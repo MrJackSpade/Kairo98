@@ -15,6 +15,7 @@ class GameCatalog(private val context: Context) {
         val baseClockTenthsMHz: Int?,
         val controllerProfile: String?,
         val controllerBindings: String?,
+        val inputMode: String?,
         val launchCommand: String?,
         val launchTimeoutMs: Int,
         val overriddenFields: Set<String>
@@ -57,6 +58,7 @@ class GameCatalog(private val context: Context) {
         val artwork = merged.optJSONObject("artwork")
         val machine = merged.optJSONObject("machine")
         val controller = merged.optJSONObject("controller")
+        val input = merged.optJSONObject("input")
         val launch = merged.optJSONObject("launch")
         val command = launch?.optString("text")?.takeIf { validCommand(it) && launch.optString("type") == "guestCommand" }
         return Game(
@@ -66,6 +68,7 @@ class GameCatalog(private val context: Context) {
             machine?.optInt("baseClockTenthsMHz")?.takeIf { it == 20 || it == 25 },
             controller?.optString("profile")?.takeIf { it.length in 1..64 },
             controller?.optJSONArray("bindings")?.toString(),
+            input?.optString("mode")?.takeIf { it in INPUT_MODES },
             command,
             launch?.optInt("timeoutMs", 30000)?.coerceIn(1000, 120000) ?: 30000,
             user?.keys()?.asSequence()?.toSet() ?: emptySet()
@@ -153,6 +156,7 @@ class GameCatalog(private val context: Context) {
         "controller" -> value is JSONObject && (!value.has("profile") ||
             (value.opt("profile") is String && value.optString("profile").length in 1..64)) &&
             (!value.has("bindings") || value.optJSONArray("bindings")?.let(ControllerBindings::valid) == true)
+        "input" -> value is JSONObject && value.optString("mode") in INPUT_MODES
         "media" -> value is org.json.JSONArray && value.length() <= 16 &&
             (0 until value.length()).all { index ->
                 value.optJSONObject(index)?.let { item ->
@@ -232,7 +236,8 @@ class GameCatalog(private val context: Context) {
     companion object {
         private const val MAX_ASSET_JSON = 64 * 1024 * 1024
         private const val MAX_LOCAL_JSON = 8L * 1024 * 1024
-        private val FIELDS = setOf("title", "aliases", "artwork", "machine", "controller", "media", "launch")
+        private val FIELDS = setOf("title", "aliases", "artwork", "machine", "controller", "input", "media", "launch")
+        private val INPUT_MODES = setOf("auto", "keyboard", "mouse")
         private val ART_FIELDS = setOf("boxArt", "preview")
         private val ID = Regex("sha256-hdi-v1:[0-9a-f]{64}")
         private val MEDIA_ROLE = Regex("[A-Za-z0-9_-]{1,32}")

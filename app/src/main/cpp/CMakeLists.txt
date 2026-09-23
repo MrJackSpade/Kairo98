@@ -10,7 +10,6 @@ add_library(np21w_core OBJECT
     ${NP21W_ROOT}/sdl2/dosio.c
     ${NP21W_ROOT}/sdl2/timemng.c
     ${NP21W_ROOT}/sdl2/joymng.c
-    ${NP21W_ROOT}/sdl2/mousemng.c
     ${NP21W_ROOT}/sdl2/fontmng.c
     ${NP21W_ROOT}/cbus/boardmo.c
     ${NP21W_ROOT}/lio/gpaint.c
@@ -20,6 +19,8 @@ add_library(np21w_core OBJECT
     android_host/core_probe.c
     android_host/font_overlay.c
     android_host/machine.c
+    android_host/input_telemetry.c
+    android_host/mousemng.c
 )
 target_include_directories(np21w_core PRIVATE
     android_host

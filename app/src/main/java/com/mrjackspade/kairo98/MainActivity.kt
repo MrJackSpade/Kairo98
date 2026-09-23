@@ -51,6 +51,9 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
     private external fun nativeReset()
     private external fun nativeClock(mhzTimesTen: Int)
     private external fun nativeKey(scanCode: Int, down: Boolean)
+    private external fun nativeMouseMove(dx: Int, dy: Int)
+    private external fun nativeMouseButton(button: Int, down: Boolean)
+    private external fun nativeInputTelemetry(): LongArray
     private external fun nativeStatus(): String
     private external fun nativeDosPromptReady(): Boolean
     private external fun nativeSetSurface(surface: Surface?, width: Int, height: Int)
@@ -69,6 +72,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
     private val handler = Handler(Looper.getMainLooper())
     private lateinit var root: FrameLayout
     private lateinit var screen: SurfaceView
+    private lateinit var keyboardPanel: Pc98KeyboardPanel
     private lateinit var libraryScreen: LibraryScreen
     private lateinit var romLibrary: RomLibrary
     private lateinit var controllerEditor: ControllerEditor
@@ -100,16 +104,33 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
     private var edgeSwipeX: Float? = null
     private var edgeSwipeY = 0f
     private var edgeSwipeConsumed = false
+    private var keyboardSwipeX: Float? = null
+    private var keyboardSwipeY = 0f
+    private var keyboardSwipeConsumed = false
     private var menuSwipeX: Float? = null
     private var menuSwipeY = 0f
     private var menuSwipeConsumed = false
+    private val inputModeDecider = InputModeDecider()
+    private var globalInputMode = InputModeDecider.Mode.AUTO
+    private var mouseTouchActive = false
+    private var mouseDragging = false
+    private var mouseTouchStartX = 0f
+    private var mouseTouchStartY = 0f
+    private var pendingMouseRelease: Runnable? = null
+    private var guestMouseX = 320
+    private var guestMouseY = 200
     @Volatile private var preparingFont = false
     @Volatile private var startGeneration = 0
 
     private val updateStatus = object : Runnable {
         override fun run() {
             if (menuOpen && !preparingFont) menuStatus.text = nativeStatus()
-            handler.postDelayed(this, 500)
+            if (!libraryVisible && !preparingFont) {
+                InputModeDecider.GuestInput.fromNative(nativeInputTelemetry())?.let {
+                    inputModeDecider.observe(it, android.os.SystemClock.elapsedRealtime())
+                }
+            }
+            handler.postDelayed(this, 250)
         }
     }
 
@@ -119,6 +140,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
         integerCrop = preferences.getBoolean("integer_crop", false)
         muted = preferences.getBoolean("muted", false)
         clock = preferences.getInt("base_clock", 25).let { if (it == 20) 20 else 25 }
+        globalInputMode = InputModeDecider.parse(preferences.getString("input_mode", "auto"))
         nativeSetMuted(muted)
         gamepadMapper.bindings = globalControllerBindings()
         gamepadMapper.deadZone = preferences.getFloat("controller_dead_zone", 0.35f)
@@ -179,9 +201,13 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
             holder.addCallback(this@MainActivity)
             isFocusableInTouchMode = true
             contentDescription = "PC-98 display"
+            setOnTouchListener { _, event -> handleScreenTouch(event) }
         }
         root.addView(screen, FrameLayout.LayoutParams(640, 400, Gravity.CENTER))
         root.addOnLayoutChangeListener { _, _, _, _, _, _, _, _, _ -> updateViewport() }
+
+        keyboardPanel = Pc98KeyboardPanel(this, inputRouter, ::hideKeyboard)
+        root.addView(keyboardPanel, FrameLayout.LayoutParams(-1, dp(260), Gravity.BOTTOM))
 
         backdrop = View(this).apply {
             setBackgroundColor(0xb8000000.toInt())
@@ -253,6 +279,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
 
         section(content, "SETTINGS")
         menuItem(content, "Graphics", "Scaling and display") { showGraphics() }
+        menuItem(content, "Input mode", "Auto, keyboard, or mouse touch") { showInputMode() }
         menuItem(content, "Machine", "Base clock") { showMachine() }
         menuItem(content, "Controller", "Gamepad buttons, sticks and hats") { showControllerScope() }
         menuItem(content, "Audio", "Sound output") { showAudio() }
@@ -327,7 +354,10 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
 
     private fun updateViewport() {
         if (!::root.isInitialized || root.width <= 0 || root.height <= 0) return
-        val fit = minOf(root.width / 640f, root.height / 400f)
+        val keyboardHeight = if (::keyboardPanel.isInitialized &&
+            keyboardPanel.visibility == View.VISIBLE) keyboardPanel.layoutParams.height else 0
+        val availableHeight = (root.height - keyboardHeight).coerceAtLeast(1)
+        val fit = minOf(root.width / 640f, availableHeight / 400f)
         if (fit <= 0f) return
         val scale = if (integerScaling && fit >= 1f) {
             if (integerCrop) ceil(fit) else floor(fit)
@@ -335,14 +365,18 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
         val width = (640 * scale).roundToInt().coerceAtLeast(1)
         val height = (400 * scale).roundToInt().coerceAtLeast(1)
         val params = screen.layoutParams as FrameLayout.LayoutParams
-        if (params.width != width || params.height != height) {
-            screen.layoutParams = FrameLayout.LayoutParams(width, height, Gravity.CENTER)
+        val top = ((availableHeight - height) / 2).coerceAtLeast(0)
+        if (params.width != width || params.height != height || params.topMargin != top ||
+            params.gravity != (Gravity.TOP or Gravity.CENTER_HORIZONTAL)) {
+            screen.layoutParams = FrameLayout.LayoutParams(width, height,
+                Gravity.TOP or Gravity.CENTER_HORIZONTAL).apply { topMargin = top }
         }
     }
 
     private fun openMenu() {
         commandCancelled.set(true)
         releaseInputs()
+        hideKeyboard()
         if (menuOpen) return
         menuOpen = true
         nativePause(true)
@@ -498,6 +532,9 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
                         currentDisk = result
                         currentTitle = game.title
                         currentGame = game
+                        inputModeDecider.reset()
+                        guestMouseX = 320
+                        guestMouseY = 200
                         gamepadMapper.bindings = effectiveControllerBindings(game)
                         userPaused = false
                         menuOpen = false
@@ -515,6 +552,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
     private fun showLibrary() {
         commandCancelled.set(true)
         releaseInputs()
+        hideKeyboard()
         libraryScreen.closeActions()
         libraryVisible = true
         closeMenu()
@@ -522,6 +560,87 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
         libraryScreen.showFolder(romTree?.let(::folderLabel))
         libraryScreen.showStatus("${libraryEntries.count { it.playable }} games ready")
         applyPauseState()
+    }
+
+    private fun configuredInputMode(): InputModeDecider.Mode =
+        currentGame?.inputMode?.let(InputModeDecider::parse) ?: globalInputMode
+
+    private fun showKeyboard() {
+        if (keyboardPanel.visibility == View.VISIBLE) return
+        keyboardPanel.visibility = View.VISIBLE
+        updateViewport()
+        handler.postDelayed({
+            if (keyboardPanel.visibility == View.VISIBLE && Build.VERSION.SDK_INT >= 30) {
+                window.insetsController?.hide(WindowInsets.Type.statusBars() or
+                    WindowInsets.Type.navigationBars())
+            }
+        }, 350)
+    }
+
+    private fun hideKeyboard() {
+        if (!::keyboardPanel.isInitialized) return
+        keyboardPanel.close()
+        updateViewport()
+        screen.requestFocus()
+    }
+
+    private fun moveGuestMouse(event: MotionEvent) {
+        val x = (event.x * 640 / screen.width).toInt().coerceIn(0, 639)
+        val y = (event.y * 400 / screen.height).toInt().coerceIn(0, 399)
+        nativeMouseMove(x - guestMouseX, y - guestMouseY)
+        guestMouseX = x
+        guestMouseY = y
+    }
+
+    private fun handleScreenTouch(event: MotionEvent): Boolean {
+        if (libraryVisible || menuOpen) return false
+        when (event.actionMasked) {
+            MotionEvent.ACTION_DOWN -> {
+                mouseTouchActive = inputModeDecider.resolve(configuredInputMode()) ==
+                    InputModeDecider.Mode.MOUSE
+                if (mouseTouchActive) {
+                    pendingMouseRelease?.let(handler::removeCallbacks)
+                    pendingMouseRelease = null
+                    nativeMouseButton(1, false)
+                    mouseDragging = false
+                    mouseTouchStartX = event.x
+                    mouseTouchStartY = event.y
+                    moveGuestMouse(event)
+                }
+            }
+            MotionEvent.ACTION_MOVE -> if (mouseTouchActive) {
+                if (!mouseDragging && (abs(event.x - mouseTouchStartX) > dp(12) ||
+                    abs(event.y - mouseTouchStartY) > dp(12))) {
+                    mouseDragging = true
+                    nativeMouseButton(1, true)
+                }
+                moveGuestMouse(event)
+            }
+            MotionEvent.ACTION_UP -> {
+                if (mouseTouchActive) {
+                    moveGuestMouse(event)
+                    if (mouseDragging) nativeMouseButton(1, false)
+                    else {
+                        nativeMouseButton(1, true)
+                        val release = Runnable {
+                            nativeMouseButton(1, false)
+                            pendingMouseRelease = null
+                        }
+                        pendingMouseRelease = release
+                        handler.postDelayed(release, 700)
+                    }
+                    hideKeyboard()
+                } else showKeyboard()
+                mouseTouchActive = false
+                mouseDragging = false
+            }
+            MotionEvent.ACTION_CANCEL -> {
+                if (mouseTouchActive) nativeMouseButton(1, false)
+                mouseTouchActive = false
+                mouseDragging = false
+            }
+        }
+        return true
     }
 
     private fun scheduleGuestCommand(game: GameCatalog.Game?) {
@@ -584,7 +703,8 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
         val game = romLibrary.catalog.resolve(id ?: "", entry.displayName)
         val catalog = romLibrary.catalog
         val fields = arrayOf("Title", "Machine clock", "Guest command", "Preview art", "Box art",
-            "View screenshot", "Reset all custom settings", "File information", "Controller mapping")
+            "View screenshot", "Reset all custom settings", "File information", "Controller mapping",
+            "Input mode")
         val values = arrayOf(
             "${game.title} · ${id?.let { catalog.sourceOf(it, "title") } ?: "Filename"}",
             "${game.baseClockTenthsMHz?.let { "${it / 10.0} MHz" } ?: "App default"} · ${id?.let { catalog.sourceOf(it, "machine") } ?: "App default"}",
@@ -593,7 +713,8 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
             "${if (game.boxArt == null) "None" else "Available"} · ${id?.let { catalog.sourceOf(it, "artwork", "boxArt") } ?: "App default"}",
             if (game.preview == null) "No screenshot available" else "Open preview",
             "Restore catalog values", "Path, ZIP entry, and content ID",
-            "${effectiveControllerBindings(game).size} bindings · ${if (game.controllerBindings == null || (game.controllerBindings == "[]" && !game.overriddenFields.contains("controller"))) "Global" else id?.let { catalog.sourceOf(it, "controller") } ?: "Global"}"
+            "${effectiveControllerBindings(game).size} bindings · ${if (game.controllerBindings == null || (game.controllerBindings == "[]" && !game.overriddenFields.contains("controller"))) "Global" else id?.let { catalog.sourceOf(it, "controller") } ?: "Global"}",
+            "${InputModeDecider.parse(game.inputMode ?: InputModeDecider.storageValue(globalInputMode))} · ${id?.let { catalog.sourceOf(it, "input") } ?: "App default"}"
         )
         AlertDialog.Builder(this).setTitle(game.title)
             .setItems(fields.indices.map { "${fields[it]}\n${values[it]}" }.toTypedArray()) { _, which ->
@@ -618,6 +739,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
                             (id ?: entry.error ?: "Not hashed"))
                         .setPositiveButton("Close", null).showStyled()
                     8 -> showControllerBindings(entry)
+                    9 -> showInputModeChoices(entry)
                 }
             }.setPositiveButton("Play") { _, _ -> launchEntry(entry) }
             .setNegativeButton("Close", null).showStyled()
@@ -729,6 +851,9 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
         if (state.startsWith("Running") || state.startsWith("Paused") ||
             state.startsWith("Starting")) {
             nativeReset()
+            inputModeDecider.reset()
+            guestMouseX = 320
+            guestMouseY = 200
             scheduleGuestCommand(currentGame)
         } else {
             startWithFont(disk, "Starting machine")
@@ -790,10 +915,55 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
             }.setNegativeButton("Cancel", null).showStyled()
     }
 
+    private fun showInputMode() {
+        val entry = currentEntry?.takeIf { it.contentId != null }
+        if (entry == null) {
+            showInputModeChoices(null)
+            return
+        }
+        AlertDialog.Builder(this).setTitle("Input mode")
+            .setItems(arrayOf("This game", "Global default")) { _, which ->
+                showInputModeChoices(if (which == 0) entry else null)
+            }.setNegativeButton("Cancel", null).showStyled()
+    }
+
+    private fun showInputModeChoices(entry: LibraryEntry?) {
+        val game = entry?.contentId?.let { romLibrary.catalog.resolve(it, entry.displayName) }
+        val choices = InputModeDecider.Mode.entries
+        var selected = choices.indexOf(if (entry == null) globalInputMode
+            else InputModeDecider.parse(game?.inputMode ?: InputModeDecider.storageValue(globalInputMode)))
+        val builder = AlertDialog.Builder(this)
+            .setTitle(if (entry == null) "Global input mode" else "Input mode for ${game?.title}")
+            .setSingleChoiceItems(arrayOf("Auto (keyboard fallback)", "Keyboard", "Mouse"), selected) { _, which ->
+                selected = which
+            }
+            .setPositiveButton("Save") { _, _ ->
+                val mode = choices[selected]
+                if (entry == null) {
+                    globalInputMode = mode
+                    preferences.edit().putString("input_mode", InputModeDecider.storageValue(mode)).apply()
+                } else {
+                    romLibrary.catalog.setOverride(entry.contentId!!, "input",
+                        JSONObject().put("mode", InputModeDecider.storageValue(mode)))
+                    if (currentEntry?.contentId == entry.contentId)
+                        currentGame = romLibrary.catalog.resolve(entry.contentId, entry.displayName)
+                }
+                toast("Input mode saved")
+            }
+            .setNegativeButton("Cancel", null)
+        if (entry != null) builder.setNeutralButton("Reset game") { _, _ ->
+            romLibrary.catalog.resetOverride(entry.contentId!!, "input")
+            if (currentEntry?.contentId == entry.contentId)
+                currentGame = romLibrary.catalog.resolve(entry.contentId, entry.displayName)
+            toast("Input mode restored")
+        }
+        builder.showStyled()
+    }
+
     private fun showAbout() {
         val version = packageManager.getPackageInfo(packageName, 0).versionName
         AlertDialog.Builder(this).setTitle("Kairo98 $version")
-            .setMessage("Open the menu with a controller Mode/Home button when Android delivers it, Back, Menu, or a swipe from the left edge. Android reserves the system Home key.\n\nPhysical keyboard input goes to the PC-98 while the menu is closed.")
+            .setMessage("Open the menu with a controller Mode/Home button when Android delivers it, Back, Menu, or a swipe from the left edge. Swipe inward from the right edge to open the PC-98 keyboard. Android reserves the system Home key.\n\nPhysical keyboard input goes to the PC-98 while the menu is closed.")
             .setPositiveButton("Done", null).showStyled()
     }
 
@@ -811,6 +981,11 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
     private fun releaseInputs() {
         gamepadMapper.releaseAll()
         inputRouter.releaseAll()
+        pendingMouseRelease?.let(handler::removeCallbacks)
+        pendingMouseRelease = null
+        nativeMouseButton(1, false)
+        mouseTouchActive = false
+        mouseDragging = false
     }
 
     private fun controllerAction(action: String) {
@@ -996,6 +1171,9 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
                     currentDisk = disk
                     currentTitle = name
                     currentGame = null
+                    inputModeDecider.reset()
+                    guestMouseX = 320
+                    guestMouseY = 200
                     gamepadMapper.bindings = globalControllerBindings()
                     libraryVisible = false
                     libraryScreen.visibility = View.GONE
@@ -1105,7 +1283,15 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
         if (!event.isFromSource(InputDevice.SOURCE_TOUCHSCREEN)) {
             return super.dispatchTouchEvent(event)
         }
-        if (event.actionMasked == MotionEvent.ACTION_DOWN) menuSwipeConsumed = false
+        if (event.actionMasked == MotionEvent.ACTION_DOWN) {
+            menuSwipeConsumed = false
+            keyboardSwipeConsumed = false
+        }
+        if (keyboardSwipeConsumed) {
+            if (event.actionMasked == MotionEvent.ACTION_UP ||
+                event.actionMasked == MotionEvent.ACTION_CANCEL) keyboardSwipeConsumed = false
+            return true
+        }
         if (menuSwipeConsumed) {
             if (event.actionMasked == MotionEvent.ACTION_UP ||
                 event.actionMasked == MotionEvent.ACTION_CANCEL) menuSwipeConsumed = false
@@ -1121,6 +1307,11 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
                 if (!menuOpen && event.x <= dp(28)) {
                     edgeSwipeX = event.x
                     edgeSwipeY = event.y
+                    return true
+                }
+                if (!menuOpen && !libraryVisible && event.x >= root.width - dp(28)) {
+                    keyboardSwipeX = event.x
+                    keyboardSwipeY = event.y
                     return true
                 }
             }
@@ -1150,9 +1341,25 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
                     }
                     return true
                 }
+                val keyboardStart = keyboardSwipeX
+                if (keyboardStart != null) {
+                    val horizontal = event.x - keyboardStart
+                    if (horizontal <= -dp(72) &&
+                        -horizontal > abs(event.y - keyboardSwipeY) * 1.3f) {
+                        keyboardSwipeX = null
+                        keyboardSwipeConsumed = true
+                        showKeyboard()
+                    }
+                    return true
+                }
             }
             MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
                 menuSwipeX = null
+                if (keyboardSwipeX != null || keyboardSwipeConsumed) {
+                    keyboardSwipeX = null
+                    keyboardSwipeConsumed = false
+                    return true
+                }
                 if (edgeSwipeX != null || edgeSwipeConsumed) {
                     edgeSwipeX = null
                     edgeSwipeConsumed = false
@@ -1172,7 +1379,9 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
                 libraryScreen.visibility = View.GONE
                 applyPauseState()
             } else finish()
-        } else if (menuOpen) closeMenu() else openMenu()
+        } else if (menuOpen) closeMenu()
+        else if (keyboardPanel.visibility == View.VISIBLE) hideKeyboard()
+        else openMenu()
     }
 
     override fun onKeyDown(keyCode: Int, event: KeyEvent): Boolean {

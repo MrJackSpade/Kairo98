@@ -9,7 +9,7 @@ from pathlib import Path
 
 CONTENT_ID = re.compile(r"sha256-hdi-v1:[0-9a-f]{64}\Z")
 ART_PATH = re.compile(r"art/(?!.*\.\.)[A-Za-z0-9_./-]{1,252}\Z")
-FIELDS = {"title", "aliases", "artwork", "machine", "controller", "media", "launch"}
+FIELDS = {"title", "aliases", "artwork", "machine", "controller", "input", "media", "launch"}
 CONTROLLER_INPUT = re.compile(r"(?:button:[0-9]{1,3}|(?:axis|hat):[0-9]{1,2}:[+-])\Z")
 CONTROLLER_ACTIONS = {"menu", "pause", "restart", "exit"}
 
@@ -67,6 +67,9 @@ def validate_record(record):
             isinstance(controller.get("profile", ""), str) and
             ("profile" not in controller or 1 <= len(controller["profile"]) <= 64) and
             valid_bindings(controller.get("bindings", [])), "invalid controller")
+    input_mode = record.get("input", {"mode": "auto"})
+    require(isinstance(input_mode, dict) and set(input_mode) == {"mode"} and
+            input_mode["mode"] in ("auto", "keyboard", "mouse"), "invalid input mode")
     media = record.get("media", [])
     require(isinstance(media, list) and len(media) <= 16 and
             all(isinstance(x, dict) and isinstance(x.get("role"), str) and

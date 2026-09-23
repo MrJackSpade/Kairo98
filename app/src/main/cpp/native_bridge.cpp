@@ -24,6 +24,10 @@ extern "C" void kairo98_machine_exec(void);
 extern "C" int kairo98_machine_reset(void);
 extern "C" int kairo98_machine_set_clock(int mhz_times_ten);
 extern "C" void kairo98_machine_key(unsigned char code, int down);
+extern "C" void kairo98_mouse_move(int dx, int dy);
+extern "C" void kairo98_mouse_button(int button, int down);
+extern "C" void kairo98_input_telemetry_reset(void);
+extern "C" void kairo98_input_telemetry_snapshot(uint64_t *, uint64_t *, uint64_t *, int *);
 extern "C" void kairo98_machine_release_keys(void);
 extern "C" int kairo98_machine_set_disk(const char *image);
 extern "C" int kairo98_machine_stop(void);
@@ -33,12 +37,13 @@ extern "C" unsigned int kairo98_audio_buffer_frames(void);
 extern "C" int kairo98_fill_audio(short *destination, unsigned int frames);
 
 namespace {
-enum class CommandType { Pause, Resume, Reset, Stop, Key, Disk, Clock };
+enum class CommandType { Pause, Resume, Reset, Stop, Key, Disk, Clock, MouseMove, MouseButton };
 struct Command {
     CommandType type;
     int key = 0;
     bool down = false;
     std::string path;
+    int y = 0;
 };
 std::mutex command_mutex;
 std::condition_variable command_ready;
@@ -89,6 +94,7 @@ void report_state(const char *state, const char *error = "") {
 
 void run_machine(std::string image, std::string font_path, int mhz_times_ten) {
     dos_prompt_ready.store(false);
+    kairo98_input_telemetry_reset();
     unsigned int prompt_frames = 0;
     int start_result = kairo98_machine_start(image.c_str(), font_path.c_str(), mhz_times_ten);
     if (start_result != 0) {
@@ -147,6 +153,7 @@ void run_machine(std::string image, std::string font_path, int mhz_times_ten) {
                     report_state("Running");
                     break;
                 case CommandType::Reset:
+                    kairo98_input_telemetry_reset();
                     prompt_frames = 0;
                     dos_prompt_ready.store(false);
                     if (kairo98_machine_reset() != 0) {
@@ -159,6 +166,7 @@ void run_machine(std::string image, std::string font_path, int mhz_times_ten) {
                     kairo98_machine_key(static_cast<unsigned char>(command.key), command.down);
                     break;
                 case CommandType::Disk:
+                    kairo98_input_telemetry_reset();
                     prompt_frames = 0;
                     dos_prompt_ready.store(false);
                     if (int disk_result = kairo98_machine_set_disk(command.path.c_str()); disk_result != 0) {
@@ -167,6 +175,7 @@ void run_machine(std::string image, std::string font_path, int mhz_times_ten) {
                     }
                     break;
                 case CommandType::Clock:
+                    kairo98_input_telemetry_reset();
                     prompt_frames = 0;
                     dos_prompt_ready.store(false);
                     if (int result = kairo98_machine_set_clock(command.key); result != 0) {
@@ -177,6 +186,12 @@ void run_machine(std::string image, std::string font_path, int mhz_times_ten) {
                     break;
                 case CommandType::Stop:
                     stop = true;
+                    break;
+                case CommandType::MouseMove:
+                    kairo98_mouse_move(command.key, command.y);
+                    break;
+                case CommandType::MouseButton:
+                    kairo98_mouse_button(command.key, command.down);
                     break;
             }
         }
@@ -292,6 +307,29 @@ Java_com_mrjackspade_kairo98_MainActivity_nativeClock(JNIEnv *, jobject, jint mh
 extern "C" JNIEXPORT void JNICALL
 Java_com_mrjackspade_kairo98_MainActivity_nativeKey(JNIEnv *, jobject, jint key, jboolean down) {
     if (key >= 0 && key < 128) enqueue({CommandType::Key, key, down == JNI_TRUE});
+}
+
+extern "C" JNIEXPORT void JNICALL
+Java_com_mrjackspade_kairo98_MainActivity_nativeMouseMove(JNIEnv *, jobject, jint dx, jint dy) {
+    if (dx >= -640 && dx <= 640 && dy >= -400 && dy <= 400)
+        enqueue({CommandType::MouseMove, dx, false, "", dy});
+}
+
+extern "C" JNIEXPORT void JNICALL
+Java_com_mrjackspade_kairo98_MainActivity_nativeMouseButton(JNIEnv *, jobject, jint button, jboolean down) {
+    if (button == 1 || button == 2) enqueue({CommandType::MouseButton, button, down == JNI_TRUE});
+}
+
+extern "C" JNIEXPORT jlongArray JNICALL
+Java_com_mrjackspade_kairo98_MainActivity_nativeInputTelemetry(JNIEnv *env, jobject) {
+    uint64_t waits = 0, polls = 0, mouse_reads = 0;
+    int waiting = 0;
+    kairo98_input_telemetry_snapshot(&waits, &polls, &mouse_reads, &waiting);
+    jlong values[4] = {static_cast<jlong>(waits), static_cast<jlong>(polls),
+                       static_cast<jlong>(mouse_reads), static_cast<jlong>(waiting)};
+    jlongArray result = env->NewLongArray(4);
+    if (result) env->SetLongArrayRegion(result, 0, 4, values);
+    return result;
 }
 
 extern "C" JNIEXPORT void JNICALL

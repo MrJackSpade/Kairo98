@@ -13,7 +13,7 @@ Kairo98 is a standalone Android PC-98 emulator in development.
 
 ## Current status
 
-Pinned 21/W and ymfm source snapshots have been imported. An arm64 Android debug APK boots a user-supplied HDI or an HDI inside a ZIP to a usable PC-98 MS-DOS prompt on a Retroid Pocket Classic, with video, physical keyboard input, initial audio output, and clean disk shutdown. Full game compatibility, controller mapping, frontend launch, and ymfm integration remain in progress.
+Pinned 21/W and ymfm source snapshots have been imported. An arm64 Android debug APK boots a user-supplied HDI or an HDI inside a ZIP on a Retroid Pocket Classic, with video, physical and touch keyboard input, initial audio output, controller key mapping, and clean disk shutdown. Full game compatibility, mouse behavior across games, frontend launch, and ymfm integration remain in progress.
 
 ## Current Android controls
 
@@ -21,7 +21,9 @@ Kairo98 opens a ROM folder picker on first launch, then scans that folder for HD
 
 The left flyout contains Continue, Restart, Game library, Choose HDI, Pause/Resume, and Exit. Graphics, Machine, Audio, and About open focused dialogs. Graphics defaults to contained integer scaling so every source pixel remains visible. An optional cropped integer mode uses the next whole-pixel multiple and hides any excess at the display edges; Fit display uses a fractional scale while preserving the 640×400 aspect ratio. The unused display area is black.
 
-Open the flyout with a controller Mode/Home event if Android sends it to the app, Android Back or Menu, or a touchscreen swipe from the left edge. [Android reserves the system Home key](https://developer.android.com/reference/android/view/KeyEvent#KEYCODE_HOME), so that key cannot directly open an app menu. No persistent menu control covers the game. Settings for scaling, base clock, and mute persist across launches. Gamepad mapping and the optional PC-98 keyboard remain separate roadmap work.
+Open the session flyout with a controller Mode/Home event if Android sends it to the app, Android Back or Menu, or a touchscreen swipe from the left edge. [Android reserves the system Home key](https://developer.android.com/reference/android/view/KeyEvent#KEYCODE_HOME), so that key cannot directly open an app menu. No persistent menu control covers the game. Settings for scaling, base clock, mute, and global input mode persist across launches.
+
+Input Mode defaults to Auto with a Keyboard fallback. On a keyboard screen, tap the emulated display to open the optional PC-98 keyboard. When Auto observes sustained guest mouse reads without keyboard activity, taps become mouse events. Swipe inward from the right edge to open the keyboard in any mode. The session Input mode menu and game details can set Keyboard or Mouse explicitly for a game; user overrides can be reset to catalog defaults. Auto is a heuristic and mixed-input titles may need a per-game choice.
 
 ## Documentation
 

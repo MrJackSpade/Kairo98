@@ -69,7 +69,6 @@ void sysmng_deinitialize(void) {}
 void sysmng_update(UINT flags) { (void)flags; }
 void sysmng_cpureset(void) {}
 void sysmng_requestupdatecaption(UINT8 flags) { (void)flags; }
-void mousemng_reset(void) {}
 
 static UINT16 frame_pixels[640 * 400];
 static SCRNSURF frame = {

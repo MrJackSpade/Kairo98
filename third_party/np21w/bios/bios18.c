@@ -4,6 +4,7 @@
 #include	"iocore.h"
 #include	"gdc_sub.h"
 #include	"bios.h"
+#include	"input_telemetry.h"
 #include	"biosmem.h"
 #include	"font/font.h"
 #if defined(SUPPORT_TEXTHOOK)
@@ -1061,9 +1062,11 @@ void bios0x18(void) {
 	switch(CPU_AH) {
 		case 0x00:						// キー・データの読みだし
 			if (bioskbd_read8(MEMB_KB_COUNT)) {
+				kairo98_observe_keyboard_read();
 				CPU_AX = keyget();
 			}
 			else {
+				kairo98_observe_keyboard_wait();
 				CPU_IP--;
 				CPU_REMCLOCK = -1;
 				break;
@@ -1071,6 +1074,7 @@ void bios0x18(void) {
 			break;
 
    		case 0x01:						// キー・バッファ状態のセンス
+			kairo98_observe_keyboard_poll();
 			if (bioskbd_read8(MEMB_KB_COUNT)) {
 				tmp.d = bioskbd_read16(MEMW_KB_BUF_HEAD);
 				CPU_AX = bioskbd_read16(tmp.d);
@@ -1117,6 +1121,7 @@ void bios0x18(void) {
  			break;
 
    		case 0x05:						// キー入力センス
+			kairo98_observe_keyboard_poll();
 			if (bioskbd_read8(MEMB_KB_COUNT)) {
 				CPU_AX = keyget();
 				CPU_BH = 1;

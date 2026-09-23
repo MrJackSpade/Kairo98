@@ -58,6 +58,14 @@ class CatalogBuildTests(unittest.TestCase):
             with self.subTest(bindings=bindings), self.assertRaisesRegex(ValueError, "invalid controller"):
                 validate_record({**record, "controller": {"bindings": bindings}})
 
+    def test_input_mode(self):
+        record = {"contentIds": ["sha256-hdi-v1:" + "0" * 64], "title": "Test"}
+        for mode in ("auto", "keyboard", "mouse"):
+            self.assertEqual(validate_record({**record, "input": {"mode": mode}})["input"]["mode"], mode)
+        for bad in ({"mode": "pointer"}, {}, {"mode": 1}):
+            with self.assertRaisesRegex(ValueError, "invalid input mode"):
+                validate_record({**record, "input": bad})
+
     def test_typed_machine_and_media(self):
         record = self.source["datasets"][0]["games"][0]
         for machine in ({"baseClockTenthsMHz": 25.0}, {"baseClockTenthsMHz": True}):

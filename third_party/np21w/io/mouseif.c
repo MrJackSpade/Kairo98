@@ -1,5 +1,6 @@
 #include	"compiler.h"
 #include	"mousemng.h"
+#include	"input_telemetry.h"
 #include	"cpucore.h"
 #include	"pccore.h"
 #include	"iocore.h"
@@ -208,6 +209,7 @@ static REG8 IOINPCALL mouseif_i7fd9(UINT port) {
 	REG8	portc;
 
 	if (mouseif.upd8255.mode & uPD8255_PORTA) {
+		kairo98_observe_mouse_port_read();
 		calc_mousexy();
 		ret = mouseif.b;
 		if (np2cfg.MOUSERAPID) {
