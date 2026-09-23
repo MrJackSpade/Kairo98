@@ -20,7 +20,17 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
+      - run: python -m pip install Pillow==11.3.0
       - run: python -m unittest discover -s tools -p 'test_*.py'
       - run: python tools/build_catalog.py docs/fixtures/catalog/source-v1.json /tmp/kairo98-catalog
       - run: python tools/build_catalog.py docs/fixtures/catalog/source-v1.json /tmp/kairo98-catalog-2
       - run: diff -r /tmp/kairo98-catalog /tmp/kairo98-catalog-2
+      - run: python tools/build_catalog.py docs/fixtures/catalog/source-v1.json /tmp/kairo98-assets/catalog
+      - run: python tools/import_art.py docs/fixtures/art-source/source-v1.json /tmp/kairo98-assets
+      - run: python tools/build_catalog.py docs/fixtures/catalog/source-v1.json /tmp/kairo98-assets-2/catalog
+      - run: python tools/import_art.py docs/fixtures/art-source/source-v1.json /tmp/kairo98-assets-2
+      - run: diff -r /tmp/kairo98-assets /tmp/kairo98-assets-2
+      - uses: actions/upload-artifact@v4
+        with:
+          name: synthetic-catalog-and-art
+          path: /tmp/kairo98-assets/

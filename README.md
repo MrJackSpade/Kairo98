@@ -33,6 +33,7 @@ Open the flyout with a controller Mode/Home event if Android sends it to the app
 - [Licensing](docs/licensing.md)
 - [Release parity](docs/release-parity.md)
 - [Game catalog and content IDs](docs/game-catalog.md)
+- [Artwork intake and rights](docs/art-rights.md)
 - [Roadmap](docs/roadmap.md)
 
 This is an independent project. It is not an official Neko Project 21/W release.

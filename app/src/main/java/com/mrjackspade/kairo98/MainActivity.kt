@@ -653,6 +653,12 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
 
     private fun restartMachine() {
         commandCancelled.set(true)
+        currentEntry?.let { entry ->
+            userPaused = false
+            closeMenu()
+            launchEntry(entry)
+            return
+        }
         val disk = currentDisk ?: File(filesDir, DISK_NAME)
         if (!disk.isFile) {
             closeMenu()
@@ -790,7 +796,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
         super.onDestroy()
     }
 
-    @Deprecated("First-boot document import; persistent URI handling comes later")
+    @Deprecated("Android activity result callback")
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
         if (requestCode == ROM_FOLDER_REQUEST) {
@@ -843,9 +849,17 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
                 partial.delete()
             }
             runOnUiThread {
+                if (generation != startGeneration) return@runOnUiThread
                 preparingFont = false
                 if (result.startsWith("Starting ")) {
                     preferences.edit().putString("disk_name", name).apply()
+                    currentEntry = null
+                    currentDisk = disk
+                    currentTitle = name
+                    currentGame = null
+                    libraryVisible = false
+                    libraryScreen.visibility = View.GONE
+                    screen.requestFocus()
                 }
                 applyPauseState()
                 toast(result)
