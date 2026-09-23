@@ -1,0 +1,23 @@
+Stage 1 compatibility checkpoint, final clean-font run
+Date: 2026-09-23
+Device: Retroid Pocket Classic, Android 14 / API 34, arm64-v8a
+Implementation revision: f295a02
+Debug APK SHA-256: 857fd9ef83b88d90a9e5233dd14a2b707fe7c1276474ba23b6f3c91cbdd6d111
+App process PID during capture: 18618
+Disk image: user-supplied HDI in private app storage; not included
+Disk SHA-256 after DIR: 455d6639f0d3e9e5e72bfe7e89bd82026bdb64ae314a4d077a2cd1e3ed7ff766
+
+Before install, app-private font.tmp and android-font.bin were removed. The app
+generated android-font.bin (253,686 bytes) and font.tmp (524,350 bytes), booted
+to A:\NS>, then accepted Android physical key events for DIR and Enter. The
+screen showed the directory listing and returned to A:\NS>. Native status on
+the boot screenshot: Running, 946 frames, audio on 5/1358. After DIR: Running,
+5530 frames, audio on 5/7938. The 5 count indicates nonzero PCM buffers.
+
+adb logcat -d --pid=18618 -v time -t 1000:
+--------- beginning of main
+09-23 00:22:04.801 E/OpenGLRenderer(18618): Unable to match the desired swap behavior.
+
+No AndroidRuntime exception or native fatal signal appeared in this app-process
+capture. The OpenGL warning did not stop rendering. The emulator's own status
+and screenshots are the frame/audio/boot evidence.
