@@ -10,8 +10,9 @@ from pathlib import Path
 CONTENT_ID = re.compile(r"sha256-hdi-v1:[0-9a-f]{64}\Z")
 ART_PATH = re.compile(r"art/(?!.*\.\.)[A-Za-z0-9_./-]{1,252}\Z")
 FIELDS = {"title", "aliases", "artwork", "machine", "controller", "input", "media", "launch"}
-CONTROLLER_INPUT = re.compile(r"(?:button:[0-9]{1,3}|(?:axis|hat):[0-9]{1,2}:[+-])\Z")
+CONTROLLER_INPUT = re.compile(r"(?:button:[0-9]{1,4}|(?:axis|hat):[0-9]{1,3}:[+-])\Z")
 CONTROLLER_ACTIONS = {"menu", "pause", "restart", "exit"}
+CONTROLLER_JOYSTICK = {"up", "down", "left", "right", "button1", "button2"}
 
 
 def require(condition, message):
@@ -24,7 +25,8 @@ def valid_bindings(bindings):
         return False
     seen = set()
     for binding in bindings:
-        if not isinstance(binding, dict) or set(binding) not in ({"input", "keys"}, {"input", "action"}):
+        if not isinstance(binding, dict) or set(binding) not in (
+                {"input", "keys"}, {"input", "action"}, {"input", "joystick"}):
             return False
         source = binding.get("input")
         if not isinstance(source, str) or not CONTROLLER_INPUT.fullmatch(source) or source in seen:
@@ -38,7 +40,11 @@ def valid_bindings(bindings):
                 return False
             if len(keys) != len(set(keys)):
                 return False
-        elif not isinstance(binding["action"], str) or binding["action"] not in CONTROLLER_ACTIONS:
+        elif "action" in binding and (not isinstance(binding["action"], str) or
+                                      binding["action"] not in CONTROLLER_ACTIONS):
+            return False
+        elif "joystick" in binding and (not isinstance(binding["joystick"], str) or
+                                        binding["joystick"] not in CONTROLLER_JOYSTICK):
             return False
     return True
 

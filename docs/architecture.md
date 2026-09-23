@@ -26,7 +26,7 @@ The Android session flyout is an activity overlay above the 640×400 surface. It
 
 ## Input model
 
-A mapping target may be a PC-98 key, a combination of keys, a mouse button or movement, or an app action such as opening the disk menu. Mappings are saved globally and may be overridden per game. Each source must produce matching press and release events; focus loss and controller disconnect release held virtual keys.
+A controller mapping target may be one to four PC-98 keys, one of the six joystick 1 controls (four directions and two buttons), or an app action. The full-screen mapping page lists Android controller inputs and their current targets. Tapping a row opens a target chooser, so assigning a PC-98 key never requires a physical keyboard. Optional controller capture and manual Android input codes cover unusual devices. Mappings are saved globally and may be overridden per game. Each source produces matching press and release events; focus loss and controller disconnect release held virtual keys and joystick controls. The Android joystick host adapter exposes active-low status to the existing FM sound board and AMD-98 guest read paths.
 
 The optional keyboard slides up from the bottom without pausing the guest. Its fitted rows have ABC, ?123, and PC-98 pages; function, navigation, and numpad keys are on the PC-98 page. Shift and Caps update visible legends using the pinned BIOS key translation table. Switching pages clears latched Shift. A swipe inward from the right screen edge opens it in every input mode. Opening it reduces the available display area; the viewport is recomputed using the selected scaling policy.
 

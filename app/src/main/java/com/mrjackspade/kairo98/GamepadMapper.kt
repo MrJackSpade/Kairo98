@@ -6,6 +6,7 @@ import android.view.MotionEvent
 
 /** Converts controller buttons, hats and axis directions into owned virtual input. */
 class GamepadMapper(private val router: InputRouter,
+                    private val joystick: JoystickInputRouter,
                     private val runAction: (String) -> Unit) {
     var bindings: List<ControllerBinding> = ControllerBindings.defaults()
         set(value) {
@@ -54,21 +55,27 @@ class GamepadMapper(private val router: InputRouter,
         val prefix = "gamepad:$deviceId:"
         active.removeAll { it.startsWith(prefix) }
         router.releasePrefix(prefix)
+        joystick.releasePrefix(prefix)
     }
 
     fun releaseAll() {
         active.clear()
         router.releasePrefix("gamepad:")
+        joystick.releasePrefix("gamepad:")
     }
 
     private fun activate(owner: String, binding: ControllerBinding) {
         if (!active.add(owner)) return
-        if (binding.action == null) router.hold(owner, binding.keys)
-        else runAction(binding.action)
+        when {
+            binding.joystick != null -> joystick.hold(owner, binding.joystick)
+            binding.action != null -> runAction(binding.action)
+            else -> router.hold(owner, binding.keys)
+        }
     }
 
     private fun deactivate(owner: String) {
         active.remove(owner)
         router.release(owner)
+        joystick.release(owner)
     }
 }

@@ -26,6 +26,8 @@ extern "C" int kairo98_machine_set_clock(int mhz_times_ten);
 extern "C" void kairo98_machine_key(unsigned char code, int down);
 extern "C" void kairo98_mouse_move(int dx, int dy);
 extern "C" void kairo98_mouse_button(int button, int down);
+extern "C" void kairo98_joy_set(int control, int down);
+extern "C" void kairo98_joy_release_all(void);
 extern "C" void kairo98_input_telemetry_reset(void);
 extern "C" void kairo98_input_telemetry_snapshot(uint64_t *, uint64_t *, uint64_t *, int *);
 extern "C" void kairo98_machine_release_keys(void);
@@ -37,7 +39,7 @@ extern "C" unsigned int kairo98_audio_buffer_frames(void);
 extern "C" int kairo98_fill_audio(short *destination, unsigned int frames);
 
 namespace {
-enum class CommandType { Pause, Resume, Reset, Stop, Key, Disk, Clock, MouseMove, MouseButton };
+enum class CommandType { Pause, Resume, Reset, Stop, Key, Disk, Clock, MouseMove, MouseButton, Joystick };
 struct Command {
     CommandType type;
     int key = 0;
@@ -95,6 +97,7 @@ void report_state(const char *state, const char *error = "") {
 void run_machine(std::string image, std::string font_path, int mhz_times_ten) {
     dos_prompt_ready.store(false);
     kairo98_input_telemetry_reset();
+    kairo98_joy_release_all();
     unsigned int prompt_frames = 0;
     int start_result = kairo98_machine_start(image.c_str(), font_path.c_str(), mhz_times_ten);
     if (start_result != 0) {
@@ -143,6 +146,7 @@ void run_machine(std::string image, std::string font_path, int mhz_times_ten) {
                 case CommandType::Pause:
                     paused = true;
                     kairo98_machine_release_keys();
+                    kairo98_joy_release_all();
                     if (audio) AAudioStream_requestPause(audio);
                     report_state("Paused");
                     break;
@@ -154,6 +158,7 @@ void run_machine(std::string image, std::string font_path, int mhz_times_ten) {
                     break;
                 case CommandType::Reset:
                     kairo98_input_telemetry_reset();
+                    kairo98_joy_release_all();
                     prompt_frames = 0;
                     dos_prompt_ready.store(false);
                     if (kairo98_machine_reset() != 0) {
@@ -167,6 +172,7 @@ void run_machine(std::string image, std::string font_path, int mhz_times_ten) {
                     break;
                 case CommandType::Disk:
                     kairo98_input_telemetry_reset();
+                    kairo98_joy_release_all();
                     prompt_frames = 0;
                     dos_prompt_ready.store(false);
                     if (int disk_result = kairo98_machine_set_disk(command.path.c_str()); disk_result != 0) {
@@ -176,6 +182,7 @@ void run_machine(std::string image, std::string font_path, int mhz_times_ten) {
                     break;
                 case CommandType::Clock:
                     kairo98_input_telemetry_reset();
+                    kairo98_joy_release_all();
                     prompt_frames = 0;
                     dos_prompt_ready.store(false);
                     if (int result = kairo98_machine_set_clock(command.key); result != 0) {
@@ -185,6 +192,7 @@ void run_machine(std::string image, std::string font_path, int mhz_times_ten) {
                     next_frame = std::chrono::steady_clock::now();
                     break;
                 case CommandType::Stop:
+                    kairo98_joy_release_all();
                     stop = true;
                     break;
                 case CommandType::MouseMove:
@@ -192,6 +200,9 @@ void run_machine(std::string image, std::string font_path, int mhz_times_ten) {
                     break;
                 case CommandType::MouseButton:
                     kairo98_mouse_button(command.key, command.down);
+                    break;
+                case CommandType::Joystick:
+                    kairo98_joy_set(command.key, command.down);
                     break;
             }
         }
@@ -318,6 +329,11 @@ Java_com_mrjackspade_kairo98_MainActivity_nativeMouseMove(JNIEnv *, jobject, jin
 extern "C" JNIEXPORT void JNICALL
 Java_com_mrjackspade_kairo98_MainActivity_nativeMouseButton(JNIEnv *, jobject, jint button, jboolean down) {
     if (button == 1 || button == 2) enqueue({CommandType::MouseButton, button, down == JNI_TRUE});
+}
+
+extern "C" JNIEXPORT void JNICALL
+Java_com_mrjackspade_kairo98_MainActivity_nativeJoystick(JNIEnv *, jobject, jint control, jboolean down) {
+    if (control >= 0 && control < 6) enqueue({CommandType::Joystick, control, down == JNI_TRUE});
 }
 
 extern "C" JNIEXPORT jlongArray JNICALL

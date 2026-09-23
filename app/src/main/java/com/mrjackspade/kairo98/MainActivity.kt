@@ -53,6 +53,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
     private external fun nativeKey(scanCode: Int, down: Boolean)
     private external fun nativeMouseMove(dx: Int, dy: Int)
     private external fun nativeMouseButton(button: Int, down: Boolean)
+    private external fun nativeJoystick(control: Int, down: Boolean)
     private external fun nativeInputTelemetry(): LongArray
     private external fun nativeStatus(): String
     private external fun nativeDosPromptReady(): Boolean
@@ -60,7 +61,8 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
     private external fun nativeSetMuted(muted: Boolean)
 
     private val inputRouter = InputRouter(::nativeKey)
-    private val gamepadMapper = GamepadMapper(inputRouter, ::controllerAction)
+    private val joystickRouter = JoystickInputRouter(::nativeJoystick)
+    private val gamepadMapper = GamepadMapper(inputRouter, joystickRouter, ::controllerAction)
     private lateinit var inputManager: InputManager
     private val inputDeviceListener = object : InputManager.InputDeviceListener {
         override fun onInputDeviceAdded(deviceId: Int) = Unit
@@ -171,12 +173,12 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
         }
         buildUi()
         romLibrary = RomLibrary(this)
-        controllerEditor = ControllerEditor(this,
+        controllerEditor = ControllerEditor(this, root,
             ::loadControllerBindings, ::saveControllerBindings, ::resetControllerBindings,
             { gamepadMapper.deadZone }, { value ->
                 gamepadMapper.deadZone = value
                 preferences.edit().putFloat("controller_dead_zone", value).apply()
-            })
+            }, ::applyPauseState)
         libraryScreen = LibraryScreen(this, romLibrary.catalog,
             ::chooseRomFolder, { refreshLibrary(false) }, { refreshLibrary(true) },
             ::launchEntry, ::showGameDetails)
@@ -423,7 +425,8 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
     }
 
     private fun applyPauseState() {
-        nativePause(userPaused || menuOpen || libraryVisible || !activityVisible || preparingFont)
+        nativePause(userPaused || menuOpen || libraryVisible || !activityVisible || preparingFont ||
+            (::controllerEditor.isInitialized && controllerEditor.isOpen))
     }
 
     private fun hasRomGrant(uri: Uri) = contentResolver.persistedUriPermissions.any {
@@ -1031,16 +1034,15 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
     }
 
     private fun showControllerScope() {
-        val entry = currentEntry
-        if (entry == null) { controllerEditor.show(null); return }
-        AlertDialog.Builder(this).setTitle("Controller settings")
-            .setItems(arrayOf("Global defaults", "${currentTitle ?: "Current game"} overrides")) { _, which ->
-                controllerEditor.show(if (which == 0) null else entry)
-            }.setNegativeButton("Cancel", null).showStyled()
+        closeMenu()
+        releaseInputs()
+        hideKeyboard()
+        controllerEditor.show(currentEntry)
     }
 
     private fun showControllerBindings(entry: LibraryEntry) {
         if (entry.contentId == null) { toast("Hash this game before editing its controls"); return }
+        releaseInputs()
         controllerEditor.show(entry)
     }
 
@@ -1236,7 +1238,10 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
     }
 
     override fun dispatchKeyEvent(event: KeyEvent): Boolean {
-        if (::controllerEditor.isInitialized && controllerEditor.captureKey(event)) return true
+        if (::controllerEditor.isInitialized && controllerEditor.isOpen) {
+            if (controllerEditor.handleKey(event)) return true
+            return super.dispatchKeyEvent(event)
+        }
         if (libraryVisible) {
             if (libraryScreen.actionsOpen) {
                 if (event.action == KeyEvent.ACTION_DOWN) {
@@ -1301,12 +1306,15 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
     }
 
     override fun dispatchGenericMotionEvent(event: MotionEvent): Boolean {
-        if (::controllerEditor.isInitialized && controllerEditor.captureMotion(event)) return true
+        if (::controllerEditor.isInitialized && controllerEditor.isOpen)
+            return controllerEditor.captureMotion(event)
         if (!menuOpen && !libraryVisible && gamepadMapper.motion(event)) return true
         return super.dispatchGenericMotionEvent(event)
     }
 
     override fun dispatchTouchEvent(event: MotionEvent): Boolean {
+        if (::controllerEditor.isInitialized && controllerEditor.isOpen)
+            return super.dispatchTouchEvent(event)
         if (!event.isFromSource(InputDevice.SOURCE_TOUCHSCREEN)) {
             return super.dispatchTouchEvent(event)
         }
@@ -1399,6 +1407,10 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
 
     @Deprecated("The platform Back callback is the reliable menu shortcut on API 26+")
     override fun onBackPressed() {
+        if (::controllerEditor.isInitialized && controllerEditor.isOpen) {
+            controllerEditor.back()
+            return
+        }
         if (libraryVisible) {
             if (libraryScreen.closeActions()) return
             if (currentDisk != null) {

@@ -45,6 +45,7 @@ class CatalogBuildTests(unittest.TestCase):
         valid = {"profile": "standard-v1", "bindings": [
             {"input": "button:96", "keys": [112, 29]},
             {"input": "axis:0:+", "action": "menu"},
+            {"input": "hat:15:-", "joystick": "left"},
         ]}
         validate_record({**record, "controller": valid})
         for bindings in (
@@ -52,6 +53,8 @@ class CatalogBuildTests(unittest.TestCase):
             [{"input": "button:96", "keys": [128]}],
             [{"input": "button:96", "keys": [True]}],
             [{"input": "button:96", "action": "shell"}],
+            [{"input": "button:96", "joystick": "button3"}],
+            [{"input": "button:96", "keys": [29], "joystick": "button1"}],
             [{"input": "button:96", "keys": [29]}, {"input": "button:96", "action": "menu"}],
             [{"input": "axis:0", "keys": [29]}],
         ):
