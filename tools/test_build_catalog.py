@@ -41,6 +41,24 @@ class CatalogBuildTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "invalid artwork"):
             validate_record({**record, "artwork": {"preview": "../outside.png"}})
 
+    def test_controller_binding_contract(self):
+        record = self.source["datasets"][0]["games"][0]
+        valid = {"profile": "standard-v1", "bindings": [
+            {"input": "button:96", "keys": [112, 29]},
+            {"input": "axis:0:+", "action": "menu"},
+        ]}
+        validate_record({**record, "controller": valid})
+        for bindings in (
+            [{"input": "button:96", "keys": [29, 29]}],
+            [{"input": "button:96", "keys": [128]}],
+            [{"input": "button:96", "keys": [True]}],
+            [{"input": "button:96", "action": "shell"}],
+            [{"input": "button:96", "keys": [29]}, {"input": "button:96", "action": "menu"}],
+            [{"input": "axis:0", "keys": [29]}],
+        ):
+            with self.subTest(bindings=bindings), self.assertRaisesRegex(ValueError, "invalid controller"):
+                validate_record({**record, "controller": {"bindings": bindings}})
+
 
 if __name__ == "__main__":
     unittest.main()

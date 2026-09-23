@@ -8,6 +8,7 @@ import android.graphics.BitmapFactory
 import android.graphics.drawable.ColorDrawable
 import android.graphics.drawable.GradientDrawable
 import android.graphics.drawable.StateListDrawable
+import android.hardware.input.InputManager
 import android.os.Bundle
 import android.os.Build
 import android.os.Handler
@@ -28,6 +29,7 @@ import android.view.WindowManager
 import android.widget.FrameLayout
 import android.widget.EditText
 import android.widget.ImageView
+import android.widget.SeekBar
 import android.widget.LinearLayout
 import android.widget.ScrollView
 import android.widget.TextView
@@ -54,12 +56,22 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
     private external fun nativeSetSurface(surface: Surface?, width: Int, height: Int)
     private external fun nativeSetMuted(muted: Boolean)
 
+    private val inputRouter = InputRouter(::nativeKey)
+    private val gamepadMapper = GamepadMapper(inputRouter, ::controllerAction)
+    private lateinit var inputManager: InputManager
+    private val inputDeviceListener = object : InputManager.InputDeviceListener {
+        override fun onInputDeviceAdded(deviceId: Int) = Unit
+        override fun onInputDeviceChanged(deviceId: Int) { gamepadMapper.releaseDevice(deviceId) }
+        override fun onInputDeviceRemoved(deviceId: Int) { gamepadMapper.releaseDevice(deviceId) }
+    }
+
     private val preferences by lazy { getSharedPreferences("kairo98", MODE_PRIVATE) }
     private val handler = Handler(Looper.getMainLooper())
     private lateinit var root: FrameLayout
     private lateinit var screen: SurfaceView
     private lateinit var libraryScreen: LibraryScreen
     private lateinit var romLibrary: RomLibrary
+    private lateinit var controllerEditor: ControllerEditor
     private var libraryVisible = true
     private var romTree: Uri? = null
     private var scanCancelled = AtomicBoolean(false)
@@ -105,6 +117,10 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
         muted = preferences.getBoolean("muted", false)
         clock = preferences.getInt("base_clock", 25).let { if (it == 20) 20 else 25 }
         nativeSetMuted(muted)
+        gamepadMapper.bindings = globalControllerBindings()
+        gamepadMapper.deadZone = preferences.getFloat("controller_dead_zone", 0.35f)
+        inputManager = getSystemService(INPUT_SERVICE) as InputManager
+        inputManager.registerInputDeviceListener(inputDeviceListener, handler)
         window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
         window.addFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN)
         window.addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS)
@@ -126,6 +142,12 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
         }
         buildUi()
         romLibrary = RomLibrary(this)
+        controllerEditor = ControllerEditor(this,
+            ::loadControllerBindings, ::saveControllerBindings, ::resetControllerBindings,
+            { gamepadMapper.deadZone }, { value ->
+                gamepadMapper.deadZone = value
+                preferences.edit().putFloat("controller_dead_zone", value).apply()
+            })
         libraryScreen = LibraryScreen(this, romLibrary.catalog,
             ::chooseRomFolder, { refreshLibrary(false) }, { refreshLibrary(true) },
             ::launchEntry, ::showGameDetails)
@@ -229,6 +251,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
         section(content, "SETTINGS")
         menuItem(content, "Graphics", "Scaling and display") { showGraphics() }
         menuItem(content, "Machine", "Base clock") { showMachine() }
+        menuItem(content, "Controller", "Gamepad buttons, sticks and hats") { showControllerScope() }
         menuItem(content, "Audio", "Sound output") { showAudio() }
         menuItem(content, "About & controls", "Version and shortcuts") { showAbout() }
 
@@ -316,6 +339,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
 
     private fun openMenu() {
         commandCancelled.set(true)
+        releaseInputs()
         if (menuOpen) return
         menuOpen = true
         nativePause(true)
@@ -416,6 +440,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
 
     private fun launchEntry(entry: LibraryEntry) {
         commandCancelled.set(true)
+        releaseInputs()
         if (!entry.playable) {
             toast(entry.error ?: "Refresh this entry before playing")
             return
@@ -470,6 +495,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
                         currentDisk = result
                         currentTitle = game.title
                         currentGame = game
+                        gamepadMapper.bindings = effectiveControllerBindings(game)
                         userPaused = false
                         menuOpen = false
                         libraryVisible = false
@@ -485,6 +511,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
 
     private fun showLibrary() {
         commandCancelled.set(true)
+        releaseInputs()
         libraryVisible = true
         closeMenu()
         libraryScreen.visibility = View.VISIBLE
@@ -509,13 +536,13 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
                             if (cancelled.get() || generation != startGeneration) return@Thread
                             val scan = guestCommandScan(character)
                                 ?: error("Unsupported launch character: $character")
-                            nativeKey(scan, true)
-                            try { Thread.sleep(70) } finally { nativeKey(scan, false) }
+                            inputRouter.hold("guest-command", listOf(scan))
+                            try { Thread.sleep(70) } finally { inputRouter.release("guest-command") }
                             Thread.sleep(70)
                         }
                         if (!cancelled.get() && generation == startGeneration) {
-                            nativeKey(0x1c, true)
-                            try { Thread.sleep(70) } finally { nativeKey(0x1c, false) }
+                            inputRouter.hold("guest-command", listOf(0x1c))
+                            try { Thread.sleep(70) } finally { inputRouter.release("guest-command") }
                         }
                     } catch (error: Exception) {
                         runOnUiThread { if (!cancelled.get()) toast(error.message ?: "Launch command failed") }
@@ -551,7 +578,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
         val game = romLibrary.catalog.resolve(id ?: "", entry.displayName)
         val catalog = romLibrary.catalog
         val fields = arrayOf("Title", "Machine clock", "Guest command", "Preview art", "Box art",
-            "View screenshot", "Reset all custom settings", "File information")
+            "View screenshot", "Reset all custom settings", "File information", "Controller mapping")
         val values = arrayOf(
             "${game.title} · ${id?.let { catalog.sourceOf(it, "title") } ?: "Filename"}",
             "${game.baseClockTenthsMHz?.let { "${it / 10.0} MHz" } ?: "App default"} · ${id?.let { catalog.sourceOf(it, "machine") } ?: "App default"}",
@@ -559,7 +586,8 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
             "${if (game.preview == null) "None" else "Available"} · ${id?.let { catalog.sourceOf(it, "artwork") } ?: "App default"}",
             "${if (game.boxArt == null) "None" else "Available"} · ${id?.let { catalog.sourceOf(it, "artwork") } ?: "App default"}",
             if (game.preview == null) "No screenshot available" else "Open preview",
-            "Restore catalog values", "Path, ZIP entry, and content ID"
+            "Restore catalog values", "Path, ZIP entry, and content ID",
+            "${effectiveControllerBindings(game).size} bindings · ${if (game.controllerBindings == null || (game.controllerBindings == "[]" && !game.overriddenFields.contains("controller"))) "Global" else id?.let { catalog.sourceOf(it, "controller") } ?: "Global"}"
         )
         AlertDialog.Builder(this).setTitle(game.title)
             .setItems(fields.indices.map { "${fields[it]}\n${values[it]}" }.toTypedArray()) { _, which ->
@@ -583,6 +611,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
                         .setMessage("${entry.path}${entry.zipEntry?.let { "\n$it" } ?: ""}\n\n" +
                             (id ?: entry.error ?: "Not hashed"))
                         .setPositiveButton("Close", null).showStyled()
+                    8 -> showControllerBindings(entry)
                 }
             }.setPositiveButton("Play") { _, _ -> launchEntry(entry) }
             .setNegativeButton("Close", null).showStyled()
@@ -680,6 +709,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
 
     private fun restartMachine() {
         commandCancelled.set(true)
+        releaseInputs()
         currentEntry?.let { entry ->
             userPaused = false
             closeMenu()
@@ -739,8 +769,10 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
                 if (clock != selected) {
                     clock = selected
                     preferences.edit().putInt("base_clock", clock).apply()
-                    nativeClock(clock)
-                    toast("Clock change resets the machine")
+                    if (currentGame?.baseClockTenthsMHz == null) {
+                        nativeClock(clock)
+                        toast("Clock change resets the machine")
+                    } else toast("Global clock saved; this game uses its own clock")
                 }
                 dialog.dismiss()
             }.setNegativeButton("Cancel", null).showStyled()
@@ -764,6 +796,73 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
             .setPositiveButton("Done", null).showStyled()
     }
 
+    private fun globalControllerBindings() =
+        ControllerBindings.parse(preferences.getString("controller_global_v1", null))
+
+    private fun effectiveControllerBindings(game: GameCatalog.Game?): List<ControllerBinding> {
+        val configured = game?.controllerBindings
+        return if (game?.overriddenFields?.contains("controller") == true ||
+            (configured != null && (configured != "[]" || game.controllerProfile == "custom-v1")))
+            ControllerBindings.parse(configured)
+        else globalControllerBindings()
+    }
+
+    private fun releaseInputs() {
+        gamepadMapper.releaseAll()
+        inputRouter.releaseAll()
+    }
+
+    private fun controllerAction(action: String) {
+        when (action) {
+            "menu" -> if (menuOpen) closeMenu() else openMenu()
+            "pause" -> {
+                userPaused = !userPaused
+                applyPauseState()
+                toast(if (userPaused) "Paused" else "Resumed")
+            }
+            "restart" -> restartMachine()
+            "exit" -> exitApp()
+        }
+    }
+
+    private fun showControllerScope() {
+        val entry = currentEntry
+        if (entry == null) { controllerEditor.show(null); return }
+        AlertDialog.Builder(this).setTitle("Controller settings")
+            .setItems(arrayOf("Global defaults", "${currentTitle ?: "Current game"} overrides")) { _, which ->
+                controllerEditor.show(if (which == 0) null else entry)
+            }.setNegativeButton("Cancel", null).showStyled()
+    }
+
+    private fun showControllerBindings(entry: LibraryEntry) {
+        if (entry.contentId == null) { toast("Hash this game before editing its controls"); return }
+        controllerEditor.show(entry)
+    }
+
+    private fun loadControllerBindings(entry: LibraryEntry?): List<ControllerBinding> =
+        if (entry == null) globalControllerBindings()
+        else effectiveControllerBindings(romLibrary.catalog.resolve(entry.contentId!!, entry.displayName))
+
+    private fun saveControllerBindings(entry: LibraryEntry?, bindings: List<ControllerBinding>) {
+        val json = ControllerBindings.toJson(bindings)
+        if (entry == null) preferences.edit().putString("controller_global_v1", json.toString()).apply()
+        else romLibrary.catalog.setOverride(entry.contentId!!, "controller",
+            JSONObject().put("profile", "custom-v1").put("bindings", json))
+        refreshControllerBindings(entry)
+    }
+
+    private fun resetControllerBindings(entry: LibraryEntry?) {
+        if (entry == null) preferences.edit().remove("controller_global_v1").apply()
+        else romLibrary.catalog.resetOverride(entry.contentId!!, "controller")
+        refreshControllerBindings(entry)
+    }
+
+    private fun refreshControllerBindings(entry: LibraryEntry?) {
+        if (entry != null && currentEntry?.contentId != entry.contentId) return
+        currentEntry?.let { currentGame = romLibrary.catalog.resolve(it.contentId!!, it.displayName) }
+        gamepadMapper.bindings = effectiveControllerBindings(currentGame)
+    }
+
     private fun AlertDialog.Builder.showStyled(): AlertDialog {
         val dialog = create()
         dialog.show()
@@ -776,6 +875,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
 
     private fun exitApp() {
         commandCancelled.set(true)
+        releaseInputs()
         if (exiting) return
         exiting = true
         startGeneration++
@@ -803,6 +903,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
 
     override fun onPause() {
         commandCancelled.set(true)
+        releaseInputs()
         activityVisible = false
         applyPauseState()
         super.onPause()
@@ -814,9 +915,19 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
         applyPauseState()
     }
 
+    override fun onWindowFocusChanged(hasFocus: Boolean) {
+        super.onWindowFocusChanged(hasFocus)
+        if (!hasFocus) {
+            commandCancelled.set(true)
+            releaseInputs()
+        }
+    }
+
     override fun onDestroy() {
         startGeneration++
         scanCancelled.set(true)
+        releaseInputs()
+        inputManager.unregisterInputDeviceListener(inputDeviceListener)
         handler.removeCallbacks(updateStatus)
         nativeSetSurface(null, 0, 0)
         if (!exiting) Thread { nativeStop() }.start()
@@ -884,6 +995,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
                     currentDisk = disk
                     currentTitle = name
                     currentGame = null
+                    gamepadMapper.bindings = globalControllerBindings()
                     libraryVisible = false
                     libraryScreen.visibility = View.GONE
                     screen.requestFocus()
@@ -918,6 +1030,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
     }
 
     override fun dispatchKeyEvent(event: KeyEvent): Boolean {
+        if (::controllerEditor.isInitialized && controllerEditor.captureKey(event)) return true
         if (libraryVisible) {
             if (event.action == KeyEvent.ACTION_DOWN) {
                 when (event.keyCode) {
@@ -936,7 +1049,8 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
             }
             return true
         }
-        if (event.keyCode == KeyEvent.KEYCODE_BUTTON_MODE ||
+        if ((event.keyCode == KeyEvent.KEYCODE_BUTTON_MODE &&
+            !gamepadMapper.hasButton(event.keyCode)) ||
             event.keyCode == KeyEvent.KEYCODE_MENU || event.keyCode == KeyEvent.KEYCODE_HOME) {
             if (event.action == KeyEvent.ACTION_DOWN && event.repeatCount == 0) {
                 if (menuOpen) closeMenu() else openMenu()
@@ -966,7 +1080,14 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
             super.dispatchKeyEvent(event)
             return true
         }
+        if (gamepadMapper.key(event)) return true
         return super.dispatchKeyEvent(event)
+    }
+
+    override fun dispatchGenericMotionEvent(event: MotionEvent): Boolean {
+        if (::controllerEditor.isInitialized && controllerEditor.captureMotion(event)) return true
+        if (!menuOpen && !libraryVisible && gamepadMapper.motion(event)) return true
+        return super.dispatchGenericMotionEvent(event)
     }
 
     override fun dispatchTouchEvent(event: MotionEvent): Boolean {
@@ -1017,16 +1138,20 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
     }
 
     override fun onKeyDown(keyCode: Int, event: KeyEvent): Boolean {
-        if (menuOpen) return true
+        if (menuOpen || libraryVisible) return true
+        if (KeyEvent.isGamepadButton(keyCode) || event.isFromSource(InputDevice.SOURCE_GAMEPAD) ||
+            event.isFromSource(InputDevice.SOURCE_JOYSTICK)) return true
         val scanCode = pc98ScanCode(keyCode) ?: return super.onKeyDown(keyCode, event)
-        if (event.repeatCount == 0) nativeKey(scanCode, true)
+        if (event.repeatCount == 0) inputRouter.hold("keyboard:${event.deviceId}:$keyCode", listOf(scanCode))
         return true
     }
 
     override fun onKeyUp(keyCode: Int, event: KeyEvent): Boolean {
-        if (menuOpen) return true
+        if (menuOpen || libraryVisible) return true
+        if (KeyEvent.isGamepadButton(keyCode) || event.isFromSource(InputDevice.SOURCE_GAMEPAD) ||
+            event.isFromSource(InputDevice.SOURCE_JOYSTICK)) return true
         val scanCode = pc98ScanCode(keyCode) ?: return super.onKeyUp(keyCode, event)
-        nativeKey(scanCode, false)
+        inputRouter.release("keyboard:${event.deviceId}:$keyCode")
         return true
     }
 
@@ -1039,6 +1164,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
                 0x1e, 0x14, 0x16, 0x2c, 0x11, 0x2a, 0x15, 0x29)
             return letters[key - KeyEvent.KEYCODE_A]
         }
+        if (key in KeyEvent.KEYCODE_F1..KeyEvent.KEYCODE_F10) return 0x62 + key - KeyEvent.KEYCODE_F1
         return when (key) {
             KeyEvent.KEYCODE_ESCAPE -> 0x00
             KeyEvent.KEYCODE_DEL -> 0x0e
@@ -1049,6 +1175,13 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
             KeyEvent.KEYCODE_DPAD_LEFT -> 0x3b
             KeyEvent.KEYCODE_DPAD_RIGHT -> 0x3c
             KeyEvent.KEYCODE_DPAD_DOWN -> 0x3d
+            KeyEvent.KEYCODE_INSERT -> 0x38
+            KeyEvent.KEYCODE_FORWARD_DEL -> 0x39
+            KeyEvent.KEYCODE_PAGE_UP -> 0x36
+            KeyEvent.KEYCODE_PAGE_DOWN -> 0x37
+            KeyEvent.KEYCODE_MOVE_HOME -> 0x3e
+            KeyEvent.KEYCODE_MOVE_END -> 0x3f
+            KeyEvent.KEYCODE_ALT_LEFT, KeyEvent.KEYCODE_ALT_RIGHT -> 0x73
             KeyEvent.KEYCODE_SHIFT_LEFT, KeyEvent.KEYCODE_SHIFT_RIGHT -> 0x70
             KeyEvent.KEYCODE_CTRL_LEFT, KeyEvent.KEYCODE_CTRL_RIGHT -> 0x74
             else -> null

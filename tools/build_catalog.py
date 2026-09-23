@@ -10,11 +10,37 @@ from pathlib import Path
 CONTENT_ID = re.compile(r"sha256-hdi-v1:[0-9a-f]{64}\Z")
 ART_PATH = re.compile(r"art/(?!.*\.\.)[A-Za-z0-9_./-]{1,252}\Z")
 FIELDS = {"title", "aliases", "artwork", "machine", "controller", "media", "launch"}
+CONTROLLER_INPUT = re.compile(r"(?:button:[0-9]{1,3}|(?:axis|hat):[0-9]{1,2}:[+-])\Z")
+CONTROLLER_ACTIONS = {"menu", "pause", "restart", "exit"}
 
 
 def require(condition, message):
     if not condition:
         raise ValueError(message)
+
+
+def valid_bindings(bindings):
+    if not isinstance(bindings, list) or len(bindings) > 128:
+        return False
+    seen = set()
+    for binding in bindings:
+        if not isinstance(binding, dict) or set(binding) not in ({"input", "keys"}, {"input", "action"}):
+            return False
+        source = binding.get("input")
+        if not isinstance(source, str) or not CONTROLLER_INPUT.fullmatch(source) or source in seen:
+            return False
+        seen.add(source)
+        if "keys" in binding:
+            keys = binding["keys"]
+            if not isinstance(keys, list) or not 1 <= len(keys) <= 4:
+                return False
+            if any(type(key) is not int or not 0 <= key <= 127 for key in keys):
+                return False
+            if len(keys) != len(set(keys)):
+                return False
+        elif not isinstance(binding["action"], str) or binding["action"] not in CONTROLLER_ACTIONS:
+            return False
+    return True
 
 
 def validate_record(record):
@@ -38,9 +64,8 @@ def validate_record(record):
     controller = record.get("controller", {})
     require(isinstance(controller, dict) and set(controller) <= {"profile", "bindings"} and
             isinstance(controller.get("profile", ""), str) and
-            len(controller.get("profile", "")) <= 64 and
-            isinstance(controller.get("bindings", []), list) and
-            len(controller.get("bindings", [])) <= 128, "invalid controller")
+            ("profile" not in controller or 1 <= len(controller["profile"]) <= 64) and
+            valid_bindings(controller.get("bindings", [])), "invalid controller")
     media = record.get("media", [])
     require(isinstance(media, list) and len(media) <= 16 and
             all(isinstance(x, dict) and CONTENT_ID.fullmatch(x.get("contentId", "")) for x in media), "invalid media")

@@ -109,9 +109,10 @@ class GameCatalog(private val context: Context) {
             !value.has(it) || validArtPath(value.optString(it))
         }
         "machine" -> value is JSONObject && (!value.has("baseClockTenthsMHz") ||
-            value.optInt("baseClockTenthsMHz") in listOf(20, 25))
-        "controller" -> value is JSONObject && value.optString("profile").length <= 64 &&
-            (value.optJSONArray("bindings")?.length() ?: 0) <= 128
+            (value.opt("baseClockTenthsMHz") is Int && value.optInt("baseClockTenthsMHz") in listOf(20, 25)))
+        "controller" -> value is JSONObject && (!value.has("profile") ||
+            (value.opt("profile") is String && value.optString("profile").length in 1..64)) &&
+            (!value.has("bindings") || value.optJSONArray("bindings")?.let(ControllerBindings::valid) == true)
         "media" -> value is org.json.JSONArray && value.length() <= 16
         "launch" -> value is JSONObject && value.optString("type") == "guestCommand" &&
             validCommand(value.optString("text")) &&
