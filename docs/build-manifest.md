@@ -14,6 +14,8 @@ The exact 185 base 21/W C source paths are frozen in [`app/src/main/cpp/np21w-so
 
 The 21/W core compile defines `SUPPORT_LARGE_HDD` and `NP2_SDL2`, with signed `char` and strict aliasing disabled to match existing host build assumptions. Android's `compiler.h` derives from the imported iOS host header; `commng.h` derives from the Windows host; `mousemng.h` and `sysmng.h` derive from the SDL2 host. These copied headers are part of the 21/W attribution and must be checked in the release audit.
 
+A detached clean worktree at commit `1dcdf06` also built `:app:assembleDebug` successfully using the pinned local SDK. This verifies that the build does not depend on untracked source files in the working tree.
+
 ## Deliberate first-stage limits
 
 - The compiled source list excludes `fmgen`, GPL MAME, the omitted DOSBox FPU code, and the older `sound/mamebsd/` copy. ymfm integration is [issue #7](https://github.com/MrJackSpade/Kairo98/issues/7).
