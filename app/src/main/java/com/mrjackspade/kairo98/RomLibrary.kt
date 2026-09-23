@@ -339,13 +339,21 @@ class RomLibrary(private val context: Context) {
                     val value = array.optJSONObject(i) ?: continue
                     val id = value.optString("id")
                     val uri = value.optString("uri")
-                    if (id.isBlank() || uri.isBlank()) continue
-                    items.add(LibraryEntry(id, uri, value.optString("path"),
-                        value.optString("zipEntry").takeIf { it.isNotEmpty() },
-                        value.optLong("sourceSize", -1), value.optLong("sourceModified"),
-                        value.optLong("imageSize", -1), value.optLong("imageCrc", -1),
+                    val path = value.optString("path")
+                    val zipEntry = value.optString("zipEntry").takeIf { it.isNotEmpty() }
+                    if (!LOCATION_ID.matches(id) || !uri.startsWith("content://") ||
+                        path.isBlank() || path.length > 4096 ||
+                        (zipEntry != null && (zipEntry.length > 4096 ||
+                            runCatching { safeEntryName(zipEntry) }.isFailure))) continue
+                    val sourceSize = value.optLong("sourceSize", -1)
+                    val sourceModified = value.optLong("sourceModified")
+                    val imageSize = value.optLong("imageSize", -1)
+                    val imageCrc = value.optLong("imageCrc", -1)
+                    if (sourceSize < -1 || sourceModified < 0 || imageSize < -1 || imageCrc < -1) continue
+                    items.add(LibraryEntry(id, uri, path, zipEntry, sourceSize, sourceModified,
+                        imageSize, imageCrc,
                         value.optString("contentId").takeIf(GameCatalog::validId),
-                        value.optString("error").takeIf { it.isNotEmpty() }))
+                        value.optString("error").takeIf { it.length in 1..1024 }))
                 }
                 json.optString("treeUri") to items
             }
@@ -384,6 +392,7 @@ class RomLibrary(private val context: Context) {
         private const val MAX_ARCHIVE_BYTES = 8L * 1024 * 1024 * 1024
         private const val MAX_EXPANSION_RATIO = 1000L
         private const val MAX_STORE_BYTES = 16L * 1024 * 1024
+        private val LOCATION_ID = Regex("[0-9a-f]{32}")
         private val PROJECTION = arrayOf(
             DocumentsContract.Document.COLUMN_DOCUMENT_ID,
             DocumentsContract.Document.COLUMN_DISPLAY_NAME,

@@ -59,6 +59,15 @@ class CatalogBuildTests(unittest.TestCase):
             with self.subTest(bindings=bindings), self.assertRaisesRegex(ValueError, "invalid controller"):
                 validate_record({**record, "controller": {"bindings": bindings}})
 
+    def test_typed_machine_and_media(self):
+        record = self.source["datasets"][0]["games"][0]
+        for machine in ({"baseClockTenthsMHz": 25.0}, {"baseClockTenthsMHz": True}):
+            with self.subTest(machine=machine), self.assertRaisesRegex(ValueError, "invalid machine"):
+                validate_record({**record, "machine": machine})
+        for media in ([{"role": "boot", "contentId": 7}], [{"contentId": record["contentIds"][0]}]):
+            with self.subTest(media=media), self.assertRaisesRegex(ValueError, "invalid media"):
+                validate_record({**record, "media": media})
+
 
 if __name__ == "__main__":
     unittest.main()

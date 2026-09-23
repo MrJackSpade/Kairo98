@@ -104,7 +104,10 @@ class GameCatalog(private val context: Context) {
 
     private fun validField(field: String, value: Any): Boolean = when (field) {
         "title" -> value is String && validTitle(value)
-        "aliases" -> value is org.json.JSONArray && value.length() <= 64
+        "aliases" -> value is org.json.JSONArray && value.length() <= 64 &&
+            (0 until value.length()).all { index ->
+                (value.opt(index) as? String)?.let(::validTitle) == true
+            }
         "artwork" -> value is JSONObject && listOf("boxArt", "preview").all {
             !value.has(it) || validArtPath(value.optString(it))
         }
@@ -113,11 +116,18 @@ class GameCatalog(private val context: Context) {
         "controller" -> value is JSONObject && (!value.has("profile") ||
             (value.opt("profile") is String && value.optString("profile").length in 1..64)) &&
             (!value.has("bindings") || value.optJSONArray("bindings")?.let(ControllerBindings::valid) == true)
-        "media" -> value is org.json.JSONArray && value.length() <= 16
+        "media" -> value is org.json.JSONArray && value.length() <= 16 &&
+            (0 until value.length()).all { index ->
+                value.optJSONObject(index)?.let { item ->
+                    MEDIA_ROLE.matches(item.optString("role")) &&
+                        validId(item.optString("contentId"))
+                } == true
+            }
         "launch" -> value is JSONObject && value.optString("type") == "guestCommand" &&
             validCommand(value.optString("text")) &&
             (!value.has("ready") || value.optString("ready") == "dosPrompt") &&
-            value.optInt("timeoutMs", 30000) in 1000..120000
+            (!value.has("timeoutMs") ||
+                (value.opt("timeoutMs") is Int && value.optInt("timeoutMs") in 1000..120000))
         else -> false
     }
 
@@ -184,6 +194,7 @@ class GameCatalog(private val context: Context) {
         private const val MAX_LOCAL_JSON = 8L * 1024 * 1024
         private val FIELDS = setOf("title", "aliases", "artwork", "machine", "controller", "media", "launch")
         private val ID = Regex("sha256-hdi-v1:[0-9a-f]{64}")
+        private val MEDIA_ROLE = Regex("[A-Za-z0-9_-]{1,32}")
         fun validId(value: String) = ID.matches(value)
         private fun validTitle(value: String) = value.isNotBlank() && value.length <= 256
         private fun validCommand(value: String) = value.isNotBlank() && value.length <= 128 &&

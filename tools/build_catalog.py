@@ -60,6 +60,7 @@ def validate_record(record):
             all(isinstance(x, str) and ART_PATH.fullmatch(x) for x in artwork.values()), "invalid artwork")
     machine = record.get("machine", {})
     require(isinstance(machine, dict) and set(machine) <= {"baseClockTenthsMHz"} and
+            type(machine.get("baseClockTenthsMHz", 25)) is int and
             machine.get("baseClockTenthsMHz", 25) in (20, 25), "invalid machine")
     controller = record.get("controller", {})
     require(isinstance(controller, dict) and set(controller) <= {"profile", "bindings"} and
@@ -68,7 +69,10 @@ def validate_record(record):
             valid_bindings(controller.get("bindings", [])), "invalid controller")
     media = record.get("media", [])
     require(isinstance(media, list) and len(media) <= 16 and
-            all(isinstance(x, dict) and CONTENT_ID.fullmatch(x.get("contentId", "")) for x in media), "invalid media")
+            all(isinstance(x, dict) and isinstance(x.get("role"), str) and
+                re.fullmatch(r"[A-Za-z0-9_-]{1,32}", x["role"]) and
+                isinstance(x.get("contentId"), str) and CONTENT_ID.fullmatch(x["contentId"])
+                for x in media), "invalid media")
     launch = record.get("launch")
     if launch is not None:
         require(isinstance(launch, dict) and launch.get("type") == "guestCommand" and
