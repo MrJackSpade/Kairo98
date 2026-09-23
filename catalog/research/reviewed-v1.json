@@ -48,6 +48,27 @@
     },
     {
       "platform": "pc88",
+      "databaseId": "189197",
+      "title": "A.E.",
+      "aliases": [],
+      "sourceGroups": [
+        "pc88:A.E. (Comptiq)"
+      ],
+      "contentIds": [],
+      "description": "Defend Earth from descending alien formations by sliding a laser cannon across the bottom of a perspective-view playfield.",
+      "pageUrl": "https://gamesdb.launchbox-app.com/games/details/139197",
+      "boxArt": {
+        "url": "https://images.launchbox-app.com/559a0eb5-e041-42f0-8fcf-72a5fa825c44.jpg",
+        "review": "checked"
+      },
+      "screenshot": {
+        "url": "https://images.launchbox-app.com/240f580b-98dc-4fc0-9b82-53e87512f6fb.png",
+        "review": "checked"
+      },
+      "notes": "Compared the live page title and platform with the on-disk group. Opened the selected box and gameplay image; redistribution rights remain unconfirmed."
+    },
+    {
+      "platform": "pc88",
       "databaseId": "186794",
       "title": "Abyss",
       "aliases": [],
@@ -89,6 +110,113 @@
         "review": "checked"
       },
       "notes": "Compared the live page title and platform with the on-disk group. Opened the selected box and gameplay image: both depict this game and show no visible nudity. Redistribution rights remain unconfirmed."
+    },
+    {
+      "platform": "pc88",
+      "databaseId": "181010",
+      "title": "Acrojet",
+      "aliases": [],
+      "sourceGroups": [
+        "pc88:Acrojet (MicroProse - SystemSoft)"
+      ],
+      "contentIds": [],
+      "description": "Fly a small jet through ten aerobatic events, navigating obstacles with cockpit instruments and adjustable weather conditions.",
+      "pageUrl": "https://gamesdb.launchbox-app.com/games/details/131010",
+      "boxArt": {
+        "url": "https://images.launchbox-app.com/c6de76e5-3627-49ac-b34d-e9cb8afc96a2.jpg",
+        "review": "checked"
+      },
+      "screenshot": {
+        "url": "https://images.launchbox-app.com/a9e1c577-bbbd-426c-9383-c9fb0df337b7.png",
+        "review": "checked"
+      },
+      "notes": "Compared the live page title and platform with the on-disk group. Opened the selected box and gameplay image; redistribution rights remain unconfirmed."
+    },
+    {
+      "platform": "pc88",
+      "databaseId": "187777",
+      "title": "Albatross",
+      "aliases": [],
+      "sourceGroups": [
+        "pc88:Albatross (Telenet Japan)"
+      ],
+      "contentIds": [],
+      "description": "Play an 18-hole golf course from overhead and close views, choosing clubs, stance, and swing for each shot.",
+      "pageUrl": "https://gamesdb.launchbox-app.com/games/details/137777",
+      "boxArt": {
+        "url": "https://images.launchbox-app.com/bdc8a7b8-0a2e-4ed6-a2d1-cad9e14f44be.jpg",
+        "review": "checked"
+      },
+      "screenshot": {
+        "url": "https://images.launchbox-app.com/3b24f5b7-9f64-4614-b8cc-9d0c402701fb.png",
+        "review": "checked"
+      },
+      "notes": "Compared the live page title and platform with the on-disk group. Opened the selected box and gameplay image; redistribution rights remain unconfirmed."
+    },
+    {
+      "platform": "pc88",
+      "databaseId": "187778",
+      "title": "Alfaim",
+      "aliases": [],
+      "sourceGroups": [
+        "pc88:Alfaim (Zain Soft)"
+      ],
+      "contentIds": [],
+      "description": "Investigate a classmate’s reported suicide in a supernatural graphic adventure about hidden powers and a mysterious transfer student.",
+      "pageUrl": "https://gamesdb.launchbox-app.com/games/details/137778",
+      "boxArt": {
+        "url": "https://images.launchbox-app.com/4dffc43c-d731-4ec0-8e0e-7b58efe9a742.jpg",
+        "review": "checked"
+      },
+      "screenshot": {
+        "url": "https://images.launchbox-app.com/37ac0c23-460f-4d65-9ab5-79486b2544b5.png",
+        "review": "checked"
+      },
+      "notes": "Compared the live page title and platform with the on-disk group. Opened the selected box and gameplay image; redistribution rights remain unconfirmed."
+    },
+    {
+      "platform": "pc88",
+      "databaseId": "187779",
+      "title": "Ali Baba",
+      "aliases": [],
+      "sourceGroups": [
+        "pc88:Ali Baba (Starcraft)"
+      ],
+      "contentIds": [],
+      "description": "Assemble a party and descend through a trap-filled dungeon to rescue a kidnapped princess, fighting creatures and gathering equipment.",
+      "pageUrl": "https://gamesdb.launchbox-app.com/games/details/137779",
+      "boxArt": {
+        "url": "https://images.launchbox-app.com/893482a6-e966-4c48-8156-38d687e12247.jpg",
+        "review": "flagged"
+      },
+      "screenshot": {
+        "url": "https://images.launchbox-app.com/41b07221-61c4-46fe-94f7-864986f3639e.png",
+        "review": "checked"
+      },
+      "notes": "Compared the live page title and platform with the on-disk group. Opened the selected box and gameplay image; redistribution rights remain unconfirmed. Cover has a revealing figure; hold for user content review."
+    },
+    {
+      "platform": "pc88",
+      "databaseId": "183613",
+      "title": "All Cast Star Trek",
+      "aliases": [
+        "Star Trek: The Computer Game"
+      ],
+      "sourceGroups": [
+        "pc88:All Cast Star Trek (M. Kasuya)"
+      ],
+      "contentIds": [],
+      "description": "A Star Trek-themed space strategy game with ship controls and portraits of the television crew.",
+      "pageUrl": "https://gamesdb.launchbox-app.com/games/details/133613",
+      "boxArt": {
+        "url": "https://images.launchbox-app.com/781189d6-beaa-4e03-a21c-66720cdeea8e.jpg",
+        "review": "checked"
+      },
+      "screenshot": {
+        "url": "https://images.launchbox-app.com/10455ef8-79e4-4b68-bb38-6456c18fac61.jpg",
+        "review": "checked"
+      },
+      "notes": "Compared the live page title and platform with the on-disk group. Opened the selected box and gameplay image; redistribution rights remain unconfirmed."
     },
     {
       "platform": "pc88",
@@ -155,6 +283,27 @@
     },
     {
       "platform": "pc88",
+      "databaseId": "187784",
+      "title": "Amazon Gakujutsu Tanken",
+      "aliases": [],
+      "sourceGroups": [
+        "pc88:Amazon Gakujutsu Tanken (Starcraft)"
+      ],
+      "contentIds": [],
+      "description": "Equip and manage a four-person expedition mapping the Amazon jungle and ancient ruins while dealing with disease, hazards, and dwindling supplies.",
+      "pageUrl": "https://gamesdb.launchbox-app.com/games/details/137784",
+      "boxArt": {
+        "url": "https://images.launchbox-app.com/4b067447-13ca-42e5-80c9-b2dc874ab531.jpg",
+        "review": "checked"
+      },
+      "screenshot": {
+        "url": "https://images.launchbox-app.com/a5c46aa7-129e-427f-a7ac-e0d8e5ddd792.png",
+        "review": "checked"
+      },
+      "notes": "Compared the live page title and platform with the on-disk group. Opened the selected box and gameplay image; redistribution rights remain unconfirmed."
+    },
+    {
+      "platform": "pc88",
       "databaseId": "187785",
       "title": "American Truck",
       "aliases": [],
@@ -173,6 +322,50 @@
         "review": "checked"
       },
       "notes": "Compared the live page title and platform with the on-disk group. Opened the selected box and gameplay image: both depict this game and show no visible nudity. Redistribution rights remain unconfirmed."
+    },
+    {
+      "platform": "pc88",
+      "databaseId": "181072",
+      "title": "Angelus: Akuma no Fukuin",
+      "aliases": [
+        "Angelus"
+      ],
+      "sourceGroups": [
+        "pc88:Angelus (Enix)"
+      ],
+      "contentIds": [],
+      "description": "Agents Alice and Brian investigate a disfiguring illness and occult incidents through illustrated scenes and menu-based conversations.",
+      "pageUrl": "https://gamesdb.launchbox-app.com/games/details/131072",
+      "boxArt": {
+        "url": "https://images.launchbox-app.com/51df32e5-b6ad-4955-b832-cc5a1e8ae0a7.jpg",
+        "review": "checked"
+      },
+      "screenshot": {
+        "url": "https://images.launchbox-app.com/4587fc74-46b9-48cc-a579-921bf5d6de2e.png",
+        "review": "checked"
+      },
+      "notes": "Compared the live page title and platform with the on-disk group. Opened the selected box and gameplay image; redistribution rights remain unconfirmed."
+    },
+    {
+      "platform": "pc88",
+      "databaseId": "187820",
+      "title": "Aoki Ookami to Shiroki Mejika: Genchou Hishi",
+      "aliases": [],
+      "sourceGroups": [
+        "pc88:Aoki Ookami to Shiroki Mejika - Genchou Hishi (Koei)"
+      ],
+      "contentIds": [],
+      "description": "Build alliances, develop provinces, and command armies across scenarios inspired by Genghis Khan and Mongol expansion.",
+      "pageUrl": "https://gamesdb.launchbox-app.com/games/details/137820",
+      "boxArt": {
+        "url": "https://images.launchbox-app.com/309c2e4b-3f52-4ff7-aa4f-a9f3efa3a9b2.png",
+        "review": "flagged"
+      },
+      "screenshot": {
+        "url": "https://images.launchbox-app.com/2d19ee19-6deb-43a6-afda-3d8a05dc1224.png",
+        "review": "checked"
+      },
+      "notes": "Compared the live page title and platform with the on-disk group. Opened the selected box and gameplay image; redistribution rights remain unconfirmed. Selected box explicitly says Mega Drive, so it is wrong-platform art; replace with PC-88 packaging."
     },
     {
       "platform": "pc88",
@@ -326,6 +519,27 @@
         "review": "checked"
       },
       "notes": "Compared the live page title and platform with the on-disk group. Opened the selected box and gameplay image: both depict this game and show no visible nudity. Redistribution rights remain unconfirmed."
+    },
+    {
+      "platform": "pc88",
+      "databaseId": "186797",
+      "title": "Asteka",
+      "aliases": [],
+      "sourceGroups": [
+        "pc88:Asteka (Falcom)"
+      ],
+      "contentIds": [],
+      "description": "Travel to Palenque to investigate the secrets of a Mayan temple in an illustrated adventure controlled by typed Japanese commands.",
+      "pageUrl": "https://gamesdb.launchbox-app.com/games/details/136797",
+      "boxArt": {
+        "url": "https://images.launchbox-app.com/300c079b-18af-4963-ba7e-570a36378de0.jpg",
+        "review": "checked"
+      },
+      "screenshot": {
+        "url": "https://images.launchbox-app.com/8b11e881-6fda-4dc8-b6c2-9ca764252037.png",
+        "review": "checked"
+      },
+      "notes": "Compared the live page title and platform with the on-disk group. Opened the selected box and gameplay image; redistribution rights remain unconfirmed."
     },
     {
       "platform": "pc88",
@@ -529,6 +743,50 @@
     },
     {
       "platform": "pc98",
+      "databaseId": "187061",
+      "title": "Balance of the Planet",
+      "aliases": [],
+      "sourceGroups": [
+        "pc98:AcclaimJapan.zip:Balance of the Planet"
+      ],
+      "contentIds": [],
+      "description": "Explore the links between ecological problems and public policy, using taxes and subsidies to influence a model of the planet.",
+      "pageUrl": "https://gamesdb.launchbox-app.com/games/details/137061",
+      "boxArt": {
+        "url": "https://images.launchbox-app.com/dbe0714a-d15e-4c63-95d5-2cb036b0e304.jpg",
+        "review": "checked"
+      },
+      "screenshot": {
+        "url": "https://images.launchbox-app.com/19c335c4-1ba1-4508-872f-f4808e82f924.png",
+        "review": "checked"
+      },
+      "notes": "Compared the live page title and platform with the on-disk group. Opened the selected box and gameplay image; redistribution rights remain unconfirmed."
+    },
+    {
+      "platform": "pc98",
+      "databaseId": "187073",
+      "title": "Block Out",
+      "aliases": [
+        "Blockout"
+      ],
+      "sourceGroups": [
+        "pc98:AcclaimJapan.zip:Block Out"
+      ],
+      "contentIds": [],
+      "description": "Rotate three-dimensional falling blocks and fit them into a deep pit, with adjustable pit dimensions and piece sets.",
+      "pageUrl": "https://gamesdb.launchbox-app.com/games/details/137073",
+      "boxArt": {
+        "url": "https://images.launchbox-app.com/961e22af-cfd3-4308-bd3a-6b7c04cfd084.jpg",
+        "review": "checked"
+      },
+      "screenshot": {
+        "url": "https://images.launchbox-app.com/b273c9cf-9b6c-44e5-ade6-0a1e7be03c1f.png",
+        "review": "checked"
+      },
+      "notes": "Compared the live page title and platform with the on-disk group. Opened the selected box and gameplay image; redistribution rights remain unconfirmed."
+    },
+    {
+      "platform": "pc98",
       "databaseId": "187076",
       "title": "Bokosuka Wars",
       "aliases": [],
@@ -661,6 +919,27 @@
         "review": "checked"
       },
       "notes": "Compared the live page title and platform with the on-disk group. Opened the selected box and gameplay image: both depict this game and show no visible nudity. Redistribution rights remain unconfirmed."
+    },
+    {
+      "platform": "pc98",
+      "databaseId": "189668",
+      "title": "Derby Stallion Expert Kit",
+      "aliases": [],
+      "sourceGroups": [
+        "pc98:ASCII.zip:Derby Stallion Expert Kit"
+      ],
+      "contentIds": [],
+      "description": "An expansion kit for Derby Stallion; its package says the base game is required, so it cannot be played on its own.",
+      "pageUrl": "https://gamesdb.launchbox-app.com/games/details/139668",
+      "boxArt": {
+        "url": "https://images.launchbox-app.com/bf09e229-a9b4-422b-bf57-ca91145dfebd.jpg",
+        "review": "checked"
+      },
+      "screenshot": {
+        "url": "https://images.launchbox-app.com/07f63caa-83f6-4bcc-abcc-dbac6b79fbd2.png",
+        "review": "checked"
+      },
+      "notes": "Compared the live page title and platform with the on-disk group. Opened the selected box and gameplay image; redistribution rights remain unconfirmed. The cover explicitly says this is not a standalone product and requires Derby Stallion."
     },
     {
       "platform": "pc98",
@@ -909,6 +1188,27 @@
     },
     {
       "platform": "pc98",
+      "databaseId": "180890",
+      "title": "Giten Megami Tensei: Tokyo Mokushiroku",
+      "aliases": [],
+      "sourceGroups": [
+        "pc98:ASCII.zip:Giten Megami Tensei - Tokyo Mokushiroku"
+      ],
+      "contentIds": [],
+      "description": "Survive in underground shelters after a nuclear attack on Tokyo and confront demons as a member of the Devil Busters.",
+      "pageUrl": "https://gamesdb.launchbox-app.com/games/details/130890",
+      "boxArt": {
+        "url": "https://images.launchbox-app.com/1e5ae586-ee9f-402e-8c8c-2c4c1b159751.png",
+        "review": "flagged"
+      },
+      "screenshot": {
+        "url": "https://images.launchbox-app.com/8fab78c9-3729-4d71-bbed-c5c92eab2776.png",
+        "review": "checked"
+      },
+      "notes": "Compared the live page title and platform with the on-disk group. Opened the selected box and gameplay image; redistribution rights remain unconfirmed. Cover contains visible uncensored nudity; hold for user censorship or replacement before any publication."
+    },
+    {
+      "platform": "pc98",
       "databaseId": "189669",
       "title": "Hokkaido Rensa Satsujin: Okhotsk ni Kiyu",
       "aliases": [],
@@ -974,6 +1274,30 @@
     },
     {
       "platform": "pc98",
+      "databaseId": "189444",
+      "title": "Kakinoki Shogi",
+      "aliases": [
+        "Kakinoki Shougi",
+        "Kakinoki Shōgi"
+      ],
+      "sourceGroups": [
+        "pc98:ASCII.zip:Kakinoki Shougi"
+      ],
+      "contentIds": [],
+      "description": "Play shogi against another person or a computer opponent, adjusting its level and reviewing moves on the board.",
+      "pageUrl": "https://gamesdb.launchbox-app.com/games/details/139444",
+      "boxArt": {
+        "url": "https://images.launchbox-app.com/a63f683a-a321-43db-8e56-753e92353ca7.jpg",
+        "review": "checked"
+      },
+      "screenshot": {
+        "url": "https://images.launchbox-app.com/19861132-d684-4cb9-af6c-cf8ecfbb4523.png",
+        "review": "checked"
+      },
+      "notes": "Compared the live page title and platform with the on-disk group. Opened the selected box and gameplay image; redistribution rights remain unconfirmed."
+    },
+    {
+      "platform": "pc98",
       "databaseId": "186567",
       "title": "Kikou Soushin Val-Kaizer",
       "aliases": [
@@ -997,6 +1321,27 @@
         "review": "flagged"
       },
       "notes": "Compared the live PC-98 page with the Japanese NeoKobe folder and English translation archive. Opened the selected box and gameplay image; both depict this game and show no visible exposed nudity. Redistribution rights remain unconfirmed. Bedroom scene; hold for user content review."
+    },
+    {
+      "platform": "pc98",
+      "databaseId": "189236",
+      "title": "Laptop Chess",
+      "aliases": [],
+      "sourceGroups": [
+        "pc98:AcclaimJapan.zip:Laptop Chess"
+      ],
+      "contentIds": [],
+      "description": "Play chess against the computer on a two-dimensional board with selectable difficulty and a move display.",
+      "pageUrl": "https://gamesdb.launchbox-app.com/games/details/139236",
+      "boxArt": {
+        "url": "https://images.launchbox-app.com/115d1bf0-679e-4676-9d3c-d0a7cbc2307c.jpg",
+        "review": "checked"
+      },
+      "screenshot": {
+        "url": "https://images.launchbox-app.com/03d5e920-44d5-4526-b12b-08f9c521707f.png",
+        "review": "checked"
+      },
+      "notes": "Compared the live page title and platform with the on-disk group. Opened the selected box and gameplay image; redistribution rights remain unconfirmed."
     },
     {
       "platform": "pc98",
@@ -1041,6 +1386,29 @@
         "review": "checked"
       },
       "notes": "Compared the live page title and platform with the on-disk group. Opened the selected box and gameplay image: both depict this game and show no visible nudity. Redistribution rights remain unconfirmed."
+    },
+    {
+      "platform": "pc98",
+      "databaseId": "189467",
+      "title": "Manhattan Requiem",
+      "aliases": [
+        "Login Disk&Book Series: Manhattan Requiem"
+      ],
+      "sourceGroups": [
+        "pc98:ASCII.zip:LOGiN Disk & Book Series - Manhattan Requiem"
+      ],
+      "contentIds": [],
+      "description": "Detective J.B. Harold investigates the murder of a pianist in Manhattan by questioning suspects and following new leads.",
+      "pageUrl": "https://gamesdb.launchbox-app.com/games/details/139467",
+      "boxArt": {
+        "url": "https://images.launchbox-app.com/a34b3b67-dc8c-42ea-8939-7595f8cf6ed3.jpg",
+        "review": "checked"
+      },
+      "screenshot": {
+        "url": "https://images.launchbox-app.com/9d1bac38-89bf-4e50-8f94-bd1b2067276f.png",
+        "review": "checked"
+      },
+      "notes": "Compared the live page title and platform with the on-disk group. Opened the selected box and gameplay image; redistribution rights remain unconfirmed."
     },
     {
       "platform": "pc98",
@@ -1097,6 +1465,27 @@
     },
     {
       "platform": "pc98",
+      "databaseId": "183176",
+      "title": "Planets of Dragon",
+      "aliases": [],
+      "sourceGroups": [
+        "pc98:ASCII.zip:Planets of Dragon"
+      ],
+      "contentIds": [],
+      "description": "Explore an illustrated fantasy world in a Japanese adventure with character dialogue and scene-based choices.",
+      "pageUrl": "https://gamesdb.launchbox-app.com/games/details/133176",
+      "boxArt": {
+        "url": "https://images.launchbox-app.com/0e5273eb-d51c-497a-ad64-7a07b15557f2.jpg",
+        "review": "checked"
+      },
+      "screenshot": {
+        "url": "https://images.launchbox-app.com/f052c62a-6eeb-4aaf-b72b-4ecb65c33793.png",
+        "review": "checked"
+      },
+      "notes": "Compared the live page title and platform with the on-disk group. Opened the selected box and gameplay image; redistribution rights remain unconfirmed."
+    },
+    {
+      "platform": "pc98",
       "databaseId": "189697",
       "title": "Primal Space",
       "aliases": [],
@@ -1142,6 +1531,29 @@
         "review": "checked"
       },
       "notes": "Compared the live page title and platform with the on-disk group. Opened the selected box and gameplay image: both depict this game and show no visible nudity. Redistribution rights remain unconfirmed."
+    },
+    {
+      "platform": "pc98",
+      "databaseId": "189715",
+      "title": "Qumdole no Ken: Master the Blind touch",
+      "aliases": [
+        "The Sword of Kumdor"
+      ],
+      "sourceGroups": [
+        "pc98:ASCII.zip:The Sword of Kumdor"
+      ],
+      "contentIds": [],
+      "description": "Advance through a fantasy adventure by practicing keyboard commands; movement and battles turn typing into the main challenge.",
+      "pageUrl": "https://gamesdb.launchbox-app.com/games/details/139715",
+      "boxArt": {
+        "url": "https://images.launchbox-app.com/0fff33ee-4bbc-4d5b-94de-6e6dd33d5370.jpg",
+        "review": "checked"
+      },
+      "screenshot": {
+        "url": "https://images.launchbox-app.com/498556fa-5666-4849-8a83-d75db8c5067d.png",
+        "review": "checked"
+      },
+      "notes": "Compared the live page title and platform with the on-disk group. Opened the selected box and gameplay image; redistribution rights remain unconfirmed."
     },
     {
       "platform": "pc98",
@@ -1327,6 +1739,30 @@
         "review": "checked"
       },
       "notes": "Compared the live page title and platform with the on-disk group. Opened the selected box and gameplay image: both depict this game and show no visible nudity. Redistribution rights remain unconfirmed."
+    },
+    {
+      "platform": "pc98",
+      "databaseId": "189702",
+      "title": "Toki no Shirube",
+      "aliases": [
+        "The Stellar Sign",
+        "Toki no Shirube: The Stellar Sign"
+      ],
+      "sourceGroups": [
+        "pc98:ASCII.zip:Toki no Shirube - The Stellar Sign"
+      ],
+      "contentIds": [],
+      "description": "Explore an overhead world and select commands from Japanese menus in this PC-98 fantasy role-playing game.",
+      "pageUrl": "https://gamesdb.launchbox-app.com/games/details/139702",
+      "boxArt": {
+        "url": "https://images.launchbox-app.com/3696c21d-4354-4308-985a-9f2dd2b5c1ed.jpg",
+        "review": "checked"
+      },
+      "screenshot": {
+        "url": "https://images.launchbox-app.com/b863a145-c52e-41af-a9a1-273300db3ccc.png",
+        "review": "checked"
+      },
+      "notes": "Compared the live page title and platform with the on-disk group. Opened the selected box and gameplay image; redistribution rights remain unconfirmed."
     },
     {
       "platform": "pc98",

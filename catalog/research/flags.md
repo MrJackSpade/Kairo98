@@ -4,10 +4,13 @@ These links are research references. The image files are not in Git or the app. 
 
 | Platform | Game | Image | Reason | Source |
 | --- | --- | --- | --- | --- |
+| PC-88 | Ali Baba | Box | Revealing figure | [Game page](https://gamesdb.launchbox-app.com/games/details/137779) · [Image](https://images.launchbox-app.com/893482a6-e966-4c48-8156-38d687e12247.jpg) |
 | PC-88 | Alpha | Box | Revealing costume | [Game page](https://gamesdb.launchbox-app.com/games/details/132531) · [Image](https://images.launchbox-app.com/230d5f8c-783c-484b-9dc0-2c747b55756e.jpg) |
+| PC-88 | Aoki Ookami to Shiroki Mejika: Genchou Hishi | Box | Mega Drive cover attached to PC-88 record | [Game page](https://gamesdb.launchbox-app.com/games/details/137820) · [Image](https://images.launchbox-app.com/309c2e4b-3f52-4ff7-aa4f-a9f3efa3a9b2.png) |
 | PC-98 | Bomber Quest | Box | Revealing costume | [Game page](https://gamesdb.launchbox-app.com/games/details/147578) · [Image](https://images.launchbox-app.com/29f3a302-1295-482d-a580-4b04c96b06e8.png) |
 | PC-98 | Bomber Quest | Screenshot | Revealing clothing | [Game page](https://gamesdb.launchbox-app.com/games/details/147578) · [Image](https://images.launchbox-app.com/67181378-0579-48cd-a3fd-049a571f08ba.png) |
 | PC-98 | Farland Story Denki: Arc Ou no Ensei | Box | Revealing costume | [Game page](https://gamesdb.launchbox-app.com/games/details/125461) · [Image](https://images.launchbox-app.com/2d200feb-52de-49d8-9f9c-837f813664a2.png) |
+| PC-98 | Giten Megami Tensei: Tokyo Mokushiroku | Box | **Visible uncensored nudity; must be censored, replaced, or omitted** | [Game page](https://gamesdb.launchbox-app.com/games/details/130890) · [Image](https://images.launchbox-app.com/1e5ae586-ee9f-402e-8c8c-2c4c1b159751.png) |
 | PC-98 | Kikou Soushin Val-Kaizer | Screenshot | Bedroom scene | [Game page](https://gamesdb.launchbox-app.com/games/details/136567) · [Image](https://images.launchbox-app.com/3859b8f6-3a5d-452e-98b9-6ad6232bb7ab.png) |
 | PC-98 | Marble Cooking | Box | Source describes sexualized young characters; hold all art | [Game page](https://gamesdb.launchbox-app.com/games/details/137450) · [Image](https://images.launchbox-app.com/2b57a6cc-1f3d-41fa-846a-9bbcdb1cada2.jpg) |
 | PC-98 | Marble Cooking | Screenshot | Source describes sexualized young characters; hold all art | [Game page](https://gamesdb.launchbox-app.com/games/details/137450) · [Image](https://images.launchbox-app.com/f7a43aa6-67c7-49c0-b03a-e6dabac666d1.png) |
