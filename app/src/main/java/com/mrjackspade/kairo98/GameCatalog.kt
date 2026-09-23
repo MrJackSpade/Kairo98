@@ -158,6 +158,13 @@ class GameCatalog(private val context: Context) {
     } catch (_: Exception) { empty() }
 
     private fun writeLocal(file: File, json: JSONObject) {
+        if (file.isFile) {
+            val existing = try { JSONObject(AtomicFile(file).readFully().toString(Charsets.UTF_8)) }
+                catch (_: Exception) { null }
+            require(existing == null || existing.optInt("schemaVersion") == 1) {
+                "This metadata uses a newer schema; update Kairo98 before editing"
+            }
+        }
         val bytes = json.toString().toByteArray(Charsets.UTF_8)
         require(bytes.size <= MAX_LOCAL_JSON) { "Metadata is too large" }
         val atomic = AtomicFile(file)

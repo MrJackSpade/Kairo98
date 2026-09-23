@@ -36,7 +36,10 @@ data class LibraryEntry(
 class RomLibrary(private val context: Context) {
     private val store = File(context.filesDir, "library-v1.json")
     private val archiveCache = File(context.cacheDir, "rom-archives").apply { mkdirs() }
-    private val imageStore = File(context.filesDir, "media").apply { mkdirs() }
+    private val imageStore = File(context.filesDir, "media").apply {
+        mkdirs()
+        listFiles()?.filter { it.name.endsWith(".part") }?.forEach { it.delete() }
+    }
     val catalog = GameCatalog(context)
 
     @Volatile var hashCount = 0
@@ -63,7 +66,7 @@ class RomLibrary(private val context: Context) {
                     continue
                 }
                 try {
-                    val zipFile = cachedZip(source, forceHash)
+                    val zipFile = cachedZip(source, forceHash, cancelled)
                     ZipFile(zipFile).use { zip ->
                         val names = HashSet<String>()
                         val playable = ArrayList<java.util.zip.ZipEntry>()
@@ -75,6 +78,10 @@ class RomLibrary(private val context: Context) {
                             require(names.add(normalized.lowercase(Locale.ROOT))) { "Duplicate ZIP entry" }
                             if (!item.isDirectory && normalized.endsWith(".hdi", ignoreCase = true)) {
                                 require(item.size in 1..MAX_IMAGE_BYTES) { "HDI exceeds size limit" }
+                                require(item.compressedSize > 0 &&
+                                    item.size / item.compressedSize <= MAX_EXPANSION_RATIO) {
+                                    "HDI expansion ratio is too large"
+                                }
                                 playable.add(item)
                             }
                         }
@@ -126,15 +133,19 @@ class RomLibrary(private val context: Context) {
         }
         checkCancelled(cancelled)
         saveStore(treeUri, result)
+        pruneArchives(files)
         return result.sortedWith(compareBy(String.CASE_INSENSITIVE_ORDER) { it.path + (it.zipEntry ?: "") })
     }
 
     /** Return an app-private writable working image for this source and content version. */
-    fun prepare(entry: LibraryEntry, cancelled: AtomicBoolean,
+    @Synchronized fun prepare(entry: LibraryEntry, cancelled: AtomicBoolean,
                 progress: (String) -> Unit): File {
         require(entry.playable) { "This entry is not ready to launch" }
         val file = File(imageStore, "${entry.id}-${entry.contentId!!.substringAfter(':')}.hdi")
         if (file.isFile && file.length() > 0) return file
+        if (entry.imageSize > 0) require(imageStore.usableSpace > entry.imageSize + 16L * 1024 * 1024) {
+            "Not enough free space for this HDI"
+        }
         val partial = File(imageStore, "${file.name}.part")
         partial.delete()
         try {
@@ -150,10 +161,14 @@ class RomLibrary(private val context: Context) {
                     }
                 } ?: error("Unable to open HDI")
             } else {
-                val archive = cachedZip(source)
+                val archive = cachedZip(source, false, cancelled)
                 ZipFile(archive).use { zip ->
                     val image = zip.getEntry(entry.zipEntry) ?: error("HDI missing from ZIP")
                     require(safeEntryName(image.name) == safeEntryName(entry.zipEntry))
+                    require(image.size in 1..MAX_IMAGE_BYTES && image.compressedSize > 0 &&
+                        image.size / image.compressedSize <= MAX_EXPANSION_RATIO) {
+                        "HDI expansion ratio is too large"
+                    }
                     progress("Preparing ${entry.displayName}")
                     zip.getInputStream(image).use { input ->
                         partial.outputStream().use { output ->
@@ -217,21 +232,48 @@ class RomLibrary(private val context: Context) {
         return result
     }
 
-    private fun cachedZip(source: Source, force: Boolean = false): File {
+    @Synchronized private fun cachedZip(source: Source, force: Boolean,
+                                        cancelled: AtomicBoolean): File {
         val key = sha256(source.uri.toString().toByteArray()).take(32)
         val file = File(archiveCache, "$key-${source.size}-${source.modified}.zip")
         if (!force && trusted(source) && file.isFile && file.length() == source.size) return file
+        require(source.size <= MAX_ARCHIVE_BYTES) { "ZIP exceeds size limit" }
+        if (source.size >= 0) require(archiveCache.usableSpace > source.size + 16L * 1024 * 1024) {
+            "Not enough free space to inspect ZIP"
+        }
         val partial = File(archiveCache, "$key.part")
         partial.delete()
         try {
             context.contentResolver.openInputStream(source.uri)?.use { input ->
-                partial.outputStream().use { output -> input.copyTo(output) }
+                partial.outputStream().use { output ->
+                    val buffer = ByteArray(64 * 1024)
+                    var count = 0L
+                    while (true) {
+                        checkCancelled(cancelled)
+                        val read = input.read(buffer)
+                        if (read < 0) break
+                        count += read
+                        require(count <= MAX_ARCHIVE_BYTES) { "ZIP exceeds size limit" }
+                        output.write(buffer, 0, read)
+                    }
+                }
             } ?: error("Unable to open ZIP")
             if (source.size >= 0) require(partial.length() == source.size) { "ZIP changed during read" }
             if (file.exists()) file.delete()
             require(partial.renameTo(file)) { "Unable to cache ZIP" }
             return file
         } finally { partial.delete() }
+    }
+
+    @Synchronized private fun pruneArchives(files: List<Source>) {
+        val active = files.filter { it.path.endsWith(".zip", true) }.map {
+            val key = sha256(it.uri.toString().toByteArray()).take(32)
+            "$key-${it.size}-${it.modified}.zip"
+        }.toSet()
+        archiveCache.listFiles()?.forEach { file ->
+            if ((file.name.endsWith(".zip") && file.name !in active) ||
+                file.name.endsWith(".part")) file.delete()
+        }
     }
 
     private fun contentId(input: InputStream, expectedSize: Long, expectedCrc: Long,
@@ -304,6 +346,13 @@ class RomLibrary(private val context: Context) {
     } catch (_: Exception) { null to emptyList() }
 
     private fun saveStore(tree: Uri, entries: List<LibraryEntry>) {
+        if (store.isFile) {
+            val existing = try { JSONObject(AtomicFile(store).readFully().toString(Charsets.UTF_8)) }
+                catch (_: Exception) { null }
+            require(existing == null || existing.optInt("schemaVersion") == 1) {
+                "Library cache uses a newer schema; update Kairo98 before scanning"
+            }
+        }
         val array = JSONArray()
         for (entry in entries) {
             array.put(JSONObject().put("id", entry.id).put("uri", entry.uri)
@@ -325,6 +374,8 @@ class RomLibrary(private val context: Context) {
         private const val MAX_DEPTH = 24
         private const val MAX_DOCUMENTS = 50_000
         private const val MAX_IMAGE_BYTES = 4L * 1024 * 1024 * 1024
+        private const val MAX_ARCHIVE_BYTES = 8L * 1024 * 1024 * 1024
+        private const val MAX_EXPANSION_RATIO = 1000L
         private const val MAX_STORE_BYTES = 16L * 1024 * 1024
         private val PROJECTION = arrayOf(
             DocumentsContract.Document.COLUMN_DOCUMENT_ID,

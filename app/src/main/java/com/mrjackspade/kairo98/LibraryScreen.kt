@@ -89,7 +89,7 @@ class LibraryScreen(
             val game = catalog.resolve(entry.contentId ?: "", entry.displayName)
             holder.title.text = game.title
             holder.detail.text = when {
-                entry.error != null -> "${entry.path}  ·  ${entry.error}"
+                entry.error != null -> "${entry.path}  ·  ${entry.error}. Fix the source, then Refresh."
                 entry.zipEntry != null -> "${entry.path}  ·  ${entry.zipEntry}"
                 else -> entry.path
             }

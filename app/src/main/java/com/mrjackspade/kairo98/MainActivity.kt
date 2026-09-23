@@ -4,6 +4,7 @@ import android.app.Activity
 import android.app.AlertDialog
 import android.content.Intent
 import android.graphics.Color
+import android.graphics.BitmapFactory
 import android.graphics.drawable.ColorDrawable
 import android.graphics.drawable.GradientDrawable
 import android.graphics.drawable.StateListDrawable
@@ -26,6 +27,7 @@ import android.view.WindowInsets
 import android.view.WindowManager
 import android.widget.FrameLayout
 import android.widget.EditText
+import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.ScrollView
 import android.widget.TextView
@@ -396,8 +398,10 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
                     if (!cancelled.get()) {
                         libraryEntries = entries
                         libraryScreen.showEntries(entries)
-                        libraryScreen.showStatus("${entries.count { it.playable }} games · " +
-                            "${romLibrary.hashCount} hashes this scan")
+                        val errors = entries.count { it.error != null }
+                        libraryScreen.showStatus("${entries.count { it.playable }} games" +
+                            (if (errors == 0) "" else " · $errors unreadable") +
+                            " · ${romLibrary.hashCount} hashes this scan")
                     }
                 }
             } catch (_: java.util.concurrent.CancellationException) {
@@ -547,17 +551,19 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
         val game = romLibrary.catalog.resolve(id ?: "", entry.displayName)
         val catalog = romLibrary.catalog
         val fields = arrayOf("Title", "Machine clock", "Guest command", "Preview art", "Box art",
-            "Reset all custom settings", "File information")
+            "View screenshot", "Reset all custom settings", "File information")
         val values = arrayOf(
             "${game.title} · ${id?.let { catalog.sourceOf(it, "title") } ?: "Filename"}",
             "${game.baseClockTenthsMHz?.let { "${it / 10.0} MHz" } ?: "App default"} · ${id?.let { catalog.sourceOf(it, "machine") } ?: "App default"}",
             "${game.launchCommand ?: "None"} · ${id?.let { catalog.sourceOf(it, "launch") } ?: "App default"}",
-            "${game.preview ?: "None"} · ${id?.let { catalog.sourceOf(it, "artwork") } ?: "App default"}",
-            game.boxArt ?: "None", "Restore catalog values", entry.path
+            "${if (game.preview == null) "None" else "Available"} · ${id?.let { catalog.sourceOf(it, "artwork") } ?: "App default"}",
+            "${if (game.boxArt == null) "None" else "Available"} · ${id?.let { catalog.sourceOf(it, "artwork") } ?: "App default"}",
+            if (game.preview == null) "No screenshot available" else "Open preview",
+            "Restore catalog values", "Path, ZIP entry, and content ID"
         )
         AlertDialog.Builder(this).setTitle(game.title)
             .setItems(fields.indices.map { "${fields[it]}\n${values[it]}" }.toTypedArray()) { _, which ->
-                if (id == null && which != 6) {
+                if (id == null && which !in 5..7) {
                     toast("This file needs a successful hash before settings can be saved")
                     return@setItems
                 }
@@ -567,18 +573,39 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
                     2 -> editGameText(entry, "launch", game.launchCommand ?: "")
                     3 -> editGameArt(entry, "preview", game.preview ?: "")
                     4 -> editGameArt(entry, "boxArt", game.boxArt ?: "")
-                    5 -> AlertDialog.Builder(this).setTitle("Reset all settings?")
+                    5 -> showGamePreview(entry)
+                    6 -> AlertDialog.Builder(this).setTitle("Reset all settings?")
                         .setMessage("Restore this game's current catalog defaults.")
                         .setPositiveButton("Reset") { _, _ -> saveGameSetting(entry) {
                             catalog.resetOverride(id!!)
                         } }.setNegativeButton("Cancel", null).showStyled()
-                    6 -> AlertDialog.Builder(this).setTitle("File information")
+                    7 -> AlertDialog.Builder(this).setTitle("File information")
                         .setMessage("${entry.path}${entry.zipEntry?.let { "\n$it" } ?: ""}\n\n" +
                             (id ?: entry.error ?: "Not hashed"))
                         .setPositiveButton("Close", null).showStyled()
                 }
             }.setPositiveButton("Play") { _, _ -> launchEntry(entry) }
             .setNegativeButton("Close", null).showStyled()
+    }
+
+    private fun showGamePreview(entry: LibraryEntry) {
+        val game = romLibrary.catalog.resolve(entry.contentId ?: "", entry.displayName)
+        val path = game.preview ?: run { toast("No screenshot available"); return }
+        val bitmap = try {
+            assets.open(path).use { BitmapFactory.decodeStream(it, null,
+                BitmapFactory.Options().apply { inSampleSize = 2 }) }
+        } catch (_: Exception) { null }
+        if (bitmap == null) {
+            toast("Screenshot unavailable")
+            return
+        }
+        val view = ImageView(this).apply {
+            setImageBitmap(bitmap)
+            adjustViewBounds = true
+            setPadding(dp(16), dp(8), dp(16), dp(8))
+        }
+        AlertDialog.Builder(this).setTitle(game.title).setView(view)
+            .setPositiveButton("Done") { _, _ -> showGameDetails(entry) }.showStyled()
     }
 
     private fun saveGameSetting(entry: LibraryEntry, action: () -> Unit) {
