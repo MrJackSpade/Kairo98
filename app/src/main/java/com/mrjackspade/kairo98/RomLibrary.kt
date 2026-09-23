@@ -35,6 +35,7 @@ data class LibraryEntry(
 
 class RomLibrary(private val context: Context) {
     private val store = File(context.filesDir, "library-v1.json")
+    private val scanLock = Any()
     private val archiveCache = File(context.cacheDir, "rom-archives").apply { mkdirs() }
     private val imageStore = File(context.filesDir, "media").apply {
         mkdirs()
@@ -50,7 +51,8 @@ class RomLibrary(private val context: Context) {
     }
 
     fun scan(treeUri: Uri, forceHash: Boolean, cancelled: AtomicBoolean,
-             progress: (String) -> Unit): List<LibraryEntry> {
+             progress: (String) -> Unit): List<LibraryEntry> = synchronized(scanLock) {
+        checkCancelled(cancelled)
         val prior = cached(treeUri).associateBy { it.id }
         val result = ArrayList<LibraryEntry>()
         val (files, folderErrors) = enumerate(treeUri, cancelled, progress)
@@ -138,7 +140,7 @@ class RomLibrary(private val context: Context) {
         checkCancelled(cancelled)
         saveStore(treeUri, result)
         pruneArchives(files)
-        return result.sortedWith(compareBy(String.CASE_INSENSITIVE_ORDER) { it.path + (it.zipEntry ?: "") })
+        result.sortedWith(compareBy(String.CASE_INSENSITIVE_ORDER) { it.path + (it.zipEntry ?: "") })
     }
 
     /** Return an app-private writable working image for this source and content version. */
