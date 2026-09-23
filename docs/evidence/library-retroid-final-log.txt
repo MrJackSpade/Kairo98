@@ -1,0 +1,2 @@
+--------- beginning of main
+09-23 09:21:13.141 E/OpenGLRenderer(31143): Unable to match the desired swap behavior.
