@@ -4,11 +4,12 @@
 #include "keystat.h"
 #include "fdd/sxsi.h"
 #include "dosio.h"
+#include "iocore.h"
 #include <string.h>
 
 int kairo98_font_overlay_load(const char *path);
 
-int kairo98_machine_start(const char *image, int mhz_times_ten) {
+int kairo98_machine_start(const char *image, const char *font_path, int mhz_times_ten) {
     size_t length = image ? strlen(image) : 0;
     if (length >= sizeof(np2cfg.sasihdd[0])) {
         return 1;
@@ -21,7 +22,7 @@ int kairo98_machine_start(const char *image, int mhz_times_ten) {
         file_setcd(image);
     }
     pccore_init();
-    if (kairo98_font_overlay_load(file_getcd("android-font.bin")) != 0) {
+    if (!font_path || kairo98_font_overlay_load(font_path) != 0) {
         pccore_term();
         np2cfg.sasihdd[0][0] = '\0';
         return 4;
@@ -38,6 +39,22 @@ int kairo98_machine_start(const char *image, int mhz_times_ten) {
     return 0;
 }
 
+int kairo98_machine_dos_prompt(void) {
+    unsigned int cursor = LOADINTELWORD(gdc.m.para + GDC_CSRW) & 0x0fff;
+    unsigned int previous = (cursor - 1) & 0x0fff;
+    if (mem[0xa0000 + previous * 2] != '>') return 0;
+    for (unsigned int back = 2; back < 80; ++back) {
+        unsigned int position = (cursor - back) & 0x0fff;
+        if (mem[0xa0000 + position * 2] != ':') continue;
+        unsigned int letter = (position - 1) & 0x0fff;
+        unsigned int slash = (position + 1) & 0x0fff;
+        unsigned char drive = mem[0xa0000 + letter * 2];
+        unsigned char separator = mem[0xa0000 + slash * 2];
+        if (((drive >= 'A' && drive <= 'Z') || (drive >= 'a' && drive <= 'z')) &&
+            (separator == '\\' || separator == '/')) return 1;
+    }
+    return 0;
+}
 static int flush_disk(void) {
     SXSIDEV drive = sxsi_getptr(0);
     if (drive && (drive->flag & SXSIFLAG_FILEOPENED) && drive->hdl) {

@@ -1,0 +1,1 @@
+﻿{"schemaVersion":1,"games":{"sha256-hdi-v1:0000000000000000000000000000000000000000000000000000000000000000":{"title":"Example Disk","machine":{"baseClockTenthsMHz":25},"launch":{"type":"guestCommand","text":"GAME","ready":"dosPrompt","timeoutMs":30000}}}}

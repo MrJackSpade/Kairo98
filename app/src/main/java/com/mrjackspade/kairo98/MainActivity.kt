@@ -11,7 +11,9 @@ import android.os.Bundle
 import android.os.Build
 import android.os.Handler
 import android.os.Looper
+import android.net.Uri
 import android.provider.OpenableColumns
+import android.provider.DocumentsContract
 import android.view.Gravity
 import android.view.InputDevice
 import android.view.KeyEvent
@@ -23,26 +25,30 @@ import android.view.View
 import android.view.WindowInsets
 import android.view.WindowManager
 import android.widget.FrameLayout
+import android.widget.EditText
 import android.widget.LinearLayout
 import android.widget.ScrollView
 import android.widget.TextView
 import android.widget.Toast
+import org.json.JSONObject
 import java.io.File
 import java.nio.file.Files
 import java.nio.file.StandardCopyOption
+import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.math.floor
 import kotlin.math.ceil
 import kotlin.math.abs
 import kotlin.math.roundToInt
 
 class MainActivity : Activity(), SurfaceHolder.Callback {
-    private external fun nativeStart(path: String?, mhzTimesTen: Int): Boolean
+    private external fun nativeStart(path: String?, fontPath: String, mhzTimesTen: Int): Boolean
     private external fun nativeStop()
     private external fun nativePause(paused: Boolean)
     private external fun nativeReset()
     private external fun nativeClock(mhzTimesTen: Int)
     private external fun nativeKey(scanCode: Int, down: Boolean)
     private external fun nativeStatus(): String
+    private external fun nativeDosPromptReady(): Boolean
     private external fun nativeSetSurface(surface: Surface?, width: Int, height: Int)
     private external fun nativeSetMuted(muted: Boolean)
 
@@ -50,6 +56,17 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
     private val handler = Handler(Looper.getMainLooper())
     private lateinit var root: FrameLayout
     private lateinit var screen: SurfaceView
+    private lateinit var libraryScreen: LibraryScreen
+    private lateinit var romLibrary: RomLibrary
+    private var libraryVisible = true
+    private var romTree: Uri? = null
+    private var scanCancelled = AtomicBoolean(false)
+    private var currentEntry: LibraryEntry? = null
+    private var currentDisk: File? = null
+    private var currentTitle: String? = null
+    private var currentGame: GameCatalog.Game? = null
+    private var commandCancelled = AtomicBoolean(false)
+    private var libraryEntries = emptyList<LibraryEntry>()
     private lateinit var backdrop: View
     private lateinit var drawer: ScrollView
     private lateinit var menuStatus: TextView
@@ -106,10 +123,26 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
                 WindowInsets.Type.navigationBars())
         }
         buildUi()
+        romLibrary = RomLibrary(this)
+        libraryScreen = LibraryScreen(this, romLibrary.catalog,
+            ::chooseRomFolder, { refreshLibrary(false) }, { refreshLibrary(true) },
+            ::launchEntry, ::showGameDetails)
+        root.addView(libraryScreen, FrameLayout.LayoutParams(-1, -1))
         handler.post(updateStatus)
         root.post {
-            val disk = File(filesDir, DISK_NAME)
-            if (disk.isFile) startWithFont(disk, "Starting machine") else openMenu()
+            val saved = preferences.getString("rom_tree", null)
+            romTree = saved?.let(Uri::parse)
+            libraryScreen.showFolder(romTree?.let(::folderLabel))
+            if (romTree == null) {
+                libraryScreen.showStatus("Choose a ROM folder to find HDI and ZIP games")
+                chooseRomFolder()
+            } else if (!hasRomGrant(romTree!!)) {
+                libraryScreen.showStatus("Folder access expired. Select the ROM folder again.")
+            } else {
+                libraryEntries = romLibrary.cached(romTree!!)
+                libraryScreen.showEntries(libraryEntries)
+                refreshLibrary(false)
+            }
         }
     }
 
@@ -181,6 +214,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
             closeMenu()
         }
         menuItem(content, "Restart", "Reset the current machine") { restartMachine() }
+        menuItem(content, "Game library", "Choose another disk") { showLibrary() }
         menuItem(content, "Choose HDI", "Import a disk image") { chooseHdi() }
         val pauseItem = menuItem(content, "Pause", "Keep the machine paused") {
             userPaused = !userPaused
@@ -279,6 +313,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
     }
 
     private fun openMenu() {
+        commandCancelled.set(true)
         if (menuOpen) return
         menuOpen = true
         nativePause(true)
@@ -286,7 +321,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
         focusMenuItem(0)
         pauseTitle.text = if (userPaused) "Resume" else "Pause"
         pauseDetail.text = if (userPaused) "Continue running" else "Keep the machine paused"
-        mediaLabel.text = if (File(filesDir, DISK_NAME).isFile)
+        mediaLabel.text = currentTitle ?: if (File(filesDir, DISK_NAME).isFile)
             "HDI  ·  " + preferences.getString("disk_name", DISK_NAME)
         else "No HDI selected"
         menuStatus.text = if (preparingFont) "Preparing PC-98 font" else nativeStatus()
@@ -321,11 +356,304 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
     }
 
     private fun applyPauseState() {
-        nativePause(userPaused || menuOpen || !activityVisible || preparingFont)
+        nativePause(userPaused || menuOpen || libraryVisible || !activityVisible || preparingFont)
+    }
+
+    private fun hasRomGrant(uri: Uri) = contentResolver.persistedUriPermissions.any {
+        it.uri == uri && it.isReadPermission
+    }
+
+    private fun folderLabel(uri: Uri): String = try {
+        "ROM folder · " + DocumentsContract.getTreeDocumentId(uri).substringAfterLast('/')
+    } catch (_: Exception) { "ROM folder selected" }
+
+    private fun chooseRomFolder() {
+        startActivityForResult(Intent(Intent.ACTION_OPEN_DOCUMENT_TREE).apply {
+            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION or
+                Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION)
+        }, ROM_FOLDER_REQUEST)
+    }
+
+    private fun refreshLibrary(forceHash: Boolean) {
+        val tree = romTree ?: run {
+            libraryScreen.showStatus("Select a ROM folder first")
+            return
+        }
+        if (!hasRomGrant(tree)) {
+            libraryScreen.showStatus("Folder access expired. Select the ROM folder again.")
+            return
+        }
+        scanCancelled.set(true)
+        val cancelled = AtomicBoolean(false)
+        scanCancelled = cancelled
+        libraryScreen.showStatus(if (forceHash) "Rehashing ROM folder…" else "Scanning ROM folder…")
+        Thread {
+            try {
+                val entries = romLibrary.scan(tree, forceHash, cancelled) { message ->
+                    runOnUiThread { if (!cancelled.get()) libraryScreen.showStatus(message) }
+                }
+                runOnUiThread {
+                    if (!cancelled.get()) {
+                        libraryEntries = entries
+                        libraryScreen.showEntries(entries)
+                        libraryScreen.showStatus("${entries.count { it.playable }} games · " +
+                            "${romLibrary.hashCount} hashes this scan")
+                    }
+                }
+            } catch (_: java.util.concurrent.CancellationException) {
+            } catch (error: Exception) {
+                runOnUiThread {
+                    if (!cancelled.get()) libraryScreen.showStatus(
+                        "Scan failed: ${error.message ?: "Unknown error"}. Select folder or refresh.")
+                }
+            }
+        }.start()
+    }
+
+    private fun launchEntry(entry: LibraryEntry) {
+        commandCancelled.set(true)
+        if (!entry.playable) {
+            toast(entry.error ?: "Refresh this entry before playing")
+            return
+        }
+        if (romTree == null || !hasRomGrant(romTree!!)) {
+            libraryScreen.showStatus("Folder access expired. Select the ROM folder again.")
+            return
+        }
+        val generation = ++startGeneration
+        val cancelled = AtomicBoolean(false)
+        preparingFont = true
+        applyPauseState()
+        libraryScreen.showStatus("Preparing ${entry.displayName}…")
+        Thread {
+            val game = romLibrary.catalog.resolve(entry.contentId!!, entry.displayName)
+            val result = try {
+                val disk = romLibrary.prepare(entry, cancelled) { message ->
+                    runOnUiThread { if (generation == startGeneration) libraryScreen.showStatus(message) }
+                }
+                Pc98FontCache.ensure(filesDir)
+                if (generation != startGeneration) null
+                else {
+                    nativeStop()
+                    if (generation != startGeneration) null
+                    else if (nativeStart(disk.absolutePath, fontPath(), game.baseClockTenthsMHz ?: clock)) {
+                        var state = nativeStatus()
+                        for (attempt in 0 until 200) {
+                            if (state.startsWith("Running") || state.startsWith("Paused") ||
+                                state.startsWith("Error")) break
+                            Thread.sleep(50)
+                            state = nativeStatus()
+                        }
+                        if (state.startsWith("Error")) error(state.substringBefore(" | "))
+                        if (!state.startsWith("Running") && !state.startsWith("Paused"))
+                            error("Machine startup timed out")
+                        disk
+                    }
+                    else error("Unable to start machine")
+                }
+            } catch (error: Exception) {
+                runOnUiThread {
+                    if (generation == startGeneration) libraryScreen.showStatus(
+                        "Launch failed: ${error.message ?: "Unknown error"}")
+                }
+                null
+            }
+            runOnUiThread {
+                if (generation == startGeneration) {
+                    preparingFont = false
+                    if (result != null) {
+                        currentEntry = entry
+                        currentDisk = result
+                        currentTitle = game.title
+                        currentGame = game
+                        userPaused = false
+                        menuOpen = false
+                        libraryVisible = false
+                        libraryScreen.visibility = View.GONE
+                        screen.requestFocus()
+                        scheduleGuestCommand(game)
+                    }
+                    applyPauseState()
+                }
+            }
+        }.start()
+    }
+
+    private fun showLibrary() {
+        commandCancelled.set(true)
+        libraryVisible = true
+        closeMenu()
+        libraryScreen.visibility = View.VISIBLE
+        libraryScreen.showFolder(romTree?.let(::folderLabel))
+        libraryScreen.showStatus("${libraryEntries.count { it.playable }} games ready")
+        applyPauseState()
+    }
+
+    private fun scheduleGuestCommand(game: GameCatalog.Game?) {
+        commandCancelled.set(true)
+        val command = game?.launchCommand ?: return
+        val cancelled = AtomicBoolean(false)
+        commandCancelled = cancelled
+        val generation = startGeneration
+        Thread {
+            val deadline = android.os.SystemClock.elapsedRealtime() + game.launchTimeoutMs
+            while (!cancelled.get() && generation == startGeneration &&
+                android.os.SystemClock.elapsedRealtime() < deadline) {
+                if (nativeDosPromptReady() && nativeStatus().startsWith("Running")) {
+                    try {
+                        for (character in command) {
+                            if (cancelled.get() || generation != startGeneration) return@Thread
+                            val scan = guestCommandScan(character)
+                                ?: error("Unsupported launch character: $character")
+                            nativeKey(scan, true)
+                            try { Thread.sleep(70) } finally { nativeKey(scan, false) }
+                            Thread.sleep(70)
+                        }
+                        if (!cancelled.get() && generation == startGeneration) {
+                            nativeKey(0x1c, true)
+                            try { Thread.sleep(70) } finally { nativeKey(0x1c, false) }
+                        }
+                    } catch (error: Exception) {
+                        runOnUiThread { if (!cancelled.get()) toast(error.message ?: "Launch command failed") }
+                    }
+                    return@Thread
+                }
+                Thread.sleep(100)
+            }
+            if (!cancelled.get() && generation == startGeneration) {
+                runOnUiThread { toast("DOS prompt not detected; type the launch command manually") }
+            }
+        }.start()
+    }
+
+    private fun guestCommandScan(character: Char): Int? = when {
+        character in 'a'..'z' -> pc98ScanCode(KeyEvent.KEYCODE_A + (character - 'a'))
+        character in 'A'..'Z' -> pc98ScanCode(KeyEvent.KEYCODE_A + (character - 'A'))
+        character in '0'..'9' -> pc98ScanCode(if (character == '0') KeyEvent.KEYCODE_0
+            else KeyEvent.KEYCODE_1 + (character - '1'))
+        else -> when (character) {
+            ' ' -> 0x34
+            '\\' -> 0x0d
+            '/' -> 0x32
+            '.' -> 0x31
+            '-' -> 0x0b
+            ':' -> 0x27
+            '_' -> 0x33
+            else -> null
+        }
+    }
+    private fun showGameDetails(entry: LibraryEntry) {
+        val id = entry.contentId
+        val game = romLibrary.catalog.resolve(id ?: "", entry.displayName)
+        val catalog = romLibrary.catalog
+        val fields = arrayOf("Title", "Machine clock", "Guest command", "Preview art", "Box art",
+            "Reset all custom settings", "File information")
+        val values = arrayOf(
+            "${game.title} · ${id?.let { catalog.sourceOf(it, "title") } ?: "Filename"}",
+            "${game.baseClockTenthsMHz?.let { "${it / 10.0} MHz" } ?: "App default"} · ${id?.let { catalog.sourceOf(it, "machine") } ?: "App default"}",
+            "${game.launchCommand ?: "None"} · ${id?.let { catalog.sourceOf(it, "launch") } ?: "App default"}",
+            "${game.preview ?: "None"} · ${id?.let { catalog.sourceOf(it, "artwork") } ?: "App default"}",
+            game.boxArt ?: "None", "Restore catalog values", entry.path
+        )
+        AlertDialog.Builder(this).setTitle(game.title)
+            .setItems(fields.indices.map { "${fields[it]}\n${values[it]}" }.toTypedArray()) { _, which ->
+                if (id == null && which != 6) {
+                    toast("This file needs a successful hash before settings can be saved")
+                    return@setItems
+                }
+                when (which) {
+                    0 -> editGameText(entry, "title", game.title)
+                    1 -> editGameClock(entry)
+                    2 -> editGameText(entry, "launch", game.launchCommand ?: "")
+                    3 -> editGameArt(entry, "preview", game.preview ?: "")
+                    4 -> editGameArt(entry, "boxArt", game.boxArt ?: "")
+                    5 -> AlertDialog.Builder(this).setTitle("Reset all settings?")
+                        .setMessage("Restore this game's current catalog defaults.")
+                        .setPositiveButton("Reset") { _, _ -> saveGameSetting(entry) {
+                            catalog.resetOverride(id!!)
+                        } }.setNegativeButton("Cancel", null).showStyled()
+                    6 -> AlertDialog.Builder(this).setTitle("File information")
+                        .setMessage("${entry.path}${entry.zipEntry?.let { "\n$it" } ?: ""}\n\n" +
+                            (id ?: entry.error ?: "Not hashed"))
+                        .setPositiveButton("Close", null).showStyled()
+                }
+            }.setPositiveButton("Play") { _, _ -> launchEntry(entry) }
+            .setNegativeButton("Close", null).showStyled()
+    }
+
+    private fun saveGameSetting(entry: LibraryEntry, action: () -> Unit) {
+        try {
+            action()
+            libraryScreen.showEntries(libraryEntries)
+            toast("Saved. Machine changes apply on next launch or restart.")
+        } catch (error: Exception) {
+            toast("Could not save: ${error.message ?: "Invalid value"}")
+        }
+        showGameDetails(entry)
+    }
+
+    private fun editGameText(entry: LibraryEntry, field: String, current: String) {
+        val input = EditText(this).apply {
+            setSingleLine(true)
+            setText(current)
+            setSelection(text.length)
+            hint = if (field == "title") "Game title" else "DOS command, such as GAME"
+        }
+        AlertDialog.Builder(this).setTitle(if (field == "title") "Game title" else "Guest command")
+            .setView(input)
+            .setPositiveButton("Save") { _, _ -> saveGameSetting(entry) {
+                val value = input.text.toString().trim()
+                if (field == "title") romLibrary.catalog.setOverride(entry.contentId!!, field, value)
+                else if (value.isEmpty()) romLibrary.catalog.resetOverride(entry.contentId!!, field)
+                else romLibrary.catalog.setOverride(entry.contentId!!, field,
+                    JSONObject().put("type", "guestCommand").put("text", value)
+                        .put("ready", "dosPrompt").put("timeoutMs", 30000))
+            } }.setNeutralButton("Reset") { _, _ -> saveGameSetting(entry) {
+                romLibrary.catalog.resetOverride(entry.contentId!!, field)
+            } }.setNegativeButton("Cancel") { _, _ -> showGameDetails(entry) }.showStyled()
+    }
+
+    private fun editGameClock(entry: LibraryEntry) {
+        val current = romLibrary.catalog.resolve(entry.contentId!!, entry.displayName)
+        AlertDialog.Builder(this).setTitle("Machine clock")
+            .setSingleChoiceItems(arrayOf("Use catalog or app default", "2 MHz", "2.5 MHz"),
+                when (current.baseClockTenthsMHz) { 20 -> 1; 25 -> 2; else -> 0 }) { dialog, which ->
+                dialog.dismiss()
+                saveGameSetting(entry) {
+                    if (which == 0) romLibrary.catalog.resetOverride(entry.contentId!!, "machine")
+                    else romLibrary.catalog.setOverride(entry.contentId!!, "machine",
+                        JSONObject().put("baseClockTenthsMHz", if (which == 1) 20 else 25))
+                }
+            }.setNegativeButton("Cancel") { _, _ -> showGameDetails(entry) }.showStyled()
+    }
+
+    private fun editGameArt(entry: LibraryEntry, kind: String, current: String) {
+        val input = EditText(this).apply {
+            setSingleLine(true)
+            setText(current)
+            setSelection(text.length)
+            hint = "art/example.webp"
+        }
+        AlertDialog.Builder(this).setTitle(if (kind == "preview") "Preview art" else "Box art")
+            .setMessage("Use a packaged art path. Missing art falls back to the game title.")
+            .setView(input)
+            .setPositiveButton("Save") { _, _ -> saveGameSetting(entry) {
+                val game = romLibrary.catalog.resolve(entry.contentId!!, entry.displayName)
+                val art = JSONObject()
+                val preview = if (kind == "preview") input.text.toString().trim() else game.preview
+                val box = if (kind == "boxArt") input.text.toString().trim() else game.boxArt
+                if (!preview.isNullOrEmpty()) art.put("preview", preview)
+                if (!box.isNullOrEmpty()) art.put("boxArt", box)
+                if (art.length() == 0) romLibrary.catalog.resetOverride(entry.contentId, "artwork")
+                else romLibrary.catalog.setOverride(entry.contentId, "artwork", art)
+            } }.setNeutralButton("Reset art") { _, _ -> saveGameSetting(entry) {
+                romLibrary.catalog.resetOverride(entry.contentId!!, "artwork")
+            } }.setNegativeButton("Cancel") { _, _ -> showGameDetails(entry) }.showStyled()
     }
 
     private fun restartMachine() {
-        val disk = File(filesDir, DISK_NAME)
+        commandCancelled.set(true)
+        val disk = currentDisk ?: File(filesDir, DISK_NAME)
         if (!disk.isFile) {
             closeMenu()
             chooseHdi()
@@ -337,6 +665,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
         if (state.startsWith("Running") || state.startsWith("Paused") ||
             state.startsWith("Starting")) {
             nativeReset()
+            scheduleGuestCommand(currentGame)
         } else {
             startWithFont(disk, "Starting machine")
         }
@@ -413,6 +742,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
     }
 
     private fun exitApp() {
+        commandCancelled.set(true)
         if (exiting) return
         exiting = true
         startGeneration++
@@ -439,6 +769,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
     }
 
     override fun onPause() {
+        commandCancelled.set(true)
         activityVisible = false
         applyPauseState()
         super.onPause()
@@ -452,6 +783,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
 
     override fun onDestroy() {
         startGeneration++
+        scanCancelled.set(true)
         handler.removeCallbacks(updateStatus)
         nativeSetSurface(null, 0, 0)
         if (!exiting) Thread { nativeStop() }.start()
@@ -461,6 +793,25 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
     @Deprecated("First-boot document import; persistent URI handling comes later")
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
+        if (requestCode == ROM_FOLDER_REQUEST) {
+            if (resultCode == RESULT_OK && data?.data != null) {
+                val tree = data.data ?: return
+                try {
+                    contentResolver.takePersistableUriPermission(tree,
+                        Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                    romTree = tree
+                    preferences.edit().putString("rom_tree", tree.toString()).apply()
+                    libraryScreen.showFolder(folderLabel(tree))
+                    libraryScreen.showEntries(emptyList())
+                    refreshLibrary(false)
+                } catch (error: Exception) {
+                    libraryScreen.showStatus("Cannot keep folder access: ${error.message}")
+                }
+            } else if (romTree == null) {
+                libraryScreen.showStatus("Choose a ROM folder when you're ready")
+            }
+            return
+        }
         if (requestCode != HDI_REQUEST || resultCode != RESULT_OK || data?.data == null) return
         val uri = data.data ?: return
         val name = contentResolver.query(uri, arrayOf(OpenableColumns.DISPLAY_NAME), null, null, null)
@@ -485,7 +836,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
                 Files.move(partial.toPath(), disk.toPath(), StandardCopyOption.REPLACE_EXISTING)
                 Pc98FontCache.ensure(filesDir)
                 if (generation != startGeneration) "Start cancelled"
-                else if (nativeStart(disk.absolutePath, clock)) "Starting $name" else "Unable to start machine"
+                else if (nativeStart(disk.absolutePath, fontPath(), clock)) "Starting $name" else "Unable to start machine"
             } catch (error: Exception) {
                 "HDI import failed: ${error.message}"
             } finally {
@@ -513,7 +864,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
                 Pc98FontCache.ensure(filesDir)
                 nativeStop()
                 if (generation != startGeneration) "Start cancelled"
-                else if (nativeStart(disk.absolutePath, clock)) message else "Unable to start machine"
+                else if (nativeStart(disk.absolutePath, fontPath(), clock)) message else "Unable to start machine"
             } catch (error: Exception) {
                 "PC-98 font generation failed: ${error.message}"
             }
@@ -526,6 +877,24 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
     }
 
     override fun dispatchKeyEvent(event: KeyEvent): Boolean {
+        if (libraryVisible) {
+            if (event.action == KeyEvent.ACTION_DOWN) {
+                when (event.keyCode) {
+                    KeyEvent.KEYCODE_DPAD_DOWN -> libraryScreen.moveSelection(1)
+                    KeyEvent.KEYCODE_DPAD_UP -> libraryScreen.moveSelection(-1)
+                    KeyEvent.KEYCODE_BUTTON_A, KeyEvent.KEYCODE_ENTER ->
+                        if (event.repeatCount == 0) libraryScreen.activateSelection()
+                    KeyEvent.KEYCODE_MENU, KeyEvent.KEYCODE_BUTTON_MODE ->
+                        if (currentDisk != null) {
+                            libraryVisible = false
+                            libraryScreen.visibility = View.GONE
+                            openMenu()
+                        }
+                    else -> return super.dispatchKeyEvent(event)
+                }
+            }
+            return true
+        }
         if (event.keyCode == KeyEvent.KEYCODE_BUTTON_MODE ||
             event.keyCode == KeyEvent.KEYCODE_MENU || event.keyCode == KeyEvent.KEYCODE_HOME) {
             if (event.action == KeyEvent.ACTION_DOWN && event.repeatCount == 0) {
@@ -597,7 +966,13 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
 
     @Deprecated("The platform Back callback is the reliable menu shortcut on API 26+")
     override fun onBackPressed() {
-        if (menuOpen) closeMenu() else openMenu()
+        if (libraryVisible) {
+            if (currentDisk != null) {
+                libraryVisible = false
+                libraryScreen.visibility = View.GONE
+                applyPauseState()
+            } else finish()
+        } else if (menuOpen) closeMenu() else openMenu()
     }
 
     override fun onKeyDown(keyCode: Int, event: KeyEvent): Boolean {
@@ -639,10 +1014,13 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
         }
     }
 
+    private fun fontPath() = File(filesDir, "android-font.bin").absolutePath
+
     private fun dp(value: Int): Int = (value * resources.displayMetrics.density).roundToInt()
 
     companion object {
         private const val HDI_REQUEST = 98
+        private const val ROM_FOLDER_REQUEST = 99
         private const val DISK_NAME = "boot.hdi"
         init { System.loadLibrary("kairo98") }
     }

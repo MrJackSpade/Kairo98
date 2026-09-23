@@ -18,7 +18,8 @@ extern "C" int kairo98_core_probe(unsigned short *code_segment,
 extern "C" int kairo98_hdi_probe(const char *path, unsigned int *cylinders,
                                  unsigned int *surfaces, unsigned int *sectors,
                                  unsigned int *sector_size, unsigned int *first_word);
-extern "C" int kairo98_machine_start(const char *image, int mhz_times_ten);
+extern "C" int kairo98_machine_start(const char *image, const char *font_path, int mhz_times_ten);
+extern "C" int kairo98_machine_dos_prompt(void);
 extern "C" void kairo98_machine_exec(void);
 extern "C" int kairo98_machine_reset(void);
 extern "C" int kairo98_machine_set_clock(int mhz_times_ten);
@@ -53,6 +54,7 @@ unsigned long long audio_buffers = 0;
 unsigned long long audible_buffers = 0;
 std::string audio_state = "off";
 std::atomic<bool> audio_muted{false};
+std::atomic<bool> dos_prompt_ready{false};
 
 std::mutex window_mutex;
 ANativeWindow *window = nullptr;
@@ -85,8 +87,10 @@ void report_state(const char *state, const char *error = "") {
     machine_error = error;
 }
 
-void run_machine(std::string image, int mhz_times_ten) {
-    int start_result = kairo98_machine_start(image.c_str(), mhz_times_ten);
+void run_machine(std::string image, std::string font_path, int mhz_times_ten) {
+    dos_prompt_ready.store(false);
+    unsigned int prompt_frames = 0;
+    int start_result = kairo98_machine_start(image.c_str(), font_path.c_str(), mhz_times_ten);
     if (start_result != 0) {
         report_state("Error", start_result == 2 ? "HDI did not mount" :
                               start_result == 3 ? "Invalid clock setting" :
@@ -143,6 +147,8 @@ void run_machine(std::string image, int mhz_times_ten) {
                     report_state("Running");
                     break;
                 case CommandType::Reset:
+                    prompt_frames = 0;
+                    dos_prompt_ready.store(false);
                     if (kairo98_machine_reset() != 0) {
                         report_state("Error", "HDI flush failed before reset");
                         stop = true;
@@ -153,12 +159,16 @@ void run_machine(std::string image, int mhz_times_ten) {
                     kairo98_machine_key(static_cast<unsigned char>(command.key), command.down);
                     break;
                 case CommandType::Disk:
+                    prompt_frames = 0;
+                    dos_prompt_ready.store(false);
                     if (int disk_result = kairo98_machine_set_disk(command.path.c_str()); disk_result != 0) {
                         report_state("Error", disk_result == 3 ? "HDI flush failed before disk change" : "HDI did not mount after disk change");
                         stop = true;
                     }
                     break;
                 case CommandType::Clock:
+                    prompt_frames = 0;
+                    dos_prompt_ready.store(false);
                     if (int result = kairo98_machine_set_clock(command.key); result != 0) {
                         report_state("Error", result == 1 ? "HDI flush failed before clock change" : "Invalid clock setting");
                         stop = true;
@@ -172,6 +182,8 @@ void run_machine(std::string image, int mhz_times_ten) {
         }
         if (stop || paused) continue;
         kairo98_machine_exec();
+        prompt_frames = kairo98_machine_dos_prompt() ? prompt_frames + 1 : 0;
+        dos_prompt_ready.store(prompt_frames >= 15);
         render_frame();
         audio_due += 44100;
         while (audio_due >= 60 * 512) {
@@ -230,12 +242,15 @@ void enqueue(Command command) {
 
 extern "C" JNIEXPORT jboolean JNICALL
 Java_com_mrjackspade_kairo98_MainActivity_nativeStart(JNIEnv *env, jobject, jstring image_path,
-                                                      jint mhz_times_ten) {
+                                                      jstring font_path, jint mhz_times_ten) {
     std::lock_guard<std::mutex> lifecycle(lifecycle_mutex);
     if (worker.joinable()) return JNI_FALSE;
     const char *chars = image_path ? env->GetStringUTFChars(image_path, nullptr) : nullptr;
     std::string path = chars ? chars : "";
     if (chars) env->ReleaseStringUTFChars(image_path, chars);
+    const char *font_chars = font_path ? env->GetStringUTFChars(font_path, nullptr) : nullptr;
+    std::string font = font_chars ? font_chars : "";
+    if (font_chars) env->ReleaseStringUTFChars(font_path, font_chars);
     {
         std::lock_guard<std::mutex> guard(command_mutex);
         commands.clear();
@@ -247,7 +262,7 @@ Java_com_mrjackspade_kairo98_MainActivity_nativeStart(JNIEnv *env, jobject, jstr
         machine_state = "Starting";
         active = true;
     }
-    worker = std::thread(run_machine, std::move(path), mhz_times_ten);
+    worker = std::thread(run_machine, std::move(path), std::move(font), mhz_times_ten);
     return JNI_TRUE;
 }
 
@@ -265,6 +280,7 @@ Java_com_mrjackspade_kairo98_MainActivity_nativePause(JNIEnv *, jobject, jboolea
 
 extern "C" JNIEXPORT void JNICALL
 Java_com_mrjackspade_kairo98_MainActivity_nativeReset(JNIEnv *, jobject) {
+    dos_prompt_ready.store(false);
     enqueue({CommandType::Reset});
 }
 
@@ -299,6 +315,10 @@ Java_com_mrjackspade_kairo98_MainActivity_nativeStatus(JNIEnv *env, jobject) {
     return env->NewStringUTF(text);
 }
 
+extern "C" JNIEXPORT jboolean JNICALL
+Java_com_mrjackspade_kairo98_MainActivity_nativeDosPromptReady(JNIEnv *, jobject) {
+    return dos_prompt_ready.load() ? JNI_TRUE : JNI_FALSE;
+}
 extern "C" JNIEXPORT void JNICALL
 Java_com_mrjackspade_kairo98_MainActivity_nativeSetSurface(JNIEnv *env, jobject, jobject surface,
                                                           jint width, jint height) {

@@ -1,0 +1,26 @@
+name: Catalog
+on:
+  push:
+    paths:
+      - 'tools/build_catalog.py'
+      - 'tools/test_build_catalog.py'
+      - 'docs/fixtures/catalog/**'
+      - '.github/workflows/catalog.yml'
+  pull_request:
+    paths:
+      - 'tools/build_catalog.py'
+      - 'tools/test_build_catalog.py'
+      - 'docs/fixtures/catalog/**'
+      - '.github/workflows/catalog.yml'
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m unittest discover -s tools -p 'test_*.py'
+      - run: python tools/build_catalog.py docs/fixtures/catalog/source-v1.json /tmp/kairo98-catalog
+      - run: python tools/build_catalog.py docs/fixtures/catalog/source-v1.json /tmp/kairo98-catalog-2
+      - run: diff -r /tmp/kairo98-catalog /tmp/kairo98-catalog-2
