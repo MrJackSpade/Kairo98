@@ -1,0 +1,1403 @@
+{
+  "schemaVersion": 1,
+  "entries": [
+    {
+      "platform": "pc88",
+      "databaseId": "156312",
+      "title": "1000nen Oukoku",
+      "aliases": [
+        "1000-nen Ōkoku",
+        "1000年王国"
+      ],
+      "sourceGroups": [
+        "pc88:1000-Nen Oukoku (Log)"
+      ],
+      "contentIds": [],
+      "description": "Guide Shou through a first-person adventure tied to a prophecy about Atlantis. Progress comes from choosing commands and interacting with people and objects.",
+      "pageUrl": "https://gamesdb.launchbox-app.com/games/details/106312",
+      "boxArt": {
+        "url": "https://images.launchbox-app.com/5b9391a5-6dcc-4ea9-8063-633d68ea5164.jpg",
+        "review": "checked"
+      },
+      "screenshot": {
+        "url": "https://images.launchbox-app.com/6bab7229-2874-45a3-a299-3d226c74eae0.png",
+        "review": "checked"
+      },
+      "notes": "Compared the live page title and platform with the on-disk group. Opened the selected box and gameplay image: both depict this game and show no visible nudity. Redistribution rights remain unconfirmed."
+    },
+    {
+      "platform": "pc88",
+      "databaseId": "159771",
+      "title": "1942",
+      "aliases": [],
+      "sourceGroups": [
+        "pc88:1942 (ASCII)"
+      ],
+      "contentIds": [],
+      "description": "Pilot a fighter through vertically scrolling aerial battles, dodging enemy formations and collecting upgrades across a long series of stages.",
+      "pageUrl": "https://gamesdb.launchbox-app.com/games/details/109771",
+      "boxArt": {
+        "url": "https://images.launchbox-app.com/f923c43e-5791-42c2-a415-9dd6b3878e3d.jpg",
+        "review": "checked"
+      },
+      "screenshot": {
+        "url": "https://images.launchbox-app.com/238ae240-f005-4474-942f-4db8d7898110.jpg",
+        "review": "checked"
+      },
+      "notes": "Compared the live page title and platform with the on-disk group. Opened the selected box and gameplay image: both depict this game and show no visible nudity. Redistribution rights remain unconfirmed."
+    },
+    {
+      "platform": "pc88",
+      "databaseId": "186794",
+      "title": "Abyss",
+      "aliases": [],
+      "sourceGroups": [
+        "pc88:Abyss (Humming Bird Soft)"
+      ],
+      "contentIds": [],
+      "description": "Escape captivity after losing your memory on a secret space mission, solving illustrated text-adventure puzzles with typed commands.",
+      "pageUrl": "https://gamesdb.launchbox-app.com/games/details/136794",
+      "boxArt": {
+        "url": "https://images.launchbox-app.com/a88482fa-3bbe-4d60-8739-a89de4323409.jpg",
+        "review": "checked"
+      },
+      "screenshot": {
+        "url": "https://images.launchbox-app.com/75ff4e1d-1ea7-4459-92bd-bdbccfe6b1b5.png",
+        "review": "checked"
+      },
+      "notes": "Compared the live page title and platform with the on-disk group. Opened the selected box and gameplay image: both depict this game and show no visible nudity. Redistribution rights remain unconfirmed."
+    },
+    {
+      "platform": "pc88",
+      "databaseId": "186795",
+      "title": "Abyss II: Tears of Emperor",
+      "aliases": [
+        "Abyss II: Teiou no Namida"
+      ],
+      "sourceGroups": [
+        "pc88:Abyss II - Tears of Emperor (Humming Bird Soft)"
+      ],
+      "contentIds": [],
+      "description": "Search for the Tears of Emperor weapon under threat from a criminal syndicate in a graphic text adventure driven by Japanese commands.",
+      "pageUrl": "https://gamesdb.launchbox-app.com/games/details/136795",
+      "boxArt": {
+        "url": "https://images.launchbox-app.com/84f7bcd0-0475-438c-b365-0ed33a522560.jpg",
+        "review": "checked"
+      },
+      "screenshot": {
+        "url": "https://images.launchbox-app.com/c1201ad0-bfb8-43c0-8149-297296fe0033.png",
+        "review": "checked"
+      },
+      "notes": "Compared the live page title and platform with the on-disk group. Opened the selected box and gameplay image: both depict this game and show no visible nudity. Redistribution rights remain unconfirmed."
+    },
+    {
+      "platform": "pc88",
+      "databaseId": "187781",
+      "title": "Alley Cat",
+      "aliases": [],
+      "sourceGroups": [
+        "pc88:Alley Cat (Kotobuki-Raison)"
+      ],
+      "contentIds": [],
+      "description": "Steer a black cat through an apartment building and timed minigames while avoiding dogs, brooms, and other hazards.",
+      "pageUrl": "https://gamesdb.launchbox-app.com/games/details/137781",
+      "boxArt": {
+        "url": "https://images.launchbox-app.com/9d2a47f6-9b79-4747-9535-d99a702c8765.jpg",
+        "review": "checked"
+      },
+      "screenshot": {
+        "url": "https://images.launchbox-app.com/86ee3317-9543-4454-b6b4-c354a7a9ce1a.png",
+        "review": "checked"
+      },
+      "notes": "Compared the live page title and platform with the on-disk group. Opened the selected box and gameplay image: both depict this game and show no visible nudity. Redistribution rights remain unconfirmed."
+    },
+    {
+      "platform": "pc88",
+      "databaseId": "182531",
+      "title": "Alpha",
+      "aliases": [],
+      "sourceGroups": [
+        "pc88:Alpha (Square)"
+      ],
+      "contentIds": [],
+      "description": "A stranded space pilot explores an unknown planet in a Japanese text adventure accompanied by still illustrations.",
+      "pageUrl": "https://gamesdb.launchbox-app.com/games/details/132531",
+      "boxArt": {
+        "url": "https://images.launchbox-app.com/230d5f8c-783c-484b-9dc0-2c747b55756e.jpg",
+        "review": "flagged"
+      },
+      "screenshot": {
+        "url": "https://images.launchbox-app.com/60df6983-3dca-42d1-a063-7716063bd4d3.png",
+        "review": "checked"
+      },
+      "notes": "Live page and screenshot match PC-88 Alpha. The box has a revealing costume but no visible explicit nudity; hold for user content judgment before packaging. Redistribution rights remain unconfirmed."
+    },
+    {
+      "platform": "pc88",
+      "databaseId": "181080",
+      "title": "Alphos",
+      "aliases": [],
+      "sourceGroups": [
+        "pc88:Alphos (Enix)"
+      ],
+      "contentIds": [],
+      "description": "Pilot the Mnemonic fighter against an alien invasion in a vertically scrolling shooter with airborne and ground targets.",
+      "pageUrl": "https://gamesdb.launchbox-app.com/games/details/131080",
+      "boxArt": {
+        "url": "https://images.launchbox-app.com/20dda595-b973-4051-bcc8-34174d86fad4.jpg",
+        "review": "checked"
+      },
+      "screenshot": {
+        "url": "https://images.launchbox-app.com/9445d19d-d81a-495c-b72f-566913afd6af.png",
+        "review": "checked"
+      },
+      "notes": "Compared the live page title and platform with the on-disk group. Opened the selected box and gameplay image: both depict this game and show no visible nudity. Redistribution rights remain unconfirmed."
+    },
+    {
+      "platform": "pc88",
+      "databaseId": "187785",
+      "title": "American Truck",
+      "aliases": [],
+      "sourceGroups": [
+        "pc88:American Truck (Telenet Japan)"
+      ],
+      "contentIds": [],
+      "description": "Drive a truck from a top-down view, reaching each finish line before the fuel or time runs out.",
+      "pageUrl": "https://gamesdb.launchbox-app.com/games/details/137785",
+      "boxArt": {
+        "url": "https://images.launchbox-app.com/e8b73a57-057b-4d12-accc-1d0adb3276e5.jpg",
+        "review": "checked"
+      },
+      "screenshot": {
+        "url": "https://images.launchbox-app.com/683d6889-8d4d-4eb5-a413-f62712f40c0a.png",
+        "review": "checked"
+      },
+      "notes": "Compared the live page title and platform with the on-disk group. Opened the selected box and gameplay image: both depict this game and show no visible nudity. Redistribution rights remain unconfirmed."
+    },
+    {
+      "platform": "pc88",
+      "databaseId": "187822",
+      "title": "Apploon",
+      "aliases": [
+        "Aploon"
+      ],
+      "sourceGroups": [
+        "pc88:Apploon (Takara - Phoenix)"
+      ],
+      "contentIds": [],
+      "description": "Fire arrows at falling apples and rising balloons, clearing the screen while avoiding hazards in a compact arcade game.",
+      "pageUrl": "https://gamesdb.launchbox-app.com/games/details/137822",
+      "boxArt": {
+        "url": "https://images.launchbox-app.com/r2_b5e5f11b-232f-48b2-878a-5a23b7ba632d.jpg",
+        "review": "checked"
+      },
+      "screenshot": {
+        "url": "https://images.launchbox-app.com/c038521e-e799-473e-8da2-02af45e92324.png",
+        "review": "checked"
+      },
+      "notes": "Compared the live page title and platform with the on-disk group. Opened the selected box and gameplay image: both depict this game and show no visible nudity. Redistribution rights remain unconfirmed."
+    },
+    {
+      "platform": "pc88",
+      "databaseId": "187824",
+      "title": "Archon: The Light and the Dark",
+      "aliases": [
+        "Archon"
+      ],
+      "sourceGroups": [
+        "pc88:Archon (BPS)"
+      ],
+      "contentIds": [],
+      "description": "Move fantasy pieces across a strategy board; when opposing pieces meet, the clash becomes a real-time arena fight.",
+      "pageUrl": "https://gamesdb.launchbox-app.com/games/details/137824",
+      "boxArt": {
+        "url": "https://images.launchbox-app.com/cd4db477-bb06-49ea-9926-313a908e15a8.jpg",
+        "review": "checked"
+      },
+      "screenshot": {
+        "url": "https://images.launchbox-app.com/229ab3b9-ea1b-4c93-9b28-4b91d0d4d4f3.png",
+        "review": "checked"
+      },
+      "notes": "Compared the live page title and platform with the on-disk group. Opened the selected box and gameplay image: both depict this game and show no visible nudity. Redistribution rights remain unconfirmed."
+    },
+    {
+      "platform": "pc88",
+      "databaseId": "187825",
+      "title": "Arctic: Active Rail Playing Game",
+      "aliases": [
+        "Arctic"
+      ],
+      "sourceGroups": [
+        "pc88:Arctic (Artdink)"
+      ],
+      "contentIds": [],
+      "description": "Switch rail junctions to route colored balls back into matching slots across a series of increasingly intricate puzzles.",
+      "pageUrl": "https://gamesdb.launchbox-app.com/games/details/137825",
+      "boxArt": {
+        "url": "https://images.launchbox-app.com/0f3ea2e5-5c69-43fa-8d6e-ac07c76635e6.jpg",
+        "review": "checked"
+      },
+      "screenshot": {
+        "url": "https://images.launchbox-app.com/b92abaa5-a086-4782-b4c4-aa5ef0518f1a.png",
+        "review": "checked"
+      },
+      "notes": "Compared the live page title and platform with the on-disk group. Opened the selected box and gameplay image: both depict this game and show no visible nudity. Redistribution rights remain unconfirmed."
+    },
+    {
+      "platform": "pc88",
+      "databaseId": "181014",
+      "title": "Arcus",
+      "aliases": [],
+      "sourceGroups": [
+        "pc88:Arcus (Wolf Team)"
+      ],
+      "contentIds": [],
+      "description": "Guide the aspiring knight Jedah through a first-person fantasy RPG with menu-based travel and turn-based battles.",
+      "pageUrl": "https://gamesdb.launchbox-app.com/games/details/131014",
+      "boxArt": {
+        "url": "https://images.launchbox-app.com/0a846639-98f3-4daa-816e-1a5fea394d17.jpg",
+        "review": "checked"
+      },
+      "screenshot": {
+        "url": "https://images.launchbox-app.com/463cd8fb-c7e9-4351-8f1e-41fbf4513aa9.png",
+        "review": "checked"
+      },
+      "notes": "Compared the live page title and platform with the on-disk group. Opened the selected box and gameplay image: both depict this game and show no visible nudity. Redistribution rights remain unconfirmed."
+    },
+    {
+      "platform": "pc88",
+      "databaseId": "181015",
+      "title": "Arcus II: Silent Symphony",
+      "aliases": [],
+      "sourceGroups": [
+        "pc88:Arcus II - Silent Symphony (Wolf Team)"
+      ],
+      "contentIds": [],
+      "description": "Follow Picto on a new quest through Arcusas, exploring from above and fighting enemies in first-person turn-based battles.",
+      "pageUrl": "https://gamesdb.launchbox-app.com/games/details/131015",
+      "boxArt": {
+        "url": "https://images.launchbox-app.com/d1f7138e-e026-462d-9f71-e37bc5d8847d.jpg",
+        "review": "checked"
+      },
+      "screenshot": {
+        "url": "https://images.launchbox-app.com/23acc79d-4c37-43e3-885b-4673540eb251.png",
+        "review": "checked"
+      },
+      "notes": "Compared the live page title and platform with the on-disk group. Opened the selected box and gameplay image: both depict this game and show no visible nudity. Redistribution rights remain unconfirmed."
+    },
+    {
+      "platform": "pc88",
+      "databaseId": "187826",
+      "title": "Argo",
+      "aliases": [],
+      "sourceGroups": [
+        "pc88:Argo (KSK)"
+      ],
+      "contentIds": [],
+      "description": "Play as Iason in a myth-inspired adventure, exploring a pseudo-3D world and battling the monsters threatening Iolkos.",
+      "pageUrl": "https://gamesdb.launchbox-app.com/games/details/137826",
+      "boxArt": {
+        "url": "https://images.launchbox-app.com/c9084adf-ca63-48d9-aa15-fcedaf683a88.jpg",
+        "review": "checked"
+      },
+      "screenshot": {
+        "url": "https://images.launchbox-app.com/fa8b179c-f956-49fc-bd1f-00df56e898da.png",
+        "review": "checked"
+      },
+      "notes": "Compared the live page title and platform with the on-disk group. Opened the selected box and gameplay image: both depict this game and show no visible nudity. Redistribution rights remain unconfirmed."
+    },
+    {
+      "platform": "pc88",
+      "databaseId": "187829",
+      "title": "Arkanoid",
+      "aliases": [],
+      "sourceGroups": [
+        "pc88:Arkanoid (Taito)"
+      ],
+      "contentIds": [],
+      "description": "Control the Vaus craft to keep a ball in play, clear brick formations, and catch falling power-ups.",
+      "pageUrl": "https://gamesdb.launchbox-app.com/games/details/137829",
+      "boxArt": {
+        "url": "https://images.launchbox-app.com/r2_f2bb2e55-0512-4a8d-b11b-777388fec8bc.jpg",
+        "review": "checked"
+      },
+      "screenshot": {
+        "url": "https://images.launchbox-app.com/bba18747-0cd0-4ad1-86c9-853cbb229e65.png",
+        "review": "checked"
+      },
+      "notes": "Compared the live page title and platform with the on-disk group. Opened the selected box and gameplay image: both depict this game and show no visible nudity. Redistribution rights remain unconfirmed."
+    },
+    {
+      "platform": "pc88",
+      "databaseId": "199666",
+      "title": "Dragon Slayer",
+      "aliases": [],
+      "sourceGroups": [
+        "pc88:Dragon Slayer (Falcom)"
+      ],
+      "contentIds": [],
+      "description": "Explore overhead dungeons as a knight, gathering treasure and defeating monsters through direct action combat.",
+      "pageUrl": "https://gamesdb.launchbox-app.com/games/details/149666",
+      "boxArt": {
+        "url": "https://images.launchbox-app.com/59b6b94c-e77d-41a7-9227-b227162a3375.jpg",
+        "review": "checked"
+      },
+      "screenshot": {
+        "url": "https://images.launchbox-app.com/a12a427b-2194-48a4-b3b9-d983c71f5820.png",
+        "review": "checked"
+      },
+      "notes": "Compared the live page title and platform with the on-disk group. Opened the selected box and gameplay image: both depict this game and show no visible nudity. Redistribution rights remain unconfirmed."
+    },
+    {
+      "platform": "pc88",
+      "databaseId": "188151",
+      "title": "The Black Onyx",
+      "aliases": [],
+      "sourceGroups": [
+        "pc88:The Black Onyx (BPS)"
+      ],
+      "contentIds": [],
+      "description": "Build a party and explore the Black Tower near Utsuro in search of the fabled Black Onyx, fighting turn-based encounters along the way.",
+      "pageUrl": "https://gamesdb.launchbox-app.com/games/details/138151",
+      "boxArt": {
+        "url": "https://images.launchbox-app.com/37a42311-165b-481d-9c70-b2fd487e53e5.jpg",
+        "review": "checked"
+      },
+      "screenshot": {
+        "url": "https://images.launchbox-app.com/61bb0df0-c708-4669-be3c-d0e8f619ba72.png",
+        "review": "checked"
+      },
+      "notes": "Compared the live page title and platform with the on-disk group. Opened the selected box and gameplay image: both depict this game and show no visible nudity. Redistribution rights remain unconfirmed."
+    },
+    {
+      "platform": "pc88",
+      "databaseId": "181044",
+      "title": "The Screamer",
+      "aliases": [],
+      "sourceGroups": [
+        "pc88:The Screamer (Magical Zoo)"
+      ],
+      "contentIds": [],
+      "description": "Descend into BIAS, a dangerous labyrinth beneath Beast City, in a game that combines dungeon exploration with side-scrolling combat.",
+      "pageUrl": "https://gamesdb.launchbox-app.com/games/details/131044",
+      "boxArt": {
+        "url": "https://images.launchbox-app.com/8e08d177-822b-4e41-a6a5-8a1f7acaf080.jpg",
+        "review": "checked"
+      },
+      "screenshot": {
+        "url": "https://images.launchbox-app.com/adb0564e-622b-42b2-9e07-5663d7915695.png",
+        "review": "checked"
+      },
+      "notes": "Compared the live page title and platform with the on-disk group. Opened the selected box and gameplay image: both depict this game and show no visible nudity. Redistribution rights remain unconfirmed."
+    },
+    {
+      "platform": "pc88",
+      "databaseId": "139262",
+      "title": "Thexder",
+      "aliases": [],
+      "sourceGroups": [
+        "pc88:Thexder (Game Arts)"
+      ],
+      "contentIds": [],
+      "description": "Pilot a robot that transforms into a jet, cross side-scrolling stages, and manage its rechargeable weapons and shields.",
+      "pageUrl": "https://gamesdb.launchbox-app.com/games/details/89262",
+      "boxArt": {
+        "url": "https://images.launchbox-app.com/041b6918-89b5-4de0-990e-37a30ce89392.jpg",
+        "review": "checked"
+      },
+      "screenshot": {
+        "url": "https://images.launchbox-app.com/54c7092c-476b-4cf0-8209-9821c34be99a.jpg",
+        "review": "checked"
+      },
+      "notes": "Compared the live page title and platform with the on-disk group. Opened the selected box and gameplay image: both depict this game and show no visible nudity. Redistribution rights remain unconfirmed."
+    },
+    {
+      "platform": "pc88",
+      "databaseId": "188724",
+      "title": "Xanadu: Dragon Slayer II",
+      "aliases": [
+        "Xanadu"
+      ],
+      "sourceGroups": [
+        "pc88:Xanadu (Falcom)"
+      ],
+      "contentIds": [],
+      "description": "Explore a vast fantasy maze, strengthen the hero through combat and equipment, and uncover the secrets beneath Xanadu.",
+      "pageUrl": "https://gamesdb.launchbox-app.com/games/details/138724",
+      "boxArt": {
+        "url": "https://images.launchbox-app.com/b02bb866-be3f-45d7-a5cb-b306c27898e1.jpg",
+        "review": "checked"
+      },
+      "screenshot": {
+        "url": "https://images.launchbox-app.com/e614bd96-34de-4aa2-b5ee-8f618513c283.png",
+        "review": "checked"
+      },
+      "notes": "Compared the live page title and platform with the on-disk group. Opened the selected box and gameplay image: both depict this game and show no visible nudity. Redistribution rights remain unconfirmed."
+    },
+    {
+      "platform": "pc98",
+      "databaseId": "156061",
+      "title": "46 Okunen Monogatari: The Shinkaron",
+      "aliases": [
+        "46億年物語 THE進化論",
+        "E.V.O.: The Theory of Evolution"
+      ],
+      "sourceGroups": [
+        "translated:evothetheoryofevolution",
+        "pc98:Enix.zip:46 Okunen Monogatari - The Shinkaron"
+      ],
+      "contentIds": [
+        "sha256-hdi-v1:b771a2328b2780108b612f36fdc996d0607c16fb8c8b1e6107ee4aed50d1e588"
+      ],
+      "description": "Evolve creatures across prehistoric eras, adapting their bodies and abilities as they struggle to survive and reach Eden.",
+      "pageUrl": "https://gamesdb.launchbox-app.com/games/details/106061",
+      "boxArt": {
+        "url": "https://images.launchbox-app.com/897fc56b-2372-4e22-8e37-c3d1d78c2389.jpg",
+        "review": "checked"
+      },
+      "screenshot": {
+        "url": "https://images.launchbox-app.com/r2_a807bf20-16a9-4d96-b26f-3636ceabdd40.png",
+        "review": "checked"
+      },
+      "notes": "Compared the live PC-98 page with the Japanese NeoKobe folder and English translation archive. Opened the selected box and gameplay image; both depict this game and show no visible exposed nudity. Redistribution rights remain unconfirmed."
+    },
+    {
+      "platform": "pc98",
+      "databaseId": "186976",
+      "title": "Acrojet",
+      "aliases": [],
+      "sourceGroups": [
+        "pc98:SystemSoft.zip:Acrojet",
+        "translated:acrojet"
+      ],
+      "contentIds": [],
+      "description": "Fly a BD-5J through stunt events including races, slaloms, and precision flying challenges.",
+      "pageUrl": "https://gamesdb.launchbox-app.com/games/details/136976",
+      "boxArt": {
+        "url": "https://images.launchbox-app.com/dedbea62-c6af-4613-8c34-40c50a202fbf.jpg",
+        "review": "checked"
+      },
+      "screenshot": {
+        "url": "https://images.launchbox-app.com/12fdf50b-5a0a-4913-954f-426927770d4b.png",
+        "review": "checked"
+      },
+      "notes": "Compared the live page title and platform with the on-disk group. Opened the selected box and gameplay image: both depict this game and show no visible nudity. Redistribution rights remain unconfirmed."
+    },
+    {
+      "platform": "pc98",
+      "databaseId": "141779",
+      "title": "Arkanoid",
+      "aliases": [
+        "アルカノイド"
+      ],
+      "sourceGroups": [
+        "pc98:Taito.zip:Arkanoid"
+      ],
+      "contentIds": [],
+      "description": "Control the Vaus craft to keep a ball in play, clear brick formations, and catch falling power-ups.",
+      "pageUrl": "https://gamesdb.launchbox-app.com/games/details/91779",
+      "boxArt": {
+        "url": "https://images.launchbox-app.com/b34e9200-71a1-407a-9918-8e96c71bf6b1.jpg",
+        "review": "checked"
+      },
+      "screenshot": {
+        "url": "https://images.launchbox-app.com/0db357e4-018a-4c1e-a1f7-fa091eb8ee77.png",
+        "review": "checked"
+      },
+      "notes": "Compared the live page title and platform with the on-disk group. Opened the selected box and gameplay image: both depict this game and show no visible nudity. Redistribution rights remain unconfirmed."
+    },
+    {
+      "platform": "pc98",
+      "databaseId": "187060",
+      "title": "Balance of Power",
+      "aliases": [],
+      "sourceGroups": [
+        "pc98:ASCII.zip:Balance of Power"
+      ],
+      "contentIds": [],
+      "description": "Manage diplomacy, covert action, and military pressure as a Cold War leader while trying to avoid nuclear escalation.",
+      "pageUrl": "https://gamesdb.launchbox-app.com/games/details/137060",
+      "boxArt": {
+        "url": "https://images.launchbox-app.com/4db8a91e-34c1-4629-8747-6e4065b90d8b.jpg",
+        "review": "checked"
+      },
+      "screenshot": {
+        "url": "https://images.launchbox-app.com/5f6ab353-4213-4056-94ed-ccbffbd77396.png",
+        "review": "checked"
+      },
+      "notes": "Compared the live page title and platform with the on-disk group. Opened the selected box and gameplay image: both depict this game and show no visible nudity. Redistribution rights remain unconfirmed."
+    },
+    {
+      "platform": "pc98",
+      "databaseId": "187076",
+      "title": "Bokosuka Wars",
+      "aliases": [],
+      "sourceGroups": [
+        "pc98:ASCII.zip:Bokosuka Wars"
+      ],
+      "contentIds": [],
+      "description": "Lead King Suren toward an enemy castle, reviving scattered soldiers and judging when your growing army can survive a fight.",
+      "pageUrl": "https://gamesdb.launchbox-app.com/games/details/137076",
+      "boxArt": {
+        "url": "https://images.launchbox-app.com/a06de5fe-3df3-4bc1-90c8-b548d70848d6.jpg",
+        "review": "checked"
+      },
+      "screenshot": {
+        "url": "https://images.launchbox-app.com/8568bde7-9816-43c8-abfe-5d4163623ba7.png",
+        "review": "checked"
+      },
+      "notes": "Compared the live page title and platform with the on-disk group. Opened the selected box and gameplay image: both depict this game and show no visible nudity. Redistribution rights remain unconfirmed."
+    },
+    {
+      "platform": "pc98",
+      "databaseId": "197578",
+      "title": "Bomber Quest",
+      "aliases": [],
+      "sourceGroups": [
+        "translated:bomberquest",
+        "pc98:Mink.zip:Bomber Quest"
+      ],
+      "contentIds": [
+        "sha256-hdi-v1:8b538467b5fb20077be45b8d71b38bd29da450bcd0ba6182333953c0282370d3"
+      ],
+      "description": "Guide Shounosuke through six interwoven stories, building paths from puzzle pieces while exploring another world and helping its inhabitants.",
+      "pageUrl": "https://gamesdb.launchbox-app.com/games/details/147578",
+      "boxArt": {
+        "url": "https://images.launchbox-app.com/29f3a302-1295-482d-a580-4b04c96b06e8.png",
+        "review": "flagged"
+      },
+      "screenshot": {
+        "url": "https://images.launchbox-app.com/67181378-0579-48cd-a3fd-049a571f08ba.png",
+        "review": "flagged"
+      },
+      "notes": "Compared the live PC-98 page with the Japanese NeoKobe folder and English translation archive. Opened the selected box and gameplay image; both depict this game and show no visible exposed nudity. Redistribution rights remain unconfirmed. Revealing costume on the cover; hold for user content review. Revealing clothing in selected scene; hold for user content review."
+    },
+    {
+      "platform": "pc98",
+      "databaseId": "187077",
+      "title": "Bomberman: Panic Bomber",
+      "aliases": [],
+      "sourceGroups": [
+        "pc98:ASCII.zip:Bomberman - Panic Bomber"
+      ],
+      "contentIds": [],
+      "description": "Rotate and stack trios of colored Bomberman heads, making matches in a competitive falling-block puzzle game.",
+      "pageUrl": "https://gamesdb.launchbox-app.com/games/details/137077",
+      "boxArt": {
+        "url": "https://images.launchbox-app.com/c4ef8bbe-f2b9-4b2d-a244-e02e247ed76e.jpg",
+        "review": "checked"
+      },
+      "screenshot": {
+        "url": "https://images.launchbox-app.com/df64f1f8-0cfa-4ac8-9d24-0f8fc882e88d.png",
+        "review": "checked"
+      },
+      "notes": "Compared the live page title and platform with the on-disk group. Opened the selected box and gameplay image: both depict this game and show no visible nudity. Redistribution rights remain unconfirmed."
+    },
+    {
+      "platform": "pc98",
+      "databaseId": "184546",
+      "title": "Chitty Chitty Train",
+      "aliases": [],
+      "sourceGroups": [
+        "translated:chittychittytrain",
+        "pc98:BIT2.zip:Chitty Chitty Train"
+      ],
+      "contentIds": [
+        "sha256-hdi-v1:99fe9611304fc7e2cbdcc27aa8d15078497c4366019aecee3c0a71a4734d87a8"
+      ],
+      "description": "Switch rail junctions in real time to deliver a train and its passengers to the exit without colliding with other trains.",
+      "pageUrl": "https://gamesdb.launchbox-app.com/games/details/134546",
+      "boxArt": {
+        "url": "https://images.launchbox-app.com/497b1bf0-dbce-42ae-88d4-b3dab1510331.jpg",
+        "review": "checked"
+      },
+      "screenshot": {
+        "url": "https://images.launchbox-app.com/d2e0caef-eddd-473f-a502-2dcf6653c77e.png",
+        "review": "checked"
+      },
+      "notes": "Compared the live PC-98 page with the Japanese NeoKobe folder and English translation archive. Opened the selected box and gameplay image; both depict this game and show no visible exposed nudity. Redistribution rights remain unconfirmed."
+    },
+    {
+      "platform": "pc98",
+      "databaseId": "156065",
+      "title": "CRW metal jacket",
+      "aliases": [],
+      "sourceGroups": [
+        "translated:crwmetaljacket",
+        "pc98:Wiz.zip:CRW Metal Jacket"
+      ],
+      "contentIds": [
+        "sha256-hdi-v1:a23bb706eb5671389697bbc3060bca9bb86056200556cf7b495a573081c6c5b0"
+      ],
+      "description": "Command a squad of specialized combat mechs through real-time missions, pausing to issue movement and attack orders.",
+      "pageUrl": "https://gamesdb.launchbox-app.com/games/details/106065",
+      "boxArt": {
+        "url": "https://images.launchbox-app.com/35985b11-5600-4758-aeb4-d82514d4e305.jpg",
+        "review": "checked"
+      },
+      "screenshot": {
+        "url": "https://images.launchbox-app.com/3010436a-8a90-46f9-a123-220a5c0e8531.png",
+        "review": "checked"
+      },
+      "notes": "Compared the live PC-98 page with the Japanese NeoKobe folder and English translation archive. Opened the selected box and gameplay image; both depict this game and show no visible exposed nudity. Redistribution rights remain unconfirmed."
+    },
+    {
+      "platform": "pc98",
+      "databaseId": "187121",
+      "title": "Derby Stallion",
+      "aliases": [],
+      "sourceGroups": [
+        "pc98:ASCII.zip:Derby Stallion"
+      ],
+      "contentIds": [],
+      "description": "Breed, train, and race horses in a Japanese management simulation centered on building a successful stable.",
+      "pageUrl": "https://gamesdb.launchbox-app.com/games/details/137121",
+      "boxArt": {
+        "url": "https://images.launchbox-app.com/577f99a8-2299-487f-a0d8-4757b9efc81c.jpg",
+        "review": "checked"
+      },
+      "screenshot": {
+        "url": "https://images.launchbox-app.com/4b3429d5-82e8-4a97-9a26-6689cb8019ab.png",
+        "review": "checked"
+      },
+      "notes": "Compared the live page title and platform with the on-disk group. Opened the selected box and gameplay image: both depict this game and show no visible nudity. Redistribution rights remain unconfirmed."
+    },
+    {
+      "platform": "pc98",
+      "databaseId": "189146",
+      "title": "Dungeon Conquest",
+      "aliases": [
+        "ダンジョンコンクエスト"
+      ],
+      "sourceGroups": [
+        "pc98:ASCII.zip:Dungeon Conquest"
+      ],
+      "contentIds": [],
+      "description": "Command units on an overhead fantasy map in a single-player PC-98 strategy game published by ASCII.",
+      "pageUrl": "https://gamesdb.launchbox-app.com/games/details/139146",
+      "boxArt": {
+        "url": "https://images.launchbox-app.com/c46191fe-81cd-480c-a379-8f9f8a99a96d.jpg",
+        "review": "checked"
+      },
+      "screenshot": {
+        "url": "https://images.launchbox-app.com/271b8ede-1129-45df-be76-2dcfb9d9ad35.png",
+        "review": "checked"
+      },
+      "notes": "Compared the live page title and platform with the on-disk group. Opened the selected box and gameplay image: both depict this game and show no visible nudity. Redistribution rights remain unconfirmed."
+    },
+    {
+      "platform": "pc98",
+      "databaseId": "182696",
+      "title": "F-16 Fighting Falcon 2",
+      "aliases": [],
+      "sourceGroups": [
+        "pc98:ASCII.zip:F-16 Fighting Falcon 2"
+      ],
+      "contentIds": [],
+      "description": "Fly an F-16 with simulated cockpit displays and radar, facing maneuvering opponents in a detailed combat flight simulator.",
+      "pageUrl": "https://gamesdb.launchbox-app.com/games/details/132696",
+      "boxArt": {
+        "url": "https://images.launchbox-app.com/2b1e8b91-9f25-4378-ade1-d2352c27f509.jpg",
+        "review": "checked"
+      },
+      "screenshot": {
+        "url": "https://images.launchbox-app.com/c9d098d7-69ac-4200-b7d5-7c988c1fd076.png",
+        "review": "checked"
+      },
+      "notes": "Compared the live page title and platform with the on-disk group. Opened the selected box and gameplay image: both depict this game and show no visible nudity. Redistribution rights remain unconfirmed."
+    },
+    {
+      "platform": "pc98",
+      "databaseId": "156122",
+      "title": "Farland Story",
+      "aliases": [
+        "Farland Story: Tooi Kuni no Monogatari",
+        "Tōi kuni no monogatari",
+        "ファーランドストーリー 遠い国の物語"
+      ],
+      "sourceGroups": [
+        "translated:farlandstory",
+        "pc98:TGL.zip:Farland Story - Tooi Kuni no Monogatari"
+      ],
+      "contentIds": [
+        "sha256-hdi-v1:262c6581ad7b596faa1b0df51748e8da3e791cd075acc263157c5888e5913c76"
+      ],
+      "description": "A fantasy strategy RPG in which Arc sets out to rescue Ferio after a hostile army attacks their town.",
+      "pageUrl": "https://gamesdb.launchbox-app.com/games/details/106122",
+      "boxArt": {
+        "url": "https://images.launchbox-app.com/2710e8ac-6e32-4d9e-a615-028041628480.png",
+        "review": "checked"
+      },
+      "screenshot": {
+        "url": "https://images.launchbox-app.com/6acffa1c-9ac9-40b4-9a90-345ab183d2bf.png",
+        "review": "checked"
+      },
+      "notes": "Compared the live PC-98 page with the Japanese NeoKobe folder and English translation archive. Opened the selected box and gameplay image; both depict this game and show no visible exposed nudity. Redistribution rights remain unconfirmed. The older local Farland Story.jpg cache file actually depicts Farland Story IV; this official linked image was opened separately and matches the first game."
+    },
+    {
+      "platform": "pc98",
+      "databaseId": "175461",
+      "title": "Farland Story Denki: Arc Ou no Ensei",
+      "aliases": [
+        "Farland Story 2",
+        "Farland Story 2: Dance of Destruction",
+        "Farland Story II: Dance of Destruction"
+      ],
+      "sourceGroups": [
+        "translated:farlandstoryiidanceofdestruction",
+        "pc98:TGL.zip:Farland Story Denki - Arc Ou no Ensei"
+      ],
+      "contentIds": [
+        "sha256-hdi-v1:c0d04f31e5c4ae6fdd3a7e592ae34244ebb2fd38c61179993ff5cff041ad3ae6"
+      ],
+      "description": "Arc and his companions return when demons steal a sacred sword, fighting turn-based battles across a fantasy map.",
+      "pageUrl": "https://gamesdb.launchbox-app.com/games/details/125461",
+      "boxArt": {
+        "url": "https://images.launchbox-app.com/2d200feb-52de-49d8-9f9c-837f813664a2.png",
+        "review": "flagged"
+      },
+      "screenshot": {
+        "url": "https://images.launchbox-app.com/b7e5f9d2-3deb-49f6-836b-cc4519a0650a.jpg",
+        "review": "checked"
+      },
+      "notes": "Compared the live PC-98 page with the Japanese NeoKobe folder and English translation archive. Opened the selected box and gameplay image; both depict this game and show no visible exposed nudity. Redistribution rights remain unconfirmed. Revealing costume on the cover; hold for user content review."
+    },
+    {
+      "platform": "pc98",
+      "databaseId": "175465",
+      "title": "Farland Story: Daichi no Kizuna",
+      "aliases": [
+        "Farland Story 5",
+        "Farland Story 5: The Bond of the Earth",
+        "Farland Story V: The Bond of the Earth"
+      ],
+      "sourceGroups": [
+        "translated:farlandstoryvthebondoftheearth",
+        "pc98:TGL.zip:Farland Story - Daichi no Kizuna"
+      ],
+      "contentIds": [
+        "sha256-hdi-v1:6f3d676b827ba67ba855bb410a28aa720b82c23d087a8b3c69ee6ee4eb83d0d0",
+        "sha256-hdi-v1:7594576c86072f3eeae436a8b54245e03d07d1854d2531df0283476baf5f1276",
+        "sha256-hdi-v1:b968f2e5282e964103db31df4e7478244539aaf3529fac72471e39f212698e1f"
+      ],
+      "description": "Princess Kushna leaves her castle and becomes caught in a new conflict, leading a party through turn-based fantasy battles.",
+      "pageUrl": "https://gamesdb.launchbox-app.com/games/details/125465",
+      "boxArt": {
+        "url": "https://images.launchbox-app.com/b1e8862f-9a51-4d73-930e-04b2b6809dfe.jpg",
+        "review": "checked"
+      },
+      "screenshot": {
+        "url": "https://images.launchbox-app.com/7a2f74c6-128c-4e9f-ab37-bcbfbc1811ed.jpg",
+        "review": "checked"
+      },
+      "notes": "Compared the live PC-98 page with the Japanese NeoKobe folder and English translation archive. Opened the selected box and gameplay image; both depict this game and show no visible exposed nudity. Redistribution rights remain unconfirmed."
+    },
+    {
+      "platform": "pc98",
+      "databaseId": "175466",
+      "title": "Farland Story: Kamigami no Isen",
+      "aliases": [
+        "Farland Story 6",
+        "Farland Story 6: God's Legacy",
+        "Farland Story VI: God's Legacy",
+        "Farland Story: Kamigami no Isan"
+      ],
+      "sourceGroups": [
+        "translated:farlandstoryvigodslegacy",
+        "pc98:TGL.zip:Farland Story - Kamigami no Isan"
+      ],
+      "contentIds": [
+        "sha256-hdi-v1:17b70565cdb7de1e891e4d442012933cbd01d0f73cee1ee5db06607dd5f0c153",
+        "sha256-hdi-v1:181053cf8817313b80e14a40f256cbf11fee5117227ef77e1d5bf7abc9f9a4e4",
+        "sha256-hdi-v1:f5f1419494bee100101a897eda2697f6e430e115c957af0fdec335e76558816e"
+      ],
+      "description": "A thief named Grey helps two sisters escape danger and becomes involved in a conspiracy, with the series’ familiar tactical battles.",
+      "pageUrl": "https://gamesdb.launchbox-app.com/games/details/125466",
+      "boxArt": {
+        "url": "https://images.launchbox-app.com/fab1ab62-60a8-48ca-a715-ca11bbe23f65.jpg",
+        "review": "checked"
+      },
+      "screenshot": {
+        "url": "https://images.launchbox-app.com/f10d431f-9a7e-4a10-a6e4-5e1808b8a089.jpg",
+        "review": "checked"
+      },
+      "notes": "Compared the live PC-98 page with the Japanese NeoKobe folder and English translation archive. Opened the selected box and gameplay image; both depict this game and show no visible exposed nudity. Redistribution rights remain unconfirmed."
+    },
+    {
+      "platform": "pc98",
+      "databaseId": "175463",
+      "title": "Farland Story: Shirogane no Tsubasa",
+      "aliases": [
+        "Farland Story 4",
+        "Farland Story 4: The Silver Wings",
+        "Farland Story IV: The Silver Wings",
+        "Farland Story: Hakugin no Tsubasa "
+      ],
+      "sourceGroups": [
+        "translated:farlandstoryivthesilverwings",
+        "pc98:TGL.zip:Farland Story - Hakugin no Tsubasa"
+      ],
+      "contentIds": [
+        "sha256-hdi-v1:0006fd452bb4dfbdd4ce087b5cacfe9424ab46f0b56068fa98d2cfe788c18d67",
+        "sha256-hdi-v1:8c2186f7bb86ea59d482a292eadd8da9e0b35e74b079ce222a6e3cd55073f1d9",
+        "sha256-hdi-v1:adc292782aac5b4f1899ee61863da21d587ad4350fe8a68059636afad029aad6"
+      ],
+      "description": "A rebel group led by Darland and Phir fights to end a despot’s rule in a new Farland Story campaign of turn-based battles.",
+      "pageUrl": "https://gamesdb.launchbox-app.com/games/details/125463",
+      "boxArt": {
+        "url": "https://images.launchbox-app.com/a937353c-7838-4906-8ab2-cd79f0f41839.jpg",
+        "review": "checked"
+      },
+      "screenshot": {
+        "url": "https://images.launchbox-app.com/eeead308-648c-40ec-a642-efd4bf1b6e5e.jpg",
+        "review": "checked"
+      },
+      "notes": "Compared the live PC-98 page with the Japanese NeoKobe folder and English translation archive. Opened the selected box and gameplay image; both depict this game and show no visible exposed nudity. Redistribution rights remain unconfirmed."
+    },
+    {
+      "platform": "pc98",
+      "databaseId": "175462",
+      "title": "Farland Story: Tenshi no Namida",
+      "aliases": [
+        "Farland Story 3",
+        "Farland Story 3: Angel's Tears",
+        "Farland Story III: Angel's Tears"
+      ],
+      "sourceGroups": [
+        "translated:farlandstoryiiiangelstears",
+        "pc98:TGL.zip:Farland Story - Tenshi no Namida"
+      ],
+      "contentIds": [
+        "sha256-hdi-v1:038aaf270dbd78c74f7f12c6ce1c537a198519d03832f5ad3a1d31e384b5c12d",
+        "sha256-hdi-v1:30de51c287e5c8d031e900b8c51d783b3ee6ddb729d8cb15619251727eb22668"
+      ],
+      "description": "Arc and Ferio take in an amnesiac girl named Fana, whose past leads their party into another turn-based fantasy campaign.",
+      "pageUrl": "https://gamesdb.launchbox-app.com/games/details/125462",
+      "boxArt": {
+        "url": "https://images.launchbox-app.com/ccd96da6-f003-4a17-89af-e23685b41279.png",
+        "review": "checked"
+      },
+      "screenshot": {
+        "url": "https://images.launchbox-app.com/940b5d15-1c44-41c7-872e-4e07ee8b4cc2.jpg",
+        "review": "checked"
+      },
+      "notes": "Compared the live PC-98 page with the Japanese NeoKobe folder and English translation archive. Opened the selected box and gameplay image; both depict this game and show no visible exposed nudity. Redistribution rights remain unconfirmed."
+    },
+    {
+      "platform": "pc98",
+      "databaseId": "189374",
+      "title": "FlixMix",
+      "aliases": [],
+      "sourceGroups": [
+        "translated:flixmix",
+        "pc98:Starcraft.zip:Flix Mix"
+      ],
+      "contentIds": [
+        "sha256-hdi-v1:a8d0eaaa6b52b6ccb62b346915cdd6a6a9c2a5ac2d0d3edca6ad96bef20bf0e0"
+      ],
+      "description": "Arrange sliding image tiles under a timer to complete pictures in a visual puzzle game.",
+      "pageUrl": "https://gamesdb.launchbox-app.com/games/details/139374",
+      "boxArt": {
+        "url": "https://images.launchbox-app.com/48db5747-3e66-4d47-a47e-57487cf4ffc9.jpg",
+        "review": "checked"
+      },
+      "screenshot": {
+        "url": "https://images.launchbox-app.com/45e6d569-aeb5-477b-b21b-ace79956c0a5.png",
+        "review": "checked"
+      },
+      "notes": "Compared the live PC-98 page with the Japanese NeoKobe folder and English translation archive. Opened the selected box and gameplay image; both depict this game and show no visible exposed nudity. Redistribution rights remain unconfirmed."
+    },
+    {
+      "platform": "pc98",
+      "databaseId": "189669",
+      "title": "Hokkaido Rensa Satsujin: Okhotsk ni Kiyu",
+      "aliases": [],
+      "sourceGroups": [
+        "pc98:ASCII.zip:Hokkaido Rensa Satsujin - Okhotsk ni Kiyu"
+      ],
+      "contentIds": [],
+      "description": "Investigate a string of murders that leads from Tokyo to Hokkaido, gathering clues through menu commands and scene examination.",
+      "pageUrl": "https://gamesdb.launchbox-app.com/games/details/139669",
+      "boxArt": {
+        "url": "https://images.launchbox-app.com/a1ab245c-5474-47f9-89fa-0a9adaaf7dc3.jpg",
+        "review": "checked"
+      },
+      "screenshot": {
+        "url": "https://images.launchbox-app.com/dcc68eb3-e11c-4189-9eb4-4fb1073f7c68.png",
+        "review": "checked"
+      },
+      "notes": "Compared the live page title and platform with the on-disk group. Opened the selected box and gameplay image: both depict this game and show no visible nudity. Redistribution rights remain unconfirmed."
+    },
+    {
+      "platform": "pc98",
+      "databaseId": "187306",
+      "title": "Igo II",
+      "aliases": [],
+      "sourceGroups": [
+        "pc98:ASCII.zip:Igo II"
+      ],
+      "contentIds": [],
+      "description": "Play go against a computer opponent at several difficulty levels, with options for undoing moves and reviewing the board.",
+      "pageUrl": "https://gamesdb.launchbox-app.com/games/details/137306",
+      "boxArt": {
+        "url": "https://images.launchbox-app.com/177ef63a-e385-4ba2-ac26-675643ea7dbe.jpg",
+        "review": "checked"
+      },
+      "screenshot": {
+        "url": "https://images.launchbox-app.com/6cddac46-b154-4a43-ba1e-ea5f1aab86c1.png",
+        "review": "checked"
+      },
+      "notes": "Compared the live page title and platform with the on-disk group. Opened the selected box and gameplay image: both depict this game and show no visible nudity. Redistribution rights remain unconfirmed."
+    },
+    {
+      "platform": "pc98",
+      "databaseId": "187329",
+      "title": "Ishidō: The Way of Stones",
+      "aliases": [
+        "Ishido"
+      ],
+      "sourceGroups": [
+        "pc98:ASCII.zip:Ishido"
+      ],
+      "contentIds": [],
+      "description": "Place patterned stones on a board to build matches and maximize your score in a strategic solitaire puzzle game.",
+      "pageUrl": "https://gamesdb.launchbox-app.com/games/details/137329",
+      "boxArt": {
+        "url": "https://images.launchbox-app.com/da9d3cc0-1a65-4064-a5b2-f6c521b035e8.jpg",
+        "review": "checked"
+      },
+      "screenshot": {
+        "url": "https://images.launchbox-app.com/2c630916-6092-44c0-bf9f-2bb0bfd50edc.png",
+        "review": "checked"
+      },
+      "notes": "Compared the live page title and platform with the on-disk group. Opened the selected box and gameplay image: both depict this game and show no visible nudity. Redistribution rights remain unconfirmed."
+    },
+    {
+      "platform": "pc98",
+      "databaseId": "186567",
+      "title": "Kikou Soushin Val-Kaizer",
+      "aliases": [
+        "Cyber Arms Val-Kaizer"
+      ],
+      "sourceGroups": [
+        "translated:cyberarmsvalkaizer",
+        "pc98:Silence.zip:Cyber Arms Val-Kaizer"
+      ],
+      "contentIds": [
+        "sha256-hdi-v1:074a694ad60463a98f29b474f12ab6a420cf94e88f7b8f8948cffaa59c450d95"
+      ],
+      "description": "Luna searches for her kidnapped sister in a science-fiction adventure involving experimental armor and the robot Val-Kaizer.",
+      "pageUrl": "https://gamesdb.launchbox-app.com/games/details/136567",
+      "boxArt": {
+        "url": "https://images.launchbox-app.com/ffa18cd4-bb73-400c-bcea-db665245d390.jpg",
+        "review": "checked"
+      },
+      "screenshot": {
+        "url": "https://images.launchbox-app.com/3859b8f6-3a5d-452e-98b9-6ad6232bb7ab.png",
+        "review": "flagged"
+      },
+      "notes": "Compared the live PC-98 page with the Japanese NeoKobe folder and English translation archive. Opened the selected box and gameplay image; both depict this game and show no visible exposed nudity. Redistribution rights remain unconfirmed. Bedroom scene; hold for user content review."
+    },
+    {
+      "platform": "pc98",
+      "databaseId": "184570",
+      "title": "Lemmings",
+      "aliases": [],
+      "sourceGroups": [
+        "pc98:Imagineer.zip:Lemmings"
+      ],
+      "contentIds": [],
+      "description": "Assign specialized jobs to a crowd of lemmings to guide enough of them past obstacles and into each level’s exit.",
+      "pageUrl": "https://gamesdb.launchbox-app.com/games/details/134570",
+      "boxArt": {
+        "url": "https://images.launchbox-app.com/154d8dac-6be9-4af6-979f-f9421b14c485.jpg",
+        "review": "checked"
+      },
+      "screenshot": {
+        "url": "https://images.launchbox-app.com/58d4a553-2977-4a7e-a19a-e6c4c96a4961.png",
+        "review": "checked"
+      },
+      "notes": "Compared the live page title and platform with the on-disk group. Opened the selected box and gameplay image: both depict this game and show no visible nudity. Redistribution rights remain unconfirmed."
+    },
+    {
+      "platform": "pc98",
+      "databaseId": "190887",
+      "title": "Log!cal",
+      "aliases": [
+        "Logical"
+      ],
+      "sourceGroups": [
+        "pc98:ASCII.zip:Logical"
+      ],
+      "contentIds": [],
+      "description": "Spin connected nodes and route colored balls to assemble matching quartets in this abstract puzzle game.",
+      "pageUrl": "https://gamesdb.launchbox-app.com/games/details/140887",
+      "boxArt": {
+        "url": "https://images.launchbox-app.com/384871ce-9ac8-4140-8317-5e0f2aad5a0e.jpg",
+        "review": "checked"
+      },
+      "screenshot": {
+        "url": "https://images.launchbox-app.com/57de73ec-8528-4e91-9f04-586aefcd5ad4.png",
+        "review": "checked"
+      },
+      "notes": "Compared the live page title and platform with the on-disk group. Opened the selected box and gameplay image: both depict this game and show no visible nudity. Redistribution rights remain unconfirmed."
+    },
+    {
+      "platform": "pc98",
+      "databaseId": "187450",
+      "title": "Marble Cooking",
+      "aliases": [
+        "マーブルクッキング"
+      ],
+      "sourceGroups": [
+        "translated:marblecooking",
+        "pc98:Negative.zip:Marble Cooking"
+      ],
+      "contentIds": [
+        "sha256-hdi-v1:ed6d10c5028ac6f7ba9cb73f67004a9961eafa73e37cdf713112d40805d6f57e"
+      ],
+      "description": "The apprentice magician Marble releases a demon by misusing a wand, then crosses single-screen puzzle stages to stop it.",
+      "pageUrl": "https://gamesdb.launchbox-app.com/games/details/137450",
+      "boxArt": {
+        "url": "https://images.launchbox-app.com/2b57a6cc-1f3d-41fa-846a-9bbcdb1cada2.jpg",
+        "review": "flagged"
+      },
+      "screenshot": {
+        "url": "https://images.launchbox-app.com/f7a43aa6-67c7-49c0-b03a-e6dabac666d1.png",
+        "review": "flagged"
+      },
+      "notes": "Compared the live PC-98 page with the Japanese NeoKobe folder and English translation archive. Opened the selected box and gameplay image; both depict this game and show no visible exposed nudity. Redistribution rights remain unconfirmed. Source describes sexualized young characters; hold all selected art for user content review. Source describes sexualized young characters; hold all selected art for user content review."
+    },
+    {
+      "platform": "pc98",
+      "databaseId": "156056",
+      "title": "Night Slave",
+      "aliases": [
+        "ナイト·スレイブ"
+      ],
+      "sourceGroups": [
+        "translated:nightslave",
+        "pc98:Melody.zip:Night Slave"
+      ],
+      "contentIds": [
+        "sha256-hdi-v1:455d6639f0d3e9e5e72bfe7e89bd82026bdb64ae314a4d077a2cd1e3ed7ff766",
+        "sha256-hdi-v1:caa32fb540aad9239ec308bac3da25dd1c31becca3f5e023043f6e628f12370f"
+      ],
+      "description": "An action game about a pilot sent to attack the Slave Dog terrorist base in an armed suit.",
+      "pageUrl": "https://gamesdb.launchbox-app.com/games/details/106056",
+      "boxArt": {
+        "url": "https://images.launchbox-app.com/b92f5b54-07ad-42c0-b628-9f28894c292c.jpg",
+        "review": "checked"
+      },
+      "screenshot": {
+        "url": "https://images.launchbox-app.com/32725030-dc63-4fcf-8b0b-43a0c7f56fd3.png",
+        "review": "checked"
+      },
+      "notes": "Compared the live PC-98 page with the Japanese NeoKobe folder and English translation archive. Opened the selected box and gameplay image; both depict this game and show no visible exposed nudity. Redistribution rights remain unconfirmed."
+    },
+    {
+      "platform": "pc98",
+      "databaseId": "189697",
+      "title": "Primal Space",
+      "aliases": [],
+      "sourceGroups": [
+        "translated:primalspace",
+        "pc98:FlipFlop.zip:Primal Space"
+      ],
+      "contentIds": [
+        "sha256-hdi-v1:a07f6edb9b6bc61f45578e9282d18a59a009e5279a0df86ce9a9b6e1516e177a"
+      ],
+      "description": "Shape a universe and guide the evolution of life in a simulation that spans cosmic history.",
+      "pageUrl": "https://gamesdb.launchbox-app.com/games/details/139697",
+      "boxArt": {
+        "url": "https://images.launchbox-app.com/25ee762f-6828-4918-b459-6c755aa9ac08.jpg",
+        "review": "checked"
+      },
+      "screenshot": {
+        "url": "https://images.launchbox-app.com/4a7b1fd8-8a16-412d-80a3-4930f269b23f.png",
+        "review": "checked"
+      },
+      "notes": "Compared the live PC-98 page with the Japanese NeoKobe folder and English translation archive. Opened the selected box and gameplay image; both depict this game and show no visible exposed nudity. Redistribution rights remain unconfirmed."
+    },
+    {
+      "platform": "pc98",
+      "databaseId": "156145",
+      "title": "Prince of Persia",
+      "aliases": [
+        "プリンス·オブ·ペルシャ"
+      ],
+      "sourceGroups": [
+        "pc98:BroderbundJapan.zip:Prince of Persia",
+        "translated:princeofpersia"
+      ],
+      "contentIds": [],
+      "description": "Race through palace dungeons to rescue the princess, using acrobatic movement and swordplay against guards and traps.",
+      "pageUrl": "https://gamesdb.launchbox-app.com/games/details/106145",
+      "boxArt": {
+        "url": "https://images.launchbox-app.com/d2c17f1a-557a-4be1-9667-a05f1d5d9de5.jpg",
+        "review": "checked"
+      },
+      "screenshot": {
+        "url": "https://images.launchbox-app.com/efe7053e-cbc1-4c7b-b404-dcb90184d3d8.png",
+        "review": "checked"
+      },
+      "notes": "Compared the live page title and platform with the on-disk group. Opened the selected box and gameplay image: both depict this game and show no visible nudity. Redistribution rights remain unconfirmed."
+    },
+    {
+      "platform": "pc98",
+      "databaseId": "142443",
+      "title": "Rusty",
+      "aliases": [
+        "ラスティ"
+      ],
+      "sourceGroups": [
+        "translated:rusty",
+        "pc98:C-Lab.zip:Rusty"
+      ],
+      "contentIds": [
+        "sha256-hdi-v1:2ccd35bc33eac747f75618bf431e6c64e832af2fc6221ad5383a974b9e03a2d6",
+        "sha256-hdi-v1:b336c58cd28e487c0260868ed598bf0c9cce008e3c785c89892415a652c52832"
+      ],
+      "description": "Rusty Springcul explores a monster-filled castle to rescue abducted villagers in a side-scrolling action game.",
+      "pageUrl": "https://gamesdb.launchbox-app.com/games/details/92443",
+      "boxArt": {
+        "url": "https://images.launchbox-app.com/b6a79e03-3182-48bd-a533-d8d82f3b0c6f.jpg",
+        "review": "flagged"
+      },
+      "screenshot": {
+        "url": "https://images.launchbox-app.com/71bea99f-29d2-4f85-a8dd-8f40b758bd5a.png",
+        "review": "checked"
+      },
+      "notes": "Compared the live PC-98 page with the Japanese NeoKobe folder and English translation archive. Opened the selected box and gameplay image; both depict this game and show no visible exposed nudity. Redistribution rights remain unconfirmed. Revealing costume on the cover; hold for user content review."
+    },
+    {
+      "platform": "pc98",
+      "databaseId": "179035",
+      "title": "Slayers",
+      "aliases": [],
+      "sourceGroups": [
+        "translated:slayers",
+        "pc98:Banpresto.zip:Slayers"
+      ],
+      "contentIds": [
+        "sha256-hdi-v1:5ea56752e6fcf5483a0bc5ca5f070ae5f52d0c1caf25864a8b8e310b595b9adf"
+      ],
+      "description": "Lina Inverse and Gourry Gabriev pursue a valuable dragon fang, then become entangled in a new fantasy adventure.",
+      "pageUrl": "https://gamesdb.launchbox-app.com/games/details/129035",
+      "boxArt": {
+        "url": "https://images.launchbox-app.com/65269156-0025-4705-ae5d-a33a32c0a71e.jpg",
+        "review": "checked"
+      },
+      "screenshot": {
+        "url": "https://images.launchbox-app.com/ab83a80b-10ac-4f60-8f1d-791f128d28b2.png",
+        "review": "checked"
+      },
+      "notes": "Compared the live PC-98 page with the Japanese NeoKobe folder and English translation archive. Opened the selected box and gameplay image; both depict this game and show no visible exposed nudity. Redistribution rights remain unconfirmed."
+    },
+    {
+      "platform": "pc98",
+      "databaseId": "182453",
+      "title": "Starfire",
+      "aliases": [],
+      "sourceGroups": [
+        "translated:starfire",
+        "pc98:Starcraft.zip:Starfire"
+      ],
+      "contentIds": [
+        "sha256-hdi-v1:8fde4af09c60b9873bc2945516b6c4835e9a010d9822b6346c7288827917654b"
+      ],
+      "description": "Pilot a mercenary mech from the battleship Dragonet through space missions that grow into a wider conflict.",
+      "pageUrl": "https://gamesdb.launchbox-app.com/games/details/132453",
+      "boxArt": {
+        "url": "https://images.launchbox-app.com/fed6fc09-0df1-4c4b-9cf8-a457b7ef07c5.jpg",
+        "review": "checked"
+      },
+      "screenshot": {
+        "url": "https://images.launchbox-app.com/6aac7d8e-a236-43fc-9a61-cda3cde3f846.png",
+        "review": "checked"
+      },
+      "notes": "Compared the live PC-98 page with the Japanese NeoKobe folder and English translation archive. Opened the selected box and gameplay image; both depict this game and show no visible exposed nudity. Redistribution rights remain unconfirmed."
+    },
+    {
+      "platform": "pc98",
+      "databaseId": "183445",
+      "title": "Sword World PC",
+      "aliases": [],
+      "sourceGroups": [
+        "translated:swordworldpc",
+        "pc98:TeSoft.zip:Sword World PC"
+      ],
+      "contentIds": [
+        "sha256-hdi-v1:cf4d518a3320982018cc7d8c3c918b71f76a33a1035360a899fa77f8c1adafa4"
+      ],
+      "description": "Adventure through Forcelia in a computer RPG based on the Sword World tabletop setting, building a party and taking on quests.",
+      "pageUrl": "https://gamesdb.launchbox-app.com/games/details/133445",
+      "boxArt": {
+        "url": "https://images.launchbox-app.com/2120150e-f0c1-4de8-8a64-8be86cc6714d.jpg",
+        "review": "flagged"
+      },
+      "screenshot": {
+        "url": "https://images.launchbox-app.com/061f2b72-85ba-4a2f-9fb9-13b6709a22fb.png",
+        "review": "checked"
+      },
+      "notes": "Compared the live PC-98 page with the Japanese NeoKobe folder and English translation archive. Opened the selected box and gameplay image; both depict this game and show no visible exposed nudity. Redistribution rights remain unconfirmed. Box scan has a large damaged/blank lower section; seek a better source."
+    },
+    {
+      "platform": "pc98",
+      "databaseId": "183256",
+      "title": "The Black Onyx",
+      "aliases": [],
+      "sourceGroups": [
+        "pc98:BPS.zip:The Black Onyx"
+      ],
+      "contentIds": [],
+      "description": "Build a party and explore the Black Tower near Utsuro in search of the fabled Black Onyx, fighting turn-based encounters along the way.",
+      "pageUrl": "https://gamesdb.launchbox-app.com/games/details/133256",
+      "boxArt": {
+        "url": "https://images.launchbox-app.com/e55f7fa6-55fd-49d5-8fc9-376e0f2b93f0.jpg",
+        "review": "checked"
+      },
+      "screenshot": {
+        "url": "https://images.launchbox-app.com/040845d0-abd8-4a97-9706-50f729bdeca4.png",
+        "review": "checked"
+      },
+      "notes": "Compared the live page title and platform with the on-disk group. Opened the selected box and gameplay image: both depict this game and show no visible nudity. Redistribution rights remain unconfirmed."
+    },
+    {
+      "platform": "pc98",
+      "databaseId": "181678",
+      "title": "The Castle",
+      "aliases": [
+        "The Castle and Princess"
+      ],
+      "sourceGroups": [
+        "pc98:ASCII.zip:The Castle"
+      ],
+      "contentIds": [],
+      "description": "Explore a hundred-room castle as a prince, collecting colored keys and solving platform puzzles to rescue the princess.",
+      "pageUrl": "https://gamesdb.launchbox-app.com/games/details/131678",
+      "boxArt": {
+        "url": "https://images.launchbox-app.com/f18642af-18e5-46ee-aca3-33ad6253988c.jpg",
+        "review": "checked"
+      },
+      "screenshot": {
+        "url": "https://images.launchbox-app.com/1e94809a-1533-49fb-b438-a1132c368d62.jpg",
+        "review": "checked"
+      },
+      "notes": "Compared the live page title and platform with the on-disk group. Opened the selected box and gameplay image: both depict this game and show no visible nudity. Redistribution rights remain unconfirmed."
+    },
+    {
+      "platform": "pc98",
+      "databaseId": "156671",
+      "title": "The Screamer",
+      "aliases": [],
+      "sourceGroups": [
+        "pc98:ASCII.zip:The Screamer"
+      ],
+      "contentIds": [],
+      "description": "Descend into BIAS, a dangerous labyrinth beneath Beast City, in a game that combines dungeon exploration with side-scrolling combat.",
+      "pageUrl": "https://gamesdb.launchbox-app.com/games/details/106671",
+      "boxArt": {
+        "url": "https://images.launchbox-app.com/9321a31b-da3e-40af-b657-903446bbb565.jpg",
+        "review": "flagged"
+      },
+      "screenshot": {
+        "url": "https://images.launchbox-app.com/e75f7ffe-1501-427e-aabf-f6aa26decca8.png",
+        "review": "flagged"
+      },
+      "notes": "Live page confirms the PC-98 title and platform. The selected box explicitly says PC-8801, and its screenshot is identical to the PC-88 image. Both are wrong-platform assets; replace them."
+    },
+    {
+      "platform": "pc98",
+      "databaseId": "187649",
+      "title": "Thexder",
+      "aliases": [],
+      "sourceGroups": [
+        "pc98:GameArts.zip:Thexder"
+      ],
+      "contentIds": [],
+      "description": "Pilot a robot that transforms into a jet, cross side-scrolling stages, and manage its rechargeable weapons and shields.",
+      "pageUrl": "https://gamesdb.launchbox-app.com/games/details/137649",
+      "boxArt": {
+        "url": "https://images.launchbox-app.com/1bae738f-7b85-4b9e-8991-6746431ea7ce.jpg",
+        "review": "checked"
+      },
+      "screenshot": {
+        "url": "https://images.launchbox-app.com/a9664a27-365c-4974-9f94-3ed8bc7d3a06.jpg",
+        "review": "checked"
+      },
+      "notes": "Compared the live page title and platform with the on-disk group. Opened the selected box and gameplay image: both depict this game and show no visible nudity. Redistribution rights remain unconfirmed."
+    },
+    {
+      "platform": "pc98",
+      "databaseId": "190873",
+      "title": "Ultima VIII: Pagan",
+      "aliases": [],
+      "sourceGroups": [
+        "translated:ultimaviiipagan",
+        "pc98:ElectronicArtsVictor.zip:Ultima VIII - Pagan"
+      ],
+      "contentIds": [
+        "sha256-hdi-v1:842bcdc5f180bf02610ce912453c66e6f2d37da00c56b68ff5bd41e51ba168ca",
+        "sha256-hdi-v1:febb854f704c0df656bfe02d9bd77066f94191ba66464c00d9e267807a536c10"
+      ],
+      "description": "Explore the world of Pagan as the Avatar, seeking a way past the Elemental Titans and the Guardian’s control.",
+      "pageUrl": "https://gamesdb.launchbox-app.com/games/details/140873",
+      "boxArt": {
+        "url": "https://images.launchbox-app.com/7c7ac7c4-7c96-4dc7-9cf2-248930f29fb0.jpg",
+        "review": "checked"
+      },
+      "screenshot": {
+        "url": "https://images.launchbox-app.com/r2_42f2dced-07c6-4858-93c2-027ca1070615.png",
+        "review": "checked"
+      },
+      "notes": "Compared the live PC-98 page with the Japanese NeoKobe folder and English translation archive. Opened the selected box and gameplay image; both depict this game and show no visible exposed nudity. Redistribution rights remain unconfirmed."
+    },
+    {
+      "platform": "pc98",
+      "databaseId": "186825",
+      "title": "Wizardry: Bane of the Cosmic Forge",
+      "aliases": [
+        "Wizardry VI"
+      ],
+      "sourceGroups": [
+        "pc98:ASCII.zip:Wizardry VI"
+      ],
+      "contentIds": [],
+      "description": "Create a party and search an abandoned castle for the Cosmic Forge, a pen said to make whatever it writes come true.",
+      "pageUrl": "https://gamesdb.launchbox-app.com/games/details/136825",
+      "boxArt": {
+        "url": "https://images.launchbox-app.com/17ee37f7-6047-4a09-a385-d7b1c8cb4598.jpg",
+        "review": "checked"
+      },
+      "screenshot": {
+        "url": "https://images.launchbox-app.com/1dd80176-ac88-4ba7-8c2c-bf3c65c4daf2.png",
+        "review": "checked"
+      },
+      "notes": "Compared the live page title and platform with the on-disk group. Opened the selected box and gameplay image: both depict this game and show no visible nudity. Redistribution rights remain unconfirmed."
+    },
+    {
+      "platform": "pc98",
+      "databaseId": "186826",
+      "title": "Wizardry: Crusaders of the Dark Savant",
+      "aliases": [
+        "Wizardry VII"
+      ],
+      "sourceGroups": [
+        "pc98:ASCII.zip:Wizardry VII"
+      ],
+      "contentIds": [],
+      "description": "Continue the party’s quest on a new world after the Cosmic Forge is taken, as rival factions pursue another powerful artifact.",
+      "pageUrl": "https://gamesdb.launchbox-app.com/games/details/136826",
+      "boxArt": {
+        "url": "https://images.launchbox-app.com/004c5c3f-c12c-42b1-9333-307a17f15bde.jpg",
+        "review": "checked"
+      },
+      "screenshot": {
+        "url": "https://images.launchbox-app.com/27c2a9c3-c3fc-4a79-88e7-fcdc7830f871.png",
+        "review": "checked"
+      },
+      "notes": "Compared the live page title and platform with the on-disk group. Opened the selected box and gameplay image: both depict this game and show no visible nudity. Redistribution rights remain unconfirmed."
+    }
+  ]
+}

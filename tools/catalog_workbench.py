@@ -103,6 +103,8 @@ def scan(root, previous=None):
 
 
 def load_metadata(path):
+    if Path(path).suffix.lower() == ".json":
+        return read(path)
     games = {}
     aliases = defaultdict(list)
     images = defaultdict(lambda: Counter())

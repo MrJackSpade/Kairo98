@@ -1,5 +1,7 @@
 # Local catalog workbench
 
+The expanded PC-88/PC-98 inventory, 60 manually reviewed game records, review commands, and held artwork are documented in [catalog research](../catalog/research/README.md).
+
 `tools/catalog_workbench.py` starts research from the local LaunchBox PC-98 metadata snapshot. It **does not accept fuzzy matches automatically** or publish game data. Its outputs go under the ignored `.downloads/launchbox/` directory. The ROM tree and copied LaunchBox images are also ignored.
 
 The Android device currently supplies `Metadata/NEC PC-9801.xml`, `Data/Platforms/NEC PC-9801.xml`, and `Images/NEC PC-9801/` from `/storage/3338-3231/LaunchBox/`. The workbench reads the metadata XML; platform library records are hints for later review, never a source of truth. The official [LaunchBox Games Database](https://gamesdb.launchbox-app.com/) supplies live pages for manual verification. The [LaunchBox media guide](https://feedback.launchbox-app.com/en/help/articles/7997304-using-games-database-media-in-launchbox) explains the local metadata and image layout.
