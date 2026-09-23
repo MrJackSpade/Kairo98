@@ -100,6 +100,9 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
     private var edgeSwipeX: Float? = null
     private var edgeSwipeY = 0f
     private var edgeSwipeConsumed = false
+    private var menuSwipeX: Float? = null
+    private var menuSwipeY = 0f
+    private var menuSwipeConsumed = false
     @Volatile private var preparingFont = false
     @Volatile private var startGeneration = 0
 
@@ -1102,9 +1105,19 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
         if (!event.isFromSource(InputDevice.SOURCE_TOUCHSCREEN)) {
             return super.dispatchTouchEvent(event)
         }
+        if (event.actionMasked == MotionEvent.ACTION_DOWN) menuSwipeConsumed = false
+        if (menuSwipeConsumed) {
+            if (event.actionMasked == MotionEvent.ACTION_UP ||
+                event.actionMasked == MotionEvent.ACTION_CANCEL) menuSwipeConsumed = false
+            return true
+        }
         when (event.actionMasked) {
             MotionEvent.ACTION_DOWN -> {
                 edgeSwipeConsumed = false
+                if (menuOpen) {
+                    menuSwipeX = event.x
+                    menuSwipeY = event.y
+                }
                 if (!menuOpen && event.x <= dp(28)) {
                     edgeSwipeX = event.x
                     edgeSwipeY = event.y
@@ -1112,6 +1125,21 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
                 }
             }
             MotionEvent.ACTION_MOVE -> {
+                val menuStart = menuSwipeX
+                if (menuOpen && menuStart != null) {
+                    val horizontal = event.x - menuStart
+                    if (horizontal <= -dp(72) &&
+                        -horizontal > abs(event.y - menuSwipeY) * 1.3f) {
+                        menuSwipeX = null
+                        menuSwipeConsumed = true
+                        val cancel = MotionEvent.obtain(event)
+                        cancel.action = MotionEvent.ACTION_CANCEL
+                        super.dispatchTouchEvent(cancel)
+                        cancel.recycle()
+                        closeMenu()
+                        return true
+                    }
+                }
                 val start = edgeSwipeX
                 if (start != null) {
                     val horizontal = event.x - start
@@ -1124,6 +1152,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
                 }
             }
             MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
+                menuSwipeX = null
                 if (edgeSwipeX != null || edgeSwipeConsumed) {
                     edgeSwipeX = null
                     edgeSwipeConsumed = false
