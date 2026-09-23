@@ -53,7 +53,8 @@ class RomLibrary(private val context: Context) {
              progress: (String) -> Unit): List<LibraryEntry> {
         val prior = cached(treeUri).associateBy { it.id }
         val result = ArrayList<LibraryEntry>()
-        val files = enumerate(treeUri, cancelled, progress)
+        val (files, folderErrors) = enumerate(treeUri, cancelled, progress)
+        result.addAll(folderErrors)
         hashCount = 0
         for ((index, source) in files.withIndex()) {
             checkCancelled(cancelled)
@@ -189,8 +190,10 @@ class RomLibrary(private val context: Context) {
 
     private data class Source(val uri: Uri, val path: String, val size: Long, val modified: Long)
 
-    private fun enumerate(tree: Uri, cancelled: AtomicBoolean, progress: (String) -> Unit): List<Source> {
+    private fun enumerate(tree: Uri, cancelled: AtomicBoolean,
+                          progress: (String) -> Unit): Pair<List<Source>, List<LibraryEntry>> {
         val result = ArrayList<Source>()
+        val errors = ArrayList<LibraryEntry>()
         val rootId = DocumentsContract.getTreeDocumentId(tree)
         val queue = ArrayDeque<Pair<String, String>>()
         queue.add(rootId to "")
@@ -226,10 +229,14 @@ class RomLibrary(private val context: Context) {
             } catch (cancel: CancellationException) { throw cancel }
             catch (error: Exception) {
                 if (parentPath.isEmpty()) throw error
+                val folder = Source(DocumentsContract.buildDocumentUriUsingTree(tree, parentId),
+                    parentPath, -1, 0)
+                errors.add(entry(folder, null, -1, -1, null,
+                    "Unreadable folder: ${error.message ?: "provider error"}"))
                 progress("Skipping unreadable folder: $parentPath")
             }
         }
-        return result
+        return result to errors
     }
 
     @Synchronized private fun cachedZip(source: Source, force: Boolean,
