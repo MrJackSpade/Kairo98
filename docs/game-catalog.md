@@ -1,5 +1,7 @@
 # Kairo98 game catalog, version 1
 
+For local research, manually verified LaunchBox matches, and media review, see the [catalog workbench](catalog-workbench.md). Its ignored draft output is separate from the shipped catalog.
+
 The app identifies one playable HDI by `sha256-hdi-v1:` followed by the lowercase SHA-256 hex digest of its **uncompressed HDI bytes**. A standalone HDI and that HDI inside any ZIP have the same ID. ZIP metadata, compression, and sidecar files do not enter the digest. A ZIP with two HDIs yields two library entries and two IDs. This identifier is for matching metadata; the source document URI and ZIP entry name remain separate launch locators.
 
 The shipped catalog and optional user catalog additions use the same JSON envelope:
