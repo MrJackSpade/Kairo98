@@ -20,7 +20,7 @@ A detached clean worktree at commit `1dcdf06` also built `:app:assembleDebug` su
 
 - The compiled source list excludes `fmgen`, GPL MAME, the omitted DOSBox FPU code, and the older `sound/mamebsd/` copy. ymfm integration is [issue #7](https://github.com/MrJackSpade/Kairo98/issues/7).
 - This profile starts the portable 286 CPU and PC-98 machine state. PC-9821/IA-32 support is [issue #15](https://github.com/MrJackSpade/Kairo98/issues/15).
-- `android_host/platform.c` currently uses disconnected serial/printer devices, a memory-only 640×400 frame surface, and no audio output. It has no Android disk picker or frontend intent. Those are later stages.
+- `android_host/platform.c` currently uses disconnected serial/printer devices, a memory-only 640x400 frame surface, and no audio output. A diagnostic Android document picker copies an HDI into temporary app storage and asks the native disk code to mount and read sector 0. Normal disk management and frontend intents are later stages.
 - Save states are unavailable: `statsave.c` is omitted and the two serialization entry points return failure. The optional NP2 guest-service commands are also stubbed. Both require deliberate follow-up before they can be advertised.
 - The first-boot profile has no floppy seek sound, SCSI, or external ROM/firmware files. It does not bundle any game, BIOS, or operating system.
 
@@ -34,4 +34,4 @@ The following changes to the pinned 21/W snapshot were required for this arm64 b
 
 ## Stage 1 device check
 
-On a Retroid Pocket Classic running Android 14 (API 34, `arm64-v8a`, 4 KB pages), the APK installed and loaded its native library. The diagnostic button calls `pccore_init()`, `pccore_reset()`, reads the CPU reset vector, then calls `pccore_term()`. It returned `CS:IP=f000:fff0` and remained running after two more repeated probes. [Device screenshot](evidence/stage1-retroid-reset.png). No game boot has been attempted.
+On a Retroid Pocket Classic running Android 14 (API 34, `arm64-v8a`, 4 KB pages), the APK installed and loaded its native library. The diagnostic button calls `pccore_init()`, `pccore_reset()`, reads the CPU reset vector, then calls `pccore_term()`. It returned `CS:IP=f000:fff0` and remained running after two more repeated probes. [Device screenshot](evidence/stage1-retroid-reset.png). A later diagnostic build mounted and read sector 0 from a user-supplied HDI through the 21/W SASI disk code; [details](compatibility.md). No game boot has been attempted.
