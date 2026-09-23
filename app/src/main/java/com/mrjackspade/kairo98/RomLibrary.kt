@@ -72,12 +72,15 @@ class RomLibrary(private val context: Context) {
                         val names = HashSet<String>()
                         val playable = ArrayList<java.util.zip.ZipEntry>()
                         val entries = zip.entries()
+                        var inspected = 0
                         while (entries.hasMoreElements()) {
                             checkCancelled(cancelled)
+                            require(++inspected <= MAX_ZIP_ENTRIES) { "ZIP has too many entries" }
                             val item = entries.nextElement()
                             val normalized = safeEntryName(item.name)
                             require(names.add(normalized.lowercase(Locale.ROOT))) { "Duplicate ZIP entry" }
                             if (!item.isDirectory && normalized.endsWith(".hdi", ignoreCase = true)) {
+                                require(playable.size < MAX_ZIP_IMAGES) { "ZIP has too many HDIs" }
                                 require(item.size in 1..MAX_IMAGE_BYTES) { "HDI exceeds size limit" }
                                 require(item.compressedSize > 0 &&
                                     item.size / item.compressedSize <= MAX_EXPANSION_RATIO) {
@@ -320,8 +323,9 @@ class RomLibrary(private val context: Context) {
         old.imageSize == item.imageSize && old.imageCrc == item.imageCrc
 
     private fun safeEntryName(name: String): String {
-        val normalized = name.replace('\\', '/')
+        val normalized = name.replace('\\', '/').removeSuffix("/")
         require(normalized.isNotBlank() && !normalized.startsWith('/') &&
+            normalized.length <= 4096 && normalized.split('/').none(String::isEmpty) &&
             !normalized.contains(':') && !normalized.contains('\u0000') &&
             normalized.split('/').none { it == ".." || it == "." }) { "Unsafe ZIP entry path" }
         return normalized
@@ -388,6 +392,8 @@ class RomLibrary(private val context: Context) {
     companion object {
         private const val MAX_DEPTH = 24
         private const val MAX_DOCUMENTS = 50_000
+        private const val MAX_ZIP_ENTRIES = 50_000
+        private const val MAX_ZIP_IMAGES = 1_000
         private const val MAX_IMAGE_BYTES = 4L * 1024 * 1024 * 1024
         private const val MAX_ARCHIVE_BYTES = 8L * 1024 * 1024 * 1024
         private const val MAX_EXPANSION_RATIO = 1000L
