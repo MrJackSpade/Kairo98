@@ -1,5 +1,11 @@
 ﻿# Compatibility evidence
 
+## Library actions drawer, 23 September 2026
+
+The Retroid library now shows the Kairo98 name, a black-backed hamburger at the top right, and the game list without a permanent folder or scan-status strip. The right drawer contains Select ROM folder, Refresh, and Rehash, with folder and scan details inside it. A scan indicator appears in the header while work is in progress; empty-library guidance occupies the list area. [Collapsed library](evidence/library-retroid-clean-header.png) · [Right drawer](evidence/library-retroid-right-drawer.png).
+
+On device, Refresh returned four games with zero hashes; Rehash checked all four. Select ROM folder opened Android's document picker and cancellation preserved the prior folder. Menu/D-pad/A activated Refresh from the flyout, Back and B closed it, and a short tap still launched Farland Story before returning to the library. Debug APK and release AAB built offline.
+
 ## Current library completion on Retroid, 23 September 2026
 
 Core revision `50d406d` plus debug-only test instrumentation built with `:app:assembleDebug --offline` on a Retroid Pocket Classic (Android 14 / API 34, arm64-v8a). The test tree remained `Documents/Kairo98Test`. The second image came from the user-provided translation share and was copied only to ignored `.downloads/` and the device test folder; no HDI or ZIP is committed. The temporary grant-revocation activity was removed after this test.

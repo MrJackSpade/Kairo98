@@ -512,6 +512,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
     private fun showLibrary() {
         commandCancelled.set(true)
         releaseInputs()
+        libraryScreen.closeActions()
         libraryVisible = true
         closeMenu()
         libraryScreen.visibility = View.VISIBLE
@@ -1029,6 +1030,20 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
     override fun dispatchKeyEvent(event: KeyEvent): Boolean {
         if (::controllerEditor.isInitialized && controllerEditor.captureKey(event)) return true
         if (libraryVisible) {
+            if (libraryScreen.actionsOpen) {
+                if (event.action == KeyEvent.ACTION_DOWN) {
+                    when (event.keyCode) {
+                        KeyEvent.KEYCODE_DPAD_DOWN -> libraryScreen.moveActionSelection(1)
+                        KeyEvent.KEYCODE_DPAD_UP -> libraryScreen.moveActionSelection(-1)
+                        KeyEvent.KEYCODE_BUTTON_A, KeyEvent.KEYCODE_ENTER ->
+                            if (event.repeatCount == 0) libraryScreen.activateAction()
+                        KeyEvent.KEYCODE_BUTTON_B, KeyEvent.KEYCODE_ESCAPE,
+                        KeyEvent.KEYCODE_BACK, KeyEvent.KEYCODE_MENU,
+                        KeyEvent.KEYCODE_BUTTON_MODE -> libraryScreen.closeActions()
+                    }
+                }
+                return true
+            }
             if (event.action == KeyEvent.ACTION_DOWN) {
                 when (event.keyCode) {
                     KeyEvent.KEYCODE_DPAD_DOWN -> libraryScreen.moveSelection(1)
@@ -1036,11 +1051,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
                     KeyEvent.KEYCODE_BUTTON_A, KeyEvent.KEYCODE_ENTER ->
                         if (event.repeatCount == 0) libraryScreen.activateSelection()
                     KeyEvent.KEYCODE_MENU, KeyEvent.KEYCODE_BUTTON_MODE ->
-                        if (currentDisk != null) {
-                            libraryVisible = false
-                            libraryScreen.visibility = View.GONE
-                            openMenu()
-                        }
+                        if (event.repeatCount == 0) libraryScreen.openActions()
                     else -> return super.dispatchKeyEvent(event)
                 }
             }
@@ -1126,6 +1137,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
     @Deprecated("The platform Back callback is the reliable menu shortcut on API 26+")
     override fun onBackPressed() {
         if (libraryVisible) {
+            if (libraryScreen.closeActions()) return
             if (currentDisk != null) {
                 libraryVisible = false
                 libraryScreen.visibility = View.GONE
