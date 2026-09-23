@@ -77,9 +77,16 @@ def import_art(source_path, assets_root):
                           | {"asset": asset_path, "assetSha256": digest})
     for prefix, shard in shards.items():
         (catalog / "shards" / f"{prefix}.json").write_bytes(compact(shard))
+    packaged_bytes = sum(path.stat().st_size for path in art_dir.glob("*.webp"))
+    coverage = {"catalogGames": catalog_manifest["games"],
+                "gamesWithArt": len({game_id for game_id, _ in by_game}),
+                "boxArt": sum(kind == "boxArt" for _, kind in by_game),
+                "previews": sum(kind == "preview" for _, kind in by_game),
+                "packagedImageBytes": packaged_bytes}
     (art_dir / "provenance-v1.json").write_bytes(compact({"schemaVersion": 1,
+        "coverage": coverage,
         "assets": sorted(provenance, key=lambda x: (x["contentId"], x["kind"]))}))
-    return len(by_game), sum(path.stat().st_size for path in art_dir.glob("*.webp"))
+    return coverage
 
 
 def main():
@@ -87,8 +94,10 @@ def main():
     parser.add_argument("source", type=Path)
     parser.add_argument("assets", type=Path, help="Android assets root with generated catalog")
     args = parser.parse_args()
-    count, size = import_art(args.source, args.assets)
-    print(f"{count} approved art references, {size} packaged image bytes")
+    coverage = import_art(args.source, args.assets)
+    print(f"{coverage['gamesWithArt']}/{coverage['catalogGames']} catalog games with art, "
+          f"{coverage['boxArt']} box images, {coverage['previews']} previews, "
+          f"{coverage['packagedImageBytes']} packaged image bytes")
 
 
 if __name__ == "__main__":

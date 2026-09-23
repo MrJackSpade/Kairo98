@@ -13,6 +13,7 @@ import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.ListView
 import android.widget.TextView
+import java.util.concurrent.Executors
 
 /** Library landing page. A short tap or A activates the selected game. */
 class LibraryScreen(
@@ -30,6 +31,9 @@ class LibraryScreen(
     private val artCache = object : LruCache<String, Bitmap>(8 * 1024 * 1024) {
         override fun sizeOf(key: String, value: Bitmap) = value.byteCount
     }
+    private val artExecutor = Executors.newSingleThreadExecutor()
+    private val pendingArt = HashSet<String>()
+    private val missingArt = HashSet<String>()
     private var entries = emptyList<LibraryEntry>()
     private var selectedIndex = 0
 
@@ -196,13 +200,27 @@ class LibraryScreen(
 
     private fun loadArt(path: String): Bitmap? {
         artCache.get(path)?.let { return it }
-        return try {
-            context.assets.open(path).use { stream ->
-                BitmapFactory.decodeStream(stream, null, BitmapFactory.Options().apply {
-                    inSampleSize = 4
-                })?.also { artCache.put(path, it) }
+        if (path in missingArt || !pendingArt.add(path)) return null
+        artExecutor.execute {
+            val bitmap = try {
+                context.assets.open(path).use { stream ->
+                    BitmapFactory.decodeStream(stream, null, BitmapFactory.Options().apply {
+                        inSampleSize = 4
+                    })
+                }
+            } catch (_: Exception) { null }
+            post {
+                pendingArt.remove(path)
+                if (bitmap == null) missingArt.add(path) else artCache.put(path, bitmap)
+                adapter.notifyDataSetChanged()
             }
-        } catch (_: Exception) { null }
+        }
+        return null
+    }
+
+    override fun onDetachedFromWindow() {
+        artExecutor.shutdownNow()
+        super.onDetachedFromWindow()
     }
 
     private fun dp(value: Int) = (value * resources.displayMetrics.density).toInt()
