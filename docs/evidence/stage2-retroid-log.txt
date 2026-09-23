@@ -1,0 +1,16 @@
+﻿Stage 2 Retroid Pocket Classic device log
+Date: 2026-09-22
+Android: 14 / API 34
+ABI: arm64-v8a
+App process PID at capture: 11384
+Implementation source revision: 71f9686
+Debug APK SHA-256: 6fe08d5b653e78a8ac181af758f24489b54f8a617e9511799a01f49da4cfcda9
+Disk image: user-supplied HDI, private app copy (not included)
+
+Final run: read-only HDI booted to A:\NS> in about 10 seconds. Native status showed Running, 590 frames, audio on 5/846. Stop showed Stopped, 623 frames, audio off 5/894. The private HDI SHA-256 after Stop matched the original: 455d6639f0d3e9e5e72bfe7e89bd82026bdb64ae314a4d077a2cd1e3ed7ff766.
+
+adb logcat -d --pid=11384 -v time -t 1000:
+--------- beginning of main
+09-22 23:19:53.781 E/OpenGLRenderer(11384): Unable to match the desired swap behavior.
+
+No AndroidRuntime or native fatal signal appeared in that app-process capture. The app did not emit core debug logs; the on-screen native status and screenshot are the boot evidence.

@@ -12,7 +12,7 @@ The Stage 2 debug APK booted a user-supplied *Night Slave* English translation H
 | Worker lifecycle | Repeated Start/Stop, Pause/Resume, Reset, and queued 2/2.5 MHz configuration changes completed on the device. The frame counter held steady while paused and advanced after resume. Returning to 2.5 MHz rebooted to the DOS prompt. |
 | Disk | The app imported the HDI through the Android document picker, mounted and read it through the native SASI code, and closed it. With the private image set read-only (`chmod 444`), boot and Stop succeeded after the read-only flush fix. The private image's SHA-256 after testing remained `455d6639f0d3e9e5e72bfe7e89bd82026bdb64ae314a4d077a2cd1e3ed7ff766`, matching the original. Writable disk persistence has not been exercised. |
 
-The debug APK was built with `:app:assembleDebug --offline` from the Stage 2 source changes documented in [the build manifest](build-manifest.md). No Android runtime or native crash appeared during these checks. This is an initial boot result, not a game compatibility or release claim. The game's README calls for the 2.5 MHz GDC setting and warns against save states; Kairo98 does not expose save states.
+The debug APK was built with `:app:assembleDebug --offline` from implementation revision `71f9686`, as documented in [the build manifest](build-manifest.md). [Device log](evidence/stage2-retroid-log.txt). No Android runtime or native crash appeared during these checks. This is an initial boot result, not a game compatibility or release claim. The game's README calls for the 2.5 MHz GDC setting and warns against save states; Kairo98 does not expose save states.
 
 ## 21/W reference comparison
 
