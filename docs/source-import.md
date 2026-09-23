@@ -14,12 +14,17 @@ Preliminary checks found no `sound/fmgen/`, `sound/mame/`, `fpemul_dosbox.c`, or
 
 A pinned [ymfm](https://github.com/aaronsgiles/ymfm) source snapshot is in `third_party/ymfm/`. Its root `.gitignore` was omitted; the `LICENSE` file, source, and examples are preserved. The adapter code will remain separate so register, timer, mixing, and sample handling can be tested against known PC-98 games.
 
+## Spleen bitmap font
+
+The ASCII ANK glyphs use [Spleen 8x16](https://github.com/fcambus/spleen), pinned to commit `57f9219328c9f5873085320fe8bc8f7dd34b8791`. The source BDF and BSD-2-Clause license are preserved in `third_party/spleen/`. `generate_ascii.py` produces the 95 printable ASCII glyphs in `spleen_ascii_8x16.h`; the Android build compiles that table. Japanese glyphs are generated at runtime from the device's installed fonts and are not included in the repository or APK.
+
 ## Provenance record
 
 | Component | Source version | SHA-256 or commit | License review | Imported |
 | --- | --- | --- | --- | --- |
 | 21/W BSD-only source | rev104 | Outer ZIP SHA-256 `0630a6f7bc794e9e8a96a090b1a80434f912b6f0c14f744e07e7932e26d0d3fb`; nested source ZIP SHA-256 `5ef56e04c8304b5af527072b3ca356ecd865e11fb293da5eea6a9962b2d491ab` | Preliminary source check; binary audit pending | Yes, 2026-09-22 |
 | ymfm | `81aec25ccbb98f4873a255f7551ac4dadac59b4a` | ZIP SHA-256 `5be43559f608e53008b6ab742bcb11acfa1f97fc0e24d42e6b36745e49f94f7a` | BSD-3-Clause license included; binary audit pending | Yes, 2026-09-22 |
+| Spleen 8x16 | `57f9219328c9f5873085320fe8bc8f7dd34b8791` | BDF SHA-256 `b38b32a66920068965a3101f98071d310c5c74659fe86e55d346140770f8f6e8` | BSD-2-Clause license included; binary notice packaging pending | Yes, 2026-09-23 |
 
 21/W archive: <https://drive.google.com/file/d/14_byhfNHKf06-nmC60svoGRehaMniL4D/view?usp=drive_link>. ymfm archive: <https://github.com/aaronsgiles/ymfm/archive/81aec25ccbb98f4873a255f7551ac4dadac59b4a.zip>.
 

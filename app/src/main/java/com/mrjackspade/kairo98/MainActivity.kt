@@ -33,9 +33,11 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
     private val handler = Handler(Looper.getMainLooper())
     private var paused = false
     private var clock = 25
+    @Volatile private var preparingFont = false
+    @Volatile private var startGeneration = 0
     private val updateStatus = object : Runnable {
         override fun run() {
-            status.text = nativeStatus()
+            if (!preparingFont) status.text = nativeStatus()
             handler.postDelayed(this, 500)
         }
     }
@@ -61,7 +63,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
             setOnClickListener {
                 val disk = File(filesDir, DISK_NAME)
                 if (disk.isFile) {
-                    if (!nativeStart(disk.absolutePath, clock)) status.text = "Stop the current machine before starting again"
+                    startWithFont(disk, "Starting machine")
                 } else {
                     status.text = "Choose an HDI first"
                 }
@@ -89,7 +91,10 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
         }
         val stopButton = Button(this).apply {
             text = "Stop"
-            setOnClickListener { Thread { nativeStop() }.start() }
+            setOnClickListener {
+                startGeneration++
+                Thread { nativeStop() }.start()
+            }
         }
         val row = LinearLayout(this).apply {
             orientation = LinearLayout.HORIZONTAL
@@ -130,6 +135,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
     }
 
     override fun onDestroy() {
+        startGeneration++
         handler.removeCallbacks(updateStatus)
         nativeSetSurface(null)
         Thread { nativeStop() }.start()
@@ -148,6 +154,8 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
             return
         }
         status.text = "Importing HDI into app storage"
+        val generation = ++startGeneration
+        preparingFont = true
         Thread {
             val disk = File(filesDir, DISK_NAME)
             val partial = File(filesDir, "$DISK_NAME.part")
@@ -158,13 +166,32 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
                     partial.outputStream().use { output -> input.copyTo(output) }
                 }
                 Files.move(partial.toPath(), disk.toPath(), StandardCopyOption.REPLACE_EXISTING)
-                if (nativeStart(disk.absolutePath, clock)) "Starting $name" else "Unable to start machine"
+                Pc98FontCache.ensure(filesDir)
+                if (generation != startGeneration) "Start cancelled"
+                else if (nativeStart(disk.absolutePath, clock)) "Starting $name" else "Unable to start machine"
             } catch (error: Exception) {
                 "HDI import failed: ${error.message}"
             } finally {
                 partial.delete()
             }
-            runOnUiThread { status.text = result }
+            runOnUiThread { preparingFont = false; status.text = result }
+        }.start()
+    }
+
+    private fun startWithFont(disk: File, message: String) {
+        if (preparingFont) return
+        val generation = ++startGeneration
+        preparingFont = true
+        status.text = "Preparing PC-98 font"
+        Thread {
+            val result = try {
+                Pc98FontCache.ensure(filesDir)
+                if (generation != startGeneration) "Start cancelled"
+                else if (nativeStart(disk.absolutePath, clock)) message else "Stop the current machine before starting again"
+            } catch (error: Exception) {
+                "PC-98 font generation failed: ${error.message}"
+            }
+            runOnUiThread { preparingFont = false; status.text = result }
         }.start()
     }
 

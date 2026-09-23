@@ -6,6 +6,8 @@
 #include "dosio.h"
 #include <string.h>
 
+int kairo98_font_overlay_load(const char *path);
+
 int kairo98_machine_start(const char *image, int mhz_times_ten) {
     size_t length = image ? strlen(image) : 0;
     if (length >= sizeof(np2cfg.sasihdd[0])) {
@@ -16,8 +18,14 @@ int kairo98_machine_start(const char *image, int mhz_times_ten) {
     np2cfg.sasihdd[0][0] = '\0';
     if (length) {
         memcpy(np2cfg.sasihdd[0], image, length + 1);
+        file_setcd(image);
     }
     pccore_init();
+    if (kairo98_font_overlay_load(file_getcd("android-font.bin")) != 0) {
+        pccore_term();
+        np2cfg.sasihdd[0][0] = '\0';
+        return 4;
+    }
     pccore_reset();
     if (length) {
         SXSIDEV drive = sxsi_getptr(0);

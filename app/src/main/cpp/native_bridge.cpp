@@ -80,7 +80,8 @@ void run_machine(std::string image, int mhz_times_ten) {
     int start_result = kairo98_machine_start(image.c_str(), mhz_times_ten);
     if (start_result != 0) {
         report_state("Error", start_result == 2 ? "HDI did not mount" :
-                              start_result == 3 ? "Invalid clock setting" : "HDI path is too long");
+                              start_result == 3 ? "Invalid clock setting" :
+                              start_result == 4 ? "PC-98 font cache missing or invalid" : "HDI path is too long");
         std::lock_guard<std::mutex> guard(command_mutex);
         active = false;
         return;

@@ -8,6 +8,8 @@ The [21/W maintainer's license table](https://simk98.github.io/np21w/download.ht
 
 [ymfm](https://github.com/aaronsgiles/ymfm) identifies its sound cores as BSD-3-Clause. Its `LICENSE` notice is present in `third_party/ymfm/`, pinned to the commit recorded in [source import](source-import.md).
 
+The compiled ASCII bitmap glyphs come from [Spleen 8x16](https://github.com/fcambus/spleen), BSD-2-Clause. Its source BDF, generator, and copyright/license notice are in `third_party/spleen/`. Both GitHub and Play binary packages must reproduce the BSD-2-Clause notice in their documentation or other distributed materials.
+
 The project's own source license has not been selected. The public GitHub distribution and paid Play distribution must include the same license notices for shared code and dependencies.
 
 ## Firmware and game data
