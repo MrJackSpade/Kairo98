@@ -24,6 +24,7 @@ class ControllerEditor(
 ) {
     private var captureDialog: AlertDialog? = null
     private var captureScope: LibraryEntry? = null
+    private val captureBaseline = HashMap<Pair<Int, Int>, Float>()
 
     fun show(scope: LibraryEntry?) {
         val bindings = load(scope)
@@ -78,7 +79,14 @@ class ControllerEditor(
             MotionEvent.AXIS_LTRIGGER, MotionEvent.AXIS_RTRIGGER)
         for (axis in axes) {
             val value = event.getAxisValue(axis)
-            if (abs(value) < 0.75f) continue
+            val key = event.deviceId to axis
+            val baseline = captureBaseline.putIfAbsent(key, value)
+            if (baseline == null) continue
+            if (abs(value) < 0.5f) {
+                captureBaseline[key] = value
+                continue
+            }
+            if (abs(value) < 0.75f || abs(value - baseline) < 0.75f) continue
             val scope = captureScope
             captureDialog = null
             dialog.dismiss()
@@ -91,8 +99,9 @@ class ControllerEditor(
     }
 
     private fun capture(scope: LibraryEntry?) {
+        captureBaseline.clear()
         val dialog = AlertDialog.Builder(activity).setTitle("Press a controller control")
-            .setMessage("Press a button or move a stick or D-pad. You can also enter its code manually.")
+            .setMessage("Release controls, then press a button or move a stick or D-pad. You can also enter its code manually.")
             .setNeutralButton("Enter code") { _, _ ->
                 captureDialog = null
                 manualInput(scope)
