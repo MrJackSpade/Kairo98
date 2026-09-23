@@ -44,10 +44,24 @@ class ArtImportTests(unittest.TestCase):
             self.assertTrue((self.assets / item["asset"]).is_file())
 
     def test_missing_paid_redistribution_permission_is_rejected(self):
-        self.art_source["assets"][0]["freeAndPaidRedistribution"] = False
+        self.art_source["assets"][1]["freeAndPaidRedistribution"] = False
         self.save_manifest()
         with self.assertRaisesRegex(ValueError, "permission"):
             import_art(self.manifest_path, self.assets)
+        self.assertFalse((self.assets / "art/provenance-v1.json").exists())
+        self.assertFalse(list((self.assets / "art").glob("*.webp")))
+        shard = json.loads((self.assets / "catalog/shards/00.json").read_text(encoding="utf-8"))
+        self.assertNotIn("artwork", next(iter(shard["games"].values())))
+
+    def test_revoked_asset_is_removed_with_its_reference(self):
+        import_art(self.manifest_path, self.assets)
+        self.art_source["assets"] = []
+        self.save_manifest()
+        coverage = import_art(self.manifest_path, self.assets)
+        self.assertEqual(coverage["gamesWithArt"], 0)
+        self.assertFalse(list((self.assets / "art").glob("*.webp")))
+        shard = json.loads((self.assets / "catalog/shards/00.json").read_text(encoding="utf-8"))
+        self.assertNotIn("artwork", next(iter(shard["games"].values())))
 
 
 if __name__ == "__main__":

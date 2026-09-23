@@ -133,6 +133,9 @@ def main():
     shard_dir.mkdir(parents=True, exist_ok=True)
     for prefix, games in shards.items():
         (shard_dir / f"{prefix}.json").write_bytes(compact({"schemaVersion": 1, "games": games}))
+    for previous in shard_dir.glob("*.json"):
+        if re.fullmatch(r"[0-9a-f]{2}\.json", previous.name) and previous.stem not in shards:
+            previous.unlink()
     (args.output / "manifest-v1.json").write_bytes(compact(manifest))
     digest = hashlib.sha256(compact(manifest) + b"".join(
         compact({"schemaVersion": 1, "games": shards[name]}) for name in sorted(shards))).hexdigest()

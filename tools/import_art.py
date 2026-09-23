@@ -5,6 +5,7 @@ import argparse
 import hashlib
 import json
 from pathlib import Path
+from tempfile import TemporaryDirectory
 
 from PIL import Image, UnidentifiedImageError
 
@@ -16,8 +17,14 @@ MAX_OUTPUT_BYTES = 2 * 1024 * 1024
 
 
 def import_art(source_path, assets_root):
-    source_path = source_path.resolve()
     assets_root = assets_root.resolve()
+    assets_root.mkdir(parents=True, exist_ok=True)
+    with TemporaryDirectory(prefix=".art-import-", dir=assets_root) as temporary:
+        return _import_art(source_path, assets_root, Path(temporary))
+
+
+def _import_art(source_path, assets_root, staging):
+    source_path = source_path.resolve()
     source = json.loads(source_path.read_text(encoding="utf-8"))
     require(source.get("schemaVersion") == 1 and isinstance(source.get("assets"), list),
             "unsupported art manifest")
@@ -28,7 +35,30 @@ def import_art(source_path, assets_root):
     provenance = []
     by_game = {}
     art_dir = assets_root / "art"
-    art_dir.mkdir(parents=True, exist_ok=True)
+    previous_manifest = art_dir / "provenance-v1.json"
+    if previous_manifest.is_file():
+        previous = json.loads(previous_manifest.read_text(encoding="utf-8"))
+        require(previous.get("schemaVersion") == 1 and isinstance(previous.get("assets"), list),
+                "unsupported previous art provenance")
+        for old in previous["assets"]:
+            require(isinstance(old, dict) and isinstance(old.get("contentId"), str) and
+                    CONTENT_ID.fullmatch(old["contentId"]) and old.get("kind") in ("boxArt", "preview") and
+                    isinstance(old.get("asset"), str) and old["asset"].startswith("art/"),
+                    "invalid previous art provenance")
+            prefix = old["contentId"].split(":", 1)[1][:2]
+            if prefix not in catalog_manifest["shards"]:
+                continue
+            if prefix not in shards:
+                shards[prefix] = json.loads((catalog / "shards" / f"{prefix}.json").read_text(encoding="utf-8"))
+            game = shards[prefix]["games"].get(old["contentId"])
+            if isinstance(game, dict):
+                artwork = game.get("artwork", {})
+                if artwork.get(old["kind"]) == old["asset"]:
+                    del artwork[old["kind"]]
+                    if not artwork:
+                        game.pop("artwork", None)
+    elif art_dir.is_dir():
+        require(not any(art_dir.glob("*.webp")), "existing art has no provenance; review before import")
     for record in source["assets"]:
         require(isinstance(record, dict), "art record must be an object")
         content_id = record.get("contentId")
@@ -69,23 +99,36 @@ def import_art(source_path, assets_root):
         require(len(encoded) <= MAX_OUTPUT_BYTES, "compressed art too large")
         digest = hashlib.sha256(encoded).hexdigest()
         asset_path = f"art/{digest}.webp"
-        (art_dir / f"{digest}.webp").write_bytes(encoded)
+        (staging / f"{digest}.webp").write_bytes(encoded)
         game.setdefault("artwork", {})[kind] = asset_path
         by_game[content_id, kind] = asset_path
         provenance.append({key: record[key] for key in
                            ("contentId", "kind", "creator", "source", "license", "permissionEvidence", "sha256")}
                           | {"asset": asset_path, "assetSha256": digest})
+    staged_shards = staging / "shards"
+    staged_shards.mkdir()
     for prefix, shard in shards.items():
-        (catalog / "shards" / f"{prefix}.json").write_bytes(compact(shard))
-    packaged_bytes = sum(path.stat().st_size for path in art_dir.glob("*.webp"))
+        (staged_shards / f"{prefix}.json").write_bytes(compact(shard))
+    packaged_bytes = sum(path.stat().st_size for path in staging.glob("*.webp"))
     coverage = {"catalogGames": catalog_manifest["games"],
                 "gamesWithArt": len({game_id for game_id, _ in by_game}),
                 "boxArt": sum(kind == "boxArt" for _, kind in by_game),
                 "previews": sum(kind == "preview" for _, kind in by_game),
                 "packagedImageBytes": packaged_bytes}
-    (art_dir / "provenance-v1.json").write_bytes(compact({"schemaVersion": 1,
+    staged_provenance = staging / "provenance-v1.json"
+    staged_provenance.write_bytes(compact({"schemaVersion": 1,
         "coverage": coverage,
         "assets": sorted(provenance, key=lambda x: (x["contentId"], x["kind"]))}))
+    art_dir.mkdir(parents=True, exist_ok=True)
+    for staged_image in staging.glob("*.webp"):
+        staged_image.replace(art_dir / staged_image.name)
+    for staged_shard in staged_shards.glob("*.json"):
+        staged_shard.replace(catalog / "shards" / staged_shard.name)
+    staged_provenance.replace(art_dir / "provenance-v1.json")
+    approved = {Path(path).name for path in by_game.values()}
+    for previous_image in art_dir.glob("*.webp"):
+        if previous_image.name not in approved:
+            previous_image.unlink()
     return coverage
 
 

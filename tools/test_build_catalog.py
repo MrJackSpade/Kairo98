@@ -1,4 +1,6 @@
 import json
+import subprocess
+import sys
 import tempfile
 import unittest
 from pathlib import Path
@@ -64,6 +66,22 @@ class CatalogBuildTests(unittest.TestCase):
         for media in ([{"role": "boot", "contentId": 7}], [{"contentId": record["contentIds"][0]}]):
             with self.subTest(media=media), self.assertRaisesRegex(ValueError, "invalid media"):
                 validate_record({**record, "media": media})
+
+    def test_removed_hash_prunes_generated_shard(self):
+        original = self.source["datasets"][0]["games"][0]
+        extra = {**original, "contentIds": ["sha256-hdi-v1:" + "f" * 64], "title": "Extra"}
+        with tempfile.TemporaryDirectory() as temporary:
+            source = Path(temporary) / "source.json"
+            output = Path(temporary) / "catalog"
+            self.source["datasets"][0]["games"] = [original, extra]
+            source.write_bytes(compact(self.source))
+            command = [sys.executable, "tools/build_catalog.py", str(source), str(output)]
+            subprocess.run(command, check=True, capture_output=True)
+            self.assertTrue((output / "shards/ff.json").exists())
+            self.source["datasets"][0]["games"] = [original]
+            source.write_bytes(compact(self.source))
+            subprocess.run(command, check=True, capture_output=True)
+            self.assertFalse((output / "shards/ff.json").exists())
 
 
 if __name__ == "__main__":
