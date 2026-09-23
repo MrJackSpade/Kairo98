@@ -1,0 +1,27 @@
+# Android / Gradle
+.gradle/
+.idea/
+build/
+**/build/
+local.properties
+*.iml
+*.apk
+*.aab
+
+# Native build output
+.cxx/
+cmake-build-*/
+out/
+
+# Local data and firmware
+roms/
+bios/
+*.hdi
+*.d88
+*.fdi
+*.nhd
+*.rom
+
+# OS and editor files
+.DS_Store
+Thumbs.db
