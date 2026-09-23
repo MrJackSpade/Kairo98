@@ -17,6 +17,7 @@ Pinned 21/W and ymfm source snapshots have been imported. Android application co
 
 ## Documentation
 
+- [Migration plan](docs/migration-plan.md)
 - [Architecture](docs/architecture.md)
 - [Source import](docs/source-import.md)
 - [Licensing](docs/licensing.md)

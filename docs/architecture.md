@@ -32,4 +32,4 @@ The flyout keyboard is optional and can be hidden during play. It must expose PC
 
 The exported launch activity will accept a game URI or path from Android frontends. Android's storage permissions require resolving or importing the image before the native core opens it. Disk changes must work after launch for multi-disk games. User-supplied firmware stays outside the distributed app.
 
-The exact intent contract and package ID will be fixed when the product name and Android project are created. LaunchBox documents its custom emulator intent format: <https://feedback.launchbox-app.com/en/help/articles/7096169-custom-emulator-with-code>.
+The exact intent contract and package ID will be fixed when the Android project is created. LaunchBox documents its custom emulator intent format: <https://feedback.launchbox-app.com/en/help/articles/7096169-custom-emulator-with-code>. See [migration plan](migration-plan.md) for the sequence and verification gates.
