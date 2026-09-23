@@ -34,7 +34,9 @@ extern	void		*g_mame_opl3[OPL3_MAX];
 #endif
 extern	_PCM86		g_pcm86;
 extern	_CS4231		cs4231;
+#if defined(SUPPORT_SOUND_SB16)
 extern	SB16		g_sb16;
+#endif
 
 REG8 fmboard_getjoy(POPNA opna);
 

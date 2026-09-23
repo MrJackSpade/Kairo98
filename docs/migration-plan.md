@@ -1,6 +1,6 @@
 # Kairo98 migration plan
 
-Status: planning, 22 September 2026. The imported source has not been built for Android and no Android game has booted yet. This is the execution order and the definition of done for each stage, not a claim of compatibility.
+Status: stage 1 native build gate reached on 22 September 2026; [build and device evidence](build-manifest.md). No Android game has booted yet. This is the execution order and the definition of done for each stage, not a claim of compatibility.
 
 ## Product target
 

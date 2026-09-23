@@ -170,7 +170,7 @@ static void IOOUTCALL prt_o142(UINT port, REG8 dat) {
 		COMMNG	prt;
 		prt = cm_prt;
 		if (prt != NULL) {
-			prt->msg(prt, COMMSG_REOPEN, NULL);
+			prt->msg(prt, COMMSG_REOPEN, (INTPTR)0);
 		}
 	}
 
@@ -355,7 +355,7 @@ void printif_finalize(void) {
 void printif_finishjob(void) {
 
 	if (cm_prt) {
-		cm_prt->msg(cm_prt, COMMSG_REOPEN, NULL);
+		cm_prt->msg(cm_prt, COMMSG_REOPEN, (INTPTR)0);
 	}
 }
 

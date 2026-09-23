@@ -305,7 +305,12 @@ short file_setdatetime(FILEH handle, const DOSDATE *dosdate, const DOSTIME *dost
 	tv[0].tv_usec = 0;
 	tv[1].tv_sec = mtime;
 	tv[1].tv_usec = 0;
-	return (futimes(fileno(handle), tv) == 0) ? 0 : -1;
+	#if defined(__ANDROID__)
+    struct timespec times[2] = {{tv[0].tv_sec, 0}, {tv[1].tv_sec, 0}};
+    return (futimens(fileno(handle), times) == 0) ? 0 : -1;
+#else
+    return (futimes(fileno(handle), tv) == 0) ? 0 : -1;
+#endif
 #endif
 }
 

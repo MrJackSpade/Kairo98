@@ -13,11 +13,13 @@ Kairo98 is a standalone Android PC-98 emulator in development.
 
 ## Current status
 
-Pinned 21/W and ymfm source snapshots have been imported. Android application code and a working native build do not exist yet. No APK exists.
+Pinned 21/W and ymfm source snapshots have been imported. A stage 1 arm64 Android debug APK now builds, and the 21/W core initializes and resets on a Retroid Pocket Classic. It has not booted a disk; video output, audio output, media access, controller mapping, and ymfm integration are still in progress.
 
 ## Documentation
 
 - [Migration plan](docs/migration-plan.md)
+- [Native build manifest](docs/build-manifest.md)
+- [Compatibility evidence](docs/compatibility.md)
 - [Architecture](docs/architecture.md)
 - [Source import](docs/source-import.md)
 - [Licensing](docs/licensing.md)
