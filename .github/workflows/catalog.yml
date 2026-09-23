@@ -6,6 +6,7 @@ on:
       - 'tools/test_build_catalog.py'
       - 'tools/import_art.py'
       - 'tools/test_import_art.py'
+      - 'tools/make_synthetic_catalog.py'
       - 'docs/fixtures/catalog/**'
       - 'docs/fixtures/art-source/**'
       - 'app/src/main/assets/art/**'
@@ -17,6 +18,7 @@ on:
       - 'tools/test_build_catalog.py'
       - 'tools/import_art.py'
       - 'tools/test_import_art.py'
+      - 'tools/make_synthetic_catalog.py'
       - 'docs/fixtures/catalog/**'
       - 'docs/fixtures/art-source/**'
       - 'app/src/main/assets/art/**'
@@ -35,6 +37,9 @@ jobs:
       - run: python tools/build_catalog.py docs/fixtures/catalog/source-v1.json /tmp/kairo98-catalog
       - run: python tools/build_catalog.py docs/fixtures/catalog/source-v1.json /tmp/kairo98-catalog-2
       - run: diff -r /tmp/kairo98-catalog /tmp/kairo98-catalog-2
+      - run: python tools/make_synthetic_catalog.py /tmp/kairo98-synthetic-source.json --games 10000
+      - run: python tools/build_catalog.py /tmp/kairo98-synthetic-source.json /tmp/kairo98-large-catalog
+      - run: du -sh /tmp/kairo98-large-catalog
       - run: python tools/build_catalog.py docs/fixtures/catalog/source-v1.json /tmp/kairo98-assets/catalog
       - run: python tools/import_art.py docs/fixtures/art-source/source-v1.json /tmp/kairo98-assets
       - run: python tools/build_catalog.py docs/fixtures/catalog/source-v1.json /tmp/kairo98-assets-2/catalog
