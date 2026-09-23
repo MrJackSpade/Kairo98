@@ -13,6 +13,7 @@
 #endif
 #else
 #include <dirent.h>
+#include <fcntl.h>
 #include <unistd.h>
 #include <sys/time.h>
 #endif
@@ -135,6 +136,13 @@ FILELEN file_getsize(FILEH handle) {
 }
 
 short file_sync(FILEH handle) {
+#if defined(__ANDROID__)
+	int flags = fcntl(fileno(handle), F_GETFL);
+	if (flags < 0)
+		return -1;
+	if ((flags & O_ACCMODE) == O_RDONLY)
+		return 0;
+#endif
 	if (fflush(handle) != 0)
 		return -1;
 #if defined(WIN32)

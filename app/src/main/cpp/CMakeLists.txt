@@ -17,6 +17,7 @@ add_library(np21w_core OBJECT
     android_host/np2sysp.c
     android_host/platform.c
     android_host/core_probe.c
+    android_host/machine.c
 )
 target_include_directories(np21w_core PRIVATE
     android_host
@@ -37,4 +38,4 @@ target_compile_options(np21w_core PRIVATE -fsigned-char -fno-strict-aliasing)
 
 add_library(kairo98 SHARED native_bridge.cpp $<TARGET_OBJECTS:np21w_core>)
 target_compile_features(kairo98 PRIVATE cxx_std_17)
-target_link_libraries(kairo98 PRIVATE log)
+target_link_libraries(kairo98 PRIVATE log android aaudio)

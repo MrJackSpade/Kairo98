@@ -6,6 +6,7 @@
 #include "mousemng.h"
 #include "scrnmng.h"
 #include "statsave.h"
+#include "sound/sound.h"
 
 NP2OSCFG np2oscfg = {0};
 
@@ -81,6 +82,8 @@ static SCRNSURF frame = {
     0
 };
 
+const UINT16 *kairo98_frame_pixels(void) { return frame_pixels; }
+
 void scrnmng_setwidth(int x, int width) {
     (void)x;
     frame.width = width > 0 && width <= 640 ? width : 640;
@@ -97,14 +100,38 @@ RGB16 scrnmng_makepal16(RGB32 color) {
                    (color.p.b >> 3));
 }
 
+static UINT audio_buffer_frames;
+
 UINT soundmng_create(UINT rate, UINT ms) {
     (void)rate;
     (void)ms;
-    return 0;
+    audio_buffer_frames = 512;
+    return audio_buffer_frames;
 }
-void soundmng_destroy(void) {}
+void soundmng_destroy(void) { audio_buffer_frames = 0; }
 void soundmng_play(void) {}
 void soundmng_stop(void) {}
+
+UINT kairo98_audio_buffer_frames(void) { return audio_buffer_frames; }
+
+int kairo98_fill_audio(SINT16 *destination, UINT frames) {
+    const SINT32 *source;
+    UINT i;
+    if (frames != audio_buffer_frames || frames == 0) return 0;
+    source = sound_pcmlock();
+    if (!source) {
+        ZeroMemory(destination, frames * 2 * sizeof(*destination));
+        return 0;
+    }
+    for (i = 0; i < frames * 2; ++i) {
+        SINT32 sample = source[i];
+        if (sample > 32767) sample = 32767;
+        if (sample < -32768) sample = -32768;
+        destination[i] = (SINT16)sample;
+    }
+    sound_pcmunlock(source);
+    return 1;
+}
 
 int statflag_read(STFLAGH state, void *destination, UINT size) {
     (void)state;

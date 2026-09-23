@@ -1,6 +1,6 @@
-# Kairo98 migration plan
+﻿# Kairo98 migration plan
 
-Status: stage 1 native build gate reached on 22 September 2026; [build and device evidence](build-manifest.md). No Android game has booted yet. This is the execution order and the definition of done for each stage, not a claim of compatibility.
+Status: Stage 1 passed and the Stage 2 Android first boot reached a usable DOS prompt on 22 September 2026; [device evidence](compatibility.md). The 21/W reference comparison and full game run remain open. This is the execution order and the definition of done for each stage, not a release claim.
 
 ## Product target
 
