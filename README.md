@@ -23,7 +23,7 @@ The left flyout contains Continue, Restart, Game library, Choose HDI, Pause/Resu
 
 Open the session flyout with a controller Mode/Home event if Android sends it to the app, Android Back or Menu, or a touchscreen swipe from the left edge. [Android reserves the system Home key](https://developer.android.com/reference/android/view/KeyEvent#KEYCODE_HOME), so that key cannot directly open an app menu. No persistent menu control covers the game. Settings for scaling, base clock, mute, and global input mode persist across launches.
 
-Input Mode defaults to Auto with a Keyboard fallback. On a keyboard screen, tap the emulated display to open the optional PC-98 keyboard. When Auto observes sustained guest mouse reads without keyboard activity, taps become mouse events. Swipe inward from the right edge to open the keyboard in any mode. The session Input mode menu and game details can set Keyboard or Mouse explicitly for a game; user overrides can be reset to catalog defaults. Auto is a heuristic and mixed-input titles may need a per-game choice.
+Input Mode defaults to Auto with a Keyboard fallback. On a keyboard screen, tap the emulated display to open the optional PC-98 keyboard. When Auto observes sustained guest mouse reads without keyboard activity, touch acts as a mouse touchpad: drag to move the guest cursor, tap to click it, or hold then drag for a button drag. Swipe inward from the right edge to open the keyboard in any mode. The session Input mode menu and game details can set Keyboard or Mouse explicitly for a game; user overrides can be reset to catalog defaults. Auto is a heuristic and mixed-input titles may need a per-game choice.
 
 ## Documentation
 

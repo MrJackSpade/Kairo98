@@ -114,11 +114,15 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
     private var globalInputMode = InputModeDecider.Mode.AUTO
     private var mouseTouchActive = false
     private var mouseDragging = false
+    private var mouseMoved = false
     private var mouseTouchStartX = 0f
     private var mouseTouchStartY = 0f
+    private var mouseTouchLastX = 0f
+    private var mouseTouchLastY = 0f
+    private var mouseFractionX = 0f
+    private var mouseFractionY = 0f
+    private var pendingMouseHold: Runnable? = null
     private var pendingMouseRelease: Runnable? = null
-    private var guestMouseX = 320
-    private var guestMouseY = 200
     @Volatile private var preparingFont = false
     @Volatile private var startGeneration = 0
 
@@ -279,7 +283,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
 
         section(content, "SETTINGS")
         menuItem(content, "Graphics", "Scaling and display") { showGraphics() }
-        menuItem(content, "Input mode", "Auto, keyboard, or mouse touch") { showInputMode() }
+        menuItem(content, "Input mode", "Auto, keyboard, or mouse touchpad") { showInputMode() }
         menuItem(content, "Machine", "Base clock") { showMachine() }
         menuItem(content, "Controller", "Gamepad buttons, sticks and hats") { showControllerScope() }
         menuItem(content, "Audio", "Sound output") { showAudio() }
@@ -533,8 +537,6 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
                         currentTitle = game.title
                         currentGame = game
                         inputModeDecider.reset()
-                        guestMouseX = 320
-                        guestMouseY = 200
                         gamepadMapper.bindings = effectiveControllerBindings(game)
                         userPaused = false
                         menuOpen = false
@@ -585,11 +587,16 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
     }
 
     private fun moveGuestMouse(event: MotionEvent) {
-        val x = (event.x * 640 / screen.width).toInt().coerceIn(0, 639)
-        val y = (event.y * 400 / screen.height).toInt().coerceIn(0, 399)
-        nativeMouseMove(x - guestMouseX, y - guestMouseY)
-        guestMouseX = x
-        guestMouseY = y
+        if (screen.width <= 0 || screen.height <= 0) return
+        mouseFractionX += (event.x - mouseTouchLastX) * 640f / screen.width
+        mouseFractionY += (event.y - mouseTouchLastY) * 400f / screen.height
+        mouseTouchLastX = event.x
+        mouseTouchLastY = event.y
+        val dx = mouseFractionX.toInt().coerceIn(-640, 640)
+        val dy = mouseFractionY.toInt().coerceIn(-400, 400)
+        mouseFractionX -= dx
+        mouseFractionY -= dy
+        if (dx != 0 || dy != 0) nativeMouseMove(dx, dy)
     }
 
     private fun handleScreenTouch(event: MotionEvent): Boolean {
@@ -603,24 +610,40 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
                     pendingMouseRelease = null
                     nativeMouseButton(1, false)
                     mouseDragging = false
+                    mouseMoved = false
                     mouseTouchStartX = event.x
                     mouseTouchStartY = event.y
-                    moveGuestMouse(event)
+                    mouseTouchLastX = event.x
+                    mouseTouchLastY = event.y
+                    mouseFractionX = 0f
+                    mouseFractionY = 0f
+                    val hold = Runnable {
+                        if (mouseTouchActive && !mouseMoved) {
+                            mouseDragging = true
+                            nativeMouseButton(1, true)
+                        }
+                        pendingMouseHold = null
+                    }
+                    pendingMouseHold = hold
+                    handler.postDelayed(hold, 500)
                 }
             }
             MotionEvent.ACTION_MOVE -> if (mouseTouchActive) {
-                if (!mouseDragging && (abs(event.x - mouseTouchStartX) > dp(12) ||
+                if (!mouseMoved && (abs(event.x - mouseTouchStartX) > dp(12) ||
                     abs(event.y - mouseTouchStartY) > dp(12))) {
-                    mouseDragging = true
-                    nativeMouseButton(1, true)
+                    mouseMoved = true
+                    pendingMouseHold?.let(handler::removeCallbacks)
+                    pendingMouseHold = null
                 }
                 moveGuestMouse(event)
             }
             MotionEvent.ACTION_UP -> {
                 if (mouseTouchActive) {
+                    pendingMouseHold?.let(handler::removeCallbacks)
+                    pendingMouseHold = null
                     moveGuestMouse(event)
                     if (mouseDragging) nativeMouseButton(1, false)
-                    else {
+                    else if (!mouseMoved) {
                         nativeMouseButton(1, true)
                         val release = Runnable {
                             nativeMouseButton(1, false)
@@ -633,11 +656,15 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
                 } else showKeyboard()
                 mouseTouchActive = false
                 mouseDragging = false
+                mouseMoved = false
             }
             MotionEvent.ACTION_CANCEL -> {
+                pendingMouseHold?.let(handler::removeCallbacks)
+                pendingMouseHold = null
                 if (mouseTouchActive) nativeMouseButton(1, false)
                 mouseTouchActive = false
                 mouseDragging = false
+                mouseMoved = false
             }
         }
         return true
@@ -852,8 +879,6 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
             state.startsWith("Starting")) {
             nativeReset()
             inputModeDecider.reset()
-            guestMouseX = 320
-            guestMouseY = 200
             scheduleGuestCommand(currentGame)
         } else {
             startWithFont(disk, "Starting machine")
@@ -934,7 +959,8 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
             else InputModeDecider.parse(game?.inputMode ?: InputModeDecider.storageValue(globalInputMode)))
         val builder = AlertDialog.Builder(this)
             .setTitle(if (entry == null) "Global input mode" else "Input mode for ${game?.title}")
-            .setSingleChoiceItems(arrayOf("Auto (keyboard fallback)", "Keyboard", "Mouse"), selected) { _, which ->
+            .setSingleChoiceItems(arrayOf("Auto (keyboard fallback)", "Keyboard",
+                "Mouse (drag to move, tap to click)"), selected) { _, which ->
                 selected = which
             }
             .setPositiveButton("Save") { _, _ ->
@@ -981,11 +1007,14 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
     private fun releaseInputs() {
         gamepadMapper.releaseAll()
         inputRouter.releaseAll()
+        pendingMouseHold?.let(handler::removeCallbacks)
+        pendingMouseHold = null
         pendingMouseRelease?.let(handler::removeCallbacks)
         pendingMouseRelease = null
         nativeMouseButton(1, false)
         mouseTouchActive = false
         mouseDragging = false
+        mouseMoved = false
     }
 
     private fun controllerAction(action: String) {
@@ -1172,8 +1201,6 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
                     currentTitle = name
                     currentGame = null
                     inputModeDecider.reset()
-                    guestMouseX = 320
-                    guestMouseY = 200
                     gamepadMapper.bindings = globalControllerBindings()
                     libraryVisible = false
                     libraryScreen.visibility = View.GONE
