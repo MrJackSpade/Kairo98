@@ -134,6 +134,29 @@
     },
     {
       "platform": "pc88",
+      "databaseId": "152499",
+      "title": "AIR",
+      "aliases": [
+        "A.I.R.: Anti-Intruder Rangers"
+      ],
+      "sourceGroups": [
+        "pc88:A.I.R. - Anti-Intruder Rangers (Quasar Soft)"
+      ],
+      "contentIds": [],
+      "description": "Pilot an armed exploration vehicle between planets to recover a lost scout’s information, fighting in overhead battles and upgrading its equipment.",
+      "pageUrl": "https://gamesdb.launchbox-app.com/games/details/102499",
+      "boxArt": {
+        "url": "https://images.launchbox-app.com/bcd90c1d-4baa-4d02-928f-00902f458d16.jpg",
+        "review": "checked"
+      },
+      "screenshot": {
+        "url": "https://images.launchbox-app.com/8578d213-cab7-4a7b-95dc-5ea2317f0d8c.png",
+        "review": "checked"
+      },
+      "notes": "Compared the live page title and platform with the on-disk group. Opened the selected box and gameplay image; redistribution rights remain unconfirmed."
+    },
+    {
+      "platform": "pc88",
       "databaseId": "187777",
       "title": "Albatross",
       "aliases": [],
@@ -501,6 +524,27 @@
     },
     {
       "platform": "pc88",
+      "databaseId": "187828",
+      "title": "Arion",
+      "aliases": [],
+      "sourceGroups": [
+        "pc88:Arion (ASCII)"
+      ],
+      "contentIds": [],
+      "description": "Follow Arion’s conflict with the gods in an illustrated adventure based on the anime of the same name.",
+      "pageUrl": "https://gamesdb.launchbox-app.com/games/details/137828",
+      "boxArt": {
+        "url": "https://images.launchbox-app.com/7707ac75-50da-445d-8a2d-b9cbcf6ff7a1.jpg",
+        "review": "checked"
+      },
+      "screenshot": {
+        "url": "https://images.launchbox-app.com/53a5d506-1abc-45d4-9928-f75c26c08793.png",
+        "review": "checked"
+      },
+      "notes": "Compared the live page title and platform with the on-disk group. Opened the selected box and gameplay image; redistribution rights remain unconfirmed."
+    },
+    {
+      "platform": "pc88",
       "databaseId": "187829",
       "title": "Arkanoid",
       "aliases": [],
@@ -522,6 +566,29 @@
     },
     {
       "platform": "pc88",
+      "databaseId": "133398",
+      "title": "Ashe",
+      "aliases": [
+        "Ashe: Legend of 'Toma'"
+      ],
+      "sourceGroups": [
+        "pc88:Ashe (Quasar Soft)"
+      ],
+      "contentIds": [],
+      "description": "Explore connected side-view areas, jump over obstacles, and fire psionic energy at enemies while managing a limited ESP gauge.",
+      "pageUrl": "https://gamesdb.launchbox-app.com/games/details/83398",
+      "boxArt": {
+        "url": "https://images.launchbox-app.com/3dac3aac-ad04-4883-b261-510eb4296958.jpg",
+        "review": "checked"
+      },
+      "screenshot": {
+        "url": "https://images.launchbox-app.com/a0ae3b83-2619-4b56-a878-698aac259154.png",
+        "review": "checked"
+      },
+      "notes": "Compared the live page title and platform with the on-disk group. Opened the selected box and gameplay image; redistribution rights remain unconfirmed."
+    },
+    {
+      "platform": "pc88",
       "databaseId": "186797",
       "title": "Asteka",
       "aliases": [],
@@ -540,6 +607,153 @@
         "review": "checked"
       },
       "notes": "Compared the live page title and platform with the on-disk group. Opened the selected box and gameplay image; redistribution rights remain unconfirmed."
+    },
+    {
+      "platform": "pc88",
+      "databaseId": "187833",
+      "title": "Aztec",
+      "aliases": [],
+      "sourceGroups": [
+        "pc88:Aztec (Comptiq)"
+      ],
+      "contentIds": [],
+      "description": "Search a trap-filled maze for a jade idol, using weapons and supplies to survive hostile creatures and escape.",
+      "pageUrl": "https://gamesdb.launchbox-app.com/games/details/137833",
+      "boxArt": {
+        "url": "https://images.launchbox-app.com/95b0411e-b0f3-490c-a30d-b7c553d2aec7.jpg",
+        "review": "checked"
+      },
+      "screenshot": {
+        "url": "https://images.launchbox-app.com/2980b7a2-1c95-46ae-a7ff-e9a464f8a1e6.png",
+        "review": "flagged"
+      },
+      "notes": "Compared the live page title and platform with the on-disk group. Opened the selected box and gameplay image; redistribution rights remain unconfirmed. Screenshot has severe color/pattern corruption; seek a readable gameplay capture."
+    },
+    {
+      "platform": "pc88",
+      "databaseId": "196077",
+      "title": "Backgammon",
+      "aliases": [],
+      "sourceGroups": [
+        "pc88:Backgammon (Tecno Soft)"
+      ],
+      "contentIds": [],
+      "description": "Play a computer version of backgammon, moving checkers around the board and wagering points against an opponent.",
+      "pageUrl": "https://gamesdb.launchbox-app.com/games/details/146077",
+      "boxArt": {
+        "url": "https://images.launchbox-app.com/117bcd20-665d-49c7-8554-a892471d4fdc.jpg",
+        "review": "checked"
+      },
+      "screenshot": {
+        "url": "https://images.launchbox-app.com/d4c7eae8-2465-4467-a81c-b70cdef7875b.png",
+        "review": "checked"
+      },
+      "notes": "Compared the live page title and platform with the on-disk group. Opened the selected box and gameplay image; redistribution rights remain unconfirmed."
+    },
+    {
+      "platform": "pc88",
+      "databaseId": "188145",
+      "title": "Balance of Power",
+      "aliases": [],
+      "sourceGroups": [
+        "pc88:Balance of Power (ASCII)"
+      ],
+      "contentIds": [],
+      "description": "Lead one Cold War superpower through eight years of diplomacy, covert operations, and military crises while avoiding nuclear war.",
+      "pageUrl": "https://gamesdb.launchbox-app.com/games/details/138145",
+      "boxArt": {
+        "url": "https://images.launchbox-app.com/7172bca3-9a63-4f6a-ad43-491ba66d86e7.jpg",
+        "review": "checked"
+      },
+      "screenshot": {
+        "url": "https://images.launchbox-app.com/432ce3a6-adf3-4ee7-b940-4b82b3d23064.png",
+        "review": "checked"
+      },
+      "notes": "Compared the live page title and platform with the on-disk group. Opened the selected box and gameplay image; redistribution rights remain unconfirmed."
+    },
+    {
+      "platform": "pc88",
+      "databaseId": "153512",
+      "title": "Balloon Fight",
+      "aliases": [],
+      "sourceGroups": [
+        "pc88:Balloon Fight (Hudson Soft)"
+      ],
+      "contentIds": [],
+      "description": "Float on balloons to defeat airborne rivals, or tackle the Balloon Trip challenge by collecting balloons while dodging hazards.",
+      "pageUrl": "https://gamesdb.launchbox-app.com/games/details/103512",
+      "boxArt": {
+        "url": "https://images.launchbox-app.com/2e8d4009-70c6-4fcd-a0f4-c441b0669375.jpg",
+        "review": "checked"
+      },
+      "screenshot": {
+        "url": "https://images.launchbox-app.com/ad3712f9-7a8e-48a8-a2f4-952bdaf5a495.png",
+        "review": "checked"
+      },
+      "notes": "Compared the live page title and platform with the on-disk group. Opened the selected box and gameplay image; redistribution rights remain unconfirmed."
+    },
+    {
+      "platform": "pc88",
+      "databaseId": "188152",
+      "title": "Bokosuka Wars",
+      "aliases": [],
+      "sourceGroups": [
+        "pc88:Bokosuka Wars (ASCII)"
+      ],
+      "contentIds": [],
+      "description": "Guide King Suren toward Ogreth’s castle, reviving soldiers from the landscape and choosing battles your growing army can win.",
+      "pageUrl": "https://gamesdb.launchbox-app.com/games/details/138152",
+      "boxArt": {
+        "url": "https://images.launchbox-app.com/2a984091-c331-49fb-84cb-328ac2cf11c1.jpg",
+        "review": "checked"
+      },
+      "screenshot": {
+        "url": "https://images.launchbox-app.com/e48cce07-8941-44a0-b34e-5cbbc3583e83.png",
+        "review": "checked"
+      },
+      "notes": "Compared the live page title and platform with the on-disk group. Opened the selected box and gameplay image; redistribution rights remain unconfirmed."
+    },
+    {
+      "platform": "pc88",
+      "databaseId": "188156",
+      "title": "Bomb Jack",
+      "aliases": [],
+      "sourceGroups": [
+        "pc88:Bomb Jack (SoftBank)"
+      ],
+      "contentIds": [],
+      "description": "Collect every bomb on each screen while avoiding enemies and chasing score bonuses in a single-screen arcade platform game.",
+      "pageUrl": "https://gamesdb.launchbox-app.com/games/details/138156",
+      "boxArt": {
+        "url": "https://images.launchbox-app.com/45eb4445-d775-4679-9843-e62d9c3a53a9.jpg",
+        "review": "flagged"
+      },
+      "screenshot": {
+        "url": "https://images.launchbox-app.com/18ca9586-fcb0-4bd5-b112-879c889c6606.png",
+        "review": "checked"
+      },
+      "notes": "Compared the live page title and platform with the on-disk group. Opened the selected box and gameplay image; redistribution rights remain unconfirmed. Selected art is an arcade flyer, not PC-88 packaging; seek a platform-specific cover."
+    },
+    {
+      "platform": "pc88",
+      "databaseId": "188157",
+      "title": "Boulder Dash",
+      "aliases": [],
+      "sourceGroups": [
+        "pc88:Boulder Dash (Comptiq)"
+      ],
+      "contentIds": [],
+      "description": "Dig through caves as Rockford, gathering enough diamonds to open each exit while using falling boulders against monsters.",
+      "pageUrl": "https://gamesdb.launchbox-app.com/games/details/138157",
+      "boxArt": {
+        "url": "https://images.launchbox-app.com/b824799f-fb6e-48b3-ad9d-3a8b6ca4b9b8.jpg",
+        "review": "checked"
+      },
+      "screenshot": {
+        "url": "https://images.launchbox-app.com/33af5840-c00e-40e3-9991-ff7a09bff1e4.png",
+        "review": "flagged"
+      },
+      "notes": "Compared the live page title and platform with the on-disk group. Opened the selected box and gameplay image; redistribution rights remain unconfirmed. Screenshot has severe color/pattern corruption; seek a readable gameplay capture."
     },
     {
       "platform": "pc88",
@@ -677,6 +891,75 @@
     },
     {
       "platform": "pc98",
+      "databaseId": "187550",
+      "title": "A Ressha de Ikou",
+      "aliases": [
+        "A Ressha de Ikou: Fukkokuban"
+      ],
+      "sourceGroups": [
+        "pc98:Artdink.zip:A Ressha de Ikou",
+        "pc98:Artdink.zip:A Ressha de Ikou - Fukkokuban"
+      ],
+      "contentIds": [],
+      "description": "Build a railroad toward the western coast with a single A-train, laying track while time passes in this early transport simulation.",
+      "pageUrl": "https://gamesdb.launchbox-app.com/games/details/137550",
+      "boxArt": {
+        "url": "https://images.launchbox-app.com/4b62b67b-4663-465d-9460-d4bde429e3ce.jpg",
+        "review": "checked"
+      },
+      "screenshot": {
+        "url": "https://images.launchbox-app.com/468bbb81-5460-4bbd-820a-4edecfc5e57c.png",
+        "review": "checked"
+      },
+      "notes": "Compared the live page title and platform with the on-disk group. Opened the selected box and gameplay image; redistribution rights remain unconfirmed. The selected cover is the PC-98 reissue variant; the disk group also includes the original release."
+    },
+    {
+      "platform": "pc98",
+      "databaseId": "187551",
+      "title": "A Ressha de Ikou II",
+      "aliases": [
+        "A Ressha de Ikou II: 5 Shuunen Kinen Tokubetsu Gentei Version"
+      ],
+      "sourceGroups": [
+        "pc98:Artdink.zip:A Ressha de Ikou II",
+        "pc98:Artdink.zip:A Ressha de Ikou II - 5 Shuunen Kinen Tokubetsu Gentei Version"
+      ],
+      "contentIds": [],
+      "description": "Connect distant destinations by rail, driving the track-building train and managing limited materials, bridges, and schedules.",
+      "pageUrl": "https://gamesdb.launchbox-app.com/games/details/137551",
+      "boxArt": {
+        "url": "https://images.launchbox-app.com/3b1eef72-fef7-416a-82fc-32f102716a46.jpg",
+        "review": "checked"
+      },
+      "screenshot": {
+        "url": "https://images.launchbox-app.com/ee1231d5-7406-4b8c-8717-aea7d7f7a2fd.png",
+        "review": "checked"
+      },
+      "notes": "Compared the live page title and platform with the on-disk group. Opened the selected box and gameplay image; redistribution rights remain unconfirmed."
+    },
+    {
+      "platform": "pc98",
+      "databaseId": "187552",
+      "title": "A Ressha de Ikou III",
+      "aliases": [],
+      "sourceGroups": [
+        "pc98:Artdink.zip:A Ressha de Ikou III"
+      ],
+      "contentIds": [],
+      "description": "Develop a city and rail company together, scheduling passenger trains, delivering building materials, and expanding businesses.",
+      "pageUrl": "https://gamesdb.launchbox-app.com/games/details/137552",
+      "boxArt": {
+        "url": "https://images.launchbox-app.com/599d6b4b-f07e-412c-a636-579c9e5f0929.jpg",
+        "review": "checked"
+      },
+      "screenshot": {
+        "url": "https://images.launchbox-app.com/3779f29b-d115-44e6-9dfe-4423bc4292c1.png",
+        "review": "checked"
+      },
+      "notes": "Compared the live page title and platform with the on-disk group. Opened the selected box and gameplay image; redistribution rights remain unconfirmed."
+    },
+    {
+      "platform": "pc98",
       "databaseId": "186976",
       "title": "Acrojet",
       "aliases": [],
@@ -696,6 +979,29 @@
         "review": "checked"
       },
       "notes": "Compared the live page title and platform with the on-disk group. Opened the selected box and gameplay image: both depict this game and show no visible nudity. Redistribution rights remain unconfirmed."
+    },
+    {
+      "platform": "pc98",
+      "databaseId": "187045",
+      "title": "Arctic: Active Rail Playing Game",
+      "aliases": [
+        "Arctic"
+      ],
+      "sourceGroups": [
+        "pc98:Artdink.zip:Arctic"
+      ],
+      "contentIds": [],
+      "description": "Switch colored rail junctions to route moving balls back to matching slots through more than two dozen action puzzles.",
+      "pageUrl": "https://gamesdb.launchbox-app.com/games/details/137045",
+      "boxArt": {
+        "url": "https://images.launchbox-app.com/32f75e3e-d957-4dfa-880d-59d93fcbf3a0.jpg",
+        "review": "checked"
+      },
+      "screenshot": {
+        "url": "https://images.launchbox-app.com/c7981739-ae61-4048-b80e-a35de3b03eef.png",
+        "review": "checked"
+      },
+      "notes": "Compared the live page title and platform with the on-disk group. Opened the selected box and gameplay image; redistribution rights remain unconfirmed."
     },
     {
       "platform": "pc98",
@@ -1209,6 +1515,27 @@
     },
     {
       "platform": "pc98",
+      "databaseId": "187285",
+      "title": "Hatris",
+      "aliases": [],
+      "sourceGroups": [
+        "pc98:BPS.zip:Hatris"
+      ],
+      "contentIds": [],
+      "description": "Stack pairs of falling hats on mannequin heads and clear groups of five matching hats before a pile reaches the top.",
+      "pageUrl": "https://gamesdb.launchbox-app.com/games/details/137285",
+      "boxArt": {
+        "url": "https://images.launchbox-app.com/f1cec462-a265-40b3-933b-ede86a6eaa10.jpg",
+        "review": "checked"
+      },
+      "screenshot": {
+        "url": "https://images.launchbox-app.com/79660d12-e505-4ab5-b3f8-b114d96ea87d.png",
+        "review": "checked"
+      },
+      "notes": "Compared the live page title and platform with the on-disk group. Opened the selected box and gameplay image; redistribution rights remain unconfirmed."
+    },
+    {
+      "platform": "pc98",
       "databaseId": "189669",
       "title": "Hokkaido Rensa Satsujin: Okhotsk ni Kiyu",
       "aliases": [],
@@ -1465,6 +1792,27 @@
     },
     {
       "platform": "pc98",
+      "databaseId": "184699",
+      "title": "Pipe Dream",
+      "aliases": [],
+      "sourceGroups": [
+        "pc98:BPS.zip:Pipe Dream"
+      ],
+      "contentIds": [],
+      "description": "Place pipe pieces quickly enough to keep the flowing liquid moving through a long, connected route.",
+      "pageUrl": "https://gamesdb.launchbox-app.com/games/details/134699",
+      "boxArt": {
+        "url": "https://images.launchbox-app.com/41614ead-a7b5-4d53-97da-d2210fabc592.jpg",
+        "review": "checked"
+      },
+      "screenshot": {
+        "url": "https://images.launchbox-app.com/e36f31ae-1ffe-4697-bfc0-75d24045a3b6.png",
+        "review": "checked"
+      },
+      "notes": "Compared the live page title and platform with the on-disk group. Opened the selected box and gameplay image; redistribution rights remain unconfirmed."
+    },
+    {
+      "platform": "pc98",
       "databaseId": "183176",
       "title": "Planets of Dragon",
       "aliases": [],
@@ -1608,6 +1956,27 @@
     },
     {
       "platform": "pc98",
+      "databaseId": "186487",
+      "title": "Star Cruiser",
+      "aliases": [],
+      "sourceGroups": [
+        "pc98:ArsysSoftware.zip:Star Cruiser"
+      ],
+      "contentIds": [],
+      "description": "Explore planets and space stations as hunter Brian Light, fighting on foot and in a ship in a three-dimensional science-fiction adventure.",
+      "pageUrl": "https://gamesdb.launchbox-app.com/games/details/136487",
+      "boxArt": {
+        "url": "https://images.launchbox-app.com/651a2d6f-7e20-4342-9e19-09697df46be8.jpg",
+        "review": "checked"
+      },
+      "screenshot": {
+        "url": "https://images.launchbox-app.com/d54a0822-e83f-4df9-ad03-e9516aef24ea.png",
+        "review": "checked"
+      },
+      "notes": "Compared the live page title and platform with the on-disk group. Opened the selected box and gameplay image; redistribution rights remain unconfirmed."
+    },
+    {
+      "platform": "pc98",
       "databaseId": "182453",
       "title": "Starfire",
       "aliases": [],
@@ -1653,6 +2022,48 @@
         "review": "checked"
       },
       "notes": "Compared the live PC-98 page with the Japanese NeoKobe folder and English translation archive. Opened the selected box and gameplay image; both depict this game and show no visible exposed nudity. Redistribution rights remain unconfirmed. Box scan has a large damaged/blank lower section; seek a better source."
+    },
+    {
+      "platform": "pc98",
+      "databaseId": "183447",
+      "title": "Tetris",
+      "aliases": [],
+      "sourceGroups": [
+        "pc98:BPS.zip:Tetris"
+      ],
+      "contentIds": [],
+      "description": "Arrange falling four-square pieces to clear rows, with rounds that add speed and obstacles as play continues.",
+      "pageUrl": "https://gamesdb.launchbox-app.com/games/details/133447",
+      "boxArt": {
+        "url": "https://images.launchbox-app.com/a7cb9ba5-1ef9-4ba8-93f6-9ad7bd7bdd6f.jpg",
+        "review": "checked"
+      },
+      "screenshot": {
+        "url": "https://images.launchbox-app.com/50023951-e7e6-45ff-b70b-c3940fb42ceb.png",
+        "review": "checked"
+      },
+      "notes": "Compared the live page title and platform with the on-disk group. Opened the selected box and gameplay image; redistribution rights remain unconfirmed."
+    },
+    {
+      "platform": "pc98",
+      "databaseId": "187049",
+      "title": "The Atlas",
+      "aliases": [],
+      "sourceGroups": [
+        "pc98:Artdink.zip:The Atlas"
+      ],
+      "contentIds": [],
+      "description": "Explore and chart a fifteenth-century world for the Portuguese crown while trading discoveries and managing expedition costs.",
+      "pageUrl": "https://gamesdb.launchbox-app.com/games/details/137049",
+      "boxArt": {
+        "url": "https://images.launchbox-app.com/788e702d-e0f3-4721-9981-4e15e43139ee.jpg",
+        "review": "checked"
+      },
+      "screenshot": {
+        "url": "https://images.launchbox-app.com/cf71de48-a998-407a-b4de-3e429184e9d4.png",
+        "review": "checked"
+      },
+      "notes": "Compared the live page title and platform with the on-disk group. Opened the selected box and gameplay image; redistribution rights remain unconfirmed."
     },
     {
       "platform": "pc98",
@@ -1788,6 +2199,27 @@
         "review": "checked"
       },
       "notes": "Compared the live PC-98 page with the Japanese NeoKobe folder and English translation archive. Opened the selected box and gameplay image; both depict this game and show no visible exposed nudity. Redistribution rights remain unconfirmed."
+    },
+    {
+      "platform": "pc98",
+      "databaseId": "187698",
+      "title": "Welltris",
+      "aliases": [],
+      "sourceGroups": [
+        "pc98:BPS.zip:Welltris"
+      ],
+      "contentIds": [],
+      "description": "Guide falling shapes down the four walls of a well and complete rows on its floor in this variation on Tetris.",
+      "pageUrl": "https://gamesdb.launchbox-app.com/games/details/137698",
+      "boxArt": {
+        "url": "https://images.launchbox-app.com/f3b132b3-7414-4d23-ab4e-cd865729973b.jpg",
+        "review": "checked"
+      },
+      "screenshot": {
+        "url": "https://images.launchbox-app.com/9bcd5237-2a98-4846-8a25-9418e2f32719.png",
+        "review": "checked"
+      },
+      "notes": "Compared the live page title and platform with the on-disk group. Opened the selected box and gameplay image; redistribution rights remain unconfirmed."
     },
     {
       "platform": "pc98",
