@@ -534,9 +534,9 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
                     try {
                         for (character in command) {
                             if (cancelled.get() || generation != startGeneration) return@Thread
-                            val scan = guestCommandScan(character)
+                            val scans = guestCommandScans(character)
                                 ?: error("Unsupported launch character: $character")
-                            inputRouter.hold("guest-command", listOf(scan))
+                            inputRouter.hold("guest-command", scans)
                             try { Thread.sleep(70) } finally { inputRouter.release("guest-command") }
                             Thread.sleep(70)
                         }
@@ -557,12 +557,14 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
         }.start()
     }
 
-    private fun guestCommandScan(character: Char): Int? = when {
-        character in 'a'..'z' -> pc98ScanCode(KeyEvent.KEYCODE_A + (character - 'a'))
-        character in 'A'..'Z' -> pc98ScanCode(KeyEvent.KEYCODE_A + (character - 'A'))
+    private fun guestCommandScans(character: Char): List<Int>? = when {
+        character in 'a'..'z' -> pc98ScanCode(KeyEvent.KEYCODE_A + (character - 'a'))?.let(::listOf)
+        character in 'A'..'Z' -> pc98ScanCode(KeyEvent.KEYCODE_A + (character - 'A'))?.let {
+            listOf(0x70, it)
+        }
         character in '0'..'9' -> pc98ScanCode(if (character == '0') KeyEvent.KEYCODE_0
-            else KeyEvent.KEYCODE_1 + (character - '1'))
-        else -> when (character) {
+            else KeyEvent.KEYCODE_1 + (character - '1'))?.let(::listOf)
+        else -> (when (character) {
             ' ' -> 0x34
             '\\' -> 0x0d
             '/' -> 0x32
@@ -571,7 +573,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
             ':' -> 0x27
             '_' -> 0x33
             else -> null
-        }
+        })?.let(::listOf)
     }
     private fun showGameDetails(entry: LibraryEntry) {
         val id = entry.contentId
