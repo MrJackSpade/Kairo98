@@ -7,7 +7,7 @@
 
 ## 1. Native proof of concept
 
-- Audit and import a fixed 21/W BSD-only source snapshot and ymfm snapshot.
+- Complete the build-level audit of the imported 21/W BSD-only and ymfm source snapshots.
 - Build the native code for arm64 Android.
 - Boot one known-compatible disk image and confirm video, input, and audio on a device.
 - Compare ymfm output and game behavior with 21/W on Windows.

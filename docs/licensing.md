@@ -1,12 +1,12 @@
 # Licensing plan
 
-This is a planning record, not a completed license audit. Do not distribute a binary until the imported source and final build inputs have been checked.
+This is a planning record and preliminary source check, not a completed binary license audit. Do not distribute a binary until the final build inputs have been checked.
 
 ## Native components
 
-The [21/W maintainer's license table](https://simk98.github.io/np21w/download.html) says most code is under a modified BSD license and provides a BSD-only source package based on rev104. It also identifies files with different terms. In particular, `sound/fmgen` is described as generally unavailable for commercial use. The Android build must exclude fmgen source and definitions. The table also lists optional GPLv2 and other components that require file-by-file review.
+The [21/W maintainer's license table](https://simk98.github.io/np21w/download.html) says most code is under a modified BSD license and provides a BSD-only source package based on rev104. It also identifies files with different terms. In particular, `sound/fmgen` is described as generally unavailable for commercial use. The imported BSD-only snapshot has no `sound/fmgen/` directory. Android build definitions must keep `SUPPORT_FMGEN` disabled. The optional GPLv2 `sound/mame/` and DOSBox FPU source files were also absent in the imported snapshot. Preserve `third_party/np21w/LICENSES/` and check each compiled component.
 
-[ymfm](https://github.com/aaronsgiles/ymfm) identifies its sound cores as BSD-3-Clause. Copy its actual license notice into the repository when source is imported, preserve required notices, and verify the version used.
+[ymfm](https://github.com/aaronsgiles/ymfm) identifies its sound cores as BSD-3-Clause. Its `LICENSE` notice is present in `third_party/ymfm/`, pinned to the commit recorded in [source import](source-import.md).
 
 The project's own source license has not been selected. The public GitHub distribution and paid Play distribution must include the same license notices for shared code and dependencies.
 

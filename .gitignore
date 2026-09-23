@@ -14,8 +14,9 @@ cmake-build-*/
 out/
 
 # Local data and firmware
-roms/
-bios/
+/.downloads/
+/roms/
+/bios/
 *.hdi
 *.d88
 *.fdi
