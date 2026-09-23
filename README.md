@@ -15,6 +15,12 @@ Kairo98 is a standalone Android PC-98 emulator in development.
 
 Pinned 21/W and ymfm source snapshots have been imported. A Stage 2 arm64 Android debug APK boots a user-supplied HDI to a usable PC-98 MS-DOS prompt on a Retroid Pocket Classic, with video, physical keyboard input, initial audio output, and clean disk shutdown. Full game compatibility, controller mapping, frontend launch, and ymfm integration remain in progress.
 
+## Current Android controls
+
+An imported HDI starts automatically when Kairo98 opens. The left flyout contains Continue, Restart, Choose HDI, Pause/Resume, and Exit. Graphics, Machine, Audio, and About open focused dialogs. Graphics defaults to contained integer scaling so every source pixel remains visible. An optional cropped integer mode uses the next whole-pixel multiple and hides any excess at the display edges; Fit display uses a fractional scale while preserving the 640×400 aspect ratio. The unused display area is black.
+
+Open the flyout with a controller Mode/Home event if Android sends it to the app, Android Back or Menu, or a touchscreen swipe from the left edge. [Android reserves the system Home key](https://developer.android.com/reference/android/view/KeyEvent#KEYCODE_HOME), so that key cannot directly open an app menu. No persistent menu control covers the game. Settings for scaling, base clock, and mute persist across launches. Gamepad mapping and the optional PC-98 keyboard remain separate roadmap work.
+
 ## Documentation
 
 - [Migration plan](docs/migration-plan.md)

@@ -4,6 +4,7 @@
 #include <android/native_window_jni.h>
 #include <aaudio/AAudio.h>
 #include <algorithm>
+#include <atomic>
 #include <chrono>
 #include <condition_variable>
 #include <cstring>
@@ -51,6 +52,7 @@ unsigned short last_cs = 0, last_ip = 0;
 unsigned long long audio_buffers = 0;
 unsigned long long audible_buffers = 0;
 std::string audio_state = "off";
+std::atomic<bool> audio_muted{false};
 
 std::mutex window_mutex;
 ANativeWindow *window = nullptr;
@@ -61,10 +63,17 @@ void render_frame() {
     ANativeWindow_Buffer buffer;
     if (ANativeWindow_lock(window, &buffer, nullptr) != 0) return;
     const auto *source = kairo98_frame_pixels();
-    if (buffer.format == WINDOW_FORMAT_RGB_565 && buffer.width >= 640 && buffer.height >= 400) {
-        for (int y = 0; y < 400; ++y) {
-            auto *target = static_cast<unsigned char *>(buffer.bits) + y * buffer.stride * 2;
-            std::memcpy(target, source + y * 640, 640 * 2);
+    if (buffer.format == WINDOW_FORMAT_RGB_565 && buffer.width > 0 && buffer.height > 0) {
+        for (int y = 0; y < buffer.height; ++y) {
+            auto *target = static_cast<unsigned short *>(buffer.bits) + y * buffer.stride;
+            const auto *row = source + (static_cast<long long>(y) * 400 / buffer.height) * 640;
+            if (buffer.width == 640) {
+                std::memcpy(target, row, 640 * sizeof(*target));
+            } else {
+                for (int x = 0; x < buffer.width; ++x) {
+                    target[x] = row[static_cast<long long>(x) * 640 / buffer.width];
+                }
+            }
         }
     }
     ANativeWindow_unlockAndPost(window);
@@ -168,6 +177,7 @@ void run_machine(std::string image, int mhz_times_ten) {
         while (audio_due >= 60 * 512) {
             audio_due -= 60 * 512;
             int filled = kairo98_fill_audio(audio_samples, 512);
+            if (audio_muted.load()) std::memset(audio_samples, 0, sizeof(audio_samples));
             if (audio) {
                 aaudio_result_t written = AAudioStream_write(audio, audio_samples, 512, 2000000);
                 if (written > 0) {
@@ -290,12 +300,21 @@ Java_com_mrjackspade_kairo98_MainActivity_nativeStatus(JNIEnv *env, jobject) {
 }
 
 extern "C" JNIEXPORT void JNICALL
-Java_com_mrjackspade_kairo98_MainActivity_nativeSetSurface(JNIEnv *env, jobject, jobject surface) {
+Java_com_mrjackspade_kairo98_MainActivity_nativeSetSurface(JNIEnv *env, jobject, jobject surface,
+                                                          jint width, jint height) {
     ANativeWindow *replacement = surface ? ANativeWindow_fromSurface(env, surface) : nullptr;
-    if (replacement) ANativeWindow_setBuffersGeometry(replacement, 640, 400, WINDOW_FORMAT_RGB_565);
     std::lock_guard<std::mutex> guard(window_mutex);
+    if (replacement) {
+        ANativeWindow_setBuffersGeometry(replacement, width > 0 ? width : 640,
+                                         height > 0 ? height : 400, WINDOW_FORMAT_RGB_565);
+    }
     if (window) ANativeWindow_release(window);
     window = replacement;
+}
+
+extern "C" JNIEXPORT void JNICALL
+Java_com_mrjackspade_kairo98_MainActivity_nativeSetMuted(JNIEnv *, jobject, jboolean muted) {
+    audio_muted.store(muted == JNI_TRUE);
 }
 
 extern "C" JNIEXPORT jstring JNICALL

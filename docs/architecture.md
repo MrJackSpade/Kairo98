@@ -22,6 +22,8 @@ Android activity -> content access -> disk image adapter
 
 The Android layer should not depend on a particular emulator's host UI. It translates platform events into explicit emulator actions. The flyout keyboard and gamepad mapper use the same virtual key API so a key behaves identically from either source.
 
+The current Android session flyout is an activity overlay above the 640×400 surface. It pauses the emulation worker while open and keeps its own pause choice when dismissed. A touch-only left-edge swipe, Android Back/Menu, or a delivered controller Mode event opens it; Android's system Home event is not delivered to applications. Graphics, base clock, and audio options persist in app preferences. The renderer writes nearest-neighbor RGB565 pixels into the selected viewport size. Integer scaling defaults to a contained whole-pixel multiple so every source pixel is visible. An optional cropped integer choice centers the next whole-pixel multiple and hides excess at the display edges. Fit uses the largest aspect-preserving fractional viewport. This session menu is separate from the future optional PC-98 flyout keyboard.
+
 ## Input model
 
 A mapping target may be a PC-98 key, a combination of keys, a mouse button or movement, or an app action such as opening the disk menu. Mappings are saved globally and may be overridden per game. Each source must produce matching press and release events; focus loss and controller disconnect release held virtual keys.
