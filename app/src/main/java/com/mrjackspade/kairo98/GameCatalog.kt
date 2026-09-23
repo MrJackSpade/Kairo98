@@ -30,12 +30,19 @@ class GameCatalog(private val context: Context) {
 
     @Synchronized fun reloadAdditions() { additions = readLocal(additionsFile) }
 
-    @Synchronized fun sourceOf(contentId: String, field: String): String = when {
-        overrides.optJSONObject("games")?.optJSONObject(contentId)?.has(field) == true -> "User override"
-        additions.optJSONObject("games")?.optJSONObject(contentId)?.has(field) == true -> "User catalog"
-        base.optJSONObject("games")?.optJSONObject(contentId)?.has(field) == true -> "Shipped catalog"
-        shardFor(contentId)?.optJSONObject("games")?.optJSONObject(contentId)?.has(field) == true -> "Shipped catalog"
+    @Synchronized fun sourceOf(contentId: String, field: String, subfield: String? = null): String = when {
+        hasField(overrides, contentId, field, subfield) -> "User override"
+        hasField(additions, contentId, field, subfield) -> "User catalog"
+        hasField(base, contentId, field, subfield) -> "Shipped catalog"
+        shardFor(contentId)?.let { hasField(it, contentId, field, subfield) } == true -> "Shipped catalog"
         else -> if (field == "title") "Filename" else "App default"
+    }
+
+    private fun hasField(source: JSONObject, contentId: String, field: String,
+                         subfield: String?): Boolean {
+        val record = source.optJSONObject("games")?.optJSONObject(contentId) ?: return false
+        return if (subfield == null) record.has(field)
+            else record.optJSONObject(field)?.has(subfield) == true
     }
 
     @Synchronized fun resolve(contentId: String, fileName: String): Game {
@@ -92,12 +99,42 @@ class GameCatalog(private val context: Context) {
         overrides = updated
     }
 
+    @Synchronized fun setArtworkOverride(contentId: String, kind: String, path: String) {
+        require(validId(contentId) && kind in ART_FIELDS && validArtPath(path))
+        val updated = JSONObject(overrides.toString())
+        val games = updated.optJSONObject("games") ?: JSONObject().also { updated.put("games", it) }
+        val entry = games.optJSONObject(contentId) ?: JSONObject().also { games.put(contentId, it) }
+        val artwork = entry.optJSONObject("artwork") ?: JSONObject().also { entry.put("artwork", it) }
+        artwork.put(kind, path)
+        writeLocal(overridesFile, updated)
+        overrides = updated
+    }
+
+    @Synchronized fun resetArtworkOverride(contentId: String, kind: String) {
+        require(validId(contentId) && kind in ART_FIELDS)
+        val updated = JSONObject(overrides.toString())
+        val games = updated.optJSONObject("games") ?: return
+        val entry = games.optJSONObject(contentId) ?: return
+        val artwork = entry.optJSONObject("artwork") ?: return
+        artwork.remove(kind)
+        if (artwork.length() == 0) entry.remove("artwork")
+        if (entry.length() == 0) games.remove(contentId)
+        writeLocal(overridesFile, updated)
+        overrides = updated
+    }
+
     private fun merge(target: JSONObject, source: JSONObject?) {
         if (source == null) return
         for (field in FIELDS) {
             if (source.has(field)) {
                 val value = source.opt(field) ?: continue
-                if (validField(field, value)) target.put(field, value)
+                if (validField(field, value)) {
+                    if (field == "artwork" && value is JSONObject) {
+                        val artwork = JSONObject(target.optJSONObject("artwork")?.toString() ?: "{}")
+                        for (kind in ART_FIELDS) if (value.has(kind)) artwork.put(kind, value.get(kind))
+                        target.put("artwork", artwork)
+                    } else target.put(field, value)
+                }
             }
         }
     }
@@ -193,6 +230,7 @@ class GameCatalog(private val context: Context) {
         private const val MAX_ASSET_JSON = 64 * 1024 * 1024
         private const val MAX_LOCAL_JSON = 8L * 1024 * 1024
         private val FIELDS = setOf("title", "aliases", "artwork", "machine", "controller", "media", "launch")
+        private val ART_FIELDS = setOf("boxArt", "preview")
         private val ID = Regex("sha256-hdi-v1:[0-9a-f]{64}")
         private val MEDIA_ROLE = Regex("[A-Za-z0-9_-]{1,32}")
         fun validId(value: String) = ID.matches(value)

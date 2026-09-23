@@ -583,8 +583,8 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
             "${game.title} · ${id?.let { catalog.sourceOf(it, "title") } ?: "Filename"}",
             "${game.baseClockTenthsMHz?.let { "${it / 10.0} MHz" } ?: "App default"} · ${id?.let { catalog.sourceOf(it, "machine") } ?: "App default"}",
             "${game.launchCommand ?: "None"} · ${id?.let { catalog.sourceOf(it, "launch") } ?: "App default"}",
-            "${if (game.preview == null) "None" else "Available"} · ${id?.let { catalog.sourceOf(it, "artwork") } ?: "App default"}",
-            "${if (game.boxArt == null) "None" else "Available"} · ${id?.let { catalog.sourceOf(it, "artwork") } ?: "App default"}",
+            "${if (game.preview == null) "None" else "Available"} · ${id?.let { catalog.sourceOf(it, "artwork", "preview") } ?: "App default"}",
+            "${if (game.boxArt == null) "None" else "Available"} · ${id?.let { catalog.sourceOf(it, "artwork", "boxArt") } ?: "App default"}",
             if (game.preview == null) "No screenshot available" else "Open preview",
             "Restore catalog values", "Path, ZIP entry, and content ID",
             "${effectiveControllerBindings(game).size} bindings · ${if (game.controllerBindings == null || (game.controllerBindings == "[]" && !game.overriddenFields.contains("controller"))) "Global" else id?.let { catalog.sourceOf(it, "controller") } ?: "Global"}"
@@ -694,16 +694,11 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
             .setMessage("Use a packaged art path. Missing art falls back to the game title.")
             .setView(input)
             .setPositiveButton("Save") { _, _ -> saveGameSetting(entry) {
-                val game = romLibrary.catalog.resolve(entry.contentId!!, entry.displayName)
-                val art = JSONObject()
-                val preview = if (kind == "preview") input.text.toString().trim() else game.preview
-                val box = if (kind == "boxArt") input.text.toString().trim() else game.boxArt
-                if (!preview.isNullOrEmpty()) art.put("preview", preview)
-                if (!box.isNullOrEmpty()) art.put("boxArt", box)
-                if (art.length() == 0) romLibrary.catalog.resetOverride(entry.contentId, "artwork")
-                else romLibrary.catalog.setOverride(entry.contentId, "artwork", art)
-            } }.setNeutralButton("Reset art") { _, _ -> saveGameSetting(entry) {
-                romLibrary.catalog.resetOverride(entry.contentId!!, "artwork")
+                val path = input.text.toString().trim()
+                if (path.isEmpty()) romLibrary.catalog.resetArtworkOverride(entry.contentId!!, kind)
+                else romLibrary.catalog.setArtworkOverride(entry.contentId!!, kind, path)
+            } }.setNeutralButton("Reset ${if (kind == "preview") "preview" else "box art"}") { _, _ -> saveGameSetting(entry) {
+                romLibrary.catalog.resetArtworkOverride(entry.contentId!!, kind)
             } }.setNegativeButton("Cancel") { _, _ -> showGameDetails(entry) }.showStyled()
     }
 
