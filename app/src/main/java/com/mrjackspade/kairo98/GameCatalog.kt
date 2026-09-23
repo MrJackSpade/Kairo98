@@ -209,7 +209,10 @@ class GameCatalog(private val context: Context) {
         if (file.isFile) {
             val existing = try { JSONObject(AtomicFile(file).readFully().toString(Charsets.UTF_8)) }
                 catch (_: Exception) { null }
-            require(existing == null || existing.optInt("schemaVersion") == 1) {
+            require(existing != null) {
+                "Existing ${file.name} is unreadable; preserve it and restore a backup before editing"
+            }
+            require(existing.optInt("schemaVersion") == 1) {
                 "This metadata uses a newer schema; update Kairo98 before editing"
             }
         }

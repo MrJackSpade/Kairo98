@@ -29,3 +29,5 @@ python tools/build_catalog.py docs/fixtures/catalog/source-v1.json app/src/main/
 ```
 
 The checked-in source fixture is synthetic. The generated-file manifest retains each dataset's attribution; source provenance and rights must be reviewed before adding a real dataset. `python -m unittest discover -s tools -p 'test_*.py'` checks deterministic output, a 10,000-record synthetic corpus spread across 256 shards, validation, and duplicate-hash rejection. For an isolated size and device-lookup test, run `python tools/make_synthetic_catalog.py <temporary-source.json> --games 10000`, then pass that source to `tools/build_catalog.py` with a temporary output directory. The generated files contain no game metadata or media and must not replace the release catalog.
+
+[Catalog CI run 35840143728](https://github.com/MrJackSpade/Kairo98/actions/runs/35840143728) generated 10,000 synthetic records across 256 shards; the Linux output directory occupied 2.5 MiB according to `du -sh`. Retroid lazy-lookup timing with that corpus remains to be measured on device.
