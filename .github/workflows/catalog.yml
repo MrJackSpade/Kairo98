@@ -4,13 +4,23 @@ on:
     paths:
       - 'tools/build_catalog.py'
       - 'tools/test_build_catalog.py'
+      - 'tools/import_art.py'
+      - 'tools/test_import_art.py'
       - 'docs/fixtures/catalog/**'
+      - 'docs/fixtures/art-source/**'
+      - 'app/src/main/assets/art/**'
+      - 'app/src/main/assets/catalog/**'
       - '.github/workflows/catalog.yml'
   pull_request:
     paths:
       - 'tools/build_catalog.py'
       - 'tools/test_build_catalog.py'
+      - 'tools/import_art.py'
+      - 'tools/test_import_art.py'
       - 'docs/fixtures/catalog/**'
+      - 'docs/fixtures/art-source/**'
+      - 'app/src/main/assets/art/**'
+      - 'app/src/main/assets/catalog/**'
       - '.github/workflows/catalog.yml'
 jobs:
   test:
@@ -30,6 +40,9 @@ jobs:
       - run: python tools/build_catalog.py docs/fixtures/catalog/source-v1.json /tmp/kairo98-assets-2/catalog
       - run: python tools/import_art.py docs/fixtures/art-source/source-v1.json /tmp/kairo98-assets-2
       - run: diff -r /tmp/kairo98-assets /tmp/kairo98-assets-2
+      - run: diff -r /tmp/kairo98-assets/art app/src/main/assets/art
+      - run: diff /tmp/kairo98-assets/catalog/manifest-v1.json app/src/main/assets/catalog/manifest-v1.json
+      - run: diff -r /tmp/kairo98-assets/catalog/shards app/src/main/assets/catalog/shards
       - uses: actions/upload-artifact@v4
         with:
           name: synthetic-catalog-and-art
