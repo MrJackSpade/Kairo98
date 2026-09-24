@@ -1202,6 +1202,48 @@
     },
     {
       "platform": "pc88",
+      "databaseId": "189663",
+      "title": "Lagrange L-2",
+      "aliases": [],
+      "sourceGroups": [
+        "pc88:Lagrange L-2 (Vehicle Soft - Compac)"
+      ],
+      "contentIds": [],
+      "description": "Investigate the destruction of a military research ship near the L-2 space colony as its lone survivor in a science-fiction adventure.",
+      "pageUrl": "https://gamesdb.launchbox-app.com/games/details/139663",
+      "boxArt": {
+        "url": "https://images.launchbox-app.com/5112ed28-12c5-48af-98a3-eb59a44014ae.jpg",
+        "review": "checked"
+      },
+      "screenshot": {
+        "url": "https://images.launchbox-app.com/60d78867-79f4-40c2-b55d-9d1a4edcd79e.png",
+        "review": "checked"
+      },
+      "notes": "Compared the live page title and platform with the on-disk group. Opened the selected box and screenshot; redistribution rights remain unconfirmed."
+    },
+    {
+      "platform": "pc88",
+      "databaseId": "188574",
+      "title": "Lamia 1999",
+      "aliases": [],
+      "sourceGroups": [
+        "pc88:Lamia 1999 (Hudson Soft)"
+      ],
+      "contentIds": [],
+      "description": "Search alien-occupied Tokyo for Lamia, fight hostile creatures, and aid the human resistance in a side-scrolling action RPG.",
+      "pageUrl": "https://gamesdb.launchbox-app.com/games/details/138574",
+      "boxArt": {
+        "url": "https://images.launchbox-app.com/7bceaf61-f616-44c6-8453-157f27f53fd2.jpg",
+        "review": "checked"
+      },
+      "screenshot": {
+        "url": "https://images.launchbox-app.com/f1ecf3ca-b0d2-45a7-ac02-dbc0089c60cf.png",
+        "review": "checked"
+      },
+      "notes": "Compared the live page title and platform with the on-disk group. Opened the selected box and screenshot; redistribution rights remain unconfirmed."
+    },
+    {
+      "platform": "pc88",
       "databaseId": "190075",
       "title": "Laptick",
       "aliases": [],
@@ -1220,6 +1262,27 @@
         "review": "checked"
       },
       "notes": "Compared the live page title and platform with the on-disk group. Opened each available selected image; redistribution rights remain unconfirmed."
+    },
+    {
+      "platform": "pc88",
+      "databaseId": "188576",
+      "title": "Las Vegas",
+      "aliases": [],
+      "sourceGroups": [
+        "pc88:Las Vegas (Starcraft)"
+      ],
+      "contentIds": [],
+      "description": "Explore a Las Vegas casino and its surroundings through illustrated rooms and typed adventure commands.",
+      "pageUrl": "https://gamesdb.launchbox-app.com/games/details/138576",
+      "boxArt": {
+        "url": "https://images.launchbox-app.com/6c7ef688-5fdc-466f-9a9f-512c6ed82b38.jpg",
+        "review": "flagged"
+      },
+      "screenshot": {
+        "url": "https://images.launchbox-app.com/8d5b73e9-883f-4ace-82ab-87d5d60d014d.png",
+        "review": "checked"
+      },
+      "notes": "Compared the live page title and platform with the on-disk group. Opened the selected box and screenshot; redistribution rights remain unconfirmed. Lingerie cover; hold for content review."
     },
     {
       "platform": "pc88",
@@ -1244,6 +1307,27 @@
     },
     {
       "platform": "pc88",
+      "databaseId": "190076",
+      "title": "Last Target",
+      "aliases": [],
+      "sourceGroups": [
+        "pc88:Last Target (Seed Software)"
+      ],
+      "contentIds": [],
+      "description": "A PC-88 science-fiction mystery adventure with a spacecraft setting.",
+      "pageUrl": "https://gamesdb.launchbox-app.com/games/details/140076",
+      "boxArt": {
+        "url": "https://images.launchbox-app.com/3748eac2-c994-4c37-aa5c-58efc72d6449.jpg",
+        "review": "checked"
+      },
+      "screenshot": {
+        "url": "https://images.launchbox-app.com/e74210f9-270e-43e2-8ca5-8d2002208c73.png",
+        "review": "flagged"
+      },
+      "notes": "Compared the live page title and platform with the on-disk group. Opened the selected box and screenshot; redistribution rights remain unconfirmed. Spacecraft cutscene, not representative gameplay; seek another capture."
+    },
+    {
+      "platform": "pc88",
       "databaseId": "188577",
       "title": "Law of the West",
       "aliases": [],
@@ -1265,6 +1349,27 @@
     },
     {
       "platform": "pc88",
+      "databaseId": "193386",
+      "title": "Lefty Mouse",
+      "aliases": [],
+      "sourceGroups": [
+        "pc88:Lefty Mouse (Starcraft)"
+      ],
+      "contentIds": [],
+      "description": "Guide Lefty Mouse through action stages, fighting sea creatures and other hazards.",
+      "pageUrl": "https://gamesdb.launchbox-app.com/games/details/143386",
+      "boxArt": {
+        "url": "https://images.launchbox-app.com/r2_73fdd918-3eb3-4118-9f42-be868a51d482.jpg",
+        "review": "checked"
+      },
+      "screenshot": {
+        "url": "https://images.launchbox-app.com/488cf3c9-403a-478d-a355-108f62550445.png",
+        "review": "checked"
+      },
+      "notes": "Compared the live page title and platform with the on-disk group. Opened the selected box and screenshot; redistribution rights remain unconfirmed."
+    },
+    {
+      "platform": "pc88",
       "databaseId": "207484",
       "title": "Leningrad",
       "aliases": [],
@@ -1283,6 +1388,51 @@
         "review": "checked"
       },
       "notes": "Compared the live page title and platform with the on-disk group. Opened each available selected image; redistribution rights remain unconfirmed."
+    },
+    {
+      "platform": "pc88",
+      "databaseId": "181083",
+      "title": "Light Flipper",
+      "aliases": [],
+      "sourceGroups": [
+        "pc88:Light Flipper (Enix)"
+      ],
+      "contentIds": [],
+      "description": "Collect keys and reach the exit in each platform-puzzle room while avoiding creatures, falling rocks, and water.",
+      "pageUrl": "https://gamesdb.launchbox-app.com/games/details/131083",
+      "boxArt": {
+        "url": "https://images.launchbox-app.com/r2_2cf03708-cb51-4424-a075-cf93525425e7.png",
+        "review": "checked"
+      },
+      "screenshot": {
+        "url": "https://images.launchbox-app.com/fae5b947-6d39-4b59-aa1b-938a68310cc3.png",
+        "review": "checked"
+      },
+      "notes": "Compared the live page title and platform with the on-disk group. Opened the selected box and screenshot; redistribution rights remain unconfirmed."
+    },
+    {
+      "platform": "pc88",
+      "databaseId": "181024",
+      "title": "Lightning Vaccus: The Knight of Iron",
+      "aliases": [
+        "Lightning Bacchus",
+        "Lightning Vaccuse: The Knight of Iron"
+      ],
+      "sourceGroups": [
+        "pc88:Lightning Vaccuse - The Knight of Iron (Masaya - NCS)"
+      ],
+      "contentIds": [],
+      "description": "Choose and position mecha and supporting units on a hex grid, then fight through a futuristic military campaign.",
+      "pageUrl": "https://gamesdb.launchbox-app.com/games/details/131024",
+      "boxArt": {
+        "url": "https://images.launchbox-app.com/a676991e-7fe7-4e63-9cf4-7d3de10bb263.jpg",
+        "review": "checked"
+      },
+      "screenshot": {
+        "url": "https://images.launchbox-app.com/046a5615-c1cd-48e8-884c-5a93516c0734.png",
+        "review": "flagged"
+      },
+      "notes": "Compared the live page title and platform with the on-disk group. Opened the selected box and screenshot; redistribution rights remain unconfirmed. Story cutscene, not a tactical battle; seek another capture."
     },
     {
       "platform": "pc88",
@@ -1349,6 +1499,27 @@
     },
     {
       "platform": "pc88",
+      "databaseId": "193388",
+      "title": "Lost Power",
+      "aliases": [],
+      "sourceGroups": [
+        "pc88:Lost Power (Winky Soft)"
+      ],
+      "contentIds": [],
+      "description": "Climb a seven-floor tower as a weakened demon lord and battle rivals to regain lost power.",
+      "pageUrl": "https://gamesdb.launchbox-app.com/games/details/143388",
+      "boxArt": {
+        "url": "https://images.launchbox-app.com/r2_31f4eb53-ebed-4edd-abe7-02290ac018d7.jpg",
+        "review": "checked"
+      },
+      "screenshot": {
+        "url": "https://images.launchbox-app.com/r2_4dd92a7a-ae4a-4cad-a916-c9d22019a0b8.png",
+        "review": "checked"
+      },
+      "notes": "Compared the live page title and platform with the on-disk group. Opened the selected box and screenshot; redistribution rights remain unconfirmed."
+    },
+    {
+      "platform": "pc88",
       "databaseId": "188585",
       "title": "Lot Lot",
       "aliases": [],
@@ -1388,6 +1559,30 @@
         "review": "checked"
       },
       "notes": "Compared the live page title and platform with the on-disk group. Opened each available selected image; redistribution rights remain unconfirmed. Visible SAMPLE watermark; seek a clean cover scan."
+    },
+    {
+      "platform": "pc88",
+      "databaseId": "181027",
+      "title": "Lupin the 3rd: Cagliostro no Shiro",
+      "aliases": [
+        "Lupin Sansei: Cagliostro no Shiro",
+        "Lupin the Third: Cagliostro no Shiro"
+      ],
+      "sourceGroups": [
+        "pc88:Lupin Sansei - Cagliostro no Shiro (Toho)"
+      ],
+      "contentIds": [],
+      "description": "Explore Cagliostro as Lupin and his allies in an adventure based on the animated film.",
+      "pageUrl": "https://gamesdb.launchbox-app.com/games/details/131027",
+      "boxArt": {
+        "url": "https://images.launchbox-app.com/r2_ab798257-575f-42b9-a35f-08fcccea9e14.png",
+        "review": "checked"
+      },
+      "screenshot": {
+        "url": "https://images.launchbox-app.com/r2_16dc355a-bc57-40aa-877c-1a7800085a52.png",
+        "review": "checked"
+      },
+      "notes": "Compared the live page title and platform with the on-disk group. Opened the selected box and screenshot; redistribution rights remain unconfirmed."
     },
     {
       "platform": "pc88",
@@ -1451,6 +1646,27 @@
         "review": "checked"
       },
       "notes": "Compared the live page title and platform with the on-disk group. Opened each available selected image; redistribution rights remain unconfirmed. Revealing bunny costume; hold for content review."
+    },
+    {
+      "platform": "pc88",
+      "databaseId": "188595",
+      "title": "Mappy",
+      "aliases": [],
+      "sourceGroups": [
+        "pc88:Mappy (Dempa)"
+      ],
+      "contentIds": [],
+      "description": "Recover stolen goods as Mappy the police mouse, using trampolines and doors to evade pursuing cats.",
+      "pageUrl": "https://gamesdb.launchbox-app.com/games/details/138595",
+      "boxArt": {
+        "url": "https://images.launchbox-app.com/r2_65023d8a-2b4e-43b6-87c0-6203c22fc667.png",
+        "review": "checked"
+      },
+      "screenshot": {
+        "url": "https://images.launchbox-app.com/54525341-7ba9-45ea-b2cd-f90b4164920d.png",
+        "review": "checked"
+      },
+      "notes": "Compared the live page title and platform with the on-disk group. Opened the selected box and screenshot; redistribution rights remain unconfirmed."
     },
     {
       "platform": "pc88",
@@ -1684,6 +1900,29 @@
         "review": "flagged"
       },
       "notes": "Compared the live page title and platform with the on-disk group. Opened the selected box and gameplay image; redistribution rights remain unconfirmed. Revealing costume; hold for content review. Suggestive costume and pose; hold for content review."
+    },
+    {
+      "platform": "pc98",
+      "databaseId": "187037",
+      "title": "Albion: Hakua no Kishi Densetsu",
+      "aliases": [
+        "Albion: Domino Soldier"
+      ],
+      "sourceGroups": [
+        "pc98:Chaos.zip:Albion - Domino Soldier"
+      ],
+      "contentIds": [],
+      "description": "Command a knight against armored foes in a fantasy role-playing game.",
+      "pageUrl": "https://gamesdb.launchbox-app.com/games/details/137037",
+      "boxArt": {
+        "url": "https://images.launchbox-app.com/f9e6c9cc-7e04-4f4b-98ed-7c2584d8b0c1.jpg",
+        "review": "checked"
+      },
+      "screenshot": {
+        "url": "https://images.launchbox-app.com/b184e731-a62a-414f-981f-34b741ab4fce.png",
+        "review": "checked"
+      },
+      "notes": "Compared the live page title and platform with the on-disk group. Opened the selected box and screenshot; redistribution rights remain unconfirmed."
     },
     {
       "platform": "pc98",
@@ -1993,6 +2232,27 @@
     },
     {
       "platform": "pc98",
+      "databaseId": "183306",
+      "title": "Demon City",
+      "aliases": [],
+      "sourceGroups": [
+        "pc98:CocktailSoft.zip:Demon City"
+      ],
+      "contentIds": [],
+      "description": "Carry out a secret mission for Princess Leticia while exploring Vagrand and its intrigues in a menu-driven adult adventure.",
+      "pageUrl": "https://gamesdb.launchbox-app.com/games/details/133306",
+      "boxArt": {
+        "url": "https://images.launchbox-app.com/f2194fce-c2a8-4eb7-898d-e04aa58f4993.jpg",
+        "review": "flagged"
+      },
+      "screenshot": {
+        "url": "https://images.launchbox-app.com/d8fd0d8b-3358-4c17-bfd4-bc255a50e988.png",
+        "review": "checked"
+      },
+      "notes": "Compared the live page title and platform with the on-disk group. Opened the selected box and screenshot; redistribution rights remain unconfirmed. Revealing costumes on adult-game cover; hold for content review."
+    },
+    {
+      "platform": "pc98",
       "databaseId": "187121",
       "title": "Derby Stallion",
       "aliases": [],
@@ -2032,6 +2292,27 @@
         "review": "checked"
       },
       "notes": "Compared the live page title and platform with the on-disk group. Opened the selected box and gameplay image; redistribution rights remain unconfirmed. The cover explicitly says this is not a standalone product and requires Derby Stallion."
+    },
+    {
+      "platform": "pc98",
+      "databaseId": "189876",
+      "title": "Derringer",
+      "aliases": [],
+      "sourceGroups": [
+        "pc98:Clest.zip:Derringer"
+      ],
+      "contentIds": [],
+      "description": "Investigate a reported abduction as a private detective in a short illustrated command-based adventure.",
+      "pageUrl": "https://gamesdb.launchbox-app.com/games/details/139876",
+      "boxArt": {
+        "url": "https://images.launchbox-app.com/ca4ec7b4-6bbe-4a65-a91d-a1cae78a604d.jpg",
+        "review": "flagged"
+      },
+      "screenshot": {
+        "url": "https://images.launchbox-app.com/9d6bab63-f7ec-4002-a730-714d60a0f6c3.png",
+        "review": "flagged"
+      },
+      "notes": "Compared the live page title and platform with the on-disk group. Opened the selected box and screenshot; redistribution rights remain unconfirmed. Source describes a 13-year-old character in an adult context; hold all art for review. Source describes a 13-year-old character in an adult context; hold all art for review."
     },
     {
       "platform": "pc98",
@@ -2134,6 +2415,27 @@
     },
     {
       "platform": "pc98",
+      "databaseId": "183316",
+      "title": "Early Kingdom",
+      "aliases": [],
+      "sourceGroups": [
+        "pc98:C2World.zip:Early Kingdom"
+      ],
+      "contentIds": [],
+      "description": "Recruit companions in a troubled port city and defend the region from monsters in a real-time party RPG.",
+      "pageUrl": "https://gamesdb.launchbox-app.com/games/details/133316",
+      "boxArt": {
+        "url": "https://images.launchbox-app.com/4bbe55cb-0338-4285-b250-a90308e28c15.jpg",
+        "review": "checked"
+      },
+      "screenshot": {
+        "url": "https://images.launchbox-app.com/270bbbc8-1446-4840-a86e-49704b9b9924.png",
+        "review": "checked"
+      },
+      "notes": "Compared the live page title and platform with the on-disk group. Opened the selected box and screenshot; redistribution rights remain unconfirmed."
+    },
+    {
+      "platform": "pc98",
       "databaseId": "156054",
       "title": "EVE Burst Error",
       "aliases": [
@@ -2158,6 +2460,29 @@
         "review": "checked"
       },
       "notes": "Compared the live page title and platform with the on-disk group. Opened the selected box and gameplay image; redistribution rights remain unconfirmed. The package carries an adults-only purchase label; the selected images show no exposed nudity."
+    },
+    {
+      "platform": "pc98",
+      "databaseId": "183335",
+      "title": "Eye of the Beholder II: The Legend of Darkmoon",
+      "aliases": [
+        "AD&D Eye of the Beholder II: The Legend of Darkmoon"
+      ],
+      "sourceGroups": [
+        "pc98:Capcom.zip:AD&D Eye of the Beholder II - The Legend of Darkmoon"
+      ],
+      "contentIds": [],
+      "description": "Investigate disappearances at the Temple Darkmoon with a party of adventurers in a real-time first-person dungeon RPG.",
+      "pageUrl": "https://gamesdb.launchbox-app.com/games/details/133335",
+      "boxArt": {
+        "url": "https://images.launchbox-app.com/9339b2bc-a920-431b-8ec1-e6603168733e.jpg",
+        "review": "checked"
+      },
+      "screenshot": {
+        "url": "https://images.launchbox-app.com/27518462-ef9d-44b1-bbde-4d0bbbaa9813.png",
+        "review": "checked"
+      },
+      "notes": "Compared the live page title and platform with the on-disk group. Opened the selected box and screenshot; redistribution rights remain unconfirmed."
     },
     {
       "platform": "pc98",
@@ -2359,6 +2684,27 @@
     },
     {
       "platform": "pc98",
+      "databaseId": "189148",
+      "title": "Flight in Hawaii",
+      "aliases": [],
+      "sourceGroups": [
+        "pc98:CarryLab.zip:Flight in Hawaii"
+      ],
+      "contentIds": [],
+      "description": "Pilot an aircraft around Hawaii using a cockpit view and flight instruments.",
+      "pageUrl": "https://gamesdb.launchbox-app.com/games/details/139148",
+      "boxArt": {
+        "url": "https://images.launchbox-app.com/5a734e8f-9229-4188-be94-e984d9e2e0eb.jpg",
+        "review": "checked"
+      },
+      "screenshot": {
+        "url": "https://images.launchbox-app.com/59c1be93-9dc9-4bde-9f86-f0c164d99826.png",
+        "review": "checked"
+      },
+      "notes": "Compared the live page title and platform with the on-disk group. Opened the selected box and screenshot; redistribution rights remain unconfirmed."
+    },
+    {
+      "platform": "pc98",
       "databaseId": "189374",
       "title": "FlixMix",
       "aliases": [],
@@ -2402,6 +2748,27 @@
         "review": "checked"
       },
       "notes": "Compared the live page title and platform with the on-disk group. Opened the selected box and gameplay image; redistribution rights remain unconfirmed. Apparent nudity in painted cover scene; hold for content review."
+    },
+    {
+      "platform": "pc98",
+      "databaseId": "183013",
+      "title": "Gaplus",
+      "aliases": [],
+      "sourceGroups": [
+        "pc98:CarryLab.zip:Gaplus"
+      ],
+      "contentIds": [],
+      "description": "Shoot waves of attacking alien ships and capture enemies to add their firepower to your own.",
+      "pageUrl": "https://gamesdb.launchbox-app.com/games/details/133013",
+      "boxArt": {
+        "url": "https://images.launchbox-app.com/0d0a0e1c-cb40-406c-9877-77325024d1f5.jpg",
+        "review": "checked"
+      },
+      "screenshot": {
+        "url": "https://images.launchbox-app.com/ccd389a4-65fa-4f97-877a-84fa0312aa29.png",
+        "review": "flagged"
+      },
+      "notes": "Compared the live page title and platform with the on-disk group. Opened the selected box and screenshot; redistribution rights remain unconfirmed. Very dark capture obscures most gameplay; seek a clearer image."
     },
     {
       "platform": "pc98",
@@ -2605,6 +2972,27 @@
         "review": "checked"
       },
       "notes": "Compared the live page title and platform with the on-disk group. Opened the selected box and gameplay image; redistribution rights remain unconfirmed."
+    },
+    {
+      "platform": "pc98",
+      "databaseId": "184696",
+      "title": "Laser Squad",
+      "aliases": [],
+      "sourceGroups": [
+        "pc98:C2Bros.zip:Laser Squad"
+      ],
+      "contentIds": [],
+      "description": "Equip a squad of soldiers and direct them through turn-based tactical battles against hostile forces.",
+      "pageUrl": "https://gamesdb.launchbox-app.com/games/details/134696",
+      "boxArt": {
+        "url": "https://images.launchbox-app.com/30379645-8c6d-4551-8fce-a787c47119b1.jpg",
+        "review": "checked"
+      },
+      "screenshot": {
+        "url": "https://images.launchbox-app.com/84a3eb97-440a-4ec6-86c2-52bdab94aaa2.png",
+        "review": "checked"
+      },
+      "notes": "Compared the live page title and platform with the on-disk group. Opened the selected box and screenshot; redistribution rights remain unconfirmed."
     },
     {
       "platform": "pc98",
@@ -3139,6 +3527,27 @@
     },
     {
       "platform": "pc98",
+      "databaseId": "189519",
+      "title": "Tawhid",
+      "aliases": [],
+      "sourceGroups": [
+        "pc98:ChampionSoft.zip:Tawhid"
+      ],
+      "contentIds": [],
+      "description": "Explore illustrated rooms and choose actions from a command menu in this Champion Soft adventure.",
+      "pageUrl": "https://gamesdb.launchbox-app.com/games/details/139519",
+      "boxArt": {
+        "url": "https://images.launchbox-app.com/e92d4ce4-b77e-4bb8-ae58-2a55f2a2b86a.jpg",
+        "review": "checked"
+      },
+      "screenshot": {
+        "url": "https://images.launchbox-app.com/f82df727-7606-41eb-ba4b-c7391d3cb96e.png",
+        "review": "checked"
+      },
+      "notes": "Compared the live page title and platform with the on-disk group. Opened the selected box and screenshot; redistribution rights remain unconfirmed."
+    },
+    {
+      "platform": "pc98",
       "databaseId": "183447",
       "title": "Tetris",
       "aliases": [],
@@ -3505,6 +3914,29 @@
         "review": "checked"
       },
       "notes": "Compared the live page title and platform with the on-disk group. Opened the selected box and gameplay image; redistribution rights remain unconfirmed. Adult-game cover includes young-looking characters; hold for content review."
+    },
+    {
+      "platform": "pc98",
+      "databaseId": "189647",
+      "title": "Yakyuudou Plus",
+      "aliases": [
+        "Yakyuudou Plus: Super Baseball Simulation"
+      ],
+      "sourceGroups": [
+        "pc98:C2World.zip:Yakyuudou Plus - Super Baseball Simulation"
+      ],
+      "contentIds": [],
+      "description": "Manage a baseball game from a stadium view in a Japanese baseball simulation.",
+      "pageUrl": "https://gamesdb.launchbox-app.com/games/details/139647",
+      "boxArt": {
+        "url": "https://images.launchbox-app.com/b5005667-d09c-46fc-8656-9b430b211254.jpg",
+        "review": "checked"
+      },
+      "screenshot": {
+        "url": "https://images.launchbox-app.com/0786c31a-e0cd-4d26-8d48-27758a266b58.png",
+        "review": "checked"
+      },
+      "notes": "Compared the live page title and platform with the on-disk group. Opened the selected box and screenshot; redistribution rights remain unconfirmed."
     },
     {
       "platform": "pc98",
