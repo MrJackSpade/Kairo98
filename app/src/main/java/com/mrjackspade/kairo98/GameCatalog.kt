@@ -9,6 +9,7 @@ import java.text.Normalizer
 
 /** Versioned, data-only metadata. Nothing in this file is executed by Android. */
 class GameCatalog(private val context: Context) {
+    private val bundledImages = context.assets.list("art/catalog")?.isNotEmpty() == true
     data class Game(
         val contentId: String,
         val title: String,
@@ -83,8 +84,8 @@ class GameCatalog(private val context: Context) {
         return Game(
             contentId, title.ifBlank { fileName },
             merged.optString("description").takeIf(::validDescription),
-            artwork?.optString("boxArt")?.takeIf(::validArtPath),
-            artwork?.optString("preview")?.takeIf(::validArtPath),
+            artwork?.optString("boxArt")?.takeIf { bundledImages && validArtPath(it) },
+            artwork?.optString("preview")?.takeIf { bundledImages && validArtPath(it) },
             artwork?.optString("boxArtUrl")?.takeIf(::validImageUrl),
             artwork?.optString("previewUrl")?.takeIf(::validImageUrl),
             machine?.optInt("baseClockTenthsMHz")?.takeIf { it == 20 || it == 25 },

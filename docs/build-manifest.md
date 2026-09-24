@@ -7,7 +7,7 @@ Status: Stage 2 debug build, 22 September 2026. The Android device booted a user
 - Gradle 8.13 via the checked-in wrapper; Android Gradle Plugin 8.13.2; Kotlin plugin 2.2.20; JDK 17.
 - Android platform API 36, target API 36, minimum API 26, build tools 36.0.0, CMake 3.22.1, NDK r28c (`28.2.13676358`).
 - Application ID: `com.mrjackspade.kairo98`. Initial ABI: `arm64-v8a`.
-- Build from the repository root with `ANDROID_HOME` pointing to an SDK containing those packages, then run `./gradlew :app:assembleDebug` (or `gradlew.bat` on Windows).
+- Build from the repository root with `ANDROID_HOME` pointing to an SDK containing those packages, then run `./gradlew :app:assembleWithImagesDebug :app:assembleWithoutImagesDebug` (or `gradlew.bat` on Windows). Shared catalog metadata is included in both APKs; `withImages` alone packages `app/src/withImages/assets/art/`.
 - Debug APK: `app/build/outputs/apk/debug/app-debug.apk`. It is an internal diagnostic build.
 
 The exact 185 base 21/W C source paths are frozen in [`app/src/main/cpp/np21w-sources.cmake`](../app/src/main/cpp/np21w-sources.cmake). CMake adds eight further 21/W sources: SDL2 host `dosio.c`, `timemng.c`, `joymng.c`, `mousemng.c`, and `fontmng.c`, plus `cbus/boardmo.c`, `lio/gpaint.c`, and `lio/groll.c`. Five project-owned C adapters (`android_host/np2sysp.c`, `platform.c`, `core_probe.c`, `font_overlay.c`, `machine.c`) and one JNI C++ bridge complete the native library. The ASCII bitmap table is generated from the pinned BSD-2-Clause Spleen 8x16 BDF in `third_party/spleen/`. The resulting APK contains `lib/arm64-v8a/libkairo98.so`.

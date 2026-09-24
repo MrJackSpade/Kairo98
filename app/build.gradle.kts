@@ -12,8 +12,8 @@ android {
         applicationId = "com.mrjackspade.kairo98"
         minSdk = 26
         targetSdk = 36
-        versionCode = 1
-        versionName = "0.1.0-dev"
+        versionCode = providers.gradleProperty("kairo98VersionCode").orNull?.toInt() ?: 1
+        versionName = providers.gradleProperty("kairo98VersionName").orNull ?: "0.1.0-dev"
         ndk {
             abiFilters += "arm64-v8a"
         }
@@ -28,6 +28,12 @@ android {
         release {
             isMinifyEnabled = false
         }
+    }
+
+    flavorDimensions += "artwork"
+    productFlavors {
+        create("withImages") { dimension = "artwork" }
+        create("withoutImages") { dimension = "artwork" }
     }
 
     externalNativeBuild {

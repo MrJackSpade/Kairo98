@@ -21,11 +21,11 @@ def lookup_name(value):
                    if char.isalnum())
 
 
-def generate(matches_path, gallery, assets, ffmpeg, quality):
+def generate(matches_path, gallery, assets, art_assets, ffmpeg, quality):
     matches = json.loads(matches_path.read_text(encoding="utf-8-sig"))["entries"]
     gallery_entries = json.loads((gallery / "manifest.json").read_text(encoding="utf-8-sig"))["entries"]
     gallery_index = {(item["platform"], item["pageUrl"]): item for item in gallery_entries}
-    art_dir = assets / "art" / "catalog"
+    art_dir = art_assets / "art" / "catalog"
     art_dir.mkdir(parents=True, exist_ok=True)
     source_games = []
     all_games = {}
@@ -115,7 +115,7 @@ def generate(matches_path, gallery, assets, ffmpeg, quality):
     (catalog / "manifest-v1.json").write_bytes(compact(manifest))
     (catalog / "name-index-v1.json").write_bytes(compact({"schemaVersion": 1,
         "games": all_games, "names": unique_names}))
-    (assets / "art" / "catalog-provenance-v1.json").write_bytes(compact({"schemaVersion": 1,
+    (art_assets / "art" / "catalog-provenance-v1.json").write_bytes(compact({"schemaVersion": 1,
         "quality": quality, "assets": provenance}))
     output_source = matches_path.parent.parent / "source-v1.json"
     output_source.write_bytes(compact(source))
@@ -129,7 +129,8 @@ if __name__ == "__main__":
     parser.add_argument("--matches", type=Path, default=Path("catalog/research/matches-v1.json"))
     parser.add_argument("--gallery", type=Path, default=Path(".downloads/catalog-height360"))
     parser.add_argument("--assets", type=Path, default=Path("app/src/main/assets"))
+    parser.add_argument("--art-assets", type=Path, default=Path("app/src/withImages/assets"))
     parser.add_argument("--ffmpeg", type=Path, default=Path("C:/bin/ffmpeg.exe"))
     parser.add_argument("--quality", type=int, default=25)
     args = parser.parse_args()
-    generate(args.matches, args.gallery, args.assets, args.ffmpeg, args.quality)
+    generate(args.matches, args.gallery, args.assets, args.art_assets, args.ffmpeg, args.quality)
