@@ -36,6 +36,9 @@ import android.widget.TextView
 import android.widget.Toast
 import org.json.JSONObject
 import java.io.File
+import java.io.ByteArrayOutputStream
+import java.net.HttpURLConnection
+import java.net.URL
 import java.nio.file.Files
 import java.nio.file.StandardCopyOption
 import java.util.concurrent.atomic.AtomicBoolean
@@ -45,7 +48,10 @@ import kotlin.math.abs
 import kotlin.math.roundToInt
 
 class MainActivity : Activity(), SurfaceHolder.Callback {
-    private external fun nativeStart(path: String?, fontPath: String, mhzTimesTen: Int): Boolean
+    private external fun nativeStart(path: String?, fontPath: String, biosDir: String,
+                                     mhzTimesTen: Int,
+                                     floppy: Boolean): Boolean
+    private external fun nativeFloppy(drive: Int, path: String?): Boolean
     private external fun nativeStop()
     private external fun nativePause(paused: Boolean)
     private external fun nativeReset()
@@ -83,6 +89,11 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
     private var scanCancelled = AtomicBoolean(false)
     private var currentEntry: LibraryEntry? = null
     private var currentDisk: File? = null
+    private var currentIsFloppy = false
+    private val mountedFloppies = arrayOfNulls<String>(2)
+    private val manualFloppies = arrayOfNulls<File>(2)
+    @Volatile private var floppyBusy = false
+    @Volatile private var biosBusy = false
     private var currentTitle: String? = null
     private var currentGame: GameCatalog.Game? = null
     private var commandCancelled = AtomicBoolean(false)
@@ -130,7 +141,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
 
     private val updateStatus = object : Runnable {
         override fun run() {
-            if (menuOpen && !preparingFont) menuStatus.text = nativeStatus()
+            if (menuOpen && !preparingFont && !floppyBusy) menuStatus.text = nativeStatus()
             if (!libraryVisible && !preparingFont) {
                 InputModeDecider.GuestInput.fromNative(nativeInputTelemetry())?.let {
                     inputModeDecider.observe(it, android.os.SystemClock.elapsedRealtime())
@@ -181,7 +192,8 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
             }, ::applyPauseState)
         libraryScreen = LibraryScreen(this, romLibrary.catalog,
             ::chooseRomFolder, { refreshLibrary(false) }, { refreshLibrary(true) },
-            ::launchEntry, ::showGameDetails)
+            { libraryScreen.closeActions(); showMachine() },
+            ::launchEntry, ::showDetailPreview, ::showGameDetails)
         root.addView(libraryScreen, FrameLayout.LayoutParams(-1, -1))
         handler.post(updateStatus)
         root.post {
@@ -189,7 +201,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
             romTree = saved?.let(Uri::parse)
             libraryScreen.showFolder(romTree?.let(::folderLabel))
             if (romTree == null) {
-                libraryScreen.showStatus("Choose a ROM folder to find HDI and ZIP games")
+                libraryScreen.showStatus("Choose a ROM folder to find disk images and ZIP games")
                 chooseRomFolder()
             } else if (!hasRomGrant(romTree!!)) {
                 libraryScreen.showStatus("Folder access expired. Select the ROM folder again.")
@@ -274,7 +286,9 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
         }
         menuItem(content, "Restart", "Reset the current machine") { restartMachine() }
         menuItem(content, "Game library", "Choose another disk") { showLibrary() }
-        menuItem(content, "Choose HDI", "Import a disk image") { chooseHdi() }
+        menuItem(content, "Choose disk image", "Import a hard disk or floppy") { chooseHdi() }
+        menuItem(content, "Floppy A", "Insert, swap, or eject a disk") { showFloppyMenu(0) }
+        menuItem(content, "Floppy B", "Insert, swap, or eject a disk") { showFloppyMenu(1) }
         val pauseItem = menuItem(content, "Pause", "Keep the machine paused") {
             userPaused = !userPaused
             closeMenu()
@@ -286,7 +300,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
         section(content, "SETTINGS")
         menuItem(content, "Graphics", "Scaling and display") { showGraphics() }
         menuItem(content, "Input mode", "Auto, keyboard, or mouse touchpad") { showInputMode() }
-        menuItem(content, "Machine", "Base clock") { showMachine() }
+        menuItem(content, "Machine", "Base clock and BIOS ROM") { showMachine() }
         menuItem(content, "Controller", "Gamepad buttons, sticks and hats") { showControllerScope() }
         menuItem(content, "Audio", "Sound output") { showAudio() }
         menuItem(content, "About & controls", "Version and shortcuts") { showAbout() }
@@ -390,9 +404,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
         focusMenuItem(0)
         pauseTitle.text = if (userPaused) "Resume" else "Pause"
         pauseDetail.text = if (userPaused) "Continue running" else "Keep the machine paused"
-        mediaLabel.text = currentTitle ?: if (File(filesDir, DISK_NAME).isFile)
-            "HDI  ·  " + preferences.getString("disk_name", DISK_NAME)
-        else "No HDI selected"
+        mediaLabel.text = currentTitle ?: "No disk selected"
         menuStatus.text = if (preparingFont) "Preparing PC-98 font" else nativeStatus()
         backdrop.visibility = View.VISIBLE
         backdrop.alpha = 0f
@@ -509,17 +521,9 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
                 else {
                     nativeStop()
                     if (generation != startGeneration) null
-                    else if (nativeStart(disk.absolutePath, fontPath(), game.baseClockTenthsMHz ?: clock)) {
-                        var state = nativeStatus()
-                        for (attempt in 0 until 200) {
-                            if (state.startsWith("Running") || state.startsWith("Paused") ||
-                                state.startsWith("Error")) break
-                            Thread.sleep(50)
-                            state = nativeStatus()
-                        }
-                        if (state.startsWith("Error")) error(state.substringBefore(" | "))
-                        if (!state.startsWith("Running") && !state.startsWith("Paused"))
-                            error("Machine startup timed out")
+                    else if (nativeStart(disk.absolutePath, fontPath(), firmwareDir().absolutePath,
+                            game.baseClockTenthsMHz ?: clock, entry.isFloppy)) {
+                        awaitMachineReady()?.let(::error)
                         disk
                     }
                     else error("Unable to start machine")
@@ -537,6 +541,9 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
                     if (result != null) {
                         currentEntry = entry
                         currentDisk = result
+                        currentIsFloppy = entry.isFloppy
+                        mountedFloppies[0] = if (entry.isFloppy) entry.displayName else null
+                        mountedFloppies[1] = null
                         currentTitle = game.title
                         currentGame = game
                         inputModeDecider.reset()
@@ -552,6 +559,16 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
                 }
             }
         }.start()
+    }
+
+    private fun awaitMachineReady(): String? {
+        repeat(200) {
+            val state = nativeStatus()
+            if (state.startsWith("Running") || state.startsWith("Paused")) return null
+            if (state.startsWith("Error")) return state.substringBefore(" | ")
+            Thread.sleep(50)
+        }
+        return "Machine startup timed out"
     }
 
     private fun showLibrary() {
@@ -775,15 +792,26 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
             .setNegativeButton("Close", null).showStyled()
     }
 
-    private fun showGamePreview(entry: LibraryEntry) {
+    private fun showGamePreview(entry: LibraryEntry) = showGameArt(entry, "preview", true)
+
+    private fun showDetailPreview(entry: LibraryEntry) = showGameArt(entry, "preview", false)
+
+    private fun showGameArt(entry: LibraryEntry, kind: String, returnToSettings: Boolean) {
         val game = romLibrary.catalog.resolve(entry.contentId ?: "", entry.displayName)
-        val path = game.preview ?: run { toast("No screenshot available"); return }
+        val path = (if (kind == "preview") game.preview else game.boxArt)
+            ?: run { toast("No ${if (kind == "preview") "screenshot" else "box art"} available"); return }
+        val urlKind = if (kind == "preview") "previewUrl" else "boxArtUrl"
+        val url = (if (kind == "preview") game.previewUrl else game.boxArtUrl)
+            ?.takeIf { entry.contentId?.let { id ->
+                romLibrary.catalog.sourceOf(id, "artwork", kind) ==
+                    romLibrary.catalog.sourceOf(id, "artwork", urlKind)
+            } == true }
         val bitmap = try {
             assets.open(path).use { BitmapFactory.decodeStream(it, null,
-                BitmapFactory.Options().apply { inSampleSize = 2 }) }
+                BitmapFactory.Options()) }
         } catch (_: Exception) { null }
         if (bitmap == null) {
-            toast("Screenshot unavailable")
+            toast("Image unavailable")
             return
         }
         val view = ImageView(this).apply {
@@ -791,8 +819,63 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
             adjustViewBounds = true
             setPadding(dp(16), dp(8), dp(16), dp(8))
         }
-        AlertDialog.Builder(this).setTitle(game.title).setView(view)
-            .setPositiveButton("Done") { _, _ -> showGameDetails(entry) }.showStyled()
+        val content = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
+        content.addView(view)
+        val hint = TextView(this).apply {
+            text = if (url == null) "" else "Tap image to load a larger version"
+            setPadding(dp(16), 0, dp(16), dp(12))
+        }
+        content.addView(hint)
+        val dialog = AlertDialog.Builder(this).setTitle(game.title).setView(content)
+            .setPositiveButton("Done") { _, _ -> if (returnToSettings) showGameDetails(entry) }
+            .showStyled()
+        if (url != null) view.setOnClickListener {
+            view.isEnabled = false
+            hint.text = "Loading larger image…"
+            Thread {
+                val larger = try { fetchLargerArt(url) } catch (_: Exception) { null }
+                runOnUiThread {
+                    if (dialog.isShowing) {
+                        if (larger == null) hint.text = "Could not load larger image"
+                        else {
+                            view.setImageBitmap(larger)
+                            hint.text = "Larger image loaded"
+                        }
+                    }
+                }
+            }.start()
+        }
+    }
+
+    private fun fetchLargerArt(url: String): android.graphics.Bitmap? {
+        if (!GameCatalog.validImageUrl(url)) return null
+        val connection = URL(url).openConnection() as HttpURLConnection
+        connection.instanceFollowRedirects = false
+        connection.connectTimeout = 10000
+        connection.readTimeout = 20000
+        try {
+            if (connection.responseCode != HttpURLConnection.HTTP_OK ||
+                connection.contentLengthLong > 16L * 1024 * 1024) return null
+            val bytes = ByteArrayOutputStream()
+            connection.inputStream.use { input ->
+                val buffer = ByteArray(8192)
+                while (true) {
+                    val count = input.read(buffer)
+                    if (count < 0) break
+                    if (bytes.size() + count > 16 * 1024 * 1024) return null
+                    bytes.write(buffer, 0, count)
+                }
+            }
+            val data = bytes.toByteArray()
+            val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
+            BitmapFactory.decodeByteArray(data, 0, data.size, bounds)
+            if (bounds.outWidth < 1 || bounds.outHeight < 1 ||
+                bounds.outWidth.toLong() * bounds.outHeight > 32_000_000L) return null
+            val options = BitmapFactory.Options()
+            while (bounds.outWidth / options.inSampleSize > 2048 ||
+                bounds.outHeight / options.inSampleSize > 2048) options.inSampleSize *= 2
+            return BitmapFactory.decodeByteArray(data, 0, data.size, options)
+        } finally { connection.disconnect() }
     }
 
     private fun saveGameSetting(entry: LibraryEntry, action: () -> Unit) {
@@ -869,8 +952,8 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
             launchEntry(entry)
             return
         }
-        val disk = currentDisk ?: File(filesDir, DISK_NAME)
-        if (!disk.isFile) {
+        val disk = currentDisk
+        if (disk == null || !disk.isFile) {
             closeMenu()
             chooseHdi()
             return
@@ -884,8 +967,71 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
             inputModeDecider.reset()
             scheduleGuestCommand(currentGame)
         } else {
-            startWithFont(disk, "Starting machine")
+            startWithFont(disk, "Starting machine", currentIsFloppy)
         }
+    }
+
+    private fun showFloppyMenu(drive: Int) {
+        if (currentDisk == null || !(nativeStatus().startsWith("Running") ||
+                nativeStatus().startsWith("Paused"))) {
+            toast("Start a game before inserting a floppy")
+            return
+        }
+        if (floppyBusy) return
+        val current = currentEntry
+        val candidates = libraryEntries.filter { entry ->
+            entry.playable && entry.isFloppy && current != null &&
+                (if (current.zipEntry != null) entry.uri == current.uri
+                else entry.path.substringBeforeLast('/', "") ==
+                    current.path.substringBeforeLast('/', ""))
+        }
+        val labels = ArrayList<String>().apply {
+            add("Eject")
+            addAll(candidates.map { it.displayName })
+            add("Choose floppy file…")
+        }
+        AlertDialog.Builder(this).setTitle("Floppy ${'A' + drive}" +
+            (mountedFloppies[drive]?.let { " · $it" } ?: " · empty"))
+            .setItems(labels.toTypedArray()) { _, which ->
+                when (which) {
+                    0 -> changeFloppy(drive, null)
+                    labels.lastIndex -> chooseFloppyFile(drive)
+                    else -> changeFloppy(drive, candidates[which - 1])
+                }
+            }.setNegativeButton("Cancel", null).showStyled()
+    }
+
+    private fun changeFloppy(drive: Int, entry: LibraryEntry?) {
+        if (floppyBusy) return
+        floppyBusy = true
+        menuStatus.text = if (entry == null) "Ejecting floppy ${'A' + drive}…"
+            else "Preparing ${entry.displayName}…"
+        Thread {
+            val result = try {
+                val disk = entry?.let { romLibrary.prepare(it, AtomicBoolean(false)) { message ->
+                    runOnUiThread { menuStatus.text = message }
+                } }
+                if (!nativeFloppy(drive, disk?.absolutePath)) error("Floppy could not be mounted")
+                null
+            } catch (error: Exception) { error.message ?: "Floppy change failed" }
+            runOnUiThread {
+                floppyBusy = false
+                if (result == null) {
+                    manualFloppies[drive]?.delete()
+                    manualFloppies[drive] = null
+                    mountedFloppies[drive] = entry?.displayName
+                }
+                menuStatus.text = result ?: "Floppy ${'A' + drive}: ${entry?.displayName ?: "empty"}"
+                if (result != null) toast(result)
+            }
+        }.start()
+    }
+
+    private fun chooseFloppyFile(drive: Int) {
+        startActivityForResult(Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
+            addCategory(Intent.CATEGORY_OPENABLE)
+            type = "*/*"
+        }, if (drive == 0) FLOPPY_A_REQUEST else FLOPPY_B_REQUEST)
     }
 
     private fun chooseHdi() {
@@ -916,6 +1062,15 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
     }
 
     private fun showMachine() {
+        val bios = biosFile()
+        AlertDialog.Builder(this).setTitle("Machine")
+            .setItems(arrayOf("Base clock  ·  ${if (clock == 25) "2.5" else "2"} MHz",
+                "BIOS ROM  ·  ${if (bios.isFile) "Imported" else "None"}")) { _, which ->
+                if (which == 0) showMachineClock() else showBiosRom()
+            }.setNegativeButton("Close", null).showStyled()
+    }
+
+    private fun showMachineClock() {
         val options = arrayOf("2.5 MHz base clock", "2 MHz base clock")
         AlertDialog.Builder(this).setTitle("Machine")
             .setSingleChoiceItems(options, if (clock == 25) 0 else 1) { dialog, which ->
@@ -930,6 +1085,24 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
                 }
                 dialog.dismiss()
             }.setNegativeButton("Cancel", null).showStyled()
+    }
+
+    private fun showBiosRom() {
+        val installed = biosFile().isFile
+        val dialog = AlertDialog.Builder(this).setTitle("BIOS ROM")
+            .setPositiveButton("Choose file") { _, _ ->
+                startActivityForResult(Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
+                    addCategory(Intent.CATEGORY_OPENABLE)
+                    type = "*/*"
+                }, BIOS_REQUEST)
+            }.setNegativeButton("Close", null)
+        if (installed) dialog.setNeutralButton("Remove") { _, _ ->
+            if (!biosBusy) {
+                if (biosFile().delete()) toast("BIOS ROM removed. Restart the game to apply.")
+                else toast("Could not remove BIOS ROM")
+            }
+        }
+        dialog.showStyled()
     }
 
     private fun showAudio() {
@@ -1163,33 +1336,57 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
             }
             return
         }
-        if (requestCode != HDI_REQUEST || resultCode != RESULT_OK || data?.data == null) return
+        if (requestCode == BIOS_REQUEST) {
+            if (resultCode == RESULT_OK && data?.data != null) importBiosRom(data.data!!)
+            return
+        }
+        if (requestCode !in listOf(HDI_REQUEST, FLOPPY_A_REQUEST, FLOPPY_B_REQUEST) ||
+            resultCode != RESULT_OK || data?.data == null) return
         val uri = data.data ?: return
         val name = contentResolver.query(uri, arrayOf(OpenableColumns.DISPLAY_NAME), null, null, null)
             ?.use { if (it.moveToFirst()) it.getString(0) else null }
-        if (name?.endsWith(".hdi", ignoreCase = true) != true) {
-            toast("Select an .hdi image")
+        val isSwap = requestCode != HDI_REQUEST
+        if (name == null || !DiskFormat.supported(name) || (isSwap && !DiskFormat.isFloppy(name))) {
+            toast(if (isSwap) "Select a supported floppy image" else "Select a supported disk image")
+            return
+        }
+        if (isSwap) {
+            importFloppyFile(if (requestCode == FLOPPY_A_REQUEST) 0 else 1, uri, name)
             return
         }
         val generation = ++startGeneration
         preparingFont = true
         applyPauseState()
-        toast("Importing HDI")
+        toast("Importing disk image")
         Thread {
-            val disk = File(filesDir, DISK_NAME)
-            val partial = File(filesDir, "$DISK_NAME.part")
+            val disk = File(filesDir, "boot${DiskFormat.suffix(name)}")
+            val partial = File(filesDir, "${disk.name}.part")
             val result = try {
                 nativeStop()
                 contentResolver.openInputStream(uri).use { input ->
                     requireNotNull(input) { "Unable to open selected image" }
-                    partial.outputStream().use { output -> input.copyTo(output) }
+                    partial.outputStream().use { output ->
+                        val buffer = ByteArray(64 * 1024)
+                        var size = 0L
+                        while (true) {
+                            val count = input.read(buffer)
+                            if (count < 0) break
+                            size += count
+                            require(size <= DiskFormat.maxBytes(name)) { "Disk image exceeds size limit" }
+                            output.write(buffer, 0, count)
+                        }
+                        require(size > 0) { "Empty disk image" }
+                    }
                 }
                 Files.move(partial.toPath(), disk.toPath(), StandardCopyOption.REPLACE_EXISTING)
                 Pc98FontCache.ensure(filesDir)
                 if (generation != startGeneration) "Start cancelled"
-                else if (nativeStart(disk.absolutePath, fontPath(), clock)) "Starting $name" else "Unable to start machine"
+                else if (nativeStart(disk.absolutePath, fontPath(), firmwareDir().absolutePath, clock,
+                        DiskFormat.isFloppy(name)))
+                    awaitMachineReady()?.let { "Disk start failed: $it" } ?: "Starting $name"
+                else "Unable to start machine"
             } catch (error: Exception) {
-                "HDI import failed: ${error.message}"
+                "Disk import failed: ${error.message}"
             } finally {
                 partial.delete()
             }
@@ -1200,6 +1397,9 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
                     preferences.edit().putString("disk_name", name).apply()
                     currentEntry = null
                     currentDisk = disk
+                    currentIsFloppy = DiskFormat.isFloppy(name)
+                    mountedFloppies[0] = if (currentIsFloppy) name else null
+                    mountedFloppies[1] = null
                     currentTitle = name
                     currentGame = null
                     inputModeDecider.reset()
@@ -1214,7 +1414,86 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
         }.start()
     }
 
-    private fun startWithFont(disk: File, message: String) {
+    private fun importFloppyFile(drive: Int, uri: Uri, name: String) {
+        if (floppyBusy) return
+        floppyBusy = true
+        menuStatus.text = "Importing $name…"
+        Thread {
+            val disk = File(cacheDir, "manual-floppy-$drive-${System.nanoTime()}${DiskFormat.suffix(name)}")
+            val result = try {
+                contentResolver.openInputStream(uri).use { input ->
+                    requireNotNull(input) { "Unable to open selected floppy" }
+                    disk.outputStream().use { output ->
+                        val buffer = ByteArray(64 * 1024)
+                        var size = 0L
+                        while (true) {
+                            val count = input.read(buffer)
+                            if (count < 0) break
+                            size += count
+                            require(size <= 64L * 1024 * 1024) { "Floppy exceeds size limit" }
+                            output.write(buffer, 0, count)
+                        }
+                        require(size > 0) { "Empty floppy image" }
+                    }
+                }
+                if (!nativeFloppy(drive, disk.absolutePath)) error("Floppy could not be mounted")
+                null
+            } catch (error: Exception) { error.message ?: "Floppy import failed" }
+            runOnUiThread {
+                floppyBusy = false
+                if (result == null) {
+                    manualFloppies[drive]?.delete()
+                    manualFloppies[drive] = disk
+                    mountedFloppies[drive] = name
+                } else {
+                    disk.delete()
+                    toast(result)
+                }
+                menuStatus.text = result ?: "Floppy ${'A' + drive}: $name"
+            }
+        }.start()
+    }
+
+    private fun importBiosRom(uri: Uri) {
+        if (biosBusy) return
+        biosBusy = true
+        if (menuOpen) menuStatus.text = "Importing BIOS ROM…"
+        toast("Importing BIOS ROM")
+        Thread {
+            val directory = firmwareDir()
+            val partial = File(directory, "bios.rom.part")
+            val result = try {
+                require(directory.isDirectory || directory.mkdirs()) { "Cannot create firmware directory" }
+                contentResolver.openInputStream(uri).use { input ->
+                    requireNotNull(input) { "Unable to open selected file" }
+                    partial.outputStream().use { output ->
+                        val buffer = ByteArray(8192)
+                        var size = 0L
+                        while (true) {
+                            val count = input.read(buffer)
+                            if (count < 0) break
+                            size += count
+                            require(size <= BIOS_ROM_BYTES) { "BIOS ROM must be exactly 96 KiB" }
+                            output.write(buffer, 0, count)
+                        }
+                        require(size == BIOS_ROM_BYTES) { "BIOS ROM must be exactly 96 KiB" }
+                    }
+                }
+                Files.move(partial.toPath(), biosFile().toPath(),
+                    StandardCopyOption.REPLACE_EXISTING)
+                "BIOS ROM imported. Restart the game to apply."
+            } catch (error: Exception) {
+                "BIOS import failed: ${error.message ?: "Unknown error"}"
+            } finally { partial.delete() }
+            runOnUiThread {
+                biosBusy = false
+                if (menuOpen) menuStatus.text = result
+                toast(result)
+            }
+        }.start()
+    }
+
+    private fun startWithFont(disk: File, message: String, floppy: Boolean) {
         if (preparingFont) return
         val generation = ++startGeneration
         preparingFont = true
@@ -1225,7 +1504,10 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
                 Pc98FontCache.ensure(filesDir)
                 nativeStop()
                 if (generation != startGeneration) "Start cancelled"
-                else if (nativeStart(disk.absolutePath, fontPath(), clock)) message else "Unable to start machine"
+                else if (nativeStart(disk.absolutePath, fontPath(), firmwareDir().absolutePath,
+                        clock, floppy))
+                    awaitMachineReady()?.let { "Disk start failed: $it" } ?: message
+                else "Unable to start machine"
             } catch (error: Exception) {
                 "PC-98 font generation failed: ${error.message}"
             }
@@ -1243,6 +1525,23 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
             return super.dispatchKeyEvent(event)
         }
         if (libraryVisible) {
+            if (libraryScreen.detailOpen) {
+                if (event.keyCode in listOf(KeyEvent.KEYCODE_BUTTON_A, KeyEvent.KEYCODE_ENTER,
+                        KeyEvent.KEYCODE_BUTTON_B, KeyEvent.KEYCODE_ESCAPE, KeyEvent.KEYCODE_BACK,
+                        KeyEvent.KEYCODE_MENU, KeyEvent.KEYCODE_BUTTON_MODE)) {
+                    if (event.action == KeyEvent.ACTION_DOWN && event.repeatCount == 0) {
+                        when (event.keyCode) {
+                            KeyEvent.KEYCODE_BUTTON_A, KeyEvent.KEYCODE_ENTER ->
+                                libraryScreen.activateDetail()
+                            KeyEvent.KEYCODE_MENU, KeyEvent.KEYCODE_BUTTON_MODE ->
+                                libraryScreen.detailsSelection()
+                            else -> libraryScreen.closeDetail()
+                        }
+                    }
+                    return true
+                }
+                return super.dispatchKeyEvent(event)
+            }
             if (libraryScreen.actionsOpen) {
                 if (event.action == KeyEvent.ACTION_DOWN) {
                     when (event.keyCode) {
@@ -1412,6 +1711,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
             return
         }
         if (libraryVisible) {
+            if (libraryScreen.closeDetail()) return
             if (libraryScreen.closeActions()) return
             if (currentDisk != null) {
                 libraryVisible = false
@@ -1475,13 +1775,18 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
     }
 
     private fun fontPath() = File(filesDir, "android-font.bin").absolutePath
+    private fun firmwareDir() = File(filesDir, "firmware")
+    private fun biosFile() = File(firmwareDir(), "bios.rom")
 
     private fun dp(value: Int): Int = (value * resources.displayMetrics.density).roundToInt()
 
     companion object {
         private const val HDI_REQUEST = 98
         private const val ROM_FOLDER_REQUEST = 99
-        private const val DISK_NAME = "boot.hdi"
+        private const val FLOPPY_A_REQUEST = 100
+        private const val FLOPPY_B_REQUEST = 101
+        private const val BIOS_REQUEST = 102
+        private const val BIOS_ROM_BYTES = 0x18000L
         init { System.loadLibrary("kairo98") }
     }
 }

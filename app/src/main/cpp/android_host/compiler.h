@@ -19,6 +19,9 @@
 #define VK_PAUSE 0
 #define GetKeyState(key) 0
 typedef uint32_t DWORD;
+typedef uint16_t WORD;
+typedef uint8_t BYTE;
+typedef int32_t INT32;
 typedef intptr_t INT_PTR;
 #define CPU_MULTIPLE_MAX 2048
 

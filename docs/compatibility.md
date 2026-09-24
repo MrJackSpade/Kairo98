@@ -1,5 +1,19 @@
 ﻿# Compatibility evidence
 
+## Bundled catalog on Retroid, 24 September 2026
+
+The debug APK bundled 6,123 reviewed, 360-pixel-max cover and screenshot files, 213 content-ID mappings, and a unique PC-98 name fallback. On the Retroid Pocket Classic, the library displayed canonical titles and box images for Acrojet, Belloncho disks 1 and 2, Black Onyx disks 1 and 2, and Farland Story. The Black Onyx game page displayed its screenshot and authored description. Offline debug APK and release AAB builds succeeded; all 6,271 `art/` and `catalog/` asset files had identical SHA-256 digests across both packages, and every artwork path in the catalog name index was present. The APK was 119,548,191 bytes. Records without an authored description still use the explicit description fallback.
+
+## Floppy boot and swap on Retroid, 24 September 2026
+
+Machine settings are accessible from both the library's right drawer and the emulator's left drawer. The BIOS picker copies a selected 96 KiB `bios.rom` into private Android app storage. The Android wrapper passes that firmware directory to the core on each machine start. Using a user-supplied ROM, Black Onyx Disk 1 advanced past the earlier BASIC firmware request to its English color/monochrome prompt. Pressing `C` advanced to the game's title scene. The imported file matched the source SHA-256 (`d0f5b6d96a01295ab5436d7852d2c9eea1faa87fcf016b7e6599cdd689266cd2`); neither file is in Git or the APK. This establishes a game boot on the test device, not broad BIOS or game compatibility.
+
+An offline `:app:assembleDebug` build was installed on the Retroid Pocket Classic (Android 14, arm64-v8a). The app scanned private test ZIPs in `Documents/Kairo98Test` and listed each extracted floppy image. `Acrojet [T-En by MrRichard999 v1.0].d88` booted to its title screen. `Melpool Land [T-En by Nana v1.0].fdi` booted to its English opening text and graphics. The two FDI images in `Belloncho Body Inspection [T-En by Nana v1.10].zip` appeared as separate entries; Disk 1 mounted, the session flyout offered both disks for Floppy A, and changing to Disk 2 updated the mounted disk label. Belloncho's Disk 1 reached the PC-98 firmware request for a system disk, so that title's gameplay was not established by this run. The test ZIPs remain outside Git.
+
+The first `Black Onyx, The (Disk 1) [T-En by LordKarnov42 v1.0 RC1].fdd` attempt failed to mount because Android's core build omitted `SUPPORT_KAI_IMAGES`, which excludes the VFDD reader. With that definition enabled, the FDD mounted and reached a Japanese firmware message requiring `BIOS.ROM` for BASIC startup. After enabling the extra readers, Melpool Land still reached its opening screen, Acrojet still reached its title screen, and the Farland Story HDI reached its English start menu.
+
+This check covers D88 and FDI boot, FDD mount, ZIP discovery, one paused disk swap, and an HDI regression boot. The other recognized floppy formats, guest writes after a swap, and Floppy B were not yet exercised on the device.
+
 ## Library actions drawer, 23 September 2026
 
 The Retroid library now shows the Kairo98 name, a black-backed hamburger at the top right, and the game list without a permanent folder or scan-status strip. The right drawer contains Select ROM folder, Refresh, and Rehash, with folder and scan details inside it. A scan indicator appears in the header while work is in progress; empty-library guidance occupies the list area. [Collapsed library](evidence/library-retroid-clean-header.png) · [Right drawer](evidence/library-retroid-right-drawer.png).

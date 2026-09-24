@@ -6,10 +6,24 @@ import hashlib
 import json
 import re
 from pathlib import Path
+from urllib.parse import urlsplit
 
-CONTENT_ID = re.compile(r"sha256-hdi-v1:[0-9a-f]{64}\Z")
+CONTENT_ID = re.compile(r"sha256-(?:hdi|fd)-v1:[0-9a-f]{64}\Z")
 ART_PATH = re.compile(r"art/(?!.*\.\.)[A-Za-z0-9_./-]{1,252}\Z")
-FIELDS = {"title", "aliases", "artwork", "machine", "controller", "input", "media", "launch"}
+FIELDS = {"title", "description", "aliases", "artwork", "machine", "controller", "input", "media", "launch"}
+
+
+def valid_image_url(value):
+    if not isinstance(value, str) or len(value) > 512:
+        return False
+    try:
+        parsed = urlsplit(value)
+        return (parsed.scheme == "https" and parsed.hostname in
+                {"images.launchbox-app.com", "gamesdb-images.launchbox.gg"} and
+                parsed.port is None and not parsed.username and not parsed.password and
+                bool(parsed.path) and not parsed.query and not parsed.fragment)
+    except ValueError:
+        return False
 CONTROLLER_INPUT = re.compile(r"(?:button:[0-9]{1,4}|(?:axis|hat):[0-9]{1,3}:[+-])\Z")
 CONTROLLER_ACTIONS = {"menu", "pause", "restart", "exit"}
 CONTROLLER_JOYSTICK = {"up", "down", "left", "right", "button1", "button2"}
@@ -58,12 +72,20 @@ def validate_record(record):
     require(len(ids) == len(set(ids)), "duplicate content ID in one game")
     title = record.get("title")
     require(isinstance(title, str) and 0 < len(title.strip()) <= 256, "invalid title")
+    description = record.get("description")
+    require(description is None or
+            (isinstance(description, str) and 0 < len(description.strip()) <= 8000),
+            "invalid description")
     aliases = record.get("aliases", [])
     require(isinstance(aliases, list) and len(aliases) <= 64 and
             all(isinstance(x, str) and 0 < len(x.strip()) <= 256 for x in aliases), "invalid aliases")
     artwork = record.get("artwork", {})
-    require(isinstance(artwork, dict) and set(artwork) <= {"boxArt", "preview"} and
-            all(isinstance(x, str) and ART_PATH.fullmatch(x) for x in artwork.values()), "invalid artwork")
+    require(isinstance(artwork, dict) and set(artwork) <=
+            {"boxArt", "preview", "boxArtUrl", "previewUrl"} and
+            all(isinstance(x, str) and ART_PATH.fullmatch(x)
+                for key, x in artwork.items() if key in {"boxArt", "preview"}) and
+            all(valid_image_url(x) for key, x in artwork.items()
+                if key in {"boxArtUrl", "previewUrl"}), "invalid artwork")
     machine = record.get("machine", {})
     require(isinstance(machine, dict) and set(machine) <= {"baseClockTenthsMHz"} and
             type(machine.get("baseClockTenthsMHz", 25)) is int and

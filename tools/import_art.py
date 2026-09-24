@@ -9,7 +9,7 @@ from tempfile import TemporaryDirectory
 
 from PIL import Image, UnidentifiedImageError
 
-from build_catalog import CONTENT_ID, compact, require
+from build_catalog import CONTENT_ID, compact, require, valid_image_url
 
 MAX_SOURCE_BYTES = 32 * 1024 * 1024
 MAX_PIXELS = 16_000_000
@@ -55,6 +55,7 @@ def _import_art(source_path, assets_root, staging):
                 artwork = game.get("artwork", {})
                 if artwork.get(old["kind"]) == old["asset"]:
                     del artwork[old["kind"]]
+                    artwork.pop("boxArtUrl" if old["kind"] == "boxArt" else "previewUrl", None)
                     if not artwork:
                         game.pop("artwork", None)
     elif art_dir.is_dir():
@@ -71,6 +72,9 @@ def _import_art(source_path, assets_root, staging):
                     ("creator", "source", "license", "permissionEvidence", "sha256", "file")),
                 "incomplete art provenance")
         require(len(record["sha256"]) == 64, "invalid source digest")
+        source_image_url = record.get("sourceImageUrl")
+        require(source_image_url is None or valid_image_url(source_image_url),
+                "invalid source image URL")
         relative = Path(record["file"])
         require(not relative.is_absolute() and ".." not in relative.parts, "unsafe source path")
         image_path = (source_path.parent / relative).resolve()
@@ -89,10 +93,10 @@ def _import_art(source_path, assets_root, staging):
             with Image.open(image_path) as original:
                 require(original.width * original.height <= MAX_PIXELS, "art dimensions too large")
                 image = original.convert("RGB")
-                image.thumbnail((960, 720), Image.Resampling.LANCZOS)
+                image.thumbnail((960, 360), Image.Resampling.LANCZOS)
                 import io
                 output = io.BytesIO()
-                image.save(output, format="WEBP", quality=82, method=6)
+                image.save(output, format="WEBP", quality=75, method=6)
                 encoded = output.getvalue()
         except (UnidentifiedImageError, OSError) as error:
             raise ValueError(f"unreadable art: {image_path}") from error
@@ -101,10 +105,13 @@ def _import_art(source_path, assets_root, staging):
         asset_path = f"art/{digest}.webp"
         (staging / f"{digest}.webp").write_bytes(encoded)
         game.setdefault("artwork", {})[kind] = asset_path
+        if source_image_url:
+            game["artwork"]["boxArtUrl" if kind == "boxArt" else "previewUrl"] = source_image_url
         by_game[content_id, kind] = asset_path
         provenance.append({key: record[key] for key in
                            ("contentId", "kind", "creator", "source", "license", "permissionEvidence", "sha256")}
-                          | {"asset": asset_path, "assetSha256": digest})
+                          | {"asset": asset_path, "assetSha256": digest}
+                          | ({"sourceImageUrl": source_image_url} if source_image_url else {}))
     staged_shards = staging / "shards"
     staged_shards.mkdir()
     for prefix, shard in shards.items():

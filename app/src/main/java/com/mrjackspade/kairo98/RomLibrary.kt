@@ -16,7 +16,7 @@ import java.util.concurrent.atomic.AtomicBoolean
 import java.util.zip.CRC32
 import java.util.zip.ZipFile
 
-/** A source location is separate from the uncompressed HDI content ID. */
+/** A source location is separate from the uncompressed disk-image content ID. */
 data class LibraryEntry(
     val id: String,
     val uri: String,
@@ -31,6 +31,18 @@ data class LibraryEntry(
 ) {
     val displayName: String get() = (zipEntry ?: path).substringAfterLast('/').substringAfterLast('\\')
     val playable: Boolean get() = contentId != null && error == null
+    val isFloppy: Boolean get() = DiskFormat.isFloppy(displayName)
+}
+
+object DiskFormat {
+    private val floppyExtensions = setOf("fdi", "d88", "88d", "d98", "98d",
+        "nfd", "fdd", "dcp", "dcu", "hdm", "xdf")
+    fun extension(name: String): String = name.substringAfterLast('.', "").lowercase(Locale.ROOT)
+    fun isFloppy(name: String): Boolean = extension(name) in floppyExtensions
+    fun supported(name: String): Boolean = extension(name) == "hdi" || isFloppy(name)
+    fun suffix(name: String): String = ".${extension(name)}"
+    fun maxBytes(name: String): Long = if (isFloppy(name)) 64L * 1024 * 1024
+        else 4L * 1024 * 1024 * 1024
 }
 
 class RomLibrary(private val context: Context) {
@@ -53,7 +65,10 @@ class RomLibrary(private val context: Context) {
     fun scan(treeUri: Uri, forceHash: Boolean, cancelled: AtomicBoolean,
              progress: (String) -> Unit): List<LibraryEntry> = synchronized(scanLock) {
         checkCancelled(cancelled)
-        val prior = cached(treeUri).associateBy { it.id }
+        val snapshot = readStore()
+        val prior = if (snapshot.first == treeUri.toString()) snapshot.second.associateBy { it.id }
+            else emptyMap()
+        val formatsCurrent = snapshot.third >= MEDIA_FORMATS_VERSION
         val result = ArrayList<LibraryEntry>()
         val (files, folderErrors) = enumerate(treeUri, cancelled, progress)
         result.addAll(folderErrors)
@@ -63,7 +78,7 @@ class RomLibrary(private val context: Context) {
             progress("Scanning ${index + 1}/${files.size}: ${source.path}")
             if (source.path.endsWith(".zip", ignoreCase = true)) {
                 val oldEntries = prior.values.filter { it.uri == source.uri.toString() }
-                if (!forceHash && trusted(source) && oldEntries.isNotEmpty() &&
+                if (!forceHash && formatsCurrent && trusted(source) && oldEntries.isNotEmpty() &&
                     oldEntries.all { sameSource(it, source) && it.error == null }) {
                     result.addAll(oldEntries)
                     continue
@@ -81,17 +96,17 @@ class RomLibrary(private val context: Context) {
                             val item = entries.nextElement()
                             val normalized = safeEntryName(item.name)
                             require(names.add(normalized.lowercase(Locale.ROOT))) { "Duplicate ZIP entry" }
-                            if (!item.isDirectory && normalized.endsWith(".hdi", ignoreCase = true)) {
-                                require(playable.size < MAX_ZIP_IMAGES) { "ZIP has too many HDIs" }
-                                require(item.size in 1..MAX_IMAGE_BYTES) { "HDI exceeds size limit" }
+                            if (!item.isDirectory && DiskFormat.supported(normalized)) {
+                                require(playable.size < MAX_ZIP_IMAGES) { "ZIP has too many disk images" }
+                                require(item.size in 1..imageLimit(normalized)) { "Disk image exceeds size limit" }
                                 require(item.compressedSize > 0 &&
                                     item.size / item.compressedSize <= MAX_EXPANSION_RATIO) {
-                                    "HDI expansion ratio is too large"
+                                    "Disk image expansion ratio is too large"
                                 }
                                 playable.add(item)
                             }
                         }
-                        require(playable.isNotEmpty()) { "No HDI in ZIP" }
+                        require(playable.isNotEmpty()) { "No supported disk image in ZIP" }
                         for (item in playable) {
                             checkCancelled(cancelled)
                             val candidate = entry(source, item.name, item.size, item.crc, null)
@@ -103,12 +118,14 @@ class RomLibrary(private val context: Context) {
                                 } else {
                                     progress("Hashing ${item.name}")
                                     hashCount++
-                                    zip.getInputStream(item).use { contentId(it, item.size, item.crc, cancelled) }
+                                    zip.getInputStream(item).use {
+                                        contentId(it, item.size, item.crc, cancelled, item.name)
+                                    }
                                 }
                                 result.add(candidate.copy(contentId = id))
                             } catch (cancel: CancellationException) { throw cancel }
                             catch (error: Exception) {
-                                result.add(candidate.copy(error = error.message ?: "HDI unreadable"))
+                                result.add(candidate.copy(error = error.message ?: "Disk image unreadable"))
                             }
                         }
                     }
@@ -127,13 +144,13 @@ class RomLibrary(private val context: Context) {
                         progress("Hashing ${source.path}")
                         hashCount++
                         context.contentResolver.openInputStream(source.uri)?.use {
-                            contentId(it, source.size, -1, cancelled)
-                        } ?: error("Unable to open HDI")
+                            contentId(it, source.size, -1, cancelled, source.path)
+                        } ?: error("Unable to open disk image")
                     }
                     result.add(candidate.copy(contentId = id))
                 } catch (cancel: CancellationException) { throw cancel }
                 catch (error: Exception) {
-                    result.add(candidate.copy(error = error.message ?: "HDI unreadable"))
+                    result.add(candidate.copy(error = error.message ?: "Disk image unreadable"))
                 }
             }
         }
@@ -147,10 +164,11 @@ class RomLibrary(private val context: Context) {
     @Synchronized fun prepare(entry: LibraryEntry, cancelled: AtomicBoolean,
                 progress: (String) -> Unit): File {
         require(entry.playable) { "This entry is not ready to launch" }
-        val file = File(imageStore, "${entry.id}-${entry.contentId!!.substringAfter(':')}.hdi")
+        val file = File(imageStore,
+            "${entry.id}-${entry.contentId!!.substringAfter(':')}${DiskFormat.suffix(entry.displayName)}")
         if (file.isFile && file.length() > 0) return file
         if (entry.imageSize > 0) require(imageStore.usableSpace > entry.imageSize + 16L * 1024 * 1024) {
-            "Not enough free space for this HDI"
+            "Not enough free space for this disk image"
         }
         val partial = File(imageStore, "${file.name}.part")
         partial.delete()
@@ -161,31 +179,33 @@ class RomLibrary(private val context: Context) {
                 progress("Preparing ${entry.displayName}")
                 context.contentResolver.openInputStream(source.uri)?.use { input ->
                     partial.outputStream().use { output ->
-                        require(contentId(input, entry.imageSize, -1, cancelled, output) == expected) {
-                            "HDI changed since scan; refresh the library"
+                        require(contentId(input, entry.imageSize, -1, cancelled,
+                            entry.displayName, output) == expected) {
+                            "Disk image changed since scan; refresh the library"
                         }
                     }
-                } ?: error("Unable to open HDI")
+                } ?: error("Unable to open disk image")
             } else {
                 val archive = cachedZip(source, false, cancelled)
                 ZipFile(archive).use { zip ->
-                    val image = zip.getEntry(entry.zipEntry) ?: error("HDI missing from ZIP")
+                    val image = zip.getEntry(entry.zipEntry) ?: error("Disk image missing from ZIP")
                     require(safeEntryName(image.name) == safeEntryName(entry.zipEntry))
-                    require(image.size in 1..MAX_IMAGE_BYTES && image.compressedSize > 0 &&
+                    require(image.size in 1..imageLimit(image.name) && image.compressedSize > 0 &&
                         image.size / image.compressedSize <= MAX_EXPANSION_RATIO) {
-                        "HDI expansion ratio is too large"
+                        "Disk image expansion ratio is too large"
                     }
                     progress("Preparing ${entry.displayName}")
                     zip.getInputStream(image).use { input ->
                         partial.outputStream().use { output ->
-                            require(contentId(input, image.size, image.crc, cancelled, output) == expected) {
-                                "HDI changed since scan; refresh the library"
+                            require(contentId(input, image.size, image.crc, cancelled,
+                                image.name, output) == expected) {
+                                "Disk image changed since scan; refresh the library"
                             }
                         }
                     }
                 }
             }
-            require(partial.renameTo(file)) { "Unable to save working HDI" }
+            require(partial.renameTo(file)) { "Unable to save working disk image" }
             return file
         } catch (error: Exception) {
             partial.delete()
@@ -222,7 +242,7 @@ class RomLibrary(private val context: Context) {
                     val path = if (parentPath.isEmpty()) name else "$parentPath/$name"
                     if (cursor.getString(mimeColumn) == DocumentsContract.Document.MIME_TYPE_DIR) {
                         queue.add(id to path)
-                    } else if (name.endsWith(".hdi", true) || name.endsWith(".zip", true)) {
+                    } else if (DiskFormat.supported(name) || name.endsWith(".zip", true)) {
                         val uri = DocumentsContract.buildDocumentUriUsingTree(tree, id)
                         val size = if (cursor.isNull(sizeColumn)) -1 else cursor.getLong(sizeColumn)
                         val modified = if (cursor.isNull(timeColumn)) 0 else cursor.getLong(timeColumn)
@@ -289,7 +309,8 @@ class RomLibrary(private val context: Context) {
     }
 
     private fun contentId(input: InputStream, expectedSize: Long, expectedCrc: Long,
-                          cancelled: AtomicBoolean, output: OutputStream? = null): String {
+                          cancelled: AtomicBoolean, imageName: String,
+                          output: OutputStream? = null): String {
         val digest = MessageDigest.getInstance("SHA-256")
         val crc = CRC32()
         val buffer = ByteArray(64 * 1024)
@@ -299,16 +320,19 @@ class RomLibrary(private val context: Context) {
             val read = input.read(buffer)
             if (read < 0) break
             count += read
-            require(count <= MAX_IMAGE_BYTES) { "HDI exceeds size limit" }
+            require(count <= imageLimit(imageName)) { "Disk image exceeds size limit" }
             digest.update(buffer, 0, read)
             crc.update(buffer, 0, read)
             output?.write(buffer, 0, read)
         }
-        require(count > 0) { "Empty HDI" }
-        if (expectedSize >= 0) require(count == expectedSize) { "HDI size changed during read" }
+        require(count > 0) { "Empty disk image" }
+        if (expectedSize >= 0) require(count == expectedSize) { "Disk image size changed during read" }
         if (expectedCrc >= 0) require(crc.value == expectedCrc) { "ZIP entry checksum mismatch" }
-        return "sha256-hdi-v1:${digest.digest().joinToString("") { "%02x".format(it) }}"
+        val kind = if (DiskFormat.isFloppy(imageName)) "fd" else "hdi"
+        return "sha256-$kind-v1:${digest.digest().joinToString("") { "%02x".format(it) }}"
     }
+
+    private fun imageLimit(name: String) = DiskFormat.maxBytes(name)
 
     private fun entry(source: Source, zipEntry: String?, imageSize: Long, imageCrc: Long,
                       contentId: String?, error: String? = null): LibraryEntry {
@@ -333,11 +357,11 @@ class RomLibrary(private val context: Context) {
         return normalized
     }
 
-    private fun readStore(): Pair<String?, List<LibraryEntry>> = try {
-        if (!store.isFile || store.length() > MAX_STORE_BYTES) null to emptyList()
+    private fun readStore(): Triple<String?, List<LibraryEntry>, Int> = try {
+        if (!store.isFile || store.length() > MAX_STORE_BYTES) Triple(null, emptyList(), 0)
         else {
             val json = JSONObject(AtomicFile(store).readFully().toString(Charsets.UTF_8))
-            if (json.optInt("schemaVersion") != 1) null to emptyList()
+            if (json.optInt("schemaVersion") != 1) Triple(null, emptyList(), 0)
             else {
                 val array = json.optJSONArray("entries") ?: JSONArray()
                 val items = ArrayList<LibraryEntry>()
@@ -361,10 +385,10 @@ class RomLibrary(private val context: Context) {
                         value.optString("contentId").takeIf(GameCatalog::validId),
                         value.optString("error").takeIf { it.length in 1..1024 }))
                 }
-                json.optString("treeUri") to items
+                Triple(json.optString("treeUri"), items, json.optInt("mediaFormatsVersion", 1))
             }
         }
-    } catch (_: Exception) { null to emptyList() }
+    } catch (_: Exception) { Triple(null, emptyList(), 0) }
 
     private fun saveStore(tree: Uri, entries: List<LibraryEntry>) {
         if (store.isFile) {
@@ -382,7 +406,8 @@ class RomLibrary(private val context: Context) {
                 .put("imageSize", entry.imageSize).put("imageCrc", entry.imageCrc)
                 .put("contentId", entry.contentId ?: "").put("error", entry.error ?: ""))
         }
-        val bytes = JSONObject().put("schemaVersion", 1).put("treeUri", tree.toString())
+        val bytes = JSONObject().put("schemaVersion", 1)
+            .put("mediaFormatsVersion", MEDIA_FORMATS_VERSION).put("treeUri", tree.toString())
             .put("entries", array).toString().toByteArray(Charsets.UTF_8)
         require(bytes.size <= MAX_STORE_BYTES) { "Library cache is too large" }
         val atomic = AtomicFile(store)
@@ -392,11 +417,11 @@ class RomLibrary(private val context: Context) {
     }
 
     companion object {
+        private const val MEDIA_FORMATS_VERSION = 3
         private const val MAX_DEPTH = 24
         private const val MAX_DOCUMENTS = 50_000
         private const val MAX_ZIP_ENTRIES = 50_000
         private const val MAX_ZIP_IMAGES = 1_000
-        private const val MAX_IMAGE_BYTES = 4L * 1024 * 1024 * 1024
         private const val MAX_ARCHIVE_BYTES = 8L * 1024 * 1024 * 1024
         private const val MAX_EXPANSION_RATIO = 1000L
         private const val MAX_STORE_BYTES = 16L * 1024 * 1024

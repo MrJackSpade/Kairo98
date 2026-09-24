@@ -9,6 +9,8 @@
 #include <condition_variable>
 #include <cstring>
 #include <deque>
+#include <future>
+#include <memory>
 #include <mutex>
 #include <string>
 #include <thread>
@@ -18,7 +20,8 @@ extern "C" int kairo98_core_probe(unsigned short *code_segment,
 extern "C" int kairo98_hdi_probe(const char *path, unsigned int *cylinders,
                                  unsigned int *surfaces, unsigned int *sectors,
                                  unsigned int *sector_size, unsigned int *first_word);
-extern "C" int kairo98_machine_start(const char *image, const char *font_path, int mhz_times_ten);
+extern "C" int kairo98_machine_start(const char *image, const char *font_path,
+                                      const char *bios_dir, int mhz_times_ten, int floppy);
 extern "C" int kairo98_machine_dos_prompt(void);
 extern "C" void kairo98_machine_exec(void);
 extern "C" int kairo98_machine_reset(void);
@@ -32,6 +35,7 @@ extern "C" void kairo98_input_telemetry_reset(void);
 extern "C" void kairo98_input_telemetry_snapshot(uint64_t *, uint64_t *, uint64_t *, int *);
 extern "C" void kairo98_machine_release_keys(void);
 extern "C" int kairo98_machine_set_disk(const char *image);
+extern "C" int kairo98_machine_set_floppy(int drive, const char *image);
 extern "C" int kairo98_machine_stop(void);
 extern "C" void kairo98_machine_location(unsigned short *cs, unsigned short *ip);
 extern "C" const unsigned short *kairo98_frame_pixels(void);
@@ -39,13 +43,14 @@ extern "C" unsigned int kairo98_audio_buffer_frames(void);
 extern "C" int kairo98_fill_audio(short *destination, unsigned int frames);
 
 namespace {
-enum class CommandType { Pause, Resume, Reset, Stop, Key, Disk, Clock, MouseMove, MouseButton, Joystick };
+enum class CommandType { Pause, Resume, Reset, Stop, Key, Disk, Floppy, Clock, MouseMove, MouseButton, Joystick };
 struct Command {
     CommandType type;
     int key = 0;
     bool down = false;
     std::string path;
     int y = 0;
+    std::shared_ptr<std::promise<int>> completion;
 };
 std::mutex command_mutex;
 std::condition_variable command_ready;
@@ -94,16 +99,19 @@ void report_state(const char *state, const char *error = "") {
     machine_error = error;
 }
 
-void run_machine(std::string image, std::string font_path, int mhz_times_ten) {
+void run_machine(std::string image, std::string font_path, std::string bios_dir,
+                 int mhz_times_ten, bool floppy) {
     dos_prompt_ready.store(false);
     kairo98_input_telemetry_reset();
     kairo98_joy_release_all();
     unsigned int prompt_frames = 0;
-    int start_result = kairo98_machine_start(image.c_str(), font_path.c_str(), mhz_times_ten);
+    int start_result = kairo98_machine_start(image.c_str(), font_path.c_str(), bios_dir.c_str(),
+                                             mhz_times_ten, floppy ? 1 : 0);
     if (start_result != 0) {
         report_state("Error", start_result == 2 ? "HDI did not mount" :
                               start_result == 3 ? "Invalid clock setting" :
-                              start_result == 4 ? "PC-98 font cache missing or invalid" : "HDI path is too long");
+                              start_result == 4 ? "PC-98 font cache missing or invalid" :
+                              start_result == 5 ? "Floppy did not mount" : "Disk image path is too long");
         std::lock_guard<std::mutex> guard(command_mutex);
         active = false;
         return;
@@ -180,6 +188,11 @@ void run_machine(std::string image, std::string font_path, int mhz_times_ten) {
                         stop = true;
                     }
                     break;
+                case CommandType::Floppy: {
+                    int result = kairo98_machine_set_floppy(command.key, command.path.c_str());
+                    if (command.completion) command.completion->set_value(result);
+                    break;
+                }
                 case CommandType::Clock:
                     kairo98_input_telemetry_reset();
                     kairo98_joy_release_all();
@@ -268,7 +281,9 @@ void enqueue(Command command) {
 
 extern "C" JNIEXPORT jboolean JNICALL
 Java_com_mrjackspade_kairo98_MainActivity_nativeStart(JNIEnv *env, jobject, jstring image_path,
-                                                      jstring font_path, jint mhz_times_ten) {
+                                                      jstring font_path, jstring bios_dir,
+                                                      jint mhz_times_ten,
+                                                      jboolean floppy) {
     std::lock_guard<std::mutex> lifecycle(lifecycle_mutex);
     if (worker.joinable()) return JNI_FALSE;
     const char *chars = image_path ? env->GetStringUTFChars(image_path, nullptr) : nullptr;
@@ -277,6 +292,9 @@ Java_com_mrjackspade_kairo98_MainActivity_nativeStart(JNIEnv *env, jobject, jstr
     const char *font_chars = font_path ? env->GetStringUTFChars(font_path, nullptr) : nullptr;
     std::string font = font_chars ? font_chars : "";
     if (font_chars) env->ReleaseStringUTFChars(font_path, font_chars);
+    const char *bios_chars = bios_dir ? env->GetStringUTFChars(bios_dir, nullptr) : nullptr;
+    std::string bios = bios_chars ? bios_chars : "";
+    if (bios_chars) env->ReleaseStringUTFChars(bios_dir, bios_chars);
     {
         std::lock_guard<std::mutex> guard(command_mutex);
         commands.clear();
@@ -288,7 +306,8 @@ Java_com_mrjackspade_kairo98_MainActivity_nativeStart(JNIEnv *env, jobject, jstr
         machine_state = "Starting";
         active = true;
     }
-    worker = std::thread(run_machine, std::move(path), std::move(font), mhz_times_ten);
+    worker = std::thread(run_machine, std::move(path), std::move(font), std::move(bios), mhz_times_ten,
+                         floppy == JNI_TRUE);
     return JNI_TRUE;
 }
 
@@ -356,6 +375,25 @@ Java_com_mrjackspade_kairo98_MainActivity_nativeDisk(JNIEnv *env, jobject, jstri
     std::string path(chars);
     env->ReleaseStringUTFChars(image_path, chars);
     enqueue({CommandType::Disk, 0, false, std::move(path)});
+}
+
+extern "C" JNIEXPORT jboolean JNICALL
+Java_com_mrjackspade_kairo98_MainActivity_nativeFloppy(JNIEnv *env, jobject, jint drive,
+                                                        jstring image_path) {
+    if (drive < 0 || drive > 1) return JNI_FALSE;
+    const char *chars = image_path ? env->GetStringUTFChars(image_path, nullptr) : nullptr;
+    std::string path = chars ? chars : "";
+    if (chars) env->ReleaseStringUTFChars(image_path, chars);
+    auto completion = std::make_shared<std::promise<int>>();
+    auto response = completion->get_future();
+    {
+        std::lock_guard<std::mutex> guard(command_mutex);
+        if (!active) return JNI_FALSE;
+        commands.push_back({CommandType::Floppy, drive, false, std::move(path), 0, completion});
+        command_ready.notify_one();
+    }
+    return response.wait_for(std::chrono::seconds(10)) == std::future_status::ready &&
+        response.get() == 0 ? JNI_TRUE : JNI_FALSE;
 }
 
 extern "C" JNIEXPORT jstring JNICALL

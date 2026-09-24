@@ -40,6 +40,24 @@ class CatalogBuildTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "invalid artwork"):
             validate_record({**record, "artwork": {"preview": "../outside.png"}})
 
+    def test_description_is_preserved(self):
+        record = self.source["datasets"][0]["games"][0]
+        self.assertEqual(validate_record({**record, "description": "A short summary."})["description"],
+                         "A short summary.")
+        with self.assertRaisesRegex(ValueError, "invalid description"):
+            validate_record({**record, "description": " "})
+
+    def test_floppy_content_id_is_accepted(self):
+        record = self.source["datasets"][0]["games"][0]
+        floppy = "sha256-fd-v1:" + "a" * 64
+        self.assertEqual(validate_record({**record, "contentIds": [floppy]})["title"],
+                         record["title"])
+        validate_record({**record, "artwork": {
+            "previewUrl": "https://images.launchbox-app.com/example.jpg"}})
+        with self.assertRaisesRegex(ValueError, "invalid artwork"):
+            validate_record({**record, "artwork": {
+                "previewUrl": "https://images.launchbox-app.com.evil.example/a.jpg"}})
+
     def test_controller_binding_contract(self):
         record = self.source["datasets"][0]["games"][0]
         valid = {"profile": "standard-v1", "bindings": [

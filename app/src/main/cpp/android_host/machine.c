@@ -3,22 +3,42 @@
 #include "cpucore.h"
 #include "keystat.h"
 #include "fdd/sxsi.h"
+#include "fdd/diskdrv.h"
+#include "diskimage/fddfile.h"
+#include "diskimage/img_common.h"
 #include "dosio.h"
 #include "iocore.h"
+#include <ctype.h>
 #include <string.h>
 
 int kairo98_font_overlay_load(const char *path);
 
-int kairo98_machine_start(const char *image, const char *font_path, int mhz_times_ten) {
+static UINT floppy_type(const char *image) {
     size_t length = image ? strlen(image) : 0;
-    if (length >= sizeof(np2cfg.sasihdd[0])) {
+    return length >= 4 && image[length - 4] == '.' &&
+           tolower((unsigned char)image[length - 3]) == 'f' &&
+           tolower((unsigned char)image[length - 2]) == 'd' &&
+           tolower((unsigned char)image[length - 1]) == 'd'
+        ? FTYPE_VFDD : FTYPE_NONE;
+}
+
+int kairo98_machine_start(const char *image, const char *font_path, const char *bios_dir,
+                          int mhz_times_ten, int floppy) {
+    size_t length = image ? strlen(image) : 0;
+    size_t bios_length = bios_dir ? strlen(bios_dir) : 0;
+    if (length >= (floppy ? sizeof(np2cfg.fddfile[0]) :
+                            sizeof(np2cfg.sasihdd[0])) ||
+        bios_length >= sizeof(np2cfg.biospath)) {
         return 1;
     }
     if (mhz_times_ten != 20 && mhz_times_ten != 25) return 3;
     np2cfg.baseclock = mhz_times_ten == 25 ? PCBASECLOCK25 : PCBASECLOCK20;
     np2cfg.sasihdd[0][0] = '\0';
+    np2cfg.fddfile[0][0] = '\0';
+    np2cfg.biospath[0] = '\0';
+    if (bios_length) memcpy(np2cfg.biospath, bios_dir, bios_length + 1);
     if (length) {
-        memcpy(np2cfg.sasihdd[0], image, length + 1);
+        if (!floppy) memcpy(np2cfg.sasihdd[0], image, length + 1);
         file_setcd(image);
     }
     pccore_init();
@@ -29,10 +49,36 @@ int kairo98_machine_start(const char *image, const char *font_path, int mhz_time
     }
     pccore_reset();
     if (length) {
-        SXSIDEV drive = sxsi_getptr(0);
-        if (!drive || !(drive->flag & SXSIFLAG_READY)) {
+        if (floppy) {
+            diskdrv_readyfddex(0, image, floppy_type(image), 0);
+            if (!fdd_diskready(0)) {
+                pccore_term();
+                np2cfg.fddfile[0][0] = '\0';
+                return 5;
+            }
+        } else {
+            SXSIDEV drive = sxsi_getptr(0);
+            if (drive && (drive->flag & SXSIFLAG_READY)) return 0;
             pccore_term();
             np2cfg.sasihdd[0][0] = '\0';
+            return 2;
+        }
+    }
+    return 0;
+}
+
+int kairo98_machine_set_floppy(int drive, const char *image) {
+    size_t length = image ? strlen(image) : 0;
+    if (drive < 0 || drive > 1 || length >= sizeof(np2cfg.fddfile[0])) return 1;
+    char previous[sizeof(np2cfg.fddfile[0])];
+    memcpy(previous, np2cfg.fddfile[drive], sizeof(previous));
+    previous[sizeof(previous) - 1] = '\0';
+    diskdrv_setfddex((REG8)drive, NULL, FTYPE_NONE, 0);
+    if (length) {
+        diskdrv_readyfddex((REG8)drive, image, floppy_type(image), 0);
+        if (!fdd_diskready((REG8)drive)) {
+            if (previous[0])
+                diskdrv_readyfddex((REG8)drive, previous, floppy_type(previous), 0);
             return 2;
         }
     }
@@ -111,6 +157,8 @@ int kairo98_machine_stop(void) {
     int result = flush_disk();
     pccore_term();
     np2cfg.sasihdd[0][0] = '\0';
+    np2cfg.fddfile[0][0] = '\0';
+    np2cfg.fddfile[1][0] = '\0';
     return result;
 }
 

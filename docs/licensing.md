@@ -16,6 +16,8 @@ The project's own source license has not been selected. The public GitHub distri
 
 Do not bundle proprietary PC-98 BIOS, font ROMs, operating systems, or commercial game images. Users provide any files they are entitled to use. The app should document which files are optional or required for each emulated configuration.
 
+The reviewed 360-pixel catalog artwork is bundled at the user's direction. Its source URLs and packaged hashes are recorded in `app/src/main/assets/art/catalog-provenance-v1.json`; creator and redistribution rights for both distribution channels still require the final asset audit. The user-supplied `bios.rom` used in device tests remains in private app storage and is absent from Git and APK/AAB assets.
+
 ## Release gate
 
 Before the first public binary, review the complete source list, generated assets, bundled native libraries, build flags, notices, and APK/AAB contents. Record the results here. The source package's license table is version-specific, so this review repeats if the native source changes.

@@ -1,8 +1,10 @@
 import json
+import hashlib
 import shutil
 import tempfile
 import unittest
 from pathlib import Path
+from PIL import Image
 
 from build_catalog import build, compact
 from import_art import import_art
@@ -42,6 +44,8 @@ class ArtImportTests(unittest.TestCase):
         self.assertEqual(len(provenance["assets"]), 2)
         for item in provenance["assets"]:
             self.assertTrue((self.assets / item["asset"]).is_file())
+            with Image.open(self.assets / item["asset"]) as image:
+                self.assertLessEqual(image.height, 360)
 
     def test_missing_paid_redistribution_permission_is_rejected(self):
         self.art_source["assets"][1]["freeAndPaidRedistribution"] = False
@@ -52,6 +56,20 @@ class ArtImportTests(unittest.TestCase):
         self.assertFalse(list((self.assets / "art").glob("*.webp")))
         shard = json.loads((self.assets / "catalog/shards/00.json").read_text(encoding="utf-8"))
         self.assertNotIn("artwork", next(iter(shard["games"].values())))
+
+    def test_tall_art_is_capped_and_source_url_is_retained(self):
+        record = self.art_source["assets"][0]
+        image_path = self.root / record["file"]
+        Image.new("RGB", (400, 800), "blue").save(image_path)
+        record["sha256"] = hashlib.sha256(image_path.read_bytes()).hexdigest()
+        record["sourceImageUrl"] = "https://images.launchbox-app.com/example.jpg"
+        self.save_manifest()
+        import_art(self.manifest_path, self.assets)
+        shard = json.loads((self.assets / "catalog/shards/00.json").read_text(encoding="utf-8"))
+        art = next(iter(shard["games"].values()))["artwork"]
+        self.assertEqual(art["boxArtUrl"], record["sourceImageUrl"])
+        with Image.open(self.assets / art["boxArt"]) as image:
+            self.assertEqual(image.size, (180, 360))
 
     def test_revoked_asset_is_removed_with_its_reference(self):
         import_art(self.manifest_path, self.assets)

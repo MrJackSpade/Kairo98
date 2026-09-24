@@ -4,14 +4,19 @@ import android.content.Context
 import android.util.AtomicFile
 import org.json.JSONObject
 import java.io.File
+import java.net.URI
+import java.text.Normalizer
 
 /** Versioned, data-only metadata. Nothing in this file is executed by Android. */
 class GameCatalog(private val context: Context) {
     data class Game(
         val contentId: String,
         val title: String,
+        val description: String?,
         val boxArt: String?,
         val preview: String?,
+        val boxArtUrl: String?,
+        val previewUrl: String?,
         val baseClockTenthsMHz: Int?,
         val controllerProfile: String?,
         val controllerBindings: String?,
@@ -22,8 +27,10 @@ class GameCatalog(private val context: Context) {
     )
 
     private val base = readAsset("catalog/base-v1.json")
+    private val nameIndex = readAsset("catalog/name-index-v1.json")
     private val shardNames = readShardNames()
     private val shardCache = object : android.util.LruCache<String, JSONObject>(8) {}
+    private val fallbackRecords = HashMap<String, JSONObject>()
     private val additionsFile = File(context.filesDir, "user-catalog-v1.json")
     private val overridesFile = File(context.filesDir, "overrides-v1.json")
     private var additions = readLocal(additionsFile)
@@ -36,6 +43,10 @@ class GameCatalog(private val context: Context) {
         hasField(additions, contentId, field, subfield) -> "User catalog"
         hasField(base, contentId, field, subfield) -> "Shipped catalog"
         shardFor(contentId)?.let { hasField(it, contentId, field, subfield) } == true -> "Shipped catalog"
+        fallbackRecords[contentId]?.let { record ->
+            if (subfield == null) record.has(field)
+            else record.optJSONObject(field)?.has(subfield) == true
+        } == true -> "Shipped catalog"
         else -> if (field == "title") "Filename" else "App default"
     }
 
@@ -48,8 +59,16 @@ class GameCatalog(private val context: Context) {
 
     @Synchronized fun resolve(contentId: String, fileName: String): Game {
         val merged = JSONObject()
-        merge(merged, base.optJSONObject("games")?.optJSONObject(contentId))
-        merge(merged, shardFor(contentId)?.optJSONObject("games")?.optJSONObject(contentId))
+        val baseRecord = base.optJSONObject("games")?.optJSONObject(contentId)
+        val shardRecord = shardFor(contentId)?.optJSONObject("games")?.optJSONObject(contentId)
+        merge(merged, baseRecord)
+        merge(merged, shardRecord)
+        if (baseRecord == null && shardRecord == null) {
+            lookupByName(fileName)?.let { fallback ->
+                merge(merged, fallback)
+                if (validId(contentId)) fallbackRecords[contentId] = fallback
+            }
+        }
         merge(merged, additions.optJSONObject("games")?.optJSONObject(contentId))
         val user = overrides.optJSONObject("games")?.optJSONObject(contentId)
         merge(merged, user)
@@ -63,8 +82,11 @@ class GameCatalog(private val context: Context) {
         val command = launch?.optString("text")?.takeIf { validCommand(it) && launch.optString("type") == "guestCommand" }
         return Game(
             contentId, title.ifBlank { fileName },
+            merged.optString("description").takeIf(::validDescription),
             artwork?.optString("boxArt")?.takeIf(::validArtPath),
             artwork?.optString("preview")?.takeIf(::validArtPath),
+            artwork?.optString("boxArtUrl")?.takeIf(::validImageUrl),
+            artwork?.optString("previewUrl")?.takeIf(::validImageUrl),
             machine?.optInt("baseClockTenthsMHz")?.takeIf { it == 20 || it == 25 },
             controller?.optString("profile")?.takeIf { it.length in 1..64 },
             controller?.optJSONArray("bindings")?.toString(),
@@ -103,7 +125,7 @@ class GameCatalog(private val context: Context) {
     }
 
     @Synchronized fun setArtworkOverride(contentId: String, kind: String, path: String) {
-        require(validId(contentId) && kind in ART_FIELDS && validArtPath(path))
+        require(validId(contentId) && kind in ART_PATH_FIELDS && validArtPath(path))
         val updated = JSONObject(overrides.toString())
         val games = updated.optJSONObject("games") ?: JSONObject().also { updated.put("games", it) }
         val entry = games.optJSONObject(contentId) ?: JSONObject().also { games.put(contentId, it) }
@@ -114,7 +136,7 @@ class GameCatalog(private val context: Context) {
     }
 
     @Synchronized fun resetArtworkOverride(contentId: String, kind: String) {
-        require(validId(contentId) && kind in ART_FIELDS)
+        require(validId(contentId) && kind in ART_PATH_FIELDS)
         val updated = JSONObject(overrides.toString())
         val games = updated.optJSONObject("games") ?: return
         val entry = games.optJSONObject(contentId) ?: return
@@ -144,13 +166,14 @@ class GameCatalog(private val context: Context) {
 
     private fun validField(field: String, value: Any): Boolean = when (field) {
         "title" -> value is String && validTitle(value)
+        "description" -> value is String && validDescription(value)
         "aliases" -> value is org.json.JSONArray && value.length() <= 64 &&
             (0 until value.length()).all { index ->
                 (value.opt(index) as? String)?.let(::validTitle) == true
             }
-        "artwork" -> value is JSONObject && listOf("boxArt", "preview").all {
+        "artwork" -> value is JSONObject && ART_PATH_FIELDS.all {
             !value.has(it) || validArtPath(value.optString(it))
-        }
+        } && ART_URL_FIELDS.all { !value.has(it) || validImageUrl(value.optString(it)) }
         "machine" -> value is JSONObject && (!value.has("baseClockTenthsMHz") ||
             (value.opt("baseClockTenthsMHz") is Int && value.optInt("baseClockTenthsMHz") in listOf(20, 25)))
         "controller" -> value is JSONObject && (!value.has("profile") ||
@@ -179,6 +202,19 @@ class GameCatalog(private val context: Context) {
             parse(bytes.toString(Charsets.UTF_8))
         }
     } catch (_: Exception) { empty() }
+
+    private fun lookupByName(fileName: String): JSONObject? {
+        val simple = fileName.substringAfterLast('/').substringAfterLast('\\')
+            .replace(Regex("\\[[^]]*]"), "")
+            .replace(Regex("\\((?:disk|disc|fd)\\s*\\d+[^)]*\\)", RegexOption.IGNORE_CASE), "")
+            .replace(Regex("\\.(?:zip|hdi|fdi|d88|88d|d98|98d|nfd|fdd|dcp|dcu|hdm|xdf)$",
+                RegexOption.IGNORE_CASE), "")
+        val key = Normalizer.normalize(simple, Normalizer.Form.NFKC).lowercase()
+            .filter(Char::isLetterOrDigit)
+        if (key.length < 4) return null
+        val id = nameIndex.optJSONObject("names")?.optString(key) ?: return null
+        return nameIndex.optJSONObject("games")?.optJSONObject(id)
+    }
 
     private fun readShardNames(): Set<String> = try {
         val manifest = context.assets.open("catalog/manifest-v1.json").use { input ->
@@ -236,18 +272,28 @@ class GameCatalog(private val context: Context) {
     companion object {
         private const val MAX_ASSET_JSON = 64 * 1024 * 1024
         private const val MAX_LOCAL_JSON = 8L * 1024 * 1024
-        private val FIELDS = setOf("title", "aliases", "artwork", "machine", "controller", "input", "media", "launch")
+        private val FIELDS = setOf("title", "description", "aliases", "artwork", "machine", "controller", "input", "media", "launch")
         private val INPUT_MODES = setOf("auto", "keyboard", "mouse")
-        private val ART_FIELDS = setOf("boxArt", "preview")
-        private val ID = Regex("sha256-hdi-v1:[0-9a-f]{64}")
+        private val ART_PATH_FIELDS = setOf("boxArt", "preview")
+        private val ART_URL_FIELDS = setOf("boxArtUrl", "previewUrl")
+        private val ART_FIELDS = ART_PATH_FIELDS + ART_URL_FIELDS
+        private val ID = Regex("sha256-(?:hdi|fd)-v1:[0-9a-f]{64}")
         private val MEDIA_ROLE = Regex("[A-Za-z0-9_-]{1,32}")
         fun validId(value: String) = ID.matches(value)
         private fun validTitle(value: String) = value.isNotBlank() && value.length <= 256
+        private fun validDescription(value: String) = value.isNotBlank() && value.length <= 8000
         private fun validCommand(value: String) = value.isNotBlank() && value.length <= 128 &&
             value.all { it.code in 32..126 && (it.isLetterOrDigit() || it in " \\/._:-") }
         private fun validArtPath(value: String) = value.length in 1..256 &&
             value.startsWith("art/") && !value.contains("..") && !value.contains('\\') &&
             !value.startsWith("/")
+        fun validImageUrl(value: String): Boolean = try {
+            if (value.length !in 1..512) false else URI(value).let { uri ->
+                uri.scheme == "https" && uri.host in setOf("images.launchbox-app.com", "gamesdb-images.launchbox.gg") &&
+                    uri.port == -1 && uri.userInfo == null && uri.rawPath.isNotEmpty() &&
+                    uri.rawQuery == null && uri.rawFragment == null
+            }
+        } catch (_: Exception) { false }
         private fun empty() = JSONObject().put("schemaVersion", 1).put("games", JSONObject())
     }
 }

@@ -18,14 +18,16 @@ import android.widget.TextView
 import android.widget.Toast
 import java.util.concurrent.Executors
 
-/** Library landing page. A short tap or A activates the selected game. */
+/** Library landing page. A short tap or A opens the selected game's page. */
 class LibraryScreen(
     context: Context,
     private val catalog: GameCatalog,
     private val chooseFolder: () -> Unit,
     private val refresh: () -> Unit,
     private val rehash: () -> Unit,
+    private val machineSettings: () -> Unit,
     private val play: (LibraryEntry) -> Unit,
+    private val preview: (LibraryEntry) -> Unit,
     private val details: (LibraryEntry) -> Unit
 ) : FrameLayout(context) {
     private val status = TextView(context)
@@ -36,9 +38,12 @@ class LibraryScreen(
     private val scrim = View(context)
     private val actionsDrawer = LinearLayout(context)
     private val actionItems = ArrayList<View>()
+    private val detailPage = GameDetailPage(context, catalog, play, preview) { closeDetail() }
+    private var detailEntryId: String? = null
     private var selectedAction = 0
     var actionsOpen = false
         private set
+    val detailOpen: Boolean get() = detailPage.isOpen
     private val artCache = object : LruCache<String, Bitmap>(8 * 1024 * 1024) {
         override fun sizeOf(key: String, value: Bitmap) = value.byteCount
     }
@@ -163,7 +168,7 @@ class LibraryScreen(
             setOnItemClickListener { _, _, position, _ ->
                 selectedIndex = position
                 this@LibraryScreen.adapter.notifyDataSetChanged()
-                play(entries[position])
+                openDetail(entries[position])
             }
             setOnItemLongClickListener { _, _, position, _ ->
                 selectedIndex = position
@@ -226,9 +231,18 @@ class LibraryScreen(
             maxLines = 2
         }
         actionsDrawer.addView(status)
-        drawerAction("Select ROM folder", "Choose where HDI and ZIP games are stored", chooseFolder)
+        drawerAction("Select ROM folder", "Choose where disk images and ZIP games are stored", chooseFolder)
         drawerAction("Refresh", "Scan for added, changed, or removed games", refresh)
         drawerAction("Rehash", "Recheck every game image", rehash)
+        actionsDrawer.addView(TextView(context).apply {
+            text = "SETTINGS"
+            textSize = 11f
+            letterSpacing = 0.16f
+            setTextColor(0xff66d6df.toInt())
+            setPadding(dp(12), dp(18), dp(12), dp(5))
+        })
+        drawerAction("Machine", "Base clock and BIOS ROM", machineSettings)
+        addView(detailPage, FrameLayout.LayoutParams(-1, -1))
     }
 
     fun showFolder(label: String?) { folder.text = label ?: "No ROM folder selected" }
@@ -251,6 +265,10 @@ class LibraryScreen(
         selectedIndex = selectedIndex.coerceIn(0, (items.size - 1).coerceAtLeast(0))
         this@LibraryScreen.adapter.notifyDataSetChanged()
         if (items.isNotEmpty()) list.setSelection(selectedIndex)
+        if (detailOpen) {
+            val refreshed = items.firstOrNull { it.id == detailEntryId }
+            if (refreshed == null) closeDetail() else detailPage.show(refreshed)
+        }
     }
     fun moveSelection(delta: Int) {
         if (entries.isEmpty()) return
@@ -259,9 +277,24 @@ class LibraryScreen(
         this@LibraryScreen.adapter.notifyDataSetChanged()
     }
     fun activateSelection() {
-        entries.getOrNull(selectedIndex)?.let(play)
+        entries.getOrNull(selectedIndex)?.let(::openDetail)
     }
     fun detailsSelection() { entries.getOrNull(selectedIndex)?.let(details) }
+
+    fun openDetail(entry: LibraryEntry) {
+        closeActions()
+        detailEntryId = entry.id
+        detailPage.show(entry)
+    }
+
+    fun closeDetail(): Boolean {
+        if (!detailPage.close()) return false
+        detailEntryId = null
+        list.requestFocus()
+        return true
+    }
+
+    fun activateDetail() { detailPage.activateFocused() }
 
     fun openActions() {
         if (actionsOpen) return
