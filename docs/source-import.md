@@ -41,3 +41,13 @@ The imported `diskimage/fddfile.h` and `fdd/sxsicd.c` used `DiskImage/FD` and `D
 ## Portable IA-32 core
 
 The Android build now compiles the pinned snapshot's portable `i386c/ia32` CPU core instead of its 286 core. The explicit source list includes the snapshot's disabled FPU, MMX, and SSE stubs, but excludes the DOSBox FPU implementations. Three local source corrections make that configuration compile: `i386c/cpumem.c` uses the non-PC-9821 memory handlers in its 32-bit table, `i386c/ia32/paging.c` removes trailing comment backslashes that accidentally continued preprocessor lines, and `i386c/ia32/instructions/sse2/sse2.c` supplies three undefined-instruction stubs in its disabled-SSE2 branch. The source archive above remains the provenance reference for all three files. The IA-32 source list needs to be included in the final binary license audit.
+
+## PC-9821 machine and graphics configuration
+
+The Android core now enables the portable 21/W PC-9821, PEGC, large-memory,
+15/31 kHz display, PC-9801-119, PC-9861K, IA-32 paging/reset, and BIOS I/O
+features used by the desktop build. `io/pegc.c` is included in the explicit
+source list. The pinned `mem/memvga.c` needs one local include of `pegc.h` to
+compile its PEGC path on Android. These are project-local build and include
+changes to the existing rev104 source; no new source archive was imported.
+The Windows-only integrations and excluded fmgen code are not enabled.

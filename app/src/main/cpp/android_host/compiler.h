@@ -125,6 +125,17 @@ typedef signed char BOOL;
 #define	SUPPORT_UTF8
 
 #define	SUPPORT_16BPP
+/* Portable 21/W machine and graphics features used by the desktop build. */
+#define SUPPORT_PC9821
+#define SUPPORT_PEGC
+#define SUPPORT_LARGE_MEMORY
+#define SUPPORT_CRT31KHZ
+#define SUPPORT_CRT15KHZ
+#define SUPPORT_PC9801_119
+#define SUPPORT_PC9861K
+#define IA32_PAGING_EACHSIZE
+#define IA32_REBOOT_ON_PANIC
+#define BIOS_IO_EMULATION
 #define	MEMOPTIMIZE		2
 
 #define	SOUNDRESERVE	100

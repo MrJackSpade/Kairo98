@@ -12,6 +12,7 @@
 #include	"iocore.h"
 #include	"memvga.h"
 #include	"vram.h"
+#include	"pegc.h"
 #if defined(SUPPORT_IA32_HAXM)
 #include	"i386hax/haxfunc.h"
 #include	"i386hax/haxcore.h"

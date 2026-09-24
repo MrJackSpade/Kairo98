@@ -150,6 +150,7 @@ set(NP21W_CORE_SOURCES
     ${NP21W_ROOT}/io/necio.c
     ${NP21W_ROOT}/io/nmiio.c
     ${NP21W_ROOT}/io/pcidev.c
+    ${NP21W_ROOT}/io/pegc.c
     ${NP21W_ROOT}/io/pic.c
     ${NP21W_ROOT}/io/pit.c
     ${NP21W_ROOT}/io/printif.c

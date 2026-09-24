@@ -3,8 +3,9 @@
 Run games on an Android device before assigning launch behavior. A disk's root
 directory or `AUTOEXEC.BAT` alone does not establish what the user sees: Rusty,
 Ayayo, and Metajo all started without a root `AUTOEXEC.BAT` in the inspected
-HDI. The first pass records the first stable screen after a fresh launch;
-"starts" does not mean a full playthrough has been completed.
+HDI. The first pass records a timed screen after a fresh launch; it may land
+on an intro fade or loading transition. "Starts" does not mean a full
+playthrough has been completed.
 
 The debug APK accepts a direct ADB launch by exact content ID or unambiguous
 title. For example:
@@ -21,11 +22,14 @@ uses the IDs in the app's local library cache:
 
 ```powershell
 python tools/adb_boot_survey.py --start 0 --limit 20 --seconds 12
+python tools/adb_boot_survey.py --indices 48,110,111,115 --capture-at 10,30,60
 ```
 
 It writes an ignored plan, log, and numbered screenshots to
-`.downloads/boot-survey/`. Review each screenshot before marking the result;
-some games take longer than twelve seconds to reach a stable screen.
+`.downloads/boot-survey/`. The second command keeps several frames from each
+launch. Its times are wall-clock seconds after requesting the launch, including
+disk preparation. A black or white frame alone does not establish a failure:
+Tuned Heart and Viper CTR were later seen advancing past intro fades.
 
 ## Confirmed on Retroid
 
@@ -296,7 +300,7 @@ These fresh launches waited 22 seconds; captures are in ignored
 | 41 | Farland Story IV original-balance variant reaches “Hit any key to start.” |
 | 44, 45 | Farland Story VI reaches FM / 86 / GS / CD / None sound choice. |
 | 47 | Fatal Relations reaches its game title menu. |
-| 48 | Flix Mix is solid white at 22 s; investigate further. |
+| 48 | White in the 22-second capture. A later live device run loaded the game after transient graphical errors; investigate those transitions separately. |
 | 56 | Holy Girl Force Lakers reaches its title. |
 | 57 | Horny Sweeper 2 reaches BGM / GS / FM / 86 / No choice. |
 | 65 | Lightning Warrior Raidy reaches its title menu. |
@@ -322,9 +326,9 @@ each archive.
 | 107 | Touhou 5's second bugfix variant reaches a sound-board menu. |
 | 108 | Toushin Toshi reaches its title. |
 | 109 | True Love reaches its title screen. |
-| 110, 111 | Tuned Heart remains black at 22 seconds. |
-| 112 | Ultima VIII reaches a corrupted green/cyan screen; graphics compatibility follow-up. |
-| 115 | Viper CTR remains black at 22 seconds. |
+| 110, 111 | Black in the 22-second captures. A later live device test confirmed Tuned Heart advances through an intro fade. |
+| 112 | The earlier build showed a persistent green/cyan pattern. With the portable desktop 21/W machine and graphics flags enabled, a fresh Android run reached the normal red/purple word-entry screen. |
+| 115 | Black in the 22-second capture. A later live device test confirmed Viper CTR advances through an intro fade. |
 | 120 | YU-NO v1.04 reaches color / monochrome choice. |
 
 ## Longer follow-up, third set
@@ -333,12 +337,12 @@ each archive.
 | --- | --- |
 | 121 | The other YU-NO translation reaches color / monochrome choice. |
 | 122 | Yugekitai reaches its translated story intro. |
-| 132–135 | All four Madou Monogatari floppies remain black at 22 seconds; investigate floppy boot/BIOS compatibility. |
+| 132–135 | Black in the 22-second captures. Longer live runs and disk arrangement still need verification. |
 | 142 | Sword of Kumdor reaches an illustrated name-entry prompt. |
 | 148 | Strush asks for a sound source and recommends FM. |
 | 153, 154 | Both Farland Story IV hack variants reach “Hit any key to start.” |
 | 157, 158 | Both Farland Story VI hack variants reach the FM / 86 / GS / CD / None sound choice. |
-| 160 | Ultima VIII voice patch reaches the same corrupted green/cyan display as the other variant. |
+| 160 | The earlier build showed the same green/cyan pattern. Retest this voice-patch variant with the updated core. |
 | 168 | Holy Girl Force Lakers III reaches its game logo. |
 | 170 | Primal Space reaches Japanese story text. |
 | 171 | X-Girl reaches FM sound / Soundboard / No Sound choice. |
@@ -352,11 +356,12 @@ under ignored `.downloads/run-starfire-title-launch.png` and
 
 ## Follow-up work
 
-Resolve the persistent black screens (Madou Monogatari 1/I/II/III, both Tuned
-Heart variants, Viper CTR), Flix Mix's solid-white screen, and the corrupted
-Ultima VIII display. Investigate Peret em Heru and Giten Megami Tensei's
-return to DOS. Test companion disk insertion for Cybernetic Hi-School 2.0
-and Reserve, and determine Belloncho Body Inspection's BASIC file-count answer.
+Check Madou Monogatari in a longer live run; the 22-second black captures do
+not establish a failure. Investigate Flix Mix's transient graphics and retest
+the Ultima VIII voice-patch variant. Investigate Peret em Heru and Giten
+Megami Tensei's return to DOS. Test companion disk insertion for Cybernetic
+Hi-School 2.0 and Reserve, and determine Belloncho Body Inspection's BASIC
+file-count answer.
 Typed-number startup menus have an [app choice-panel design](startup-choices.md).
 Arrow-and-Enter menus remain on the guest screen. Some archives contain multiple
 episodes/disks; this first pass boots the preferred disk for each archive

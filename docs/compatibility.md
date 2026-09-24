@@ -1,5 +1,19 @@
 ﻿# Compatibility evidence
 
+## PC-9821 graphics on Retroid, 24 September 2026
+
+The translated Ultima VIII: Pagan HDI reached its English word-entry screen in
+desktop 21/W rev104, while the prior Android build held a green/cyan corrupted
+image for at least 60 seconds. Restoring the portable desktop 21/W PC-9821,
+PEGC, memory, display, IA-32, and BIOS I/O feature set in the Android build
+made a fresh launch show the same red/purple artwork and word-entry prompt on
+the Retroid Pocket Classic. A temporary build that only restored the original
+interpreter signal-mask behavior stayed corrupted; removing debug `-O2` also
+stayed corrupted. The final build retains both performance changes. The
+voice-patch variant and wider game regressions remain to be checked. Device
+captures are in ignored `.downloads/ultima-*.png`; no game media or screenshot
+was added to Git.
+
 ## Night Slave launch on Retroid, 24 September 2026
 
 With the full user-selected library folder, a debug ADB selector opened the exact `Night Slave [T-En by BabaJeanmel, Valley Bell & Kirinn B v1.0]` detail page. Play booted its user-supplied HDI, entered `NS` at the DOS prompt from catalog metadata, passed the game's 2.5 MHz GDC check, showed the English music-driver selection menu, and reached the animated *Night Slave* title logo on the Retroid Pocket Classic. The native build used the portable IA-32 core; the previous 286 build returned to DOS. The HDI and BIOS remain outside Git and APK assets.
