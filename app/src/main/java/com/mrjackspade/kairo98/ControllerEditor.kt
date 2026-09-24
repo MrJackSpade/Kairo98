@@ -17,18 +17,21 @@ import android.widget.TextView
 import android.widget.Toast
 import kotlin.math.abs
 
-/** Full-screen controller mapping page with selectable guest targets. */
+/** Full-screen physical-to-virtual and virtual-to-guest controller mapping page. */
 class ControllerEditor(
     private val activity: Activity,
     private val root: FrameLayout,
     private val load: (LibraryEntry?) -> List<ControllerBinding>,
     private val save: (LibraryEntry?, List<ControllerBinding>) -> Unit,
     private val reset: (LibraryEntry?) -> Unit,
+    private val loadPhysical: () -> List<PhysicalControllerBinding>,
+    private val savePhysical: (List<PhysicalControllerBinding>) -> Unit,
+    private val resetPhysical: () -> Unit,
     private val getDeadZone: () -> Float,
     private val setDeadZone: (Float) -> Unit,
     private val onVisibilityChanged: () -> Unit
 ) {
-    private enum class Stage { LIST, SOURCES, CAPTURE, MANUAL, TARGET, KEYS, JOYSTICK, ACTIONS, DEAD_ZONE, RESET }
+    private enum class Stage { LIST, SOURCES, CAPTURE, MANUAL, TARGET, VIRTUAL, KEYS, JOYSTICK, ACTIONS, DEAD_ZONE, RESET }
     private data class Source(val group: String, val name: String, val input: String)
 
     private lateinit var page: LinearLayout
@@ -37,6 +40,7 @@ class ControllerEditor(
     private lateinit var footer: LinearLayout
     private var game: LibraryEntry? = null
     private var scope: LibraryEntry? = null
+    private var physicalScope = false
     private var stage = Stage.LIST
     private var selectedInput = ""
     private val selectedScans = linkedSetOf<Int>()
@@ -49,6 +53,7 @@ class ControllerEditor(
         if (isOpen) close()
         game = gameEntry
         scope = gameEntry
+        physicalScope = false
         stage = Stage.LIST
         page = LinearLayout(activity).apply {
             orientation = LinearLayout.VERTICAL
@@ -111,7 +116,7 @@ class ControllerEditor(
             Stage.SOURCES, Stage.DEAD_ZONE, Stage.RESET -> Stage.LIST
             Stage.CAPTURE, Stage.MANUAL -> Stage.SOURCES
             Stage.TARGET -> Stage.LIST
-            Stage.KEYS, Stage.JOYSTICK, Stage.ACTIONS -> Stage.TARGET
+            Stage.VIRTUAL, Stage.KEYS, Stage.JOYSTICK, Stage.ACTIONS -> Stage.TARGET
         }
         render()
     }
@@ -131,13 +136,30 @@ class ControllerEditor(
             }
             return true
         }
-        if (event.keyCode == KeyEvent.KEYCODE_BUTTON_B || event.keyCode == KeyEvent.KEYCODE_ESCAPE) {
+        val control = if (KeyEvent.isGamepadButton(event.keyCode) ||
+            event.isFromSource(InputDevice.SOURCE_GAMEPAD) ||
+            event.isFromSource(InputDevice.SOURCE_JOYSTICK))
+            loadPhysical().firstOrNull { it.input == "button:${event.keyCode}" }?.control
+        else null
+        if (control == "b" || event.keyCode == KeyEvent.KEYCODE_ESCAPE) {
             if (event.action == KeyEvent.ACTION_DOWN && event.repeatCount == 0) back()
             return true
         }
-        if (event.keyCode == KeyEvent.KEYCODE_BUTTON_A) {
+        if (control == "a" || event.keyCode == KeyEvent.KEYCODE_ENTER) {
             if (event.action == KeyEvent.ACTION_DOWN && event.repeatCount == 0)
                 activity.currentFocus?.performClick()
+            return true
+        }
+        val direction = when (control) {
+            "up" -> View.FOCUS_UP
+            "down" -> View.FOCUS_DOWN
+            "left" -> View.FOCUS_LEFT
+            "right" -> View.FOCUS_RIGHT
+            else -> null
+        }
+        if (direction != null) {
+            if (event.action == KeyEvent.ACTION_DOWN)
+                activity.currentFocus?.focusSearch(direction)?.requestFocus()
             return true
         }
         return false
@@ -196,6 +218,7 @@ class ControllerEditor(
             Stage.CAPTURE -> "Listen for input"
             Stage.MANUAL -> "Enter input code"
             Stage.TARGET -> "Choose target"
+            Stage.VIRTUAL -> "Virtual controller"
             Stage.KEYS -> "PC-98 keys"
             Stage.JOYSTICK -> "PC-98 joystick 1"
             Stage.ACTIONS -> "Emulator actions"
@@ -208,6 +231,7 @@ class ControllerEditor(
             Stage.CAPTURE -> renderCapture()
             Stage.MANUAL -> renderManual()
             Stage.TARGET -> renderTarget()
+            Stage.VIRTUAL -> renderVirtual()
             Stage.KEYS -> renderKeys()
             Stage.JOYSTICK -> renderJoystick()
             Stage.ACTIONS -> renderActions()
@@ -217,51 +241,75 @@ class ControllerEditor(
     }
 
     private fun renderList() {
-        if (game != null) {
-            val tabs = LinearLayout(activity).apply { orientation = LinearLayout.HORIZONTAL }
-            tabs.addView(tab("Global", scope == null) { scope = null; render() },
-                LinearLayout.LayoutParams(0, dp(48), 1f))
-            tabs.addView(tab("This game", scope != null) { scope = game; render() },
-                LinearLayout.LayoutParams(0, dp(48), 1f))
-            body.addView(tabs)
-        }
-        section(if (scope == null) "GLOBAL PROFILE" else "GAME PROFILE")
-        val controllers = InputDevice.getDeviceIds().toList().mapNotNull(InputDevice::getDevice)
-            .filter { it.supportsSource(InputDevice.SOURCE_GAMEPAD) ||
-                it.supportsSource(InputDevice.SOURCE_JOYSTICK) }
-            .joinToString { it.name }
-        note(if (controllers.isEmpty()) "No controller connected. You can still assign controls."
-            else "Connected: " + controllers)
-        row("Add another input", "Choose from a list or capture it", true) {
-            stage = Stage.SOURCES
-            render()
-        }
-        val bindings = load(scope).associateBy { it.input }
-        val shown = HashSet<String>()
-        var group = ""
-        for (source in commonSources()) {
-            if (source.group != group) {
-                group = source.group
-                section(group.uppercase())
+        val tabs = LinearLayout(activity).apply { orientation = LinearLayout.HORIZONTAL }
+        tabs.addView(tab("Physical", physicalScope) { physicalScope = true; scope = null; render() },
+            LinearLayout.LayoutParams(0, dp(48), 1f))
+        tabs.addView(tab("Global", !physicalScope && scope == null) {
+            physicalScope = false; scope = null; render()
+        }, LinearLayout.LayoutParams(0, dp(48), 1f))
+        if (game != null) tabs.addView(tab("This game", !physicalScope && scope != null) {
+            physicalScope = false; scope = game; render()
+        }, LinearLayout.LayoutParams(0, dp(48), 1f))
+        body.addView(tabs)
+        if (physicalScope) {
+            section("PHYSICAL CONTROLLER → VIRTUAL CONTROLLER")
+            val controllers = InputDevice.getDeviceIds().toList().mapNotNull(InputDevice::getDevice)
+                .filter { it.supportsSource(InputDevice.SOURCE_GAMEPAD) ||
+                    it.supportsSource(InputDevice.SOURCE_JOYSTICK) }
+                .joinToString { it.name }
+            note(if (controllers.isEmpty()) "No controller connected. You can still assign controls."
+                else "Connected: " + controllers)
+            row("Add another input", "Choose from a list or capture it", true) {
+                stage = Stage.SOURCES
+                render()
             }
-            shown.add(source.input)
-            row(source.name, (bindings[source.input]?.let(::targetLabel) ?: "Unassigned") + "  ▾", true) {
-                chooseInput(source.input)
+            val bindings = loadPhysical().associateBy { it.input }
+            val shown = HashSet<String>()
+            var group = ""
+            for (source in commonSources()) {
+                if (source.group != group) {
+                    group = source.group
+                    section(group.uppercase())
+                }
+                shown.add(source.input)
+                row(source.name, (bindings[source.input]?.control?.let(::virtualLabel) ?: "Unassigned") + "  ▾", true) {
+                    chooseInput(source.input)
+                }
             }
-        }
-        val custom = bindings.values.filter { it.input !in shown }
-        if (custom.isNotEmpty()) section("OTHER INPUTS")
-        for (binding in custom) {
-            row(inputLabel(binding.input), targetLabel(binding) + "  ▾", true) {
+            val custom = bindings.values.filter { it.input !in shown }
+            if (custom.isNotEmpty()) section("OTHER INPUTS")
+            for (binding in custom) row(inputLabel(binding.input), virtualLabel(binding.control) + "  ▾", true) {
                 chooseInput(binding.input)
+            }
+        } else {
+            section(if (scope == null) "VIRTUAL CONTROLLER → GLOBAL PC-98 PROFILE"
+                else "VIRTUAL CONTROLLER → GAME PROFILE")
+            val bindings = load(scope).associateBy { it.input }
+            for (control in PhysicalControllerBindings.controls) {
+                val input = "virtual:$control"
+                row(virtualLabel(control), (bindings[input]?.let(::targetLabel) ?: "Unassigned") + "  ▾", true) {
+                    chooseInput(input)
+                }
+            }
+            val legacy = bindings.values.filter { !it.input.startsWith("virtual:") }
+            if (legacy.isNotEmpty()) {
+                section("LEGACY DIRECT INPUTS")
+                note("These saved assignments still work. Reset this profile to use virtual controls.")
+                for (binding in legacy) row(inputLabel(binding.input), targetLabel(binding) + "  ▾", true) {
+                    chooseInput(binding.input)
+                }
             }
         }
         section("OPTIONS")
-        if (scope == null) row("Stick dead zone", (getDeadZone() * 100).toInt().toString() + "%", true) {
+        if (physicalScope) row("Stick dead zone", (getDeadZone() * 100).toInt().toString() + "%", true) {
             stage = Stage.DEAD_ZONE
             render()
         }
-        row("Reset profile", "Restore " + if (scope == null) "built-in defaults" else "catalog or global defaults", true) {
+        row("Reset profile", "Restore " + when {
+            physicalScope -> "standard controller layout"
+            scope == null -> "built-in defaults"
+            else -> "catalog or global defaults"
+        }, true) {
             stage = Stage.RESET
             render()
         }
@@ -313,7 +361,7 @@ class ControllerEditor(
         footerAction("Choose target") {
             val input = edit.text.toString().trim().lowercase()
             try {
-                ControllerBindings.toJson(listOf(ControllerBinding(input, listOf(0x1c))))
+                PhysicalControllerBindings.toJson(listOf(PhysicalControllerBinding(input, "a")))
                 chooseInput(input)
             } catch (error: Exception) { toast(error.message ?: "Invalid input code") }
         }
@@ -321,6 +369,18 @@ class ControllerEditor(
 
     private fun renderTarget() {
         section(inputLabel(selectedInput).uppercase())
+        if (physicalScope) {
+            val existing = loadPhysical().firstOrNull { it.input == selectedInput }
+            note("Current target: " + (existing?.control?.let(::virtualLabel) ?: "Unassigned"))
+            row("Virtual controller button", "Choose the logical button or direction", true) {
+                stage = Stage.VIRTUAL
+                render()
+            }
+            if (existing != null) row("Clear assignment", "Leave this input unassigned", true) {
+                change { savePhysical(loadPhysical().filterNot { it.input == selectedInput }) }
+            }
+            return
+        }
         val existing = load(scope).firstOrNull { it.input == selectedInput }
         note("Current target: " + (existing?.let(::targetLabel) ?: "Unassigned"))
         row("PC-98 key or key combination", "Choose from all scan codes", true) {
@@ -339,6 +399,20 @@ class ControllerEditor(
         }
         if (existing != null) row("Clear assignment", "Leave this input unassigned", true) {
             change { save(scope, load(scope).filterNot { it.input == selectedInput }) }
+        }
+    }
+
+    private fun renderVirtual() {
+        note("Map this physical input once. Every game uses the same virtual layout.")
+        for (control in PhysicalControllerBindings.controls) {
+            row(virtualLabel(control), "Virtual controller", true) {
+                change {
+                    val updated = loadPhysical().filterNot { it.input == selectedInput } +
+                        PhysicalControllerBinding(selectedInput, control)
+                    PhysicalControllerBindings.toJson(updated)
+                    savePhysical(updated)
+                }
+            }
         }
     }
 
@@ -409,9 +483,14 @@ class ControllerEditor(
     }
 
     private fun renderReset() {
-        note(if (scope == null) "Restore the built-in global mapping?"
-            else "Remove this game's override and use its catalog or global mapping?")
-        row("Reset bindings", "Confirm", true) { change { reset(scope) } }
+        note(when {
+            physicalScope -> "Restore the standard physical controller layout?"
+            scope == null -> "Restore the built-in global mapping?"
+            else -> "Remove this game's override and use its catalog or global mapping?"
+        })
+        row("Reset bindings", "Confirm", true) {
+            change { if (physicalScope) resetPhysical() else reset(scope) }
+        }
         row("Keep bindings", "Cancel", true) { back() }
     }
 
@@ -510,7 +589,13 @@ class ControllerEditor(
         else -> binding.keys.joinToString(" + ") { Pc98KeyNames.label(it) }
     }
 
+    private fun virtualLabel(control: String): String = when (control) {
+        "l1", "r1", "l2", "r2" -> control.uppercase()
+        else -> control.replaceFirstChar(Char::uppercase)
+    }
+
     private fun inputLabel(input: String): String {
+        if (input.startsWith("virtual:")) return virtualLabel(input.removePrefix("virtual:"))
         commonSources().firstOrNull { it.input == input }?.let { return it.name }
         val parts = input.split(':')
         return if (parts.size == 2) {

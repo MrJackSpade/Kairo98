@@ -61,7 +61,7 @@ class CatalogBuildTests(unittest.TestCase):
     def test_controller_binding_contract(self):
         record = self.source["datasets"][0]["games"][0]
         valid = {"profile": "standard-v1", "bindings": [
-            {"input": "button:96", "keys": [112, 29]},
+            {"input": "virtual:a", "keys": [112, 29]},
             {"input": "axis:0:+", "action": "menu"},
             {"input": "hat:15:-", "joystick": "left"},
         ]}
@@ -75,6 +75,7 @@ class CatalogBuildTests(unittest.TestCase):
             [{"input": "button:96", "keys": [29], "joystick": "button1"}],
             [{"input": "button:96", "keys": [29]}, {"input": "button:96", "action": "menu"}],
             [{"input": "axis:0", "keys": [29]}],
+            [{"input": "virtual:unknown", "keys": [29]}],
         ):
             with self.subTest(bindings=bindings), self.assertRaisesRegex(ValueError, "invalid controller"):
                 validate_record({**record, "controller": {"bindings": bindings}})

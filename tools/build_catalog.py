@@ -24,7 +24,9 @@ def valid_image_url(value):
                 bool(parsed.path) and not parsed.query and not parsed.fragment)
     except ValueError:
         return False
-CONTROLLER_INPUT = re.compile(r"(?:button:[0-9]{1,4}|(?:axis|hat):[0-9]{1,3}:[+-])\Z")
+CONTROLLER_INPUT = re.compile(r"(?:virtual:[a-z0-9]+|button:[0-9]{1,4}|(?:axis|hat):[0-9]{1,3}:[+-])\Z")
+CONTROLLER_CONTROLS = {"up", "down", "left", "right", "a", "b", "x", "y",
+                       "l1", "r1", "l2", "r2", "start", "select", "menu"}
 CONTROLLER_ACTIONS = {"menu", "pause", "restart", "exit"}
 CONTROLLER_JOYSTICK = {"up", "down", "left", "right", "button1", "button2"}
 
@@ -44,6 +46,8 @@ def valid_bindings(bindings):
             return False
         source = binding.get("input")
         if not isinstance(source, str) or not CONTROLLER_INPUT.fullmatch(source) or source in seen:
+            return False
+        if source.startswith("virtual:") and source.removeprefix("virtual:") not in CONTROLLER_CONTROLS:
             return False
         seen.add(source)
         if "keys" in binding:

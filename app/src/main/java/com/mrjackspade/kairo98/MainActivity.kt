@@ -169,6 +169,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
         clock = preferences.getInt("base_clock", 25).let { if (it == 20) 20 else 25 }
         globalInputMode = InputModeDecider.parse(preferences.getString("input_mode", "auto"))
         nativeSetMuted(muted)
+        gamepadMapper.physicalBindings = physicalControllerBindings()
         gamepadMapper.bindings = globalControllerBindings()
         gamepadMapper.deadZone = preferences.getFloat("controller_dead_zone", 0.35f)
         inputManager = getSystemService(INPUT_SERVICE) as InputManager
@@ -196,6 +197,8 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
         romLibrary = RomLibrary(this)
         controllerEditor = ControllerEditor(this, root,
             ::loadControllerBindings, ::saveControllerBindings, ::resetControllerBindings,
+            ::physicalControllerBindings, ::savePhysicalControllerBindings,
+            ::resetPhysicalControllerBindings,
             { gamepadMapper.deadZone }, { value ->
                 gamepadMapper.deadZone = value
                 preferences.edit().putFloat("controller_dead_zone", value).apply()
@@ -1237,6 +1240,20 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
     private fun globalControllerBindings() =
         ControllerBindings.parse(preferences.getString("controller_global_v1", null))
 
+    private fun physicalControllerBindings() =
+        PhysicalControllerBindings.parse(preferences.getString("controller_physical_v1", null))
+
+    private fun savePhysicalControllerBindings(bindings: List<PhysicalControllerBinding>) {
+        preferences.edit().putString("controller_physical_v1",
+            PhysicalControllerBindings.toJson(bindings).toString()).apply()
+        gamepadMapper.physicalBindings = bindings
+    }
+
+    private fun resetPhysicalControllerBindings() {
+        preferences.edit().remove("controller_physical_v1").apply()
+        gamepadMapper.physicalBindings = physicalControllerBindings()
+    }
+
     private fun effectiveControllerBindings(game: GameCatalog.Game?): List<ControllerBinding> {
         val configured = game?.controllerBindings
         return if (game?.overriddenFields?.contains("controller") == true ||
@@ -1628,22 +1645,38 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
         }.start()
     }
 
+    private fun uiControl(event: KeyEvent): String? {
+        gamepadMapper.controlForButton(event)?.let { return it }
+        when (event.keyCode) {
+            KeyEvent.KEYCODE_ESCAPE, KeyEvent.KEYCODE_BACK -> return "b"
+            KeyEvent.KEYCODE_MENU -> return "menu"
+        }
+        if (KeyEvent.isGamepadButton(event.keyCode) ||
+            event.isFromSource(InputDevice.SOURCE_GAMEPAD) ||
+            event.isFromSource(InputDevice.SOURCE_JOYSTICK)) return null
+        return when (event.keyCode) {
+            KeyEvent.KEYCODE_DPAD_UP -> "up"
+            KeyEvent.KEYCODE_DPAD_DOWN -> "down"
+            KeyEvent.KEYCODE_ENTER -> "a"
+            KeyEvent.KEYCODE_ESCAPE, KeyEvent.KEYCODE_BACK -> "b"
+            KeyEvent.KEYCODE_MENU -> "menu"
+            else -> null
+        }
+    }
+
     override fun dispatchKeyEvent(event: KeyEvent): Boolean {
         if (::controllerEditor.isInitialized && controllerEditor.isOpen) {
             if (controllerEditor.handleKey(event)) return true
             return super.dispatchKeyEvent(event)
         }
         if (libraryVisible) {
+            val control = uiControl(event)
             if (libraryScreen.detailOpen) {
-                if (event.keyCode in listOf(KeyEvent.KEYCODE_BUTTON_A, KeyEvent.KEYCODE_ENTER,
-                        KeyEvent.KEYCODE_BUTTON_B, KeyEvent.KEYCODE_ESCAPE, KeyEvent.KEYCODE_BACK,
-                        KeyEvent.KEYCODE_MENU, KeyEvent.KEYCODE_BUTTON_MODE)) {
+                if (control == "a" || control == "b" || control == "menu") {
                     if (event.action == KeyEvent.ACTION_DOWN && event.repeatCount == 0) {
-                        when (event.keyCode) {
-                            KeyEvent.KEYCODE_BUTTON_A, KeyEvent.KEYCODE_ENTER ->
-                                libraryScreen.activateDetail()
-                            KeyEvent.KEYCODE_MENU, KeyEvent.KEYCODE_BUTTON_MODE ->
-                                libraryScreen.detailsSelection()
+                        when (control) {
+                            "a" -> libraryScreen.activateDetail()
+                            "menu" -> libraryScreen.detailsSelection()
                             else -> libraryScreen.closeDetail()
                         }
                     }
@@ -1653,28 +1686,22 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
             }
             if (libraryScreen.actionsOpen) {
                 if (event.action == KeyEvent.ACTION_DOWN) {
-                    when (event.keyCode) {
-                        KeyEvent.KEYCODE_DPAD_DOWN -> libraryScreen.moveActionSelection(1)
-                        KeyEvent.KEYCODE_DPAD_UP -> libraryScreen.moveActionSelection(-1)
-                        KeyEvent.KEYCODE_BUTTON_A, KeyEvent.KEYCODE_ENTER ->
-                            if (event.repeatCount == 0) libraryScreen.activateAction()
-                        KeyEvent.KEYCODE_BUTTON_B, KeyEvent.KEYCODE_ESCAPE,
-                        KeyEvent.KEYCODE_BACK, KeyEvent.KEYCODE_MENU,
-                        KeyEvent.KEYCODE_BUTTON_MODE -> libraryScreen.closeActions()
+                    when (control) {
+                        "down" -> libraryScreen.moveActionSelection(1)
+                        "up" -> libraryScreen.moveActionSelection(-1)
+                        "a" -> if (event.repeatCount == 0) libraryScreen.activateAction()
+                        "b", "menu" -> libraryScreen.closeActions()
                     }
                 }
                 return true
             }
             if (event.action == KeyEvent.ACTION_DOWN) {
-                when (event.keyCode) {
-                    KeyEvent.KEYCODE_DPAD_DOWN -> libraryScreen.moveSelection(1)
-                    KeyEvent.KEYCODE_DPAD_UP -> libraryScreen.moveSelection(-1)
-                    KeyEvent.KEYCODE_BUTTON_A, KeyEvent.KEYCODE_ENTER ->
-                        if (event.repeatCount == 0) libraryScreen.activateSelection()
-                    KeyEvent.KEYCODE_MENU, KeyEvent.KEYCODE_BUTTON_MODE ->
-                        if (event.repeatCount == 0) libraryScreen.openActions()
-                    KeyEvent.KEYCODE_BACK ->
-                        if (event.repeatCount == 0) onBackPressed()
+                when (control) {
+                    "down" -> libraryScreen.moveSelection(1)
+                    "up" -> libraryScreen.moveSelection(-1)
+                    "a" -> if (event.repeatCount == 0) libraryScreen.activateSelection()
+                    "menu" -> if (event.repeatCount == 0) libraryScreen.openActions()
+                    "b" -> if (event.repeatCount == 0) onBackPressed()
                     else -> return super.dispatchKeyEvent(event)
                 }
             }
@@ -1691,20 +1718,19 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
             return true
         }
         if (menuOpen) {
-            if (event.keyCode == KeyEvent.KEYCODE_DPAD_DOWN ||
-                event.keyCode == KeyEvent.KEYCODE_DPAD_UP) {
+            val control = uiControl(event)
+            if (control == "down" || control == "up") {
                 if (event.action == KeyEvent.ACTION_DOWN) {
                     focusMenuItem(selectedMenuIndex +
-                        if (event.keyCode == KeyEvent.KEYCODE_DPAD_DOWN) 1 else -1)
+                        if (control == "down") 1 else -1)
                 }
                 return true
             }
-            if (event.keyCode == KeyEvent.KEYCODE_BUTTON_B ||
-                event.keyCode == KeyEvent.KEYCODE_ESCAPE) {
+            if (control == "b") {
                 if (event.action == KeyEvent.ACTION_DOWN && event.repeatCount == 0) closeMenu()
                 return true
             }
-            if (event.keyCode == KeyEvent.KEYCODE_BUTTON_A) {
+            if (control == "a") {
                 if (event.action == KeyEvent.ACTION_DOWN && event.repeatCount == 0) {
                     menuItems[selectedMenuIndex].performClick()
                 }
