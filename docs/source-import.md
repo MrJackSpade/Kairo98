@@ -33,3 +33,7 @@ Future upstream changes are not merged automatically. Changes needed for this pr
 ## Local input observation patch
 
 The vendored rev104 snapshot has two Kairo98-only, additive observation hooks. `bios/bios18.c` records BIOS keyboard waits, completed reads, and polls; `io/mouseif.c` records reads of the PC-98 bus mouse data port. The hooks call project-owned `android_host/input_telemetry.c` and do not branch on telemetry values or change guest-visible results. The Android build replaces the imported SDL2 mouse stub with project-owned `android_host/mousemng.c` to accept guest mouse movement and buttons. These changes are local to this repository; the original archive and its provenance above remain the reference snapshot.
+
+## Android/Linux include portability
+
+The imported `diskimage/fddfile.h` and `fdd/sxsicd.c` used `DiskImage/FD` and `DiskImage/CD` in quoted include paths while the actual directories are lowercase. Kairo98 changes those 11 include paths to `diskimage/fd` and `diskimage/cd` so the pinned snapshot builds on case-sensitive Linux CI runners. No code behavior changes.
