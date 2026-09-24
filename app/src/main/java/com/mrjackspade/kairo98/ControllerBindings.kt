@@ -71,8 +71,12 @@ object ControllerBindings {
     }
 
     fun defaults() = listOf(
-        ControllerBinding("button:${KeyEvent.KEYCODE_BUTTON_A}", listOf(0x1c)),
-        ControllerBinding("button:${KeyEvent.KEYCODE_BUTTON_B}", listOf(0x00)),
+        ControllerBinding("button:${KeyEvent.KEYCODE_BUTTON_A}", listOf(0x29)),
+        ControllerBinding("button:${KeyEvent.KEYCODE_BUTTON_B}", listOf(0x2a)),
+        ControllerBinding("button:${KeyEvent.KEYCODE_BUTTON_X}", listOf(0x2b)),
+        ControllerBinding("button:${KeyEvent.KEYCODE_BUTTON_Y}", listOf(0x34)),
+        ControllerBinding("button:${KeyEvent.KEYCODE_BUTTON_START}", listOf(0x1c)),
+        ControllerBinding("button:${KeyEvent.KEYCODE_BUTTON_SELECT}", listOf(0x00)),
         ControllerBinding("button:${KeyEvent.KEYCODE_DPAD_UP}", listOf(0x3a)),
         ControllerBinding("button:${KeyEvent.KEYCODE_DPAD_DOWN}", listOf(0x3d)),
         ControllerBinding("button:${KeyEvent.KEYCODE_DPAD_LEFT}", listOf(0x3b)),

@@ -35753,6 +35753,22 @@
       "description": "An action game about a pilot sent to attack the Slave Dog terrorist base in an armed suit.",
       "machine": {"gdcClockTenthsMHz": 25},
       "launch": {"type": "guestCommand", "text": "NS", "ready": "dosPrompt", "timeoutMs": 30000},
+      "controller": {"profile": "night-slave-v1", "bindings": [
+        {"input": "button:96", "keys": [52]},
+        {"input": "button:97", "keys": [42]},
+        {"input": "button:99", "keys": [43]},
+        {"input": "button:100", "keys": [41]},
+        {"input": "button:108", "keys": [28]},
+        {"input": "button:109", "keys": [0]},
+        {"input": "button:19", "keys": [58]},
+        {"input": "button:20", "keys": [61]},
+        {"input": "button:21", "keys": [59]},
+        {"input": "button:22", "keys": [60]},
+        {"input": "hat:15:-", "keys": [59]},
+        {"input": "hat:15:+", "keys": [60]},
+        {"input": "hat:16:-", "keys": [58]},
+        {"input": "hat:16:+", "keys": [61]}
+      ]},
       "pageUrl": "https://gamesdb.launchbox-app.com/games/details/106056-night-slave",
       "boxArtUrl": "https://images.launchbox-app.com/b92f5b54-07ad-42c0-b628-9f28894c292c.jpg",
       "screenshotUrl": "https://images.launchbox-app.com/32725030-dc63-4fcf-8b0b-43a0c7f56fd3.png"

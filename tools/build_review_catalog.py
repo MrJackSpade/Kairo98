@@ -43,7 +43,7 @@ def generate(matches_path, gallery, assets, art_assets, ffmpeg, quality):
             metadata["description"] = entry["description"]
         if entry.get("aliases"):
             metadata["aliases"] = entry["aliases"]
-        for field in ("machine", "launch"):
+        for field in ("machine", "launch", "controller"):
             if entry.get(field):
                 metadata[field] = entry[field]
         artwork = {}
