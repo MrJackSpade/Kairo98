@@ -22,18 +22,22 @@ Belloncho Body Inspection asks BASIC for a file count, and Giten Megami Tensei a
 
 ## Player flow
 
-1. Play launches the game normally, including any existing catalog DOS command. If this game has a verified typed startup question, the app opens a compact **Start choice** panel below the emulated display. The display remains fully visible above it, using the current scaling policy.
-2. The panel gives large, labeled answer buttons. It stays visible through an intro or loading screen. The player taps an answer when the matching guest question is visible. D-pad changes the selected answer and controller A sends it; Back closes the panel without guest input. **Keyboard** opens the existing flyout keyboard for an unlisted answer.
-3. The tap sends that option's cataloged key, releases it, and sends Enter only when that option's tested sequence requires Enter. Use the same bounded press/release cadence as the current DOS command sender, with a short fixed settling gap before Enter; do not add per-game timing scripts. The app closes the panel after the sequence. A **Send again** action remains in the session flyout until another game starts, so an early or missed press can be retried without restarting.
-4. If the selected path presents another typed question, the next panel stage appears. The player again taps only when that guest question is visible. For example, Jewel Bem Hunter Lime can have a page-one “More episodes” answer (`9`) followed by a separately verified page-two episode question.
+1. Play opens a touch-friendly **Start choices** page before the machine boots. It shows large labeled answer buttons for each cataloged typed question. D-pad and controller A work here too. No choice is silently selected or remembered. **Play without answers** is available for manual keyboard use.
+2. After the player chooses, the app starts the machine and queues each fixed launch command and selected answer in order. Each queued step waits for its own cataloged screen hash set. The native Android host hashes the complete guest framebuffer every 100 ms while the queue is nonempty. The first matching hash releases that step's input; the queue then advances to the next step.
+3. A menu answer sends its cataloged letter or digit and sends Enter only when that option's tested sequence requires it. Use the current bounded key press/release cadence. The player sees the actual guest screen throughout startup; no app panel covers it while booting.
+4. If no accepted hash appears before a bounded timeout, leave the answer unsent and show a visible recovery action: retry the wait, open the keyboard, or restart. Stop, reset, game switch, and exit cancel the queue and release held keys.
 
-There is no countdown or guess based on elapsed boot time. The app does not infer that an arbitrary game menu is ready from keyboard polling: DOS, drivers, and games can all poll the keyboard. The player's tap is the readiness signal for these menus. This avoids sending a digit into an intro, a date prompt, or active gameplay. The panel is absent for games without a verified typed question.
+The screen match is the readiness signal. It depends on emulated pixels, so a slower Android frame, a different CPU clock, or extra boot frames do not shift the trigger. No keyboard-poll heuristic or elapsed-frame guess selects a menu. A game without cataloged typed questions starts as it does today.
+
+The previous frame-count experiment demonstrated why a fixed frame is unsuitable: separate cold Starfire boots paused at frame 450 showed the numbered menu in one run and DOS startup in another. Four captures of the eventual menu differed only in the 16×32 blinking cursor region. Both full-frame cursor states are valid matches and should be recorded as accepted hashes; there is no need to crop or mask the screen.
 
 ## Catalog contract
 
-Use an additive `startupChoices` field keyed by the same content ID as existing game metadata. It is independent of `launch`: a fixed DOS command such as Night Slave's `NS` still waits for the existing DOS prompt; a later typed question is presented to the player. Catalog source, user additions, and per-game overrides follow the current precedence and reset rules. Old catalog readers ignore the new field.
+Use an additive `startupChoices` field keyed by the same content ID as existing game metadata. It is independent of `launch`: a fixed DOS command such as Night Slave's `NS` comes before its driver-choice answer in the ordered queue. Both kinds of queued input use screen-hash readiness once their hashes have been captured. Existing `guestCommand` records continue using their current DOS-prompt signal until their screen hashes have been measured and added. Catalog source, user additions, and per-game overrides follow the current precedence and reset rules. Old catalog readers ignore the new field.
 
-Proposed record for Starfire's tested sequences:
+Internally, every queued item is just **accepted full-screen hashes → guest keys**. A game with two DOS commands needs a separate accepted-hash set for each prompt, such as `A:\>` before `CD PW` and `A:\PW>` before `GAO2`; the second command must not fire merely because the first was sent. The existing `launch.commands` data can be compiled into this ordered form as its hashes are collected. The same queue then accepts a chosen menu answer at a later matching screen.
+
+Proposed record for Starfire's tested keys; the hash strings are placeholders until captured from the raw guest framebuffer:
 
 ```json
 {
@@ -41,6 +45,7 @@ Proposed record for Starfire's tested sequences:
     {
       "id": "display-version",
       "title": "Choose display version",
+      "screenHashes": ["0123456789abcdef", "fedcba9876543210"],
       "options": [
         {"id": "16-color", "label": "16-color version", "key": "1", "enter": true},
         {"id": "256-color", "label": "256-color version", "key": "2", "enter": true}
@@ -50,10 +55,12 @@ Proposed record for Starfire's tested sequences:
 }
 ```
 
-For the first version, each option has one ASCII letter or digit and an explicit Boolean `enter`; there are no arbitrary scripts, delays, host commands, or mouse actions. A game may have several ordered question stages. Bounds: at most four stages, twelve options per stage, unique IDs within each stage, and short nonempty titles and labels. Validate the full field in the catalog builder and at runtime; reject malformed records individually. An override replaces this whole field, and Reset removes the override. No option is auto-selected or remembered by default, so different episodes remain easy to choose on each launch.
+Hash the full 640×400 RGB565 framebuffer produced by the native emulator, before Android scaling or overlays. Define one deterministic byte order and a versioned 64-bit hash algorithm (`fnv1a64-rgb565-v1`); store its fixed-width lowercase hexadecimal result. `screenHashes` is a nonempty set of accepted complete-frame values. A blinking cursor normally contributes two values, both of which match. Sample at 100 ms intervals only while a queued step waits. Hash on the emulation worker after it finishes a frame, then publish the immutable value for Android's queue controller to compare. Reset the published value on each machine start or reset so a previous game cannot satisfy a new step.
 
-The Android `StartupChoiceController` owns the stage, chosen option, and launch generation. A small `GuestKeySequenceSender` converts the validated character and optional Enter to PC-98 scan codes and uses the existing `InputRouter`; both the panel and the old DOS command injector call this sender. Stop, restart, game switch, activity loss, or a dismissed panel cancel any queued presses and release held keys. The native emulator only receives ordinary key press/release events. No menu-specific logic or dependency on catalog data enters the core.
+For the first version, each option has one ASCII letter or digit and an explicit Boolean `enter`; there are no arbitrary scripts, host commands, or mouse actions. A game may have several ordered question stages. Bounds: at most four stages, twelve options per stage, unique IDs within each stage, and short nonempty titles and labels. Validate the full field in the catalog builder and at runtime; reject malformed records individually. An override replaces this whole field, and Reset removes the override. Different episodes remain easy to choose on each launch.
+
+The Android `StartupChoiceController` owns the ordered queue, selected options, matching hash sets, timeout, and launch generation. A small `GuestKeySequenceSender` converts the validated character and optional Enter to PC-98 scan codes and uses the existing `InputRouter`. The native host supplies only a current framebuffer hash when sampling is enabled; the PC-98 core still only produces pixels and receives ordinary key events. No catalog or menu decisions enter the core.
 
 ## Verification gate
 
-Implement the panel and sender with one fully tested menu first. On the Retroid, verify both touch and controller selection, each option's exact key sequence, that an early press can be sent again, Back/keyboard fallback, cancellation on game switch, and no panel for Rusty or an arrow-driven menu. Then add each row above only after its numbered choice actually reaches the expected guest screen. Keep test captures and game files ignored locally; only the validated catalog mapping is shipped.
+Implement the full-frame hash sampler and sender with Starfire first. Capture both cursor-phase hashes from the native buffer; verify that either hash triggers each selected option from repeated cold boots, including boots with different frame counts at the prompt. Verify touch and controller selection, timeout recovery, cancellation on game switch, and no choice page for Rusty or an arrow-driven menu. Then add each row above only after its numbered choice actually reaches the expected guest screen. Keep test captures and game files ignored locally; only validated catalog mappings are shipped.
