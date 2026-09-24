@@ -9,6 +9,9 @@ import java.text.Normalizer
 
 /** Versioned, data-only metadata. Nothing in this file is executed by Android. */
 class GameCatalog(private val context: Context) {
+    data class StartupOption(val id: String, val label: String, val key: Char, val enter: Boolean)
+    data class StartupChoice(val id: String, val title: String, val screenHashes: Set<Long>,
+                             val options: List<StartupOption>)
     private val bundledImages = context.assets.list("art/catalog")?.isNotEmpty() == true
     data class Game(
         val contentId: String,
@@ -25,6 +28,8 @@ class GameCatalog(private val context: Context) {
         val inputMode: String?,
         val launchCommand: String?,
         val launchCommands: List<String>,
+        val launchScreenHashes: List<Set<Long>>,
+        val startupChoices: List<StartupChoice>,
         val launchTimeoutMs: Int,
         val overriddenFields: Set<String>
     )
@@ -87,6 +92,24 @@ class GameCatalog(private val context: Context) {
                 (0 until array.length()).map(array::getString)
             } ?: listOf(value.getString("text"))
         } ?: emptyList()
+        val commandHashes = launch?.optJSONArray("screenHashes")?.let { groups ->
+            (0 until groups.length()).map { index -> parseHashes(groups.optJSONArray(index)) }
+        } ?: emptyList()
+        val choices = merged.optJSONArray("startupChoices")?.takeIf {
+            validField("startupChoices", it)
+        }?.let { array ->
+            (0 until array.length()).map { index ->
+                val item = array.getJSONObject(index)
+                val options = item.getJSONArray("options")
+                StartupChoice(item.getString("id"), item.getString("title"),
+                    parseHashes(item.getJSONArray("screenHashes")),
+                    (0 until options.length()).map { optionIndex ->
+                        val option = options.getJSONObject(optionIndex)
+                        StartupOption(option.getString("id"), option.getString("label"),
+                            option.getString("key")[0], option.getBoolean("enter"))
+                    })
+            }
+        } ?: emptyList()
         return Game(
             contentId, title.ifBlank { fileName },
             merged.optString("description").takeIf(::validDescription),
@@ -101,6 +124,8 @@ class GameCatalog(private val context: Context) {
             input?.optString("mode")?.takeIf { it in INPUT_MODES },
             commands.joinToString("; ").takeIf { commands.isNotEmpty() },
             commands,
+            commandHashes,
+            choices,
             launch?.optInt("timeoutMs", 30000)?.coerceIn(1000, 120000) ?: 30000,
             user?.keys()?.asSequence()?.toSet() ?: emptySet()
         )
@@ -207,8 +232,33 @@ class GameCatalog(private val context: Context) {
                 } == true
             } else validCommand(value.optString("text"))) &&
             (!value.has("ready") || value.optString("ready") == "dosPrompt") &&
+            (!value.has("screenHashes") || value.optJSONArray("screenHashes")?.let { groups ->
+                val count = value.optJSONArray("commands")?.length() ?: 1
+                groups.length() == count && (0 until count).all { index ->
+                    validHashes(groups.optJSONArray(index))
+                }
+            } == true) &&
             (!value.has("timeoutMs") ||
                 (value.opt("timeoutMs") is Int && value.optInt("timeoutMs") in 1000..120000))
+        "startupChoices" -> value is org.json.JSONArray && value.length() in 1..4 &&
+            (0 until value.length()).all { index ->
+                value.optJSONObject(index)?.let { choice ->
+                    validShortId(choice.optString("id")) && validLabel(choice.optString("title")) &&
+                    validHashes(choice.optJSONArray("screenHashes")) &&
+                    choice.optJSONArray("options")?.let { options ->
+                        options.length() in 1..12 && (0 until options.length()).all { optionIndex ->
+                            options.optJSONObject(optionIndex)?.let { option ->
+                                validShortId(option.optString("id")) &&
+                                validLabel(option.optString("label")) &&
+                                option.optString("key").matches(Regex("[A-Za-z0-9]")) &&
+                                option.opt("enter") is Boolean
+                            } == true
+                        } && (0 until options.length()).map { options.getJSONObject(it).getString("id") }
+                            .distinct().size == options.length()
+                    } == true
+                } == true
+            } && (0 until value.length()).map { value.getJSONObject(it).getString("id") }
+                .distinct().size == value.length()
         else -> false
     }
 
@@ -289,7 +339,7 @@ class GameCatalog(private val context: Context) {
     companion object {
         private const val MAX_ASSET_JSON = 64 * 1024 * 1024
         private const val MAX_LOCAL_JSON = 8L * 1024 * 1024
-        private val FIELDS = setOf("title", "description", "aliases", "artwork", "machine", "controller", "input", "media", "launch")
+        private val FIELDS = setOf("title", "description", "aliases", "artwork", "machine", "controller", "input", "media", "launch", "startupChoices")
         private val INPUT_MODES = setOf("auto", "keyboard", "mouse")
         private val ART_PATH_FIELDS = setOf("boxArt", "preview")
         private val ART_URL_FIELDS = setOf("boxArtUrl", "previewUrl")
@@ -301,6 +351,16 @@ class GameCatalog(private val context: Context) {
         private fun validDescription(value: String) = value.isNotBlank() && value.length <= 8000
         private fun validCommand(value: String) = value.isNotBlank() && value.length <= 128 &&
             value.all { it.code in 32..126 && (it.isLetterOrDigit() || it in " \\/._:-") }
+        private fun validShortId(value: String) = value.matches(Regex("[a-z0-9-]{1,40}"))
+        private fun validLabel(value: String) = value.isNotBlank() && value.length <= 100
+        private fun validHashes(value: org.json.JSONArray?): Boolean = value != null &&
+            value.length() in 1..16 && (0 until value.length()).all {
+                (value.opt(it) as? String)?.matches(Regex("[0-9a-f]{16}")) == true
+            }
+        private fun parseHashes(value: org.json.JSONArray?): Set<Long> =
+            if (value == null) emptySet() else (0 until value.length()).map {
+                java.lang.Long.parseUnsignedLong(value.getString(it), 16)
+            }.toSet()
         private fun validArtPath(value: String) = value.length in 1..256 &&
             value.startsWith("art/") && !value.contains("..") && !value.contains('\\') &&
             !value.startsWith("/")

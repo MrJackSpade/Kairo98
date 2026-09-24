@@ -69,6 +69,27 @@ unsigned long long audible_buffers = 0;
 std::string audio_state = "off";
 std::atomic<bool> audio_muted{false};
 std::atomic<bool> dos_prompt_ready{false};
+// A passive host-side observation of the complete 640x400 RGB565 guest image.
+// The emulator core neither knows about nor depends on startup automation.
+std::atomic<bool> screen_hash_sampling{false};
+std::atomic<uint64_t> screen_hash{0};
+std::atomic<uint64_t> screen_hash_serial{0};
+
+void clear_screen_hash() {
+    screen_hash.store(0, std::memory_order_relaxed);
+    screen_hash_serial.fetch_add(1, std::memory_order_release);
+}
+
+uint64_t hash_guest_frame() {
+    const auto *pixels = kairo98_frame_pixels();
+    uint64_t hash = 14695981039346656037ULL;
+    for (size_t i = 0; i < 640 * 400; ++i) {
+        const uint16_t pixel = pixels[i];
+        hash = (hash ^ static_cast<uint8_t>(pixel)) * 1099511628211ULL;
+        hash = (hash ^ static_cast<uint8_t>(pixel >> 8)) * 1099511628211ULL;
+    }
+    return hash;
+}
 
 std::mutex window_mutex;
 ANativeWindow *window = nullptr;
@@ -120,6 +141,7 @@ void report_state(const char *state, const char *error = "") {
 void run_machine(std::string image, std::string font_path, std::string bios_dir,
                  bool font_bitmap, int mhz_times_ten, int gdc_mhz_times_ten, bool floppy) {
     dos_prompt_ready.store(false);
+    clear_screen_hash();
     kairo98_input_telemetry_reset();
     kairo98_joy_release_all();
     unsigned int prompt_frames = 0;
@@ -159,6 +181,7 @@ void run_machine(std::string image, std::string font_path, std::string bios_dir,
     unsigned int audio_due = 0;
     short audio_samples[512 * 2];
     auto next_frame = std::chrono::steady_clock::now();
+    auto next_hash = next_frame;
     while (!stop) {
         std::deque<Command> pending;
         {
@@ -188,6 +211,7 @@ void run_machine(std::string image, std::string font_path, std::string bios_dir,
                     kairo98_joy_release_all();
                     prompt_frames = 0;
                     dos_prompt_ready.store(false);
+                    clear_screen_hash();
                     if (kairo98_machine_reset() != 0) {
                         report_state("Error", "HDI flush failed before reset");
                         stop = true;
@@ -202,6 +226,7 @@ void run_machine(std::string image, std::string font_path, std::string bios_dir,
                     kairo98_joy_release_all();
                     prompt_frames = 0;
                     dos_prompt_ready.store(false);
+                    clear_screen_hash();
                     if (int disk_result = kairo98_machine_set_disk(command.path.c_str()); disk_result != 0) {
                         report_state("Error", disk_result == 3 ? "HDI flush failed before disk change" : "HDI did not mount after disk change");
                         stop = true;
@@ -217,6 +242,7 @@ void run_machine(std::string image, std::string font_path, std::string bios_dir,
                     kairo98_joy_release_all();
                     prompt_frames = 0;
                     dos_prompt_ready.store(false);
+                    clear_screen_hash();
                     if (int result = kairo98_machine_set_clock(command.key); result != 0) {
                         report_state("Error", result == 1 ? "HDI flush failed before clock change" : "Invalid clock setting");
                         stop = true;
@@ -242,6 +268,12 @@ void run_machine(std::string image, std::string font_path, std::string bios_dir,
         kairo98_machine_exec();
         prompt_frames = kairo98_machine_dos_prompt() ? prompt_frames + 1 : 0;
         dos_prompt_ready.store(prompt_frames >= 15);
+        if (screen_hash_sampling.load(std::memory_order_relaxed) &&
+            std::chrono::steady_clock::now() >= next_hash) {
+            screen_hash.store(hash_guest_frame(), std::memory_order_relaxed);
+            screen_hash_serial.fetch_add(1, std::memory_order_release);
+            next_hash = std::chrono::steady_clock::now() + std::chrono::milliseconds(100);
+        }
         render_frame();
         audio_due += 44100;
         while (audio_due >= 60 * 512) {
@@ -431,6 +463,25 @@ Java_com_mrjackspade_kairo98_MainActivity_nativeStatus(JNIEnv *env, jobject) {
 extern "C" JNIEXPORT jboolean JNICALL
 Java_com_mrjackspade_kairo98_MainActivity_nativeDosPromptReady(JNIEnv *, jobject) {
     return dos_prompt_ready.load() ? JNI_TRUE : JNI_FALSE;
+}
+
+extern "C" JNIEXPORT void JNICALL
+Java_com_mrjackspade_kairo98_MainActivity_nativeSetScreenHashSampling(JNIEnv *, jobject,
+                                                                        jboolean enabled) {
+    screen_hash_sampling.store(enabled == JNI_TRUE, std::memory_order_relaxed);
+    clear_screen_hash();
+}
+
+extern "C" JNIEXPORT jlongArray JNICALL
+Java_com_mrjackspade_kairo98_MainActivity_nativeScreenHashSnapshot(JNIEnv *env, jobject) {
+    const uint64_t before = screen_hash_serial.load(std::memory_order_acquire);
+    const uint64_t hash = screen_hash.load(std::memory_order_relaxed);
+    const uint64_t after = screen_hash_serial.load(std::memory_order_acquire);
+    const jlong values[2] = {static_cast<jlong>(before == after ? after : 0),
+                             static_cast<jlong>(before == after ? hash : 0)};
+    jlongArray result = env->NewLongArray(2);
+    if (result) env->SetLongArrayRegion(result, 0, 2, values);
+    return result;
 }
 extern "C" JNIEXPORT void JNICALL
 Java_com_mrjackspade_kairo98_MainActivity_nativeSetSurface(JNIEnv *env, jobject, jobject surface,

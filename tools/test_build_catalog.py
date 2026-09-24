@@ -43,6 +43,26 @@ class CatalogBuildTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "invalid artwork"):
             validate_record({**record, "artwork": {"preview": "../outside.png"}})
 
+    def test_startup_hash_and_typed_choice_contract(self):
+        record = self.source["datasets"][0]["games"][0]
+        choice = {"id": "display", "title": "Choose display", "screenHashes": [
+            "d7c067596b97be35", "daddf81acfadb135"], "options": [
+                {"id": "color", "label": "16-color", "key": "1", "enter": False}]}
+        validate_record({**record, "startupChoices": [choice]})
+        validate_record({**record, "launch": {"type": "guestCommand", "text": "NS",
+                                              "screenHashes": [["0123456789abcdef"]]}})
+        for bad in (
+            {**choice, "screenHashes": ["0123456789abcdef", "0123456789abcdef"]},
+            {**choice, "screenHashes": ["0123456789abcdeg"]},
+            {**choice, "options": [{**choice["options"][0], "key": ";"}]},
+            {**choice, "options": choice["options"] * 2},
+        ):
+            with self.subTest(bad=bad), self.assertRaisesRegex(ValueError, "invalid startup choices"):
+                validate_record({**record, "startupChoices": [bad]})
+        with self.assertRaisesRegex(ValueError, "invalid launch"):
+            validate_record({**record, "launch": {"type": "guestCommand",
+                "commands": ["CD PW", "GAO2"], "screenHashes": [["0123456789abcdef"]]}})
+
     def test_description_is_preserved(self):
         record = self.source["datasets"][0]["games"][0]
         self.assertEqual(validate_record({**record, "description": "A short summary."})["description"],

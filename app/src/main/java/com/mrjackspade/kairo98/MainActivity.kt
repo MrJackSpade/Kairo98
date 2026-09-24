@@ -63,6 +63,8 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
     private external fun nativeInputTelemetry(): LongArray
     private external fun nativeStatus(): String
     private external fun nativeDosPromptReady(): Boolean
+    private external fun nativeSetScreenHashSampling(enabled: Boolean)
+    private external fun nativeScreenHashSnapshot(): LongArray
     private external fun nativeSetSurface(surface: Surface?, width: Int, height: Int)
     private external fun nativeSetMuted(muted: Boolean)
 
@@ -98,6 +100,11 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
     private var currentTitle: String? = null
     private var currentGame: GameCatalog.Game? = null
     private var commandCancelled = AtomicBoolean(false)
+    private var selectedStartup = emptyList<Pair<GameCatalog.StartupChoice, GameCatalog.StartupOption>>()
+    private var traceScreenHashes = false
+    private var skipDebugChoices = false
+    private var skipDebugCommands = false
+    private var lastTraceSerial = 0L
     private var libraryEntries = emptyList<LibraryEntry>()
     private var pendingDebugGame: String? = null
     private var pendingDebugLaunch: String? = null
@@ -154,9 +161,28 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
         }
     }
 
+    private val traceHashes = object : Runnable {
+        override fun run() {
+            if (traceScreenHashes && !libraryVisible) {
+                val sample = nativeScreenHashSnapshot()
+                if (sample.size == 2 && sample[0] != 0L && sample[0] != lastTraceSerial) {
+                    lastTraceSerial = sample[0]
+                    File(filesDir, "startup-hash-trace.txt").appendText(
+                        "${android.os.SystemClock.elapsedRealtime()} ${sample[0]} " +
+                            "${java.lang.Long.toUnsignedString(sample[1], 16).padStart(16, '0')} " +
+                            "${nativeDosPromptReady()} ${nativeStatus()}\n")
+                }
+            }
+            handler.postDelayed(this, 100)
+        }
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         if (applicationInfo.flags and android.content.pm.ApplicationInfo.FLAG_DEBUGGABLE != 0) {
+            traceScreenHashes = intent.getBooleanExtra("kairo98.traceScreenHashes", false)
+            skipDebugChoices = intent.getBooleanExtra("kairo98.skipStartupChoices", false)
+            skipDebugCommands = intent.getBooleanExtra("kairo98.skipLaunchCommands", false)
             pendingDebugLaunch = intent.getStringExtra("kairo98.launchGame64")
                 ?.let(::decodeDebugGameQuery) ?: intent.getStringExtra("kairo98.launchGame")
             pendingDebugGame = intent.getStringExtra("kairo98.selectGame64")
@@ -168,6 +194,11 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
         clock = preferences.getInt("base_clock", 25).let { if (it == 20) 20 else 25 }
         globalInputMode = InputModeDecider.parse(preferences.getString("input_mode", "auto"))
         nativeSetMuted(muted)
+        if (traceScreenHashes) {
+            File(filesDir, "startup-hash-trace.txt").writeText("")
+            nativeSetScreenHashSampling(true)
+            handler.post(traceHashes)
+        }
         gamepadMapper.physicalBindings = physicalControllerBindings()
         gamepadMapper.bindings = globalControllerBindings()
         gamepadMapper.deadZone = preferences.getFloat("controller_dead_zone", 0.35f)
@@ -545,13 +576,38 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
             libraryScreen.showStatus("Folder access expired. Select the ROM folder again.")
             return
         }
+        val game = romLibrary.catalog.resolve(entry.contentId!!, entry.displayName)
+        if (game.startupChoices.isNotEmpty() && !skipDebugChoices) {
+            chooseStartupOptions(entry, game, 0, emptyList())
+        } else startEntry(entry, game, emptyList())
+    }
+
+    private fun chooseStartupOptions(entry: LibraryEntry, game: GameCatalog.Game, index: Int,
+                                     selected: List<Pair<GameCatalog.StartupChoice,
+                                         GameCatalog.StartupOption>>) {
+        if (index == game.startupChoices.size) {
+            startEntry(entry, game, selected)
+            return
+        }
+        val choice = game.startupChoices[index]
+        AlertDialog.Builder(this).setTitle(choice.title)
+            .setItems(choice.options.map { it.label }.toTypedArray()) { _, which ->
+                chooseStartupOptions(entry, game, index + 1,
+                    selected + (choice to choice.options[which]))
+            }
+            .setNeutralButton("Play manually") { _, _ -> startEntry(entry, game, selected) }
+            .setNegativeButton("Cancel", null).showStyled()
+    }
+
+    private fun startEntry(entry: LibraryEntry, game: GameCatalog.Game,
+                           choices: List<Pair<GameCatalog.StartupChoice,
+                               GameCatalog.StartupOption>>) {
         val generation = ++startGeneration
         val cancelled = AtomicBoolean(false)
         preparingFont = true
         applyPauseState()
         libraryScreen.showStatus("Preparing ${entry.displayName}…")
         Thread {
-            val game = romLibrary.catalog.resolve(entry.contentId!!, entry.displayName)
             val result = try {
                 val disk = romLibrary.prepare(entry, cancelled) { message ->
                     runOnUiThread { if (generation == startGeneration) libraryScreen.showStatus(message) }
@@ -588,6 +644,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
                         mountedFloppies[1] = null
                         currentTitle = game.title
                         currentGame = game
+                        selectedStartup = choices
                         inputModeDecider.reset()
                         gamepadMapper.bindings = effectiveControllerBindings(game)
                         userPaused = false
@@ -595,7 +652,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
                         libraryVisible = false
                         libraryScreen.visibility = View.GONE
                         screen.requestFocus()
-                        scheduleGuestCommand(game)
+                        scheduleStartupQueue(game, choices)
                     }
                     applyPauseState()
                 }
@@ -732,43 +789,80 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
         return true
     }
 
-    private fun scheduleGuestCommand(game: GameCatalog.Game?) {
+    private fun scheduleStartupQueue(game: GameCatalog.Game?,
+        choices: List<Pair<GameCatalog.StartupChoice, GameCatalog.StartupOption>>) {
         commandCancelled.set(true)
-        val commands = game?.launchCommands?.takeIf { it.isNotEmpty() } ?: return
+        if (game == null) return
+        val steps = (if (skipDebugCommands) emptyList() else game.launchCommands).mapIndexed { index, command ->
+            val hashes = game.launchScreenHashes.getOrNull(index) ?: emptySet()
+            StartupHashMatcher.Step("Launch command ${index + 1}: $command", command, true,
+                hashes, hashes.isEmpty(), game.launchTimeoutMs)
+        } + choices.map { (choice, option) ->
+            StartupHashMatcher.Step(choice.title, option.key.toString(), option.enter,
+                choice.screenHashes, false, 120000)
+        }
+        scheduleStartupSteps(steps)
+    }
+
+    private fun scheduleStartupSteps(steps: List<StartupHashMatcher.Step>) {
+        if (steps.isEmpty()) {
+            if (!traceScreenHashes) nativeSetScreenHashSampling(false)
+            return
+        }
         val cancelled = AtomicBoolean(false)
         commandCancelled = cancelled
         val generation = startGeneration
+        nativeSetScreenHashSampling(true)
         Thread {
-            val deadline = android.os.SystemClock.elapsedRealtime() + game.launchTimeoutMs
-            while (!cancelled.get() && generation == startGeneration &&
-                android.os.SystemClock.elapsedRealtime() < deadline) {
-                if (nativeDosPromptReady() && nativeStatus().startsWith("Running")) {
-                    try {
-                        for (command in commands) {
-                            for (character in command) {
-                                if (cancelled.get() || generation != startGeneration) return@Thread
-                                val scans = guestCommandScans(character)
-                                    ?: error("Unsupported launch character: $character")
-                                inputRouter.hold("guest-command", scans)
-                                try { Thread.sleep(70) } finally { inputRouter.release("guest-command") }
-                                Thread.sleep(70)
-                            }
-                            if (cancelled.get() || generation != startGeneration) return@Thread
-                            inputRouter.hold("guest-command", listOf(0x1c))
-                            try { Thread.sleep(70) } finally { inputRouter.release("guest-command") }
-                            Thread.sleep(500)
-                        }
-                    } catch (error: Exception) {
-                        runOnUiThread { if (!cancelled.get()) toast(error.message ?: "Launch command failed") }
-                    }
-                    return@Thread
+            try {
+                StartupHashMatcher(::nativeScreenHashSnapshot, ::nativeDosPromptReady,
+                    { nativeStatus().startsWith("Running") },
+                    { cancelled.get() || generation != startGeneration },
+                    { step -> sendStartupKeys(step, cancelled, generation) },
+                    { step -> runOnUiThread {
+                        if (!cancelled.get() && generation == startGeneration)
+                            showStartupTimeout(steps, step)
+                    } }).run(steps)
+            } catch (error: Exception) {
+                runOnUiThread {
+                    if (!cancelled.get() && generation == startGeneration)
+                        toast(error.message ?: "Startup input failed")
                 }
-                Thread.sleep(100)
-            }
-            if (!cancelled.get() && generation == startGeneration) {
-                runOnUiThread { toast("DOS prompt not detected; type the launch command manually") }
+            } finally {
+                inputRouter.release("guest-command")
+                if (!traceScreenHashes && generation == startGeneration &&
+                    commandCancelled === cancelled)
+                    nativeSetScreenHashSampling(false)
             }
         }.start()
+    }
+
+    private fun sendStartupKeys(step: StartupHashMatcher.Step, cancelled: AtomicBoolean,
+                                generation: Int) {
+        for (character in step.text) {
+            if (cancelled.get() || generation != startGeneration) return
+            val scans = guestCommandScans(character)
+                ?: error("Unsupported startup character: $character")
+            inputRouter.hold("guest-command", scans)
+            try { Thread.sleep(70) } finally { inputRouter.release("guest-command") }
+            Thread.sleep(70)
+        }
+        if (step.enter && !cancelled.get() && generation == startGeneration) {
+            inputRouter.hold("guest-command", listOf(0x1c))
+            try { Thread.sleep(70) } finally { inputRouter.release("guest-command") }
+        }
+    }
+
+    private fun showStartupTimeout(steps: List<StartupHashMatcher.Step>,
+                                   step: StartupHashMatcher.Step) {
+        AlertDialog.Builder(this).setTitle("Startup screen not recognized")
+            .setMessage("Waiting for ${step.label}. The game is still running.")
+            .setPositiveButton("Retry") { _, _ ->
+                scheduleStartupSteps(steps.drop(steps.indexOf(step).coerceAtLeast(0)))
+            }
+            .setNeutralButton("Open keyboard") { _, _ -> showKeyboard() }
+            .setNegativeButton("Restart") { _, _ -> restartMachine() }
+            .showStyled()
     }
 
     private fun guestCommandScans(character: Char): List<Int>? = when {
@@ -1029,7 +1123,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
             state.startsWith("Starting")) {
             nativeReset()
             inputModeDecider.reset()
-            scheduleGuestCommand(currentGame)
+            scheduleStartupQueue(currentGame, selectedStartup)
         } else {
             startWithFont(disk, "Starting machine", currentIsFloppy)
         }
@@ -1410,6 +1504,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
         releaseInputs()
         inputManager.unregisterInputDeviceListener(inputDeviceListener)
         handler.removeCallbacks(updateStatus)
+        handler.removeCallbacks(traceHashes)
         nativeSetSurface(null, 0, 0)
         if (!exiting) Thread { nativeStop() }.start()
         super.onDestroy()

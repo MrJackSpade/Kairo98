@@ -23,6 +23,8 @@ def lookup_name(value):
 
 def generate(matches_path, gallery, assets, art_assets, ffmpeg, quality):
     matches = json.loads(matches_path.read_text(encoding="utf-8-sig"))["entries"]
+    profiles_path = matches_path.parent.parent / "startup-profiles-v1.json"
+    profiles = json.loads(profiles_path.read_text(encoding="utf-8"))["games"] if profiles_path.is_file() else {}
     gallery_entries = json.loads((gallery / "manifest.json").read_text(encoding="utf-8-sig"))["entries"]
     gallery_index = {(item["platform"], item["pageUrl"]): item for item in gallery_entries}
     art_dir = art_assets / "art" / "catalog"
@@ -89,7 +91,12 @@ def generate(matches_path, gallery, assets, art_assets, ffmpeg, quality):
             metadata["artwork"] = artwork
         all_games[key] = metadata
         if entry.get("contentIds"):
-            source_games.append({"contentIds": entry["contentIds"], **metadata})
+            if any(content_id in profiles for content_id in entry["contentIds"]):
+                for content_id in entry["contentIds"]:
+                    source_games.append({"contentIds": [content_id], **metadata,
+                                         **profiles.pop(content_id, {})})
+            else:
+                source_games.append({"contentIds": entry["contentIds"], **metadata})
         if entry["platform"] == "pc98":
             candidates = [entry["title"], *entry.get("aliases", []),
                           *(group.rsplit(":", 1)[-1] for group in entry.get("sourceGroups", []))]
@@ -99,6 +106,9 @@ def generate(matches_path, gallery, assets, art_assets, ffmpeg, quality):
                     names.setdefault(normalized, set()).add(key)
         if number % 500 == 0:
             print(f"{number}/{len(matches)} games, {copied} new images", flush=True)
+
+    for content_id, profile in sorted(profiles.items()):
+        source_games.append({"contentIds": [content_id], **profile})
 
     unique_names = {name: next(iter(keys)) for name, keys in sorted(names.items()) if len(keys) == 1}
     source = {"schemaVersion": 1, "datasets": [{"id": "reviewed-research-2026-09-24",

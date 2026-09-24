@@ -1,0 +1,391 @@
+{
+  "schemaVersion": 1,
+  "games": {
+    "sha256-hdi-v1:00c508d1b69106b5441c60e459f2984b90de2148c2c76c7343f5348f9695895c": {
+      "title": "Jewel Bem Hunter Lime",
+      "startupChoices": [
+        {
+          "id": "startup",
+          "title": "Choose episode",
+          "screenHashes": [
+            "7184142527792879",
+            "055cfcfcfbcc6379"
+          ],
+          "options": [
+            {
+              "id": "episode-1",
+              "label": "Episode 1",
+              "key": "1",
+              "enter": false
+            },
+            {
+              "id": "episode-2",
+              "label": "Episode 2",
+              "key": "2",
+              "enter": false
+            },
+            {
+              "id": "episode-3",
+              "label": "Episode 3",
+              "key": "3",
+              "enter": false
+            },
+            {
+              "id": "episode-4",
+              "label": "Episode 4",
+              "key": "4",
+              "enter": false
+            },
+            {
+              "id": "episode-5",
+              "label": "Episode 5",
+              "key": "5",
+              "enter": false
+            },
+            {
+              "id": "episode-6",
+              "label": "Episode 6",
+              "key": "6",
+              "enter": false
+            }
+          ]
+        }
+      ]
+    },
+    "sha256-hdi-v1:074a694ad60463a98f29b474f12ab6a420cf94e88f7b8f8948cffaa59c450d95": {
+      "title": "Cyber Arms Val-Kaizer",
+      "startupChoices": [
+        {
+          "id": "startup",
+          "title": "Cyber Arms Val-Kaizer",
+          "screenHashes": [
+            "8dc81ee93b103d36"
+          ],
+          "options": [
+            {
+              "id": "game",
+              "label": "Start game",
+              "key": "2",
+              "enter": false
+            }
+          ]
+        },
+        {
+          "id": "new-game",
+          "title": "Start a new Val-Kaizer game",
+          "screenHashes": [
+            "7676d32ef46bcc0d"
+          ],
+          "options": [
+            {
+              "id": "new-game",
+              "label": "New game",
+              "key": "0",
+              "enter": false
+            }
+          ]
+        }
+      ]
+    },
+    "sha256-hdi-v1:21938c993420f8ba785103cc83477848ed60df2a99f9d39a61f569c5e0da036c": {
+      "title": "Rance II: The Rebellious Maidens + Hint Disk",
+      "startupChoices": [
+        {
+          "id": "startup",
+          "title": "Rance II",
+          "screenHashes": [
+            "6a013e0f33c612cd",
+            "ba4a4d27ddfaa5cd"
+          ],
+          "options": [
+            {
+              "id": "game",
+              "label": "Game",
+              "key": "1",
+              "enter": false
+            },
+            {
+              "id": "hint",
+              "label": "Hint Disk",
+              "key": "2",
+              "enter": false
+            }
+          ]
+        }
+      ]
+    },
+    "sha256-hdi-v1:262c6581ad7b596faa1b0df51748e8da3e791cd075acc263157c5888e5913c76": {
+      "title": "Farland Story",
+      "startupChoices": [
+        {
+          "id": "startup",
+          "title": "Farland Story",
+          "screenHashes": [
+            "4f08b74b2e875ba3",
+            "3c7c93c9b66140a3"
+          ],
+          "options": [
+            {
+              "id": "game",
+              "label": "Start game",
+              "key": "1",
+              "enter": false
+            },
+            {
+              "id": "opening",
+              "label": "Watch opening",
+              "key": "2",
+              "enter": false
+            }
+          ]
+        }
+      ]
+    },
+    "sha256-hdi-v1:455d6639f0d3e9e5e72bfe7e89bd82026bdb64ae314a4d077a2cd1e3ed7ff766": {
+      "title": "Night Slave",
+      "startupChoices": [
+        {
+          "id": "startup",
+          "title": "Night Slave music driver",
+          "screenHashes": [
+            "d965df24c27d8c9d",
+            "b2152147e4e2339d"
+          ],
+          "options": [
+            {
+              "id": "regular",
+              "label": "Regular driver",
+              "key": "1",
+              "enter": false
+            },
+            {
+              "id": "no-midi",
+              "label": "Disable MIDI",
+              "key": "2",
+              "enter": false
+            }
+          ]
+        }
+      ]
+    },
+    "sha256-hdi-v1:879f430c8e6ca66dde8dfdf93ac3a36897310e9037e4bc84bbcc9fc1c0c3999b": {
+      "title": "Dragon Knight",
+      "startupChoices": [
+        {
+          "id": "startup",
+          "title": "Dragon Knight",
+          "screenHashes": [
+            "939d3e87b42258ab",
+            "86553dad0221edab"
+          ],
+          "options": [
+            {
+              "id": "game",
+              "label": "Game",
+              "key": "1",
+              "enter": false
+            },
+            {
+              "id": "bonus",
+              "label": "Bonus content",
+              "key": "2",
+              "enter": false
+            }
+          ]
+        }
+      ]
+    },
+    "sha256-hdi-v1:8fde4af09c60b9873bc2945516b6c4835e9a010d9822b6346c7288827917654b": {
+      "title": "Starfire",
+      "startupChoices": [
+        {
+          "id": "startup",
+          "title": "Choose display version",
+          "screenHashes": [
+            "d7c067596b97be35",
+            "daddf81acfadb135"
+          ],
+          "options": [
+            {
+              "id": "16-color",
+              "label": "16-color version",
+              "key": "1",
+              "enter": false
+            },
+            {
+              "id": "256-color",
+              "label": "256-color version",
+              "key": "2",
+              "enter": false
+            }
+          ]
+        }
+      ]
+    },
+    "sha256-hdi-v1:97f8747f30303378331aa4fea84c2194ef209072a614dabfbc7bfa4f1d339f22": {
+      "title": "Exciting Milk",
+      "startupChoices": [
+        {
+          "id": "startup",
+          "title": "Exciting Milk episode",
+          "screenHashes": [
+            "d8fa0737ced02bc5",
+            "47c1a335073b24c5"
+          ],
+          "options": [
+            {
+              "id": "episode-1",
+              "label": "Episode 1",
+              "key": "1",
+              "enter": false
+            },
+            {
+              "id": "episode-2",
+              "label": "Episode 2",
+              "key": "2",
+              "enter": false
+            }
+          ]
+        }
+      ]
+    },
+    "sha256-hdi-v1:98258586c8cdf874db71353903d31d8be42553f8e26483ec85359e5036051532": {
+      "title": "Dragon Knight",
+      "startupChoices": [
+        {
+          "id": "startup",
+          "title": "Dragon Knight",
+          "screenHashes": [
+            "939d3e87b42258ab",
+            "86553dad0221edab"
+          ],
+          "options": [
+            {
+              "id": "game",
+              "label": "Game",
+              "key": "1",
+              "enter": false
+            },
+            {
+              "id": "bonus",
+              "label": "Bonus content",
+              "key": "2",
+              "enter": false
+            }
+          ]
+        }
+      ]
+    },
+    "sha256-hdi-v1:b90760124561eec410b6f87decede79cd17da060e07afa0514e452c00e21fb8a": {
+      "title": "Foxy",
+      "startupChoices": [
+        {
+          "id": "startup",
+          "title": "Foxy",
+          "screenHashes": [
+            "9b96b759f0c00727",
+            "8b89995a1f458627"
+          ],
+          "options": [
+            {
+              "id": "game",
+              "label": "Game",
+              "key": "1",
+              "enter": false
+            },
+            {
+              "id": "special",
+              "label": "Special disk",
+              "key": "2",
+              "enter": false
+            },
+            {
+              "id": "editor",
+              "label": "Character edit",
+              "key": "3",
+              "enter": false
+            }
+          ]
+        }
+      ]
+    },
+    "sha256-hdi-v1:df01650dba4e2e4c48af1760f4b76a87450c1b438cf579f01aec4a072384d29a": {
+      "title": "Jewel Bem Hunter Lime",
+      "startupChoices": [
+        {
+          "id": "startup",
+          "title": "Choose episode",
+          "screenHashes": [
+            "7184142527792879",
+            "055cfcfcfbcc6379"
+          ],
+          "options": [
+            {
+              "id": "episode-1",
+              "label": "Episode 1",
+              "key": "1",
+              "enter": false
+            },
+            {
+              "id": "episode-2",
+              "label": "Episode 2",
+              "key": "2",
+              "enter": false
+            },
+            {
+              "id": "episode-3",
+              "label": "Episode 3",
+              "key": "3",
+              "enter": false
+            },
+            {
+              "id": "episode-4",
+              "label": "Episode 4",
+              "key": "4",
+              "enter": false
+            },
+            {
+              "id": "episode-5",
+              "label": "Episode 5",
+              "key": "5",
+              "enter": false
+            },
+            {
+              "id": "episode-6",
+              "label": "Episode 6",
+              "key": "6",
+              "enter": false
+            }
+          ]
+        }
+      ]
+    },
+    "sha256-hdi-v1:eb149d516b7299e2277a520d490438a8df474d70b7719264765334d51731617e": {
+      "title": "Rance II: The Rebellious Maidens + Hint Disk",
+      "startupChoices": [
+        {
+          "id": "startup",
+          "title": "Rance II",
+          "screenHashes": [
+            "6a013e0f33c612cd",
+            "ba4a4d27ddfaa5cd"
+          ],
+          "options": [
+            {
+              "id": "game",
+              "label": "Game",
+              "key": "1",
+              "enter": false
+            },
+            {
+              "id": "hint",
+              "label": "Hint Disk",
+              "key": "2",
+              "enter": false
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

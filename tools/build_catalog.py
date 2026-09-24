@@ -10,7 +10,47 @@ from urllib.parse import urlsplit
 
 CONTENT_ID = re.compile(r"sha256-(?:hdi|fd)-v1:[0-9a-f]{64}\Z")
 ART_PATH = re.compile(r"art/(?!.*\.\.)[A-Za-z0-9_./-]{1,252}\Z")
-FIELDS = {"title", "description", "aliases", "artwork", "machine", "controller", "input", "media", "launch"}
+FIELDS = {"title", "description", "aliases", "artwork", "machine", "controller", "input", "media", "launch", "startupChoices"}
+SCREEN_HASH = re.compile(r"[0-9a-f]{16}\Z")
+SHORT_ID = re.compile(r"[a-z0-9-]{1,40}\Z")
+
+
+def valid_hashes(values):
+    return (isinstance(values, list) and 1 <= len(values) <= 16 and
+            all(isinstance(value, str) and SCREEN_HASH.fullmatch(value) for value in values) and
+            len(values) == len(set(values)))
+
+
+def valid_startup_choices(choices):
+    if not isinstance(choices, list) or not 1 <= len(choices) <= 4:
+        return False
+    ids = set()
+    for choice in choices:
+        if not isinstance(choice, dict) or set(choice) != {"id", "title", "screenHashes", "options"}:
+            return False
+        name = choice["id"]
+        title = choice["title"]
+        options = choice["options"]
+        if (not isinstance(name, str) or not SHORT_ID.fullmatch(name) or name in ids or
+                not isinstance(title, str) or not 0 < len(title.strip()) <= 100 or
+                not valid_hashes(choice["screenHashes"]) or
+                not isinstance(options, list) or not 1 <= len(options) <= 12):
+            return False
+        ids.add(name)
+        option_ids = set()
+        for option in options:
+            if not isinstance(option, dict) or set(option) != {"id", "label", "key", "enter"}:
+                return False
+            option_id = option["id"]
+            label = option["label"]
+            key = option["key"]
+            if (not isinstance(option_id, str) or not SHORT_ID.fullmatch(option_id) or
+                    option_id in option_ids or not isinstance(label, str) or
+                    not 0 < len(label.strip()) <= 100 or not isinstance(key, str) or
+                    not re.fullmatch(r"[A-Za-z0-9]", key) or type(option["enter"]) is not bool):
+                return False
+            option_ids.add(option_id)
+    return True
 
 
 def valid_image_url(value):
@@ -123,7 +163,13 @@ def validate_record(record):
                     all(c.isascii() and (c.isalnum() or c in " \\/._:-") for c in command)
                     for command in commands) and
                 type(launch.get("timeoutMs", 30000)) is int and
-                1000 <= launch.get("timeoutMs", 30000) <= 120000, "invalid launch")
+                1000 <= launch.get("timeoutMs", 30000) <= 120000 and
+                ("screenHashes" not in launch or
+                 (isinstance(launch["screenHashes"], list) and
+                  len(launch["screenHashes"]) == len(commands) and
+                  all(valid_hashes(group) for group in launch["screenHashes"]))), "invalid launch")
+    if "startupChoices" in record:
+        require(valid_startup_choices(record["startupChoices"]), "invalid startup choices")
     return {key: value for key, value in record.items() if key != "contentIds"}
 
 

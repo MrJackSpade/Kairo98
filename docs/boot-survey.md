@@ -34,16 +34,17 @@ some games take longer than twelve seconds to reach a stable screen.
 | Rusty, translated HDI `b336c58c` | Game intro appears without a catalog command. | Keep normal boot. |
 | Ayayo's Love Affair, translated HDI `8533204b` | Title artwork appears without a catalog command. | Keep normal boot. |
 | GaoGao! 2nd: Pandora no Mori, translated HDI `a80b9658` | Stops at `A:\>`; `CD PW`, then `GAO2` starts the game. The new catalog command sequence reproduced the game artwork from a fresh launch. | Shipped launch sequence `CD PW`, `GAO2`. |
-| Dragon Knight, translated HDI `879f430c` | Menu: **1 Game**, **2 Bonus content**, **3 Quit**. The input line also lists 4, which has no displayed meaning. | Keep the choice visible; determine what 4 does before offering it. |
-| Farland Story, translated HDI `262c6581` | Menu: **1 Start game**, **2 Watch opening**, **3 Quit**. | Keep the choice visible for a future preboot selector. |
-| Foxy, translated HDI `b9076012` | Menu: **1 Game**, **2 Special disk**, **3 Character edit**, **4 Quit**. | Keep the choice visible for a future preboot selector. |
-| Starfire, translated HDI `8fde4af0` | Menu: **1 16-color version**, **2 256-color version**, **3 Quit**. | Keep the choice visible for a future preboot selector. |
+| Dragon Knight, translated HDI `879f430c` | Menu: **1 Game**, **2 Bonus content**, **3 Quit**. The input line also lists 4, which has no displayed meaning. | Game and Bonus content are now labeled prelaunch choices; 4 remains unoffered. |
+| Farland Story, translated HDI `262c6581` | Menu: **1 Start game**, **2 Watch opening**, **3 Quit**. | Start game and Watch opening are now labeled prelaunch choices. |
+| Foxy, translated HDI `b9076012` | Menu: **1 Game**, **2 Special disk**, **3 Character edit**, **4 Quit**. | The three non-quit paths are now labeled prelaunch choices. |
+| Starfire, translated HDI `8fde4af0` | Menu: **1 16-color version**, **2 256-color version**, **3 Quit**. | Both display versions are now labeled prelaunch choices. |
 | Giten Megami Tensei, incomplete translation 0.3 HDI `e760379a` | Asks for a date, then a time. Enter accepts the shown values; it then reaches DOS. Running `CD DDS98`, `DDS98` printed diagnostics and returned to DOS in this run. | Investigate the intended boot disk/media arrangement before assigning a command. |
 | Metajo, incomplete translation 0.1 HDI `c1df4b95` | Started a game logo and advanced to a graphical menu without a catalog command. The graphical menu text looked corrupted in the capture. | Keep normal boot; investigate the menu rendering separately. |
 
-Night Slave already has a verified `NS` launch command in the catalog. The
-screenshots for this pass are local under `.downloads/run-*.png` and are not
-part of a distributable build.
+The later [startup-choice implementation](startup-choices.md) found that both
+translated Night Slave images boot without a DOS command. The older `NS`
+catalog command was removed. Screenshots for this pass remain local under
+`.downloads/run-*.png` and are not part of a distributable build.
 
 ## Sequential capture review, archives 0–19
 
