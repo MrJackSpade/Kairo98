@@ -14,6 +14,7 @@
 #include <mutex>
 #include <string>
 #include <thread>
+#include <vector>
 
 extern "C" int kairo98_core_probe(unsigned short *code_segment,
                                   unsigned short *instruction_pointer);
@@ -79,16 +80,32 @@ void render_frame() {
     if (ANativeWindow_lock(window, &buffer, nullptr) != 0) return;
     const auto *source = kairo98_frame_pixels();
     if (buffer.format == WINDOW_FORMAT_RGB_565 && buffer.width > 0 && buffer.height > 0) {
+        static int mapped_width = 0;
+        static std::vector<int> source_x;
+        if (mapped_width != buffer.width) {
+            source_x.resize(buffer.width);
+            for (int x = 0; x < buffer.width; ++x) {
+                source_x[x] = static_cast<long long>(x) * 640 / buffer.width;
+            }
+            mapped_width = buffer.width;
+        }
+        int previous_source_y = -1;
         for (int y = 0; y < buffer.height; ++y) {
             auto *target = static_cast<unsigned short *>(buffer.bits) + y * buffer.stride;
-            const auto *row = source + (static_cast<long long>(y) * 400 / buffer.height) * 640;
+            const int source_y = static_cast<long long>(y) * 400 / buffer.height;
+            if (source_y == previous_source_y) {
+                std::memcpy(target, target - buffer.stride, buffer.width * sizeof(*target));
+                continue;
+            }
+            const auto *row = source + source_y * 640;
             if (buffer.width == 640) {
                 std::memcpy(target, row, 640 * sizeof(*target));
             } else {
                 for (int x = 0; x < buffer.width; ++x) {
-                    target[x] = row[static_cast<long long>(x) * 640 / buffer.width];
+                    target[x] = row[source_x[x]];
                 }
             }
+            previous_source_y = source_y;
         }
     }
     ANativeWindow_unlockAndPost(window);

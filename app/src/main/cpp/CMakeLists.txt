@@ -39,8 +39,10 @@ target_include_directories(np21w_core PRIVATE
     ${SPLEEN_ROOT}
 )
 target_compile_definitions(np21w_core PRIVATE SUPPORT_LARGE_HDD SUPPORT_KAI_IMAGES NP2_SDL2 CPUCORE_IA32 USE_TSC)
-target_compile_options(np21w_core PRIVATE -fsigned-char -fno-strict-aliasing)
+target_compile_options(np21w_core PRIVATE -fsigned-char -fno-strict-aliasing
+    $<$<CONFIG:Debug>:-O2>)
 
 add_library(kairo98 SHARED native_bridge.cpp $<TARGET_OBJECTS:np21w_core>)
 target_compile_features(kairo98 PRIVATE cxx_std_17)
+target_compile_options(kairo98 PRIVATE $<$<CONFIG:Debug>:-O2>)
 target_link_libraries(kairo98 PRIVATE log android aaudio)
