@@ -40341,6 +40341,7 @@
         "sha256-hdi-v1:b336c58cd28e487c0260868ed598bf0c9cce008e3c785c89892415a652c52832"
       ],
       "description": "Rusty Springcul explores a monster-filled castle to rescue abducted villagers in a side-scrolling action game.",
+      "machine": {"gdcClockTenthsMHz": 25},
       "pageUrl": "https://gamesdb.launchbox-app.com/games/details/92443-rusty",
       "boxArtUrl": "https://images.launchbox-app.com/b6a79e03-3182-48bd-a533-d8d82f3b0c6f.jpg",
       "screenshotUrl": "https://images.launchbox-app.com/71bea99f-29d2-4f85-a8dd-8f40b758bd5a.png"

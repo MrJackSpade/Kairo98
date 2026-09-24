@@ -1673,6 +1673,8 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
                         if (event.repeatCount == 0) libraryScreen.activateSelection()
                     KeyEvent.KEYCODE_MENU, KeyEvent.KEYCODE_BUTTON_MODE ->
                         if (event.repeatCount == 0) libraryScreen.openActions()
+                    KeyEvent.KEYCODE_BACK ->
+                        if (event.repeatCount == 0) onBackPressed()
                     else -> return super.dispatchKeyEvent(event)
                 }
             }
@@ -1680,6 +1682,8 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
         }
         if ((event.keyCode == KeyEvent.KEYCODE_BUTTON_MODE &&
             !gamepadMapper.hasButton(event.keyCode)) ||
+            (event.keyCode == KeyEvent.KEYCODE_BACK &&
+                !gamepadMapper.hasButton(event.keyCode)) ||
             event.keyCode == KeyEvent.KEYCODE_MENU || event.keyCode == KeyEvent.KEYCODE_HOME) {
             if (event.action == KeyEvent.ACTION_DOWN && event.repeatCount == 0) {
                 if (menuOpen) closeMenu() else openMenu()

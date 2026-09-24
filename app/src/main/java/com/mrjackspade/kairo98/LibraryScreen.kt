@@ -291,8 +291,29 @@ class LibraryScreen(
     fun moveSelection(delta: Int) {
         if (entries.isEmpty()) return
         selectedIndex = (selectedIndex + delta).coerceIn(0, entries.lastIndex)
-        list.setSelection(selectedIndex)
         this@LibraryScreen.adapter.notifyDataSetChanged()
+        keepSelectionVisible()
+    }
+
+    private fun keepSelectionVisible() {
+        if (list.height == 0) return
+        val first = list.firstVisiblePosition
+        val last = list.lastVisiblePosition
+        val viewportBottom = list.height - list.paddingBottom
+        val child = list.getChildAt(selectedIndex - first)
+        when {
+            selectedIndex < first -> list.setSelectionFromTop(selectedIndex, list.paddingTop)
+            selectedIndex > last -> {
+                val rowHeight = list.getChildAt(last - first)?.height ?: dp(75)
+                list.setSelectionFromTop(selectedIndex,
+                    (viewportBottom - rowHeight).coerceAtLeast(list.paddingTop))
+            }
+            child != null && child.top < list.paddingTop ->
+                list.setSelectionFromTop(selectedIndex, list.paddingTop)
+            child != null && child.bottom > viewportBottom ->
+                list.setSelectionFromTop(selectedIndex,
+                    (viewportBottom - child.height).coerceAtLeast(list.paddingTop))
+        }
     }
     fun activateSelection() {
         entries.getOrNull(selectedIndex)?.let(::openDetail)
