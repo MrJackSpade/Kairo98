@@ -49,7 +49,7 @@ import kotlin.math.roundToInt
 
 class MainActivity : Activity(), SurfaceHolder.Callback {
     private external fun nativeStart(path: String?, fontPath: String, biosDir: String,
-                                     mhzTimesTen: Int, gdcMhzTimesTen: Int,
+                                     fontBitmap: Boolean, mhzTimesTen: Int, gdcMhzTimesTen: Int,
                                      floppy: Boolean): Boolean
     private external fun nativeFloppy(drive: Int, path: String?): Boolean
     private external fun nativeStop()
@@ -94,6 +94,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
     private val manualFloppies = arrayOfNulls<File>(2)
     @Volatile private var floppyBusy = false
     @Volatile private var biosBusy = false
+    @Volatile private var fontBusy = false
     private var currentTitle: String? = null
     private var currentGame: GameCatalog.Game? = null
     private var commandCancelled = AtomicBoolean(false)
@@ -310,7 +311,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
         section(content, "SETTINGS")
         menuItem(content, "Graphics", "Scaling and display") { showGraphics() }
         menuItem(content, "Input mode", "Auto, keyboard, or mouse touchpad") { showInputMode() }
-        menuItem(content, "Machine", "Base clock and BIOS ROM") { showMachine() }
+        menuItem(content, "Machine", "Clock, BIOS ROM, and font") { showMachine() }
         menuItem(content, "Controller", "Gamepad buttons, sticks and hats") { showControllerScope() }
         menuItem(content, "Audio", "Sound output") { showAudio() }
         menuItem(content, "About & controls", "Version and shortcuts") { showAbout() }
@@ -535,12 +536,13 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
                 val disk = romLibrary.prepare(entry, cancelled) { message ->
                     runOnUiThread { if (generation == startGeneration) libraryScreen.showStatus(message) }
                 }
-                Pc98FontCache.ensure(filesDir)
+                val font = prepareFont()
                 if (generation != startGeneration) null
                 else {
                     nativeStop()
                     if (generation != startGeneration) null
-                    else if (nativeStart(disk.absolutePath, fontPath(), firmwareDir().absolutePath,
+                    else if (nativeStart(disk.absolutePath, font.path, firmwareDir().absolutePath,
+                            font.bitmap,
                             game.baseClockTenthsMHz ?: clock,
                             game.gdcClockTenthsMHz ?: 50, entry.isFloppy)) {
                         awaitMachineReady()?.let(::error)
@@ -1103,10 +1105,16 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
 
     private fun showMachine() {
         val bios = biosFile()
+        val font = fontBitmapFile()
         AlertDialog.Builder(this).setTitle("Machine")
             .setItems(arrayOf("Base clock  ·  ${if (clock == 25) "2.5" else "2"} MHz",
-                "BIOS ROM  ·  ${if (bios.isFile) "Imported" else "None"}")) { _, which ->
-                if (which == 0) showMachineClock() else showBiosRom()
+                "BIOS ROM  ·  ${if (bios.isFile) "Imported" else "None"}",
+                "Font BMP  ·  ${if (font.isFile) "Imported" else "Generated"}")) { _, which ->
+                when (which) {
+                    0 -> showMachineClock()
+                    1 -> showBiosRom()
+                    else -> showFontBitmap()
+                }
             }.setNegativeButton("Close", null).showStyled()
     }
 
@@ -1140,6 +1148,23 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
             if (!biosBusy) {
                 if (biosFile().delete()) toast("BIOS ROM removed. Restart the game to apply.")
                 else toast("Could not remove BIOS ROM")
+            }
+        }
+        dialog.showStyled()
+    }
+
+    private fun showFontBitmap() {
+        val dialog = AlertDialog.Builder(this).setTitle("Font BMP")
+            .setPositiveButton("Choose file") { _, _ ->
+                startActivityForResult(Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
+                    addCategory(Intent.CATEGORY_OPENABLE)
+                    type = "*/*"
+                }, FONT_REQUEST)
+            }.setNegativeButton("Close", null)
+        if (fontBitmapFile().isFile) dialog.setNeutralButton("Remove") { _, _ ->
+            if (!fontBusy) {
+                if (fontBitmapFile().delete()) toast("Font BMP removed. Restart the game to apply.")
+                else toast("Could not remove Font BMP")
             }
         }
         dialog.showStyled()
@@ -1380,6 +1405,10 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
             if (resultCode == RESULT_OK && data?.data != null) importBiosRom(data.data!!)
             return
         }
+        if (requestCode == FONT_REQUEST) {
+            if (resultCode == RESULT_OK && data?.data != null) importFontBitmap(data.data!!)
+            return
+        }
         if (requestCode !in listOf(HDI_REQUEST, FLOPPY_A_REQUEST, FLOPPY_B_REQUEST) ||
             resultCode != RESULT_OK || data?.data == null) return
         val uri = data.data ?: return
@@ -1419,9 +1448,10 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
                     }
                 }
                 Files.move(partial.toPath(), disk.toPath(), StandardCopyOption.REPLACE_EXISTING)
-                Pc98FontCache.ensure(filesDir)
+                val font = prepareFont()
                 if (generation != startGeneration) "Start cancelled"
-                else if (nativeStart(disk.absolutePath, fontPath(), firmwareDir().absolutePath, clock,
+                else if (nativeStart(disk.absolutePath, font.path, firmwareDir().absolutePath,
+                        font.bitmap, clock,
                         50, DiskFormat.isFloppy(name)))
                     awaitMachineReady()?.let { "Disk start failed: $it" } ?: "Starting $name"
                 else "Unable to start machine"
@@ -1533,6 +1563,45 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
         }.start()
     }
 
+    private fun importFontBitmap(uri: Uri) {
+        if (fontBusy) return
+        fontBusy = true
+        if (menuOpen) menuStatus.text = "Importing Font BMP…"
+        toast("Importing Font BMP")
+        Thread {
+            val directory = firmwareDir()
+            val partial = File(directory, "font.bmp.part")
+            val result = try {
+                require(directory.isDirectory || directory.mkdirs()) { "Cannot create firmware directory" }
+                contentResolver.openInputStream(uri).use { input ->
+                    requireNotNull(input) { "Unable to open selected file" }
+                    partial.outputStream().use { output ->
+                        val buffer = ByteArray(8192)
+                        var size = 0L
+                        while (true) {
+                            val count = input.read(buffer)
+                            if (count < 0) break
+                            size += count
+                            require(size <= Pc98FontBitmap.MAX_BYTES) { "Font BMP is too large" }
+                            output.write(buffer, 0, count)
+                        }
+                    }
+                }
+                Pc98FontBitmap.validate(partial)
+                Files.move(partial.toPath(), fontBitmapFile().toPath(),
+                    StandardCopyOption.REPLACE_EXISTING)
+                "Font BMP imported. Restart the game to apply."
+            } catch (error: Exception) {
+                "Font BMP import failed: ${error.message ?: "Unknown error"}"
+            } finally { partial.delete() }
+            runOnUiThread {
+                fontBusy = false
+                if (menuOpen) menuStatus.text = result
+                toast(result)
+            }
+        }.start()
+    }
+
     private fun startWithFont(disk: File, message: String, floppy: Boolean) {
         if (preparingFont) return
         val generation = ++startGeneration
@@ -1541,15 +1610,15 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
         toast("Preparing PC-98 font")
         Thread {
             val result = try {
-                Pc98FontCache.ensure(filesDir)
+                val font = prepareFont()
                 nativeStop()
                 if (generation != startGeneration) "Start cancelled"
-                else if (nativeStart(disk.absolutePath, fontPath(), firmwareDir().absolutePath,
-                        clock, 50, floppy))
+                else if (nativeStart(disk.absolutePath, font.path, firmwareDir().absolutePath,
+                        font.bitmap, clock, 50, floppy))
                     awaitMachineReady()?.let { "Disk start failed: $it" } ?: message
                 else "Unable to start machine"
             } catch (error: Exception) {
-                "PC-98 font generation failed: ${error.message}"
+                "PC-98 font preparation failed: ${error.message}"
             }
             runOnUiThread {
                 preparingFont = false
@@ -1814,9 +1883,18 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
         }
     }
 
-    private fun fontPath() = File(filesDir, "android-font.bin").absolutePath
+    private data class FontSelection(val path: String, val bitmap: Boolean)
+
+    private fun prepareFont(): FontSelection {
+        val bitmap = fontBitmapFile()
+        if (bitmap.isFile) return FontSelection(bitmap.absolutePath, true)
+        Pc98FontCache.ensure(filesDir)
+        return FontSelection(File(filesDir, "android-font.bin").absolutePath, false)
+    }
+
     private fun firmwareDir() = File(filesDir, "firmware")
     private fun biosFile() = File(firmwareDir(), "bios.rom")
+    private fun fontBitmapFile() = File(firmwareDir(), "font.bmp")
 
     private fun dp(value: Int): Int = (value * resources.displayMetrics.density).roundToInt()
 
@@ -1826,6 +1904,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
         private const val FLOPPY_A_REQUEST = 100
         private const val FLOPPY_B_REQUEST = 101
         private const val BIOS_REQUEST = 102
+        private const val FONT_REQUEST = 103
         private const val BIOS_ROM_BYTES = 0x18000L
         init { System.loadLibrary("kairo98") }
     }

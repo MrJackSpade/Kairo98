@@ -22,6 +22,8 @@ out/
 *.fdi
 *.nhd
 *.rom
+font.bmp
+FONT.BMP
 
 # OS and editor files
 .DS_Store

@@ -37,12 +37,14 @@ static void apply_gdc_clock(void) {
 }
 
 int kairo98_machine_start(const char *image, const char *font_path, const char *bios_dir,
-                          int mhz_times_ten, int gdc_mhz_times_ten, int floppy) {
+                          int font_bitmap, int mhz_times_ten, int gdc_mhz_times_ten, int floppy) {
     size_t length = image ? strlen(image) : 0;
     size_t bios_length = bios_dir ? strlen(bios_dir) : 0;
+    size_t font_length = font_path ? strlen(font_path) : 0;
     if (length >= (floppy ? sizeof(np2cfg.fddfile[0]) :
                             sizeof(np2cfg.sasihdd[0])) ||
-        bios_length >= sizeof(np2cfg.biospath)) {
+        bios_length >= sizeof(np2cfg.biospath) || !font_length ||
+        (font_bitmap && font_length >= sizeof(np2cfg.fontfile))) {
         return 1;
     }
     if ((mhz_times_ten != 20 && mhz_times_ten != 25) ||
@@ -53,13 +55,15 @@ int kairo98_machine_start(const char *image, const char *font_path, const char *
     np2cfg.sasihdd[0][0] = '\0';
     np2cfg.fddfile[0][0] = '\0';
     np2cfg.biospath[0] = '\0';
+    np2cfg.fontfile[0] = '\0';
     if (bios_length) memcpy(np2cfg.biospath, bios_dir, bios_length + 1);
+    if (font_bitmap) memcpy(np2cfg.fontfile, font_path, font_length + 1);
     if (length) {
         if (!floppy) memcpy(np2cfg.sasihdd[0], image, length + 1);
         file_setcd(image);
     }
     pccore_init();
-    if (!font_path || kairo98_font_overlay_load(font_path) != 0) {
+    if (!font_bitmap && kairo98_font_overlay_load(font_path) != 0) {
         pccore_term();
         np2cfg.sasihdd[0][0] = '\0';
         return 4;

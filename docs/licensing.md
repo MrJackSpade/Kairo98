@@ -16,7 +16,7 @@ The project's own source license has not been selected. The public GitHub distri
 
 ## Firmware and game data
 
-Do not bundle proprietary PC-98 BIOS, font ROMs, operating systems, or commercial game images. Users provide any files they are entitled to use. The app should document which files are optional or required for each emulated configuration.
+Do not bundle proprietary PC-98 BIOS, font ROMs, operating systems, or commercial game images. Users provide any files they are entitled to use. The optional `FONT.BMP` import is validated and copied into private app storage; it is absent from Git and both APK variants. Without it, the app generates its font from Android device fonts and the pinned Spleen glyphs. The app should document which files are optional or required for each emulated configuration.
 
 The reviewed 360-pixel catalog artwork is bundled in the `withImages` build at the user's direction. Its source URLs and packaged hashes are recorded in `app/src/withImages/assets/art/catalog-provenance-v1.json`; creator and redistribution rights for both distribution channels still require the final asset audit. The user-supplied `bios.rom` used in device tests remains in private app storage and is absent from Git and APK/AAB assets.
 
