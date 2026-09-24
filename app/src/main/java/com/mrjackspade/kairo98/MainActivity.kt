@@ -1292,7 +1292,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
         closeMenu()
         releaseInputs()
         hideKeyboard()
-        controllerEditor.show(currentEntry)
+        controllerEditor.show(currentEntry, startPhysical = true)
     }
 
     private fun showControllerBindings(entry: LibraryEntry) {

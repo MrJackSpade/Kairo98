@@ -43,18 +43,20 @@ class ControllerEditor(
     private var physicalScope = false
     private var stage = Stage.LIST
     private var selectedInput = ""
+    private var selectedControl: String? = null
     private val selectedScans = linkedSetOf<Int>()
     private var deadZoneSlider: SeekBar? = null
     private val captureBaseline = HashMap<Pair<Int, Int>, Float>()
     var isOpen = false
         private set
 
-    fun show(gameEntry: LibraryEntry?) {
+    fun show(gameEntry: LibraryEntry?, startPhysical: Boolean = false) {
         if (isOpen) close()
         game = gameEntry
         scope = gameEntry
-        physicalScope = false
+        physicalScope = startPhysical
         stage = Stage.LIST
+        selectedControl = null
         page = LinearLayout(activity).apply {
             orientation = LinearLayout.VERTICAL
             setBackgroundColor(0xff10151d.toInt())
@@ -106,6 +108,7 @@ class ControllerEditor(
         root.removeView(page)
         isOpen = false
         captureBaseline.clear()
+        selectedControl = null
         onVisibilityChanged()
     }
 
@@ -114,7 +117,8 @@ class ControllerEditor(
         stage = when (stage) {
             Stage.LIST -> { close(); return }
             Stage.SOURCES, Stage.DEAD_ZONE, Stage.RESET -> Stage.LIST
-            Stage.CAPTURE, Stage.MANUAL -> Stage.SOURCES
+            Stage.CAPTURE -> if (selectedControl == null) Stage.SOURCES else Stage.LIST
+            Stage.MANUAL -> if (selectedControl == null) Stage.SOURCES else Stage.CAPTURE
             Stage.TARGET -> Stage.LIST
             Stage.VIRTUAL, Stage.KEYS, Stage.JOYSTICK, Stage.ACTIONS -> Stage.TARGET
         }
@@ -123,17 +127,20 @@ class ControllerEditor(
 
     fun handleKey(event: KeyEvent): Boolean {
         if (!isOpen) return false
-        if (event.keyCode == KeyEvent.KEYCODE_BACK) {
-            if (event.action == KeyEvent.ACTION_DOWN && event.repeatCount == 0) back()
-            return true
-        }
         if (stage == Stage.CAPTURE) {
             if (event.action == KeyEvent.ACTION_DOWN && event.repeatCount == 0 &&
                 (KeyEvent.isGamepadButton(event.keyCode) ||
                     event.isFromSource(InputDevice.SOURCE_GAMEPAD) ||
                     event.isFromSource(InputDevice.SOURCE_JOYSTICK))) {
-                chooseInput("button:" + event.keyCode)
+                captureInput("button:" + event.keyCode)
+            } else if (event.keyCode == KeyEvent.KEYCODE_BACK &&
+                event.action == KeyEvent.ACTION_DOWN && event.repeatCount == 0) {
+                back()
             }
+            return true
+        }
+        if (event.keyCode == KeyEvent.KEYCODE_BACK) {
+            if (event.action == KeyEvent.ACTION_DOWN && event.repeatCount == 0) back()
             return true
         }
         val control = if (KeyEvent.isGamepadButton(event.keyCode) ||
@@ -182,14 +189,14 @@ class ControllerEditor(
             if (baseline == null) {
                 captureBaseline[id] = value
                 if (abs(value) >= 0.75f && (!trigger || value > 0.75f)) {
-                    chooseInput(axisInput(axis, value))
+                    captureInput(axisInput(axis, value))
                     return true
                 }
             } else {
                 if (abs(value) < 0.25f) captureBaseline[id] = value
                 if (abs(value) >= 0.75f && abs(value - baseline) >= 0.75f &&
                     (!trigger || value > 0.75f)) {
-                    chooseInput(axisInput(axis, value))
+                    captureInput(axisInput(axis, value))
                     return true
                 }
             }
@@ -207,6 +214,20 @@ class ControllerEditor(
         captureBaseline.clear()
         stage = Stage.TARGET
         render()
+    }
+
+    private fun captureInput(input: String) {
+        val control = selectedControl
+        if (control == null) {
+            chooseInput(input)
+            return
+        }
+        change {
+            val updated = loadPhysical().filterNot { it.input == input || it.control == control } +
+                PhysicalControllerBinding(input, control)
+            PhysicalControllerBindings.toJson(updated)
+            savePhysical(updated)
+        }
     }
 
     private fun render() {
@@ -259,27 +280,27 @@ class ControllerEditor(
                 .joinToString { it.name }
             note(if (controllers.isEmpty()) "No controller connected. You can still assign controls."
                 else "Connected: " + controllers)
-            row("Add another input", "Choose from a list or capture it", true) {
+            note("Select a virtual control, then press the device input to assign it.")
+            val bindings = loadPhysical().groupBy { it.control }
+            for (control in PHYSICAL_DISPLAY_CONTROLS) {
+                val sources = bindings[control].orEmpty()
+                val value = when (sources.size) {
+                    0 -> "Unassigned"
+                    1 -> physicalInputLabel(sources[0].input)
+                    else -> physicalInputLabel(sources[0].input) + " + ${sources.size - 1} more"
+                }
+                row(virtualLabel(control), value + "  ▾", true) {
+                    selectedControl = control
+                    captureBaseline.clear()
+                    stage = Stage.CAPTURE
+                    render()
+                }
+            }
+            section("ADVANCED")
+            row("Add alternate input", "Assign another button to a virtual control", true) {
+                selectedControl = null
                 stage = Stage.SOURCES
                 render()
-            }
-            val bindings = loadPhysical().associateBy { it.input }
-            val shown = HashSet<String>()
-            var group = ""
-            for (source in commonSources()) {
-                if (source.group != group) {
-                    group = source.group
-                    section(group.uppercase())
-                }
-                shown.add(source.input)
-                row(source.name, (bindings[source.input]?.control?.let(::virtualLabel) ?: "Unassigned") + "  ▾", true) {
-                    chooseInput(source.input)
-                }
-            }
-            val custom = bindings.values.filter { it.input !in shown }
-            if (custom.isNotEmpty()) section("OTHER INPUTS")
-            for (binding in custom) row(inputLabel(binding.input), virtualLabel(binding.control) + "  ▾", true) {
-                chooseInput(binding.input)
             }
         } else {
             section(if (scope == null) "VIRTUAL CONTROLLER → GLOBAL PC-98 PROFILE"
@@ -342,11 +363,24 @@ class ControllerEditor(
     }
 
     private fun renderCapture() {
-        note("Release the controller, then press a button or move a stick, trigger, or D-pad. Use Back to cancel.")
+        val control = selectedControl
+        if (control == null) {
+            note("Release the controller, then press a button or move a stick, trigger, or D-pad.")
+        } else {
+            section("VIRTUAL " + virtualLabel(control).uppercase())
+            val current = loadPhysical().filter { it.control == control }
+            note("Current input: " + (if (current.isEmpty()) "Unassigned"
+                else current.joinToString { physicalInputLabel(it.input) }))
+            note("Press the controller button, D-pad direction, stick, or trigger to assign it.")
+            if (current.isNotEmpty()) row("Clear assignment", "Unmap virtual " + virtualLabel(control), true) {
+                change { savePhysical(loadPhysical().filterNot { it.control == control }) }
+            }
+        }
         row("Enter code instead", "No hardware capture required", true) {
             stage = Stage.MANUAL
             render()
         }
+        row("Cancel", "Keep the current mapping", true) { back() }
     }
 
     private fun renderManual() {
@@ -358,11 +392,11 @@ class ControllerEditor(
             setHintTextColor(0xff9eacbd.toInt())
         }
         body.addView(edit)
-        footerAction("Choose target") {
+        footerAction(if (selectedControl == null) "Choose target" else "Assign input") {
             val input = edit.text.toString().trim().lowercase()
             try {
                 PhysicalControllerBindings.toJson(listOf(PhysicalControllerBinding(input, "a")))
-                chooseInput(input)
+                if (selectedControl == null) chooseInput(input) else captureInput(input)
             } catch (error: Exception) { toast(error.message ?: "Invalid input code") }
         }
     }
@@ -594,6 +628,11 @@ class ControllerEditor(
         else -> control.replaceFirstChar(Char::uppercase)
     }
 
+    private fun physicalInputLabel(input: String): String {
+        val source = commonSources().firstOrNull { it.input == input } ?: return inputLabel(input)
+        return if (source.group == "Buttons") source.name else source.group + " " + source.name
+    }
+
     private fun inputLabel(input: String): String {
         if (input.startsWith("virtual:")) return virtualLabel(input.removePrefix("virtual:"))
         commonSources().firstOrNull { it.input == input }?.let { return it.name }
@@ -646,6 +685,8 @@ class ControllerEditor(
     private fun dp(value: Int) = (value * activity.resources.displayMetrics.density).toInt()
 
     companion object {
+        private val PHYSICAL_DISPLAY_CONTROLS = listOf("a", "b", "x", "y", "up", "down",
+            "left", "right", "l1", "r1", "l2", "r2", "start", "select", "menu")
         private val MODIFIERS = setOf(0x70, 0x71, 0x72, 0x73, 0x74, 0x7d)
     }
 }
