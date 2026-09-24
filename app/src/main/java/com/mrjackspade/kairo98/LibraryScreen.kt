@@ -288,6 +288,24 @@ class LibraryScreen(
         openDetail(entries[index])
         return true
     }
+
+    /** Debug launch requires an unambiguous library entry. A full content ID
+     * can select a particular patch revision when names overlap. */
+    fun findGameForDebugLaunch(query: String): LibraryEntry? {
+        val needle = query.trim()
+        if (needle.isEmpty()) return null
+        val playable = entries.filter { it.playable }
+        fun unique(matches: List<LibraryEntry>): LibraryEntry? =
+            matches.firstOrNull()?.takeIf {
+                matches.all { other -> other.contentId == it.contentId }
+            }
+        return unique(playable.filter { it.contentId?.equals(needle, ignoreCase = true) == true })
+            ?: unique(playable.filter { it.displayName.equals(needle, ignoreCase = true) })
+            ?: unique(playable.filter {
+                catalog.resolve(it.contentId ?: "", it.displayName).title.equals(needle, ignoreCase = true)
+            })
+            ?: unique(playable.filter { it.displayName.contains(needle, ignoreCase = true) })
+    }
     fun moveSelection(delta: Int) {
         if (entries.isEmpty()) return
         selectedIndex = (selectedIndex + delta).coerceIn(0, entries.lastIndex)

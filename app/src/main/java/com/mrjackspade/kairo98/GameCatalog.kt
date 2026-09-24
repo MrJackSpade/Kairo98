@@ -24,6 +24,7 @@ class GameCatalog(private val context: Context) {
         val controllerBindings: String?,
         val inputMode: String?,
         val launchCommand: String?,
+        val launchCommands: List<String>,
         val launchTimeoutMs: Int,
         val overriddenFields: Set<String>
     )
@@ -81,7 +82,11 @@ class GameCatalog(private val context: Context) {
         val controller = merged.optJSONObject("controller")
         val input = merged.optJSONObject("input")
         val launch = merged.optJSONObject("launch")
-        val command = launch?.optString("text")?.takeIf { validCommand(it) && launch.optString("type") == "guestCommand" }
+        val commands = launch?.takeIf { validField("launch", it) }?.let { value ->
+            value.optJSONArray("commands")?.let { array ->
+                (0 until array.length()).map(array::getString)
+            } ?: listOf(value.getString("text"))
+        } ?: emptyList()
         return Game(
             contentId, title.ifBlank { fileName },
             merged.optString("description").takeIf(::validDescription),
@@ -94,7 +99,8 @@ class GameCatalog(private val context: Context) {
             controller?.optString("profile")?.takeIf { it.length in 1..64 },
             controller?.optJSONArray("bindings")?.toString(),
             input?.optString("mode")?.takeIf { it in INPUT_MODES },
-            command,
+            commands.joinToString("; ").takeIf { commands.isNotEmpty() },
+            commands,
             launch?.optInt("timeoutMs", 30000)?.coerceIn(1000, 120000) ?: 30000,
             user?.keys()?.asSequence()?.toSet() ?: emptySet()
         )
@@ -193,7 +199,13 @@ class GameCatalog(private val context: Context) {
                 } == true
             }
         "launch" -> value is JSONObject && value.optString("type") == "guestCommand" &&
-            validCommand(value.optString("text")) &&
+            (if (value.has("commands")) {
+                !value.has("text") && value.optJSONArray("commands")?.let { commands ->
+                    commands.length() in 1..4 && (0 until commands.length()).all { index ->
+                        (commands.opt(index) as? String)?.let(::validCommand) == true
+                    }
+                } == true
+            } else validCommand(value.optString("text"))) &&
             (!value.has("ready") || value.optString("ready") == "dosPrompt") &&
             (!value.has("timeoutMs") ||
                 (value.opt("timeoutMs") is Int && value.optInt("timeoutMs") in 1000..120000))

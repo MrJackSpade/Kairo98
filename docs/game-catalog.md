@@ -14,6 +14,8 @@ The shipped catalog and optional user catalog additions use the same JSON envelo
 
 The shipped catalog uses sorted, two-digit hash-prefix shards under a manifest; each shard uses this envelope. `name-index-v1.json` holds the 3,342 matched research records and maps only unique normalized PC-98 titles, aliases, or source-group names to a fallback record. Relative artwork paths stay below `art/`. Metadata never contains Android intent commands, process commands, or host shell scripts. A `guestCommand` is bounded text sent as PC-98 key events after the selected disk reaches the documented ready state; absent launch metadata means normal boot with no injected keys.
 
+For a game that needs several DOS lines, use `"commands":["CD PW","GAO2"]` in place of `"text":"GAME"`. The app sends each line followed by Enter, in order. One to four lines of at most 128 characters each are allowed. The single `text` form remains valid; user edits in the app currently support one line.
+
 `machine.baseClockTenthsMHz` selects the 2 or 2.5 MHz CPU base clock. `machine.gdcClockTenthsMHz` selects the 2.5 or 5 MHz GDC clock through the emulated BIOS DIP setting; the app defaults to 5 MHz. Both are per-game settings and can be overridden in the game details. `Night Slave` uses `NS` at the DOS prompt and the 2.5 MHz GDC setting for both known HDI hashes.
 
 `description` is an optional game field of up to 8,000 characters. A library tap or controller A opens a full game page: screenshot at upper left, title and Play at upper right, and description below. Missing descriptions and screenshots show explicit fallbacks. Play starts the selected disk; Back or controller B returns to the library.

@@ -100,6 +100,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
     private var commandCancelled = AtomicBoolean(false)
     private var libraryEntries = emptyList<LibraryEntry>()
     private var pendingDebugGame: String? = null
+    private var pendingDebugLaunch: String? = null
     private lateinit var backdrop: View
     private lateinit var drawer: ScrollView
     private lateinit var menuStatus: TextView
@@ -156,12 +157,10 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         if (applicationInfo.flags and android.content.pm.ApplicationInfo.FLAG_DEBUGGABLE != 0) {
-            pendingDebugGame = intent.getStringExtra("kairo98.selectGame64")?.let { encoded ->
-                runCatching {
-                    String(android.util.Base64.decode(encoded,
-                        android.util.Base64.URL_SAFE or android.util.Base64.NO_WRAP), Charsets.UTF_8)
-                }.getOrNull()
-            } ?: intent.getStringExtra("kairo98.selectGame")
+            pendingDebugLaunch = intent.getStringExtra("kairo98.launchGame64")
+                ?.let(::decodeDebugGameQuery) ?: intent.getStringExtra("kairo98.launchGame")
+            pendingDebugGame = intent.getStringExtra("kairo98.selectGame64")
+                ?.let(::decodeDebugGameQuery) ?: intent.getStringExtra("kairo98.selectGame")
         }
         integerScaling = preferences.getBoolean("integer_scaling", true)
         integerCrop = preferences.getBoolean("integer_crop", false)
@@ -221,8 +220,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
             } else {
                 libraryEntries = romLibrary.cached(romTree!!)
                 libraryScreen.showEntries(libraryEntries)
-                selectPendingDebugGame()
-                refreshLibrary(false)
+                if (!selectPendingDebugGame()) refreshLibrary(false)
             }
         }
     }
@@ -493,6 +491,10 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
                         libraryEntries = entries
                         libraryScreen.showEntries(entries)
                         selectPendingDebugGame()
+                        pendingDebugLaunch?.let { query ->
+                            android.util.Log.w("Kairo98", "ADB game not found or ambiguous: $query")
+                            pendingDebugLaunch = null
+                        }
                         val errors = entries.count { it.error != null }
                         libraryScreen.showStatus("${entries.count { it.playable }} games" +
                             (if (errors == 0) "" else " · $errors unreadable") +
@@ -509,12 +511,27 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
         }.start()
     }
 
-    private fun selectPendingDebugGame() {
-        val query = pendingDebugGame ?: return
+    private fun decodeDebugGameQuery(encoded: String): String? = runCatching {
+        String(android.util.Base64.decode(encoded,
+            android.util.Base64.URL_SAFE or android.util.Base64.NO_WRAP), Charsets.UTF_8)
+    }.getOrNull()
+
+    private fun selectPendingDebugGame(): Boolean {
+        pendingDebugLaunch?.let { query ->
+            val entry = libraryScreen.findGameForDebugLaunch(query)
+            if (entry != null) {
+                pendingDebugLaunch = null
+                android.util.Log.i("Kairo98", "ADB launching ${entry.displayName} [$query]")
+                launchEntry(entry)
+                return true
+            }
+        }
+        val query = pendingDebugGame ?: return false
         if (libraryScreen.selectGame(query)) {
             pendingDebugGame = null
             android.util.Log.i("Kairo98", "Selected library game: $query")
         }
+        return false
     }
 
     private fun launchEntry(entry: LibraryEntry) {
@@ -717,7 +734,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
 
     private fun scheduleGuestCommand(game: GameCatalog.Game?) {
         commandCancelled.set(true)
-        val command = game?.launchCommand ?: return
+        val commands = game?.launchCommands?.takeIf { it.isNotEmpty() } ?: return
         val cancelled = AtomicBoolean(false)
         commandCancelled = cancelled
         val generation = startGeneration
@@ -727,17 +744,19 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
                 android.os.SystemClock.elapsedRealtime() < deadline) {
                 if (nativeDosPromptReady() && nativeStatus().startsWith("Running")) {
                     try {
-                        for (character in command) {
+                        for (command in commands) {
+                            for (character in command) {
+                                if (cancelled.get() || generation != startGeneration) return@Thread
+                                val scans = guestCommandScans(character)
+                                    ?: error("Unsupported launch character: $character")
+                                inputRouter.hold("guest-command", scans)
+                                try { Thread.sleep(70) } finally { inputRouter.release("guest-command") }
+                                Thread.sleep(70)
+                            }
                             if (cancelled.get() || generation != startGeneration) return@Thread
-                            val scans = guestCommandScans(character)
-                                ?: error("Unsupported launch character: $character")
-                            inputRouter.hold("guest-command", scans)
-                            try { Thread.sleep(70) } finally { inputRouter.release("guest-command") }
-                            Thread.sleep(70)
-                        }
-                        if (!cancelled.get() && generation == startGeneration) {
                             inputRouter.hold("guest-command", listOf(0x1c))
                             try { Thread.sleep(70) } finally { inputRouter.release("guest-command") }
+                            Thread.sleep(500)
                         }
                     } catch (error: Exception) {
                         runOnUiThread { if (!cancelled.get()) toast(error.message ?: "Launch command failed") }

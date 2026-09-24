@@ -112,11 +112,16 @@ def validate_record(record):
                 for x in media), "invalid media")
     launch = record.get("launch")
     if launch is not None:
+        commands = launch.get("commands") if isinstance(launch, dict) else None
+        if commands is None:
+            commands = [launch.get("text")] if isinstance(launch, dict) else []
         require(isinstance(launch, dict) and launch.get("type") == "guestCommand" and
                 launch.get("ready", "dosPrompt") == "dosPrompt" and
-                isinstance(launch.get("text"), str) and
-                0 < len(launch["text"]) <= 128 and
-                all(c.isascii() and (c.isalnum() or c in " \\/._:-") for c in launch["text"]) and
+                not ("text" in launch and "commands" in launch) and
+                isinstance(commands, list) and 1 <= len(commands) <= 4 and
+                all(isinstance(command, str) and 0 < len(command) <= 128 and
+                    all(c.isascii() and (c.isalnum() or c in " \\/._:-") for c in command)
+                    for command in commands) and
                 type(launch.get("timeoutMs", 30000)) is int and
                 1000 <= launch.get("timeoutMs", 30000) <= 120000, "invalid launch")
     return {key: value for key, value in record.items() if key != "contentIds"}

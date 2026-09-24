@@ -21525,6 +21525,7 @@
         "sha256-hdi-v1:7f400c345d60cad497ff191cfd4d9af406df27fdcc6d555026ad95e24338e9d7"
       ],
       "description": "",
+      "machine": {"gdcClockTenthsMHz": 25},
       "pageUrl": "https://gamesdb.launchbox-app.com/games/details/106050-desire-haitoku-no-rasen",
       "boxArtUrl": "https://images.launchbox-app.com/a2cf906d-adae-4783-b412-e626dffc5969.jpg",
       "screenshotUrl": "https://images.launchbox-app.com/d21fae88-631a-4925-ae26-db43cc6f646b.png"
@@ -23043,6 +23044,7 @@
         "sha256-fd-v1:c0878be21e8d6e61d7e6c30943622dd8ecabf5a331da9c5ec0db422489027ac9"
       ],
       "description": "Help Prince Selios escape captivity, gather allies, and reclaim his kingdom in a turn-based fantasy RPG.",
+      "machine": {"gdcClockTenthsMHz": 25},
       "pageUrl": "https://gamesdb.launchbox-app.com/games/details/133171-dragon-slayer-the-legend-of-heroes",
       "boxArtUrl": "https://images.launchbox-app.com/r2_8782bb0c-d4d4-42b0-975e-39931b11245d.jpg",
       "screenshotUrl": "https://images.launchbox-app.com/cf6b428f-2739-4bd8-9890-c31177deb940.png"
@@ -25828,6 +25830,7 @@
         "sha256-hdi-v1:a80b9658a8456535da828d38ca999999b272b451dcd4b688c25d029ae480649e"
       ],
       "description": "",
+      "launch": {"type": "guestCommand", "commands": ["CD PW", "GAO2"], "ready": "dosPrompt", "timeoutMs": 30000},
       "pageUrl": "https://gamesdb.launchbox-app.com/games/details/137222-gaogao-2nd-pandora-no-mori",
       "boxArtUrl": "https://images.launchbox-app.com/a349b00e-fee2-49f6-b601-0ad7b14ce5be.jpg",
       "screenshotUrl": "https://images.launchbox-app.com/6b06145c-12d6-41f6-893f-e7652bf632d2.png"
@@ -32311,6 +32314,7 @@
         "sha256-hdi-v1:5e833e9ea05da2cc28510d4deea7267282da1ea6daf71691d82c7c96f992305d"
       ],
       "description": "",
+      "machine": {"gdcClockTenthsMHz": 25},
       "pageUrl": "https://gamesdb.launchbox-app.com/games/details/169471-love-potion",
       "boxArtUrl": "https://images.launchbox-app.com/5632e227-0baa-4176-bf57-a39ce5993180.jpg",
       "screenshotUrl": "https://images.launchbox-app.com/2c8f9a59-1c48-400f-8f78-4c26eca156c1.png"
@@ -43271,6 +43275,7 @@
         "sha256-hdi-v1:b173100f12e9483e86992f3fa678ab0bfa90a1eae0843712e2f0fb7f9425f671"
       ],
       "description": "Pilot a fighter against the war machines of virus-stricken rulers in a scrolling shooter with an adult story.",
+      "machine": {"gdcClockTenthsMHz": 25},
       "pageUrl": "https://gamesdb.launchbox-app.com/games/details/106060-steam-hearts",
       "boxArtUrl": "https://images.launchbox-app.com/4f64729e-3f0b-4efd-9a9a-3aa815c7a4bb.jpg",
       "screenshotUrl": "https://images.launchbox-app.com/f28f538f-8287-4393-8611-4e6d3a238491.png"
@@ -47506,6 +47511,7 @@
         "sha256-hdi-v1:d8b2a8afe52e84e700803e06a715e5e77d792aeb50778b64490d5043549efe83"
       ],
       "description": "",
+      "machine": {"gdcClockTenthsMHz": 25},
       "pageUrl": "https://gamesdb.launchbox-app.com/games/details/106033-vg-variable-geo",
       "boxArtUrl": "https://images.launchbox-app.com/e0763b8d-c856-4034-881a-984356563024.jpg",
       "screenshotUrl": "https://images.launchbox-app.com/b19eada3-bdb7-4b82-99a8-569745a70268.png"

@@ -37,6 +37,9 @@ class CatalogBuildTests(unittest.TestCase):
         record = self.source["datasets"][0]["games"][0]
         with self.assertRaisesRegex(ValueError, "invalid launch"):
             validate_record({**record, "launch": {"type": "guestCommand", "text": "X&Y"}})
+        validate_record({**record, "launch": {"type": "guestCommand", "commands": ["CD PW", "GAO2"]}})
+        with self.assertRaisesRegex(ValueError, "invalid launch"):
+            validate_record({**record, "launch": {"type": "guestCommand", "commands": ["CD PW", "X&Y"]}})
         with self.assertRaisesRegex(ValueError, "invalid artwork"):
             validate_record({**record, "artwork": {"preview": "../outside.png"}})
 
