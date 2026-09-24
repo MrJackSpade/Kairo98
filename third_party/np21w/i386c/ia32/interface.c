@@ -152,13 +152,8 @@ ia32a20enable(BOOL enable)
 void
 ia32(void)
 {
-	/* Android skips saving the host signal mask on each emulated CPU slice.
-	 * These jumps only handle emulated exceptions and panic. */
-#if defined(__ANDROID__)
+	/* Emulated exceptions and panic do not change the host signal mask. */
 	switch (sigsetjmp(exec_1step_jmpbuf, 0)) {
-#else
-	switch (sigsetjmp(exec_1step_jmpbuf, 1)) {
-#endif
 	case 0:
 		break;
 
@@ -197,13 +192,8 @@ ia32(void)
 void
 ia32_step(void)
 {
-	/* Android skips saving the host signal mask on each emulated CPU slice.
-	 * These jumps only handle emulated exceptions and panic. */
-#if defined(__ANDROID__)
+	/* Emulated exceptions and panic do not change the host signal mask. */
 	switch (sigsetjmp(exec_1step_jmpbuf, 0)) {
-#else
-	switch (sigsetjmp(exec_1step_jmpbuf, 1)) {
-#endif
 	case 0:
 		break;
 
