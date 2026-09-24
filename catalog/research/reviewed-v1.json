@@ -862,6 +862,27 @@
     },
     {
       "platform": "pc88",
+      "databaseId": "188438",
+      "title": "Elevator Action",
+      "aliases": [],
+      "sourceGroups": [
+        "pc88:Elevator Action (Carry lab)"
+      ],
+      "contentIds": [],
+      "description": "Enter a guarded tower as a secret agent, retrieve documents from its red-door rooms, and escape by car from the basement.",
+      "pageUrl": "https://gamesdb.launchbox-app.com/games/details/138438",
+      "boxArt": {
+        "url": "https://images.launchbox-app.com/14de95b7-0a19-412e-9e1c-7d4e3bb2c5c0.jpg",
+        "review": "checked"
+      },
+      "screenshot": {
+        "url": "https://images.launchbox-app.com/dcfc8ab0-ce1d-4d27-9716-d367092d9f36.png",
+        "review": "checked"
+      },
+      "notes": "Compared the live page title and platform with the on-disk group. Opened the selected box and gameplay image; redistribution rights remain unconfirmed."
+    },
+    {
+      "platform": "pc88",
       "databaseId": "190025",
       "title": "Elthlead",
       "aliases": [],
@@ -901,6 +922,27 @@
         "review": "checked"
       },
       "notes": "Compared the live page title and platform with the on-disk group. Opened the selected box and gameplay image; redistribution rights remain unconfirmed. Selected image has no title or platform marking; identity needs a second visual source."
+    },
+    {
+      "platform": "pc88",
+      "databaseId": "140884",
+      "title": "Excitebike",
+      "aliases": [],
+      "sourceGroups": [
+        "pc88:Excitebike (Hudson Soft)"
+      ],
+      "contentIds": [],
+      "description": "Race a motocross bike over jumps and obstacles against the clock or other riders, or build a custom course to ride.",
+      "pageUrl": "https://gamesdb.launchbox-app.com/games/details/90884",
+      "boxArt": {
+        "url": "https://images.launchbox-app.com/r2_1613d5d2-ce6c-409b-b8c2-cea2ac485094.jpg",
+        "review": "checked"
+      },
+      "screenshot": {
+        "url": "https://images.launchbox-app.com/82736fd8-2d9e-45fa-989a-daa3a5aec2fe.png",
+        "review": "checked"
+      },
+      "notes": "Compared the live page title and platform with the on-disk group. Opened the selected box and gameplay image; redistribution rights remain unconfirmed."
     },
     {
       "platform": "pc88",
@@ -946,6 +988,90 @@
     },
     {
       "platform": "pc88",
+      "databaseId": "188448",
+      "title": "Flicky",
+      "aliases": [],
+      "sourceGroups": [
+        "pc88:Flicky (Micronet)"
+      ],
+      "contentIds": [],
+      "description": "Lead Flicky’s scattered chicks to safety while evading cats and throwing objects to clear a path.",
+      "pageUrl": "https://gamesdb.launchbox-app.com/games/details/138448",
+      "boxArt": {
+        "url": "https://images.launchbox-app.com/086ff2fc-7613-4047-a92b-c8592c1fdfe0.jpg",
+        "review": "checked"
+      },
+      "screenshot": {
+        "url": "https://images.launchbox-app.com/47c0867f-f030-4316-9d4f-fd953770dcde.png",
+        "review": "checked"
+      },
+      "notes": "Compared the live page title and platform with the on-disk group. Opened the selected box and gameplay image; redistribution rights remain unconfirmed."
+    },
+    {
+      "platform": "pc88",
+      "databaseId": "183901",
+      "title": "Formation Z",
+      "aliases": [],
+      "sourceGroups": [
+        "pc88:Formation Z (Dexter Soft)"
+      ],
+      "contentIds": [],
+      "description": "Transform between a walking robot and a jet fighter while battling enemies across scrolling land and air stages.",
+      "pageUrl": "https://gamesdb.launchbox-app.com/games/details/133901",
+      "boxArt": {
+        "url": "https://images.launchbox-app.com/97db1eca-8627-466b-8e6b-bb78af5afc32.jpg",
+        "review": "checked"
+      },
+      "screenshot": {
+        "url": "https://images.launchbox-app.com/8b2cdc81-c46d-433e-a5a4-39150693d308.png",
+        "review": "checked"
+      },
+      "notes": "Compared the live page title and platform with the on-disk group. Opened the selected box and gameplay image; redistribution rights remain unconfirmed."
+    },
+    {
+      "platform": "pc88",
+      "databaseId": "188477",
+      "title": "Galaxian",
+      "aliases": [],
+      "sourceGroups": [
+        "pc88:Galaxian (Dempa)"
+      ],
+      "contentIds": [],
+      "description": "Move a ship along the bottom of the screen, shoot alien formations, and dodge their diving attacks.",
+      "pageUrl": "https://gamesdb.launchbox-app.com/games/details/138477",
+      "boxArt": {
+        "url": "https://images.launchbox-app.com/2fe4bdb3-6dd7-4f49-aa89-2d7616786984.jpg",
+        "review": "checked"
+      },
+      "screenshot": {
+        "url": "https://images.launchbox-app.com/442f3bd9-8343-4b07-935b-a5137dcfc670.png",
+        "review": "checked"
+      },
+      "notes": "Compared the live page title and platform with the on-disk group. Opened the selected box and gameplay image; redistribution rights remain unconfirmed."
+    },
+    {
+      "platform": "pc88",
+      "databaseId": "188480",
+      "title": "Gemstone Warrior",
+      "aliases": [],
+      "sourceGroups": [
+        "pc88:Gemstone Warrior (Starcraft)"
+      ],
+      "contentIds": [],
+      "description": "Explore a monster-filled catacomb, recover five scattered gemstone pieces, and find the route back to the entrance.",
+      "pageUrl": "https://gamesdb.launchbox-app.com/games/details/138480",
+      "boxArt": {
+        "url": "https://images.launchbox-app.com/01e26b53-68d3-4ee5-87b9-cbf5d841223f.jpg",
+        "review": "checked"
+      },
+      "screenshot": {
+        "url": "https://images.launchbox-app.com/7b9148a3-f29f-4f06-8a6a-6162a12bc5f9.png",
+        "review": "checked"
+      },
+      "notes": "Compared the live page title and platform with the on-disk group. Opened the selected box and gameplay image; redistribution rights remain unconfirmed."
+    },
+    {
+      "platform": "pc88",
       "databaseId": "188489",
       "title": "Gradius",
       "aliases": [],
@@ -984,6 +1110,92 @@
       },
       "screenshot": {
         "url": "https://images.launchbox-app.com/77e4ff60-0d31-4875-9158-d5428f544f77.png",
+        "review": "checked"
+      },
+      "notes": "Compared the live page title and platform with the on-disk group. Opened the selected box and gameplay image; redistribution rights remain unconfirmed."
+    },
+    {
+      "platform": "pc88",
+      "databaseId": "180985",
+      "title": "Jesus",
+      "aliases": [],
+      "sourceGroups": [
+        "pc88:Jesus (Enix)"
+      ],
+      "contentIds": [],
+      "description": "Investigate a missing space probe near Halley’s Comet through illustrated scenes and menu-driven adventure commands.",
+      "pageUrl": "https://gamesdb.launchbox-app.com/games/details/130985",
+      "boxArt": {
+        "url": "https://images.launchbox-app.com/r2_388f6a33-1eab-4d2c-b837-ff759b3772e0.png",
+        "review": "checked"
+      },
+      "screenshot": {
+        "url": "https://images.launchbox-app.com/c786ba4c-833a-45c7-bac3-aa5924ef05c1.png",
+        "review": "checked"
+      },
+      "notes": "Compared the live page title and platform with the on-disk group. Opened the selected box and gameplay image; redistribution rights remain unconfirmed."
+    },
+    {
+      "platform": "pc88",
+      "databaseId": "180986",
+      "title": "Jesus II",
+      "aliases": [],
+      "sourceGroups": [
+        "pc88:Jesus II (Enix)"
+      ],
+      "contentIds": [],
+      "description": "Investigate murders aboard the Callisto, following clues that connect the voyage to the Halley’s Comet incident.",
+      "pageUrl": "https://gamesdb.launchbox-app.com/games/details/130986",
+      "boxArt": {
+        "url": "https://images.launchbox-app.com/r2_8846db64-eec5-4968-b24d-63ab08e1d2b8.png",
+        "review": "checked"
+      },
+      "screenshot": {
+        "url": "https://images.launchbox-app.com/ceaf781f-c8e3-48c3-8dec-2028df018e3c.png",
+        "review": "checked"
+      },
+      "notes": "Compared the live page title and platform with the on-disk group. Opened the selected box and gameplay image; redistribution rights remain unconfirmed."
+    },
+    {
+      "platform": "pc88",
+      "databaseId": "181088",
+      "title": "King's Knight Special",
+      "aliases": [
+        "King' Knight Special"
+      ],
+      "sourceGroups": [
+        "pc88:King's Knight Special (Square)"
+      ],
+      "contentIds": [],
+      "description": "Guide four heroes through separate overhead shooting stages, gathering upgrades so the whole party can face the final dragon.",
+      "pageUrl": "https://gamesdb.launchbox-app.com/games/details/131088",
+      "boxArt": {
+        "url": "https://images.launchbox-app.com/r2_0d1df27f-42f5-40d1-b979-90ae503637de.png",
+        "review": "checked"
+      },
+      "screenshot": {
+        "url": "https://images.launchbox-app.com/r2_e0879e67-5f9f-4b1a-a79a-960c106dedf5.png",
+        "review": "checked"
+      },
+      "notes": "Compared the live page title and platform with the on-disk group. Opened the selected box and gameplay image; redistribution rights remain unconfirmed."
+    },
+    {
+      "platform": "pc88",
+      "databaseId": "188571",
+      "title": "Klax",
+      "aliases": [],
+      "sourceGroups": [
+        "pc88:Klax (Hudson Soft)"
+      ],
+      "contentIds": [],
+      "description": "Catch falling colored tiles and arrange matching rows, columns, or diagonals under increasingly difficult stage rules.",
+      "pageUrl": "https://gamesdb.launchbox-app.com/games/details/138571",
+      "boxArt": {
+        "url": "https://images.launchbox-app.com/r2_6da1f005-4995-4e5c-843c-e7a15ece7df2.png",
+        "review": "checked"
+      },
+      "screenshot": {
+        "url": "https://images.launchbox-app.com/r2_acdfa4fa-7b61-42b0-be2e-4fdf6ed7f622.png",
         "review": "checked"
       },
       "notes": "Compared the live page title and platform with the on-disk group. Opened the selected box and gameplay image; redistribution rights remain unconfirmed."
@@ -1191,6 +1403,35 @@
         "review": "checked"
       },
       "notes": "Compared the live page title and platform with the on-disk group. Opened the selected box and gameplay image: both depict this game and show no visible nudity. Redistribution rights remain unconfirmed."
+    },
+    {
+      "platform": "pc98",
+      "databaseId": "187676",
+      "title": "Aegeankai no Shizuku",
+      "aliases": [
+        "Aegean Kai no Shizuku",
+        "Aegean no Shizuku"
+      ],
+      "sourceGroups": [
+        "translated:aegeankainoshizuku",
+        "pc98:IllusionCore.zip:Aegean no Shizuku"
+      ],
+      "contentIds": [
+        "sha256-hdi-v1:0325532abc43d5cff1aa4aa2602cd08643f42d4520e0bde835963ccf26eddf88",
+        "sha256-hdi-v1:5d7d37d60c85a421fc112acfff6c854e01d82fb93ac3747df4b01405fa488e12",
+        "sha256-hdi-v1:d5a82fcf523c8505c279bf99d0c302a3d331a0d5ea7c004de978bf0ad2b5fc44"
+      ],
+      "description": "A Japanese illustrated adventure released by Illusion Core in 1995.",
+      "pageUrl": "https://gamesdb.launchbox-app.com/games/details/137676",
+      "boxArt": {
+        "url": "https://images.launchbox-app.com/02347185-8227-46d6-90fc-cc86918e3506.jpg",
+        "review": "flagged"
+      },
+      "screenshot": {
+        "url": "https://images.launchbox-app.com/cb17a7d0-1bb9-4abe-b6da-db2cc9dff8d9.png",
+        "review": "flagged"
+      },
+      "notes": "Compared the live page title and platform with the on-disk group. Opened the selected box and gameplay image; redistribution rights remain unconfirmed. Revealing costume; hold for content review. Suggestive costume and pose; hold for content review."
     },
     {
       "platform": "pc98",
@@ -1542,6 +1783,59 @@
     },
     {
       "platform": "pc98",
+      "databaseId": "156125",
+      "title": "Dragon Knight",
+      "aliases": [
+        "ドラゴンナイト"
+      ],
+      "sourceGroups": [
+        "translated:dragonknight",
+        "pc98:elf.zip:Dragon Knight"
+      ],
+      "contentIds": [
+        "sha256-hdi-v1:879f430c8e6ca66dde8dfdf93ac3a36897310e9037e4bc84bbcc9fc1c0c3999b",
+        "sha256-hdi-v1:98258586c8cdf874db71353903d31d8be42553f8e26483ec85359e5036051532"
+      ],
+      "description": "Descend the Goddess Tower and fight the dragon knights threatening Strawberry Fields in a fantasy dungeon RPG.",
+      "pageUrl": "https://gamesdb.launchbox-app.com/games/details/106125",
+      "boxArt": {
+        "url": "https://images.launchbox-app.com/b13bf5af-9f04-4a57-ba6e-de7052cef6d7.jpg",
+        "review": "flagged"
+      },
+      "screenshot": {
+        "url": "https://images.launchbox-app.com/24061e99-dc44-42da-b26f-1fd27273bcfa.png",
+        "review": "flagged"
+      },
+      "notes": "Compared the live page title and platform with the on-disk group. Opened the selected box and gameplay image; redistribution rights remain unconfirmed. Revealing costumes; hold for content review. Visible uncensored nudity; replace, censor, or omit."
+    },
+    {
+      "platform": "pc98",
+      "databaseId": "156124",
+      "title": "Dragon Knight II",
+      "aliases": [
+        "ドラゴンナイトII"
+      ],
+      "sourceGroups": [
+        "translated:dragonknightii",
+        "pc98:elf.zip:Dragon Knight II"
+      ],
+      "contentIds": [
+        "sha256-hdi-v1:14ccae5da061fa8c251e070867d02493d7cb066c0021f7586b450212045b3bec"
+      ],
+      "description": "Explore three dangerous dungeons for sacred writings that can lift a witch’s curse on the people of Strawberry Fields.",
+      "pageUrl": "https://gamesdb.launchbox-app.com/games/details/106124",
+      "boxArt": {
+        "url": "https://images.launchbox-app.com/r2_8357a5e0-9eca-443b-9fdf-17cc078f5cf2.jpg",
+        "review": "flagged"
+      },
+      "screenshot": {
+        "url": "https://images.launchbox-app.com/bc187d77-1eb9-464e-952b-8b051fbd45b7.png",
+        "review": "flagged"
+      },
+      "notes": "Compared the live page title and platform with the on-disk group. Opened the selected box and gameplay image; redistribution rights remain unconfirmed. Sexualized young-looking characters on adult-game cover; hold for content review. Sexualized young-looking character imagery; hold for content review."
+    },
+    {
+      "platform": "pc98",
       "databaseId": "189146",
       "title": "Dungeon Conquest",
       "aliases": [
@@ -1814,6 +2108,28 @@
     },
     {
       "platform": "pc98",
+      "databaseId": "187207",
+      "title": "Gage",
+      "aliases": [],
+      "sourceGroups": [
+        "translated:gage",
+        "pc98:M.n.m.Software.zip:Gage"
+      ],
+      "contentIds": [],
+      "description": "Climb the tower of Gage, recruit allies, gather equipment, and confront the Dark Lord at its summit.",
+      "pageUrl": "https://gamesdb.launchbox-app.com/games/details/137207",
+      "boxArt": {
+        "url": "https://images.launchbox-app.com/06977c97-08c8-4a58-8bf0-ddc3b91adf84.jpg",
+        "review": "flagged"
+      },
+      "screenshot": {
+        "url": "https://images.launchbox-app.com/e8d5cce5-d95b-4ca3-9edb-02474d3a38d7.png",
+        "review": "checked"
+      },
+      "notes": "Compared the live page title and platform with the on-disk group. Opened the selected box and gameplay image; redistribution rights remain unconfirmed. Apparent nudity in painted cover scene; hold for content review."
+    },
+    {
+      "platform": "pc98",
       "databaseId": "180890",
       "title": "Giten Megami Tensei: Tokyo Mokushiroku",
       "aliases": [],
@@ -1895,6 +2211,31 @@
         "review": "checked"
       },
       "notes": "Compared the live page title and platform with the on-disk group. Opened the selected box and gameplay image: both depict this game and show no visible nudity. Redistribution rights remain unconfirmed."
+    },
+    {
+      "platform": "pc98",
+      "databaseId": "189246",
+      "title": "Innocent Tour",
+      "aliases": [],
+      "sourceGroups": [
+        "translated:innocenttour",
+        "pc98:KSS.zip:Innocent Tour"
+      ],
+      "contentIds": [
+        "sha256-hdi-v1:0fe741a7207ddb1fd64751070d573a08ccc92b7e60bafce9b7de4cbc2e969ef6",
+        "sha256-hdi-v1:db59828b2742063151bc02d02c7a3059fa47033b944952eb961d65be594f4180"
+      ],
+      "description": "Choose one of three heroes for a strategy RPG journey while the computer directs the other two through board-based battles.",
+      "pageUrl": "https://gamesdb.launchbox-app.com/games/details/139246",
+      "boxArt": {
+        "url": "https://images.launchbox-app.com/869f38d2-1937-4dc8-9300-40eb3b144d0e.jpg",
+        "review": "flagged"
+      },
+      "screenshot": {
+        "url": "https://images.launchbox-app.com/c627ad29-aefa-4afd-b2a0-fb1196590bf5.png",
+        "review": "checked"
+      },
+      "notes": "Compared the live page title and platform with the on-disk group. Opened the selected box and gameplay image; redistribution rights remain unconfirmed. Revealing costume; hold for content review."
     },
     {
       "platform": "pc98",
@@ -2420,6 +2761,33 @@
     },
     {
       "platform": "pc98",
+      "databaseId": "156060",
+      "title": "Steam Heart's",
+      "aliases": [
+        "Steam-Heart's",
+        "スチーム·ハーツ"
+      ],
+      "sourceGroups": [
+        "translated:steamhearts",
+        "pc98:Giga.zip:Steam Heart's"
+      ],
+      "contentIds": [
+        "sha256-hdi-v1:b173100f12e9483e86992f3fa678ab0bfa90a1eae0843712e2f0fb7f9425f671"
+      ],
+      "description": "Pilot a fighter against the war machines of virus-stricken rulers in a scrolling shooter with an adult story.",
+      "pageUrl": "https://gamesdb.launchbox-app.com/games/details/106060",
+      "boxArt": {
+        "url": "https://images.launchbox-app.com/4f64729e-3f0b-4efd-9a9a-3aa815c7a4bb.jpg",
+        "review": "flagged"
+      },
+      "screenshot": {
+        "url": "https://images.launchbox-app.com/f28f538f-8287-4393-8611-4e6d3a238491.png",
+        "review": "checked"
+      },
+      "notes": "Compared the live page title and platform with the on-disk group. Opened the selected box and gameplay image; redistribution rights remain unconfirmed. Sexualized cover artwork; hold for content review."
+    },
+    {
+      "platform": "pc98",
       "databaseId": "183445",
       "title": "Sword World PC",
       "aliases": [],
@@ -2622,6 +2990,59 @@
     },
     {
       "platform": "pc98",
+      "databaseId": "183448",
+      "title": "Toushin Toshi",
+      "aliases": [
+        "Toushintoshi",
+        "Tōshin Toshi",
+        "闘神都市"
+      ],
+      "sourceGroups": [
+        "translated:toushintoshi",
+        "pc98:AliceSoft.zip:Toushin Toshi"
+      ],
+      "contentIds": [
+        "sha256-hdi-v1:dd8b97826e9b6d5fd66f1b4d7ec06da1da5d597ad47f5ff16acc22222e710658"
+      ],
+      "description": "Train in nearby dungeons and prepare for a fighting tournament in a fantasy RPG with turn-based combat.",
+      "pageUrl": "https://gamesdb.launchbox-app.com/games/details/133448",
+      "boxArt": {
+        "url": "https://images.launchbox-app.com/r2_f4a53fb1-5760-4ca4-b00d-0ccd4a34c16a.jpg",
+        "review": "flagged"
+      },
+      "screenshot": {
+        "url": "https://images.launchbox-app.com/b5a736dd-610e-4d65-bddc-c9f85ecd31ee.png",
+        "review": "flagged"
+      },
+      "notes": "Compared the live page title and platform with the on-disk group. Opened the selected box and gameplay image; redistribution rights remain unconfirmed. Revealing costume; hold for content review. Revealing costume; hold for content review."
+    },
+    {
+      "platform": "pc98",
+      "databaseId": "168776",
+      "title": "Tuned Heart",
+      "aliases": [],
+      "sourceGroups": [
+        "translated:tunedheart",
+        "pc98:SystemSoft.zip:Tuned Heart"
+      ],
+      "contentIds": [
+        "sha256-hdi-v1:19137726a8bfcdc0c136cf80cc99f095da1dd6140a4b5e5f4f807c014196f648",
+        "sha256-hdi-v1:3b31daed39a16040db476d5a3420372e02a56bf61f354667323241747d514d40"
+      ],
+      "description": "Lead a crime-fighting squad through turn-based city battles, improving its members and customizing their vehicles.",
+      "pageUrl": "https://gamesdb.launchbox-app.com/games/details/118776",
+      "boxArt": {
+        "url": "https://images.launchbox-app.com/3558b1b3-6abe-4ddf-b33e-e8be5465351f.jpg",
+        "review": "checked"
+      },
+      "screenshot": {
+        "url": "https://images.launchbox-app.com/26d0ff7d-e26b-4ee5-ad1d-e680d4d44d10.jpg",
+        "review": "checked"
+      },
+      "notes": "Compared the live page title and platform with the on-disk group. Opened the selected box and gameplay image; redistribution rights remain unconfirmed."
+    },
+    {
+      "platform": "pc98",
       "databaseId": "190873",
       "title": "Ultima VIII: Pagan",
       "aliases": [],
@@ -2714,6 +3135,30 @@
     },
     {
       "platform": "pc98",
+      "databaseId": "187703",
+      "title": "Words Worth",
+      "aliases": [],
+      "sourceGroups": [
+        "translated:wordsworth",
+        "pc98:elf.zip:Words Worth"
+      ],
+      "contentIds": [
+        "sha256-hdi-v1:0eb1591ceaaf1e9a50067ea776580dcc514dca430b9251906efbc85fab94d1d8"
+      ],
+      "description": "Guide Astral through first-person dungeons to uncover who shattered the Words Worth tablet and end a war between two tribes.",
+      "pageUrl": "https://gamesdb.launchbox-app.com/games/details/137703",
+      "boxArt": {
+        "url": "https://images.launchbox-app.com/r2_a43b91b7-1acc-453c-81b7-1ae6826ecafe.jpg",
+        "review": "flagged"
+      },
+      "screenshot": {
+        "url": "https://images.launchbox-app.com/aa04dfff-9706-44ed-bcee-605747e80ac8.png",
+        "review": "flagged"
+      },
+      "notes": "Compared the live page title and platform with the on-disk group. Opened the selected box and gameplay image; redistribution rights remain unconfirmed. Revealing costumes; hold for content review. Revealing costume; hold for content review."
+    },
+    {
+      "platform": "pc98",
       "databaseId": "183481",
       "title": "Xak II: Rising of the Redmoon",
       "aliases": [],
@@ -2733,6 +3178,32 @@
         "review": "checked"
       },
       "notes": "Compared the live page title and platform with the on-disk group. Opened the selected box and gameplay image; redistribution rights remain unconfirmed."
+    },
+    {
+      "platform": "pc98",
+      "databaseId": "156059",
+      "title": "Xenon: Mugen no Shitai",
+      "aliases": [
+        "XENON ~夢幻の肢体~"
+      ],
+      "sourceGroups": [
+        "translated:xenonmugennoshitai",
+        "pc98:CsWare.zip:Xenon - Mugen no Shitai"
+      ],
+      "contentIds": [
+        "sha256-hdi-v1:44b5349b20b7af9d303f10192e02dde272f2fb0444277eda074b66918f07c1dd"
+      ],
+      "description": "Investigate a space station that appears in Kouji’s recurring dreams as its mysteries begin to affect his waking life.",
+      "pageUrl": "https://gamesdb.launchbox-app.com/games/details/106059",
+      "boxArt": {
+        "url": "https://images.launchbox-app.com/72dba6c1-12eb-48c9-ad4e-f274941b8336.jpg",
+        "review": "flagged"
+      },
+      "screenshot": {
+        "url": "https://images.launchbox-app.com/51477595-adc8-4d0b-9ac3-082e0d88dbd4.png",
+        "review": "checked"
+      },
+      "notes": "Compared the live page title and platform with the on-disk group. Opened the selected box and gameplay image; redistribution rights remain unconfirmed. Adult-game cover includes young-looking characters; hold for content review."
     }
   ]
 }

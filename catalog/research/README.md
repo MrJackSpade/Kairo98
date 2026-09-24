@@ -6,7 +6,7 @@ Image URLs are source references, not permission to redistribute. No LaunchBox a
 
 ## Progress and target
 
-The current realistic milestone is **120 manually reviewed games**. It is complete: 50 PC-88 and 70 PC-98 records cover 154 on-disk groups. Thirty Japanese/English PC-98 translation pairs and two A-Train original/reissue pairs share records, with the English HDI hashes where available. Of 240 possible box/screenshot selections, 218 are checked and 22 flagged; none are packaged. One reviewed item, *Derby Stallion Expert Kit*, is a non-standalone expansion and will need a base-game dependency before launch support.
+The research ledger now contains **140 manually reviewed games**: 60 PC-88 and 80 PC-98 records covering 184 on-disk groups. Forty Japanese/English PC-98 translation pairs and two A-Train original/reissue pairs share records, with the English HDI hashes where available. Of 280 possible box/screenshot selections, 244 are checked and 36 flagged; none are packaged. One reviewed item, *Derby Stallion Expert Kit*, is a non-standalone expansion and will need a base-game dependency before launch support.
 
 This is a small portion of the full library. The local inventory contains 2,037 PC-88 folders and 3,308 Japanese PC-98 game folders inside publisher ZIPs, plus 130 translated PC-98 title groups. Some folders may be compilations, utilities, or duplicates. Exact LaunchBox title/alias candidates exist for 884 PC-88 groups and 2,162 PC-98 groups. An exact match is only a review lead: the rest need alternate-title searches, and all matches need live page and image verification. Continue with LaunchBox until its useful records are exhausted, then evaluate other sources. No claim is made that the unreviewed games are cataloged.
 
