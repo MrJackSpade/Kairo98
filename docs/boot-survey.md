@@ -356,7 +356,7 @@ Heart variants, Viper CTR), Flix Mix's solid-white screen, and the corrupted
 Ultima VIII display. Investigate Peret em Heru and Giten Megami Tensei's
 return to DOS. Test companion disk insertion for Cybernetic Hi-School 2.0
 and Reserve, and determine Belloncho Body Inspection's BASIC file-count answer.
-Boot menus and sound choices in the tables above need user-selectable answers
-before automatic injection. Some archives contain multiple episodes/disks;
-this first pass boots the preferred disk for each archive rather than every
-disk in each ZIP.
+Typed-number startup menus have an [app choice-panel design](startup-choices.md).
+Arrow-and-Enter menus remain on the guest screen. Some archives contain multiple
+episodes/disks; this first pass boots the preferred disk for each archive
+rather than every disk in each ZIP.
