@@ -1202,6 +1202,258 @@
     },
     {
       "platform": "pc88",
+      "databaseId": "190075",
+      "title": "Laptick",
+      "aliases": [],
+      "sourceGroups": [
+        "pc88:Laptick (dB-Soft)"
+      ],
+      "contentIds": [],
+      "description": "Guide Vickey across question-mark tiles in each action-puzzle stage, collecting temporary powers while avoiding enemies.",
+      "pageUrl": "https://gamesdb.launchbox-app.com/games/details/140075",
+      "boxArt": {
+        "url": "https://images.launchbox-app.com/3492fa16-d1ba-430c-944a-e3facf3889d3.jpg",
+        "review": "checked"
+      },
+      "screenshot": {
+        "url": "https://images.launchbox-app.com/8a1a7a03-a891-4f1a-a72c-bfbaff300cb4.png",
+        "review": "checked"
+      },
+      "notes": "Compared the live page title and platform with the on-disk group. Opened each available selected image; redistribution rights remain unconfirmed."
+    },
+    {
+      "platform": "pc88",
+      "databaseId": "188575",
+      "title": "Last Armageddon",
+      "aliases": [],
+      "sourceGroups": [
+        "pc88:Last Armageddon (Brain Gray)"
+      ],
+      "contentIds": [],
+      "description": "Lead parties of demons across a devastated Earth to fight alien machines in a turn-based RPG with first-person dungeons.",
+      "pageUrl": "https://gamesdb.launchbox-app.com/games/details/138575",
+      "boxArt": {
+        "url": "https://images.launchbox-app.com/feb95baa-024b-4610-af17-181be94265c1.jpg",
+        "review": "flagged"
+      },
+      "screenshot": {
+        "url": "",
+        "review": "missing"
+      },
+      "notes": "Compared the live page title and platform with the on-disk group. Opened each available selected image; redistribution rights remain unconfirmed. No screenshot image was available in the snapshot. Revealing fantasy figure on cover; hold for content review."
+    },
+    {
+      "platform": "pc88",
+      "databaseId": "188577",
+      "title": "Law of the West",
+      "aliases": [],
+      "sourceGroups": [
+        "pc88:Law of the West (Pony Canyon)"
+      ],
+      "contentIds": [],
+      "description": "Keep order as a sheriff in a frontier town, choosing what to say to its residents and drawing a gun when talks fail.",
+      "pageUrl": "https://gamesdb.launchbox-app.com/games/details/138577",
+      "boxArt": {
+        "url": "https://images.launchbox-app.com/2097c55a-36ee-4933-a29b-c9db93e1c854.jpg",
+        "review": "checked"
+      },
+      "screenshot": {
+        "url": "https://images.launchbox-app.com/273845c2-c94e-4f6a-b023-827c1ab223b0.png",
+        "review": "checked"
+      },
+      "notes": "Compared the live page title and platform with the on-disk group. Opened each available selected image; redistribution rights remain unconfirmed."
+    },
+    {
+      "platform": "pc88",
+      "databaseId": "207484",
+      "title": "Leningrad",
+      "aliases": [],
+      "sourceGroups": [
+        "pc88:Leningrad (Pony Canyon)"
+      ],
+      "contentIds": [],
+      "description": "Command units across a map of northern Russia in a World War II strategy game.",
+      "pageUrl": "https://gamesdb.launchbox-app.com/games/details/157484",
+      "boxArt": {
+        "url": "https://images.launchbox-app.com/51381de6-c25c-4acc-bbe0-bd3407557fe7.jpg",
+        "review": "checked"
+      },
+      "screenshot": {
+        "url": "https://images.launchbox-app.com/e6b80dc3-df52-4779-a325-06fea38f2297.png",
+        "review": "checked"
+      },
+      "notes": "Compared the live page title and platform with the on-disk group. Opened each available selected image; redistribution rights remain unconfirmed."
+    },
+    {
+      "platform": "pc88",
+      "databaseId": "188582",
+      "title": "Little Computer People",
+      "aliases": [],
+      "sourceGroups": [
+        "pc88:Little Computer People (Pony Canyon)"
+      ],
+      "contentIds": [],
+      "description": "Watch a resident live in a simulated house and interact through typed requests, gifts, letters, and card games.",
+      "pageUrl": "https://gamesdb.launchbox-app.com/games/details/138582",
+      "boxArt": {
+        "url": "https://images.launchbox-app.com/r2_8195dbec-99cf-4947-8c06-eb80624e99d5.png",
+        "review": "checked"
+      },
+      "screenshot": {
+        "url": "https://images.launchbox-app.com/r2_13a1c36a-01c7-49ae-8fc8-0dfb4a164e97.png",
+        "review": "checked"
+      },
+      "notes": "Compared the live page title and platform with the on-disk group. Opened each available selected image; redistribution rights remain unconfirmed."
+    },
+    {
+      "platform": "pc88",
+      "databaseId": "188584",
+      "title": "Lizard",
+      "aliases": [],
+      "sourceGroups": [
+        "pc88:Lizard (Xtalsoft - Riverhill Soft)"
+      ],
+      "contentIds": [],
+      "description": "Explore a tower in first person, fighting random encounters and searching for a magical book to rescue a princess.",
+      "pageUrl": "https://gamesdb.launchbox-app.com/games/details/138584",
+      "boxArt": {
+        "url": "https://images.launchbox-app.com/r2_ff9612b4-5c17-4522-9982-bcf4880e167c.png",
+        "review": "flagged"
+      },
+      "screenshot": {
+        "url": "https://images.launchbox-app.com/1e33d59d-bc17-4c90-a8f7-2f433c13741f.png",
+        "review": "checked"
+      },
+      "notes": "Compared the live page title and platform with the on-disk group. Opened each available selected image; redistribution rights remain unconfirmed. Revealing fantasy figure on cover; hold for content review."
+    },
+    {
+      "platform": "pc88",
+      "databaseId": "188423",
+      "title": "Lode Runner",
+      "aliases": [],
+      "sourceGroups": [
+        "pc88:Lode Runner (SystemSoft)"
+      ],
+      "contentIds": [],
+      "description": "Collect gold across ladder-and-rope stages while digging holes to trap pursuing guards.",
+      "pageUrl": "https://gamesdb.launchbox-app.com/games/details/138423",
+      "boxArt": {
+        "url": "https://images.launchbox-app.com/ced38d92-601c-4317-a59e-15fb0ec8d28d.jpg",
+        "review": "checked"
+      },
+      "screenshot": {
+        "url": "",
+        "review": "missing"
+      },
+      "notes": "Compared the live page title and platform with the on-disk group. Opened each available selected image; redistribution rights remain unconfirmed. No screenshot image was available in the snapshot."
+    },
+    {
+      "platform": "pc88",
+      "databaseId": "188585",
+      "title": "Lot Lot",
+      "aliases": [],
+      "sourceGroups": [
+        "pc88:Lot Lot (Technopolis Soft)"
+      ],
+      "contentIds": [],
+      "description": "Swap groups of falling balls between compartments to steer them into scoring pits before time and lives run out.",
+      "pageUrl": "https://gamesdb.launchbox-app.com/games/details/138585",
+      "boxArt": {
+        "url": "https://images.launchbox-app.com/18aecb5a-b28f-4e13-a62e-dfacff9b6402.jpg",
+        "review": "checked"
+      },
+      "screenshot": {
+        "url": "https://images.launchbox-app.com/b27d31d3-b69c-42e3-b2e7-14531772ca8b.png",
+        "review": "checked"
+      },
+      "notes": "Compared the live page title and platform with the on-disk group. Opened each available selected image; redistribution rights remain unconfirmed."
+    },
+    {
+      "platform": "pc88",
+      "databaseId": "190077",
+      "title": "Lunar Ball",
+      "aliases": [],
+      "sourceGroups": [
+        "pc88:Lunar Ball (Compile - Pony Canyon)"
+      ],
+      "contentIds": [],
+      "description": "Play futuristic pool on oddly shaped tables in solo or two-player matches.",
+      "pageUrl": "https://gamesdb.launchbox-app.com/games/details/140077",
+      "boxArt": {
+        "url": "https://images.launchbox-app.com/r2_d381130b-d129-49af-8e5c-7c073483326e.png",
+        "review": "flagged"
+      },
+      "screenshot": {
+        "url": "https://images.launchbox-app.com/f814c526-f099-4000-a92f-8e72d75f69ff.png",
+        "review": "checked"
+      },
+      "notes": "Compared the live page title and platform with the on-disk group. Opened each available selected image; redistribution rights remain unconfirmed. Visible SAMPLE watermark; seek a clean cover scan."
+    },
+    {
+      "platform": "pc88",
+      "databaseId": "188604",
+      "title": "M.U.L.E.",
+      "aliases": [],
+      "sourceGroups": [
+        "pc88:M.U.L.E. (BPS)"
+      ],
+      "contentIds": [],
+      "description": "Settle a distant planet by assigning robotic M.U.L.E.s to produce food, energy, ore, and valuable crystite.",
+      "pageUrl": "https://gamesdb.launchbox-app.com/games/details/138604",
+      "boxArt": {
+        "url": "https://images.launchbox-app.com/r2_fda59775-0956-4e19-996f-fc8eece34a9d.png",
+        "review": "checked"
+      },
+      "screenshot": {
+        "url": "https://images.launchbox-app.com/2a84ce5f-e05e-467e-a11d-fb0995b32bc9.png",
+        "review": "checked"
+      },
+      "notes": "Compared the live page title and platform with the on-disk group. Opened each available selected image; redistribution rights remain unconfirmed."
+    },
+    {
+      "platform": "pc88",
+      "databaseId": "207919",
+      "title": "Magic Garden",
+      "aliases": [],
+      "sourceGroups": [
+        "pc88:Magic Garden (T. Hidaka - Enix)"
+      ],
+      "contentIds": [],
+      "description": "Move through a bright garden maze in this Enix action game.",
+      "pageUrl": "https://gamesdb.launchbox-app.com/games/details/157919",
+      "boxArt": {
+        "url": "https://images.launchbox-app.com/r2_e36133ca-cac1-49f2-a0e7-9e3649631609.png",
+        "review": "checked"
+      },
+      "screenshot": {
+        "url": "https://images.launchbox-app.com/r2_316ee673-894f-45b1-b9b0-a7f86065790a.png",
+        "review": "checked"
+      },
+      "notes": "Compared the live page title and platform with the on-disk group. Opened each available selected image; redistribution rights remain unconfirmed."
+    },
+    {
+      "platform": "pc88",
+      "databaseId": "197000",
+      "title": "Magical Box",
+      "aliases": [],
+      "sourceGroups": [
+        "pc88:Magical Box (Technopolis Soft)"
+      ],
+      "contentIds": [],
+      "description": "Open boxes on a colorful puzzle board to uncover items and progress through each stage.",
+      "pageUrl": "https://gamesdb.launchbox-app.com/games/details/147000",
+      "boxArt": {
+        "url": "https://images.launchbox-app.com/r2_de6472ef-4ebe-4179-aad6-e3e55f901ca6.png",
+        "review": "flagged"
+      },
+      "screenshot": {
+        "url": "https://images.launchbox-app.com/r2_1db1aa3b-5842-4b60-ba13-2d886174d748.png",
+        "review": "checked"
+      },
+      "notes": "Compared the live page title and platform with the on-disk group. Opened each available selected image; redistribution rights remain unconfirmed. Revealing bunny costume; hold for content review."
+    },
+    {
+      "platform": "pc88",
       "databaseId": "188151",
       "title": "The Black Onyx",
       "aliases": [],
@@ -1833,6 +2085,29 @@
         "review": "flagged"
       },
       "notes": "Compared the live page title and platform with the on-disk group. Opened the selected box and gameplay image; redistribution rights remain unconfirmed. Sexualized young-looking characters on adult-game cover; hold for content review. Sexualized young-looking character imagery; hold for content review."
+    },
+    {
+      "platform": "pc98",
+      "databaseId": "183171",
+      "title": "Dragon Slayer: The Legend of Heroes",
+      "aliases": [
+        "Dragon Slayer: Eiyuu Densetsu"
+      ],
+      "sourceGroups": [
+        "translated:dragonslayerthelegendofheroes"
+      ],
+      "contentIds": [],
+      "description": "Help Prince Selios escape captivity, gather allies, and reclaim his kingdom in a turn-based fantasy RPG.",
+      "pageUrl": "https://gamesdb.launchbox-app.com/games/details/133171",
+      "boxArt": {
+        "url": "https://images.launchbox-app.com/r2_8782bb0c-d4d4-42b0-975e-39931b11245d.jpg",
+        "review": "checked"
+      },
+      "screenshot": {
+        "url": "https://images.launchbox-app.com/cf6b428f-2739-4bd8-9890-c31177deb940.png",
+        "review": "checked"
+      },
+      "notes": "Compared the live page title and platform with the on-disk group. Opened each available selected image; redistribution rights remain unconfirmed."
     },
     {
       "platform": "pc98",
@@ -2528,6 +2803,32 @@
     },
     {
       "platform": "pc98",
+      "databaseId": "189844",
+      "title": "Nova",
+      "aliases": [
+        "Nova Miirareta Sitai"
+      ],
+      "sourceGroups": [
+        "translated:nova",
+        "pc98:CatsPro.zip:Nova"
+      ],
+      "contentIds": [
+        "sha256-hdi-v1:c629a6124fafd67969d788ab48c543ed0023b66ddce13642f156c4abb067bc0e"
+      ],
+      "description": "Awaken aboard a troubled spaceship with no memory, explore its rooms, and make dialogue choices that shape the story.",
+      "pageUrl": "https://gamesdb.launchbox-app.com/games/details/139844",
+      "boxArt": {
+        "url": "",
+        "review": "missing"
+      },
+      "screenshot": {
+        "url": "https://images.launchbox-app.com/d06a3ab8-c19a-4af6-9301-fe3d392e2aa2.jpg",
+        "review": "checked"
+      },
+      "notes": "Compared the live page title and platform with the on-disk group. Opened each available selected image; redistribution rights remain unconfirmed. No boxArt image was available in the snapshot."
+    },
+    {
+      "platform": "pc98",
       "databaseId": "184699",
       "title": "Pipe Dream",
       "aliases": [],
@@ -3204,6 +3505,29 @@
         "review": "checked"
       },
       "notes": "Compared the live page title and platform with the on-disk group. Opened the selected box and gameplay image; redistribution rights remain unconfirmed. Adult-game cover includes young-looking characters; hold for content review."
+    },
+    {
+      "platform": "pc98",
+      "databaseId": "183795",
+      "title": "Ys: Ancient Ys Vanished",
+      "aliases": [
+        "Ys: Ancient Ys Vanished Omen"
+      ],
+      "sourceGroups": [
+        "translated:ysancientysvanishedomen"
+      ],
+      "contentIds": [],
+      "description": "Guide Adol in a quest for the six books of Ys, gaining equipment and experience through real-time collision-based combat.",
+      "pageUrl": "https://gamesdb.launchbox-app.com/games/details/133795",
+      "boxArt": {
+        "url": "https://images.launchbox-app.com/afa418f2-fa65-4cfe-8828-dce1cf73bacf.jpg",
+        "review": "flagged"
+      },
+      "screenshot": {
+        "url": "https://images.launchbox-app.com/cc9f7282-fc5d-4f7c-8f97-dbebdc6f5386.png",
+        "review": "flagged"
+      },
+      "notes": "Compared the live page title and platform with the on-disk group. Opened each available selected image; redistribution rights remain unconfirmed. Cover has no PC-98 platform marking; verify edition against another source. Severe diagonal pattern corruption; replace with a clean PC-98 capture."
     }
   ]
 }

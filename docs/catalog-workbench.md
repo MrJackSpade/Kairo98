@@ -1,6 +1,6 @@
 # Local catalog workbench
 
-The expanded PC-88/PC-98 inventory, 140 manually reviewed game records, review commands, and held artwork are documented in [catalog research](../catalog/research/README.md).
+The expanded PC-88/PC-98 inventory, 155 manually reviewed game records, review commands, and held artwork are documented in [catalog research](../catalog/research/README.md).
 
 `tools/catalog_workbench.py` starts research from the local LaunchBox PC-98 metadata snapshot. It **does not accept fuzzy matches automatically** or publish game data. Its outputs go under the ignored `.downloads/launchbox/` directory. The ROM tree and copied LaunchBox images are also ignored.
 
