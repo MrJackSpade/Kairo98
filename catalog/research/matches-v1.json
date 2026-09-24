@@ -35751,6 +35751,8 @@
         "sha256-hdi-v1:caa32fb540aad9239ec308bac3da25dd1c31becca3f5e023043f6e628f12370f"
       ],
       "description": "An action game about a pilot sent to attack the Slave Dog terrorist base in an armed suit.",
+      "machine": {"gdcClockTenthsMHz": 25},
+      "launch": {"type": "guestCommand", "text": "NS", "ready": "dosPrompt", "timeoutMs": 30000},
       "pageUrl": "https://gamesdb.launchbox-app.com/games/details/106056-night-slave",
       "boxArtUrl": "https://images.launchbox-app.com/b92f5b54-07ad-42c0-b628-9f28894c292c.jpg",
       "screenshotUrl": "https://images.launchbox-app.com/32725030-dc63-4fcf-8b0b-43a0c7f56fd3.png"

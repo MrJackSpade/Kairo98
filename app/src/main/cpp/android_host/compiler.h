@@ -10,6 +10,7 @@
 #include <stdio.h>
 #include <stddef.h>
 #include <stdint.h>
+#include <setjmp.h>
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
@@ -131,3 +132,21 @@ typedef signed char BOOL;
 #define	SUPPORT_SASI
 
 #define	SCREEN_BPP		16
+#define _tcslen strlen
+#define MEMORY_MAXSIZE 230
+#define INFINITE UINT32_MAX
+#define _tcscpy strcpy
+
+/* The portable IA-32 core uses these call and register aliases on ARM64. */
+#define REG8 UINT8
+#define REG16 UINT16
+#define CPUCALL
+#define MEMCALL
+#define DMACCALL
+#define IOOUTCALL
+#define IOINPCALL
+#define SOUNDCALL
+#define VRAMCALL
+#define SCRNCALL
+#define VERMOUTHCL
+#define INLINE inline

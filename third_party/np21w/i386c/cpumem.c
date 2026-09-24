@@ -713,9 +713,9 @@ static const MEMFNF memfnf = {
 	   {memnc_wr16,		memnc_wr16,		memnc_wr16,		memnc_wr16,
 		memnc_wr16,		memsys_wr16,	memsys_wr16,	memsys_wr16},
 
-	   {memvgaf_rd32,	memvgaf_rd32,	memvgaf_rd32,	memvgaf_rd32,
+	   {memnc_rd32,	memnc_rd32,	memnc_rd32,	memnc_rd32,
 		memnc_rd32,		memsys_rd32,	memsys_rd32,	memsys_rd32},
-	   {memvgaf_wr32,	memvgaf_wr32,	memvgaf_wr32,	memvgaf_wr32,
+	   {memnc_wr32,	memnc_wr32,	memnc_wr32,	memnc_wr32,
 		memnc_wr32,		memsys_wr32,	memsys_wr32,	memsys_wr32}};
 #endif
 

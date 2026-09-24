@@ -270,6 +270,24 @@ class LibraryScreen(
             if (refreshed == null) closeDetail() else detailPage.show(refreshed)
         }
     }
+    /** Used by the debug ADB selector after cached entries or a scan arrive. */
+    fun selectGame(query: String): Boolean {
+        val needle = query.trim()
+        if (needle.isEmpty()) return false
+        val index = entries.indexOfFirst { it.displayName.equals(needle, ignoreCase = true) }
+            .takeIf { it >= 0 }
+            ?: entries.indexOfFirst {
+                catalog.resolve(it.contentId ?: "", it.displayName).title.equals(needle, ignoreCase = true)
+            }.takeIf { it >= 0 }
+            ?: entries.indices.filter { entries[it].displayName.contains(needle, ignoreCase = true) }
+                .singleOrNull() ?: -1
+        if (index < 0) return false
+        selectedIndex = index
+        list.setSelection(index)
+        adapter.notifyDataSetChanged()
+        openDetail(entries[index])
+        return true
+    }
     fun moveSelection(delta: Int) {
         if (entries.isEmpty()) return
         selectedIndex = (selectedIndex + delta).coerceIn(0, entries.lastIndex)

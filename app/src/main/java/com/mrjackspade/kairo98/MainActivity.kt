@@ -49,7 +49,7 @@ import kotlin.math.roundToInt
 
 class MainActivity : Activity(), SurfaceHolder.Callback {
     private external fun nativeStart(path: String?, fontPath: String, biosDir: String,
-                                     mhzTimesTen: Int,
+                                     mhzTimesTen: Int, gdcMhzTimesTen: Int,
                                      floppy: Boolean): Boolean
     private external fun nativeFloppy(drive: Int, path: String?): Boolean
     private external fun nativeStop()
@@ -98,6 +98,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
     private var currentGame: GameCatalog.Game? = null
     private var commandCancelled = AtomicBoolean(false)
     private var libraryEntries = emptyList<LibraryEntry>()
+    private var pendingDebugGame: String? = null
     private lateinit var backdrop: View
     private lateinit var drawer: ScrollView
     private lateinit var menuStatus: TextView
@@ -153,6 +154,14 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        if (applicationInfo.flags and android.content.pm.ApplicationInfo.FLAG_DEBUGGABLE != 0) {
+            pendingDebugGame = intent.getStringExtra("kairo98.selectGame64")?.let { encoded ->
+                runCatching {
+                    String(android.util.Base64.decode(encoded,
+                        android.util.Base64.URL_SAFE or android.util.Base64.NO_WRAP), Charsets.UTF_8)
+                }.getOrNull()
+            } ?: intent.getStringExtra("kairo98.selectGame")
+        }
         integerScaling = preferences.getBoolean("integer_scaling", true)
         integerCrop = preferences.getBoolean("integer_crop", false)
         muted = preferences.getBoolean("muted", false)
@@ -208,6 +217,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
             } else {
                 libraryEntries = romLibrary.cached(romTree!!)
                 libraryScreen.showEntries(libraryEntries)
+                selectPendingDebugGame()
                 refreshLibrary(false)
             }
         }
@@ -478,6 +488,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
                     if (!cancelled.get()) {
                         libraryEntries = entries
                         libraryScreen.showEntries(entries)
+                        selectPendingDebugGame()
                         val errors = entries.count { it.error != null }
                         libraryScreen.showStatus("${entries.count { it.playable }} games" +
                             (if (errors == 0) "" else " · $errors unreadable") +
@@ -492,6 +503,14 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
                 }
             }
         }.start()
+    }
+
+    private fun selectPendingDebugGame() {
+        val query = pendingDebugGame ?: return
+        if (libraryScreen.selectGame(query)) {
+            pendingDebugGame = null
+            android.util.Log.i("Kairo98", "Selected library game: $query")
+        }
     }
 
     private fun launchEntry(entry: LibraryEntry) {
@@ -522,7 +541,8 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
                     nativeStop()
                     if (generation != startGeneration) null
                     else if (nativeStart(disk.absolutePath, fontPath(), firmwareDir().absolutePath,
-                            game.baseClockTenthsMHz ?: clock, entry.isFloppy)) {
+                            game.baseClockTenthsMHz ?: clock,
+                            game.gdcClockTenthsMHz ?: 50, entry.isFloppy)) {
                         awaitMachineReady()?.let(::error)
                         disk
                     }
@@ -751,7 +771,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
         val catalog = romLibrary.catalog
         val fields = arrayOf("Title", "Machine clock", "Guest command", "Preview art", "Box art",
             "View screenshot", "Reset all custom settings", "File information", "Controller mapping",
-            "Input mode")
+            "Input mode", "GDC clock")
         val values = arrayOf(
             "${game.title} · ${id?.let { catalog.sourceOf(it, "title") } ?: "Filename"}",
             "${game.baseClockTenthsMHz?.let { "${it / 10.0} MHz" } ?: "App default"} · ${id?.let { catalog.sourceOf(it, "machine") } ?: "App default"}",
@@ -761,7 +781,8 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
             if (game.preview == null) "No screenshot available" else "Open preview",
             "Restore catalog values", "Path, ZIP entry, and content ID",
             "${effectiveControllerBindings(game).size} bindings · ${if (game.controllerBindings == null || (game.controllerBindings == "[]" && !game.overriddenFields.contains("controller"))) "Global" else id?.let { catalog.sourceOf(it, "controller") } ?: "Global"}",
-            "${InputModeDecider.parse(game.inputMode ?: InputModeDecider.storageValue(globalInputMode))} · ${id?.let { catalog.sourceOf(it, "input") } ?: "App default"}"
+            "${InputModeDecider.parse(game.inputMode ?: InputModeDecider.storageValue(globalInputMode))} · ${id?.let { catalog.sourceOf(it, "input") } ?: "App default"}",
+            "${game.gdcClockTenthsMHz?.let { "${it / 10.0} MHz" } ?: "5.0 MHz (app default)"} · ${id?.let { catalog.sourceOf(it, "machine") } ?: "App default"}"
         )
         AlertDialog.Builder(this).setTitle(game.title)
             .setItems(fields.indices.map { "${fields[it]}\n${values[it]}" }.toTypedArray()) { _, which ->
@@ -787,6 +808,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
                         .setPositiveButton("Close", null).showStyled()
                     8 -> showControllerBindings(entry)
                     9 -> showInputModeChoices(entry)
+                    10 -> editGameGdcClock(entry)
                 }
             }.setPositiveButton("Play") { _, _ -> launchEntry(entry) }
             .setNegativeButton("Close", null).showStyled()
@@ -913,13 +935,31 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
     private fun editGameClock(entry: LibraryEntry) {
         val current = romLibrary.catalog.resolve(entry.contentId!!, entry.displayName)
         AlertDialog.Builder(this).setTitle("Machine clock")
-            .setSingleChoiceItems(arrayOf("Use catalog or app default", "2 MHz", "2.5 MHz"),
+            .setSingleChoiceItems(arrayOf("Reset machine settings", "2 MHz", "2.5 MHz"),
                 when (current.baseClockTenthsMHz) { 20 -> 1; 25 -> 2; else -> 0 }) { dialog, which ->
                 dialog.dismiss()
                 saveGameSetting(entry) {
                     if (which == 0) romLibrary.catalog.resetOverride(entry.contentId!!, "machine")
                     else romLibrary.catalog.setOverride(entry.contentId!!, "machine",
-                        JSONObject().put("baseClockTenthsMHz", if (which == 1) 20 else 25))
+                        JSONObject().put("baseClockTenthsMHz", if (which == 1) 20 else 25).apply {
+                            current.gdcClockTenthsMHz?.let { put("gdcClockTenthsMHz", it) }
+                        })
+                }
+            }.setNegativeButton("Cancel") { _, _ -> showGameDetails(entry) }.showStyled()
+    }
+
+    private fun editGameGdcClock(entry: LibraryEntry) {
+        val current = romLibrary.catalog.resolve(entry.contentId!!, entry.displayName)
+        AlertDialog.Builder(this).setTitle("GDC clock")
+            .setSingleChoiceItems(arrayOf("Reset machine settings", "2.5 MHz", "5 MHz"),
+                when (current.gdcClockTenthsMHz) { 25 -> 1; 50 -> 2; else -> 0 }) { dialog, which ->
+                dialog.dismiss()
+                saveGameSetting(entry) {
+                    if (which == 0) romLibrary.catalog.resetOverride(entry.contentId!!, "machine")
+                    else romLibrary.catalog.setOverride(entry.contentId!!, "machine",
+                        JSONObject().put("gdcClockTenthsMHz", if (which == 1) 25 else 50).apply {
+                            current.baseClockTenthsMHz?.let { put("baseClockTenthsMHz", it) }
+                        })
                 }
             }.setNegativeButton("Cancel") { _, _ -> showGameDetails(entry) }.showStyled()
     }
@@ -1382,7 +1422,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
                 Pc98FontCache.ensure(filesDir)
                 if (generation != startGeneration) "Start cancelled"
                 else if (nativeStart(disk.absolutePath, fontPath(), firmwareDir().absolutePath, clock,
-                        DiskFormat.isFloppy(name)))
+                        50, DiskFormat.isFloppy(name)))
                     awaitMachineReady()?.let { "Disk start failed: $it" } ?: "Starting $name"
                 else "Unable to start machine"
             } catch (error: Exception) {
@@ -1505,7 +1545,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
                 nativeStop()
                 if (generation != startGeneration) "Start cancelled"
                 else if (nativeStart(disk.absolutePath, fontPath(), firmwareDir().absolutePath,
-                        clock, floppy))
+                        clock, 50, floppy))
                     awaitMachineReady()?.let { "Disk start failed: $it" } ?: message
                 else "Unable to start machine"
             } catch (error: Exception) {

@@ -22,8 +22,22 @@ static UINT floppy_type(const char *image) {
         ? FTYPE_VFDD : FTYPE_NONE;
 }
 
+static int configured_gdc_clock = 50;
+
+static void apply_gdc_dipswitch(void) {
+    /* DIP switch 2-8 is sampled by the BIOS into MEMB_PRXDUPD at boot. */
+    if (configured_gdc_clock == 25) np2cfg.dipsw[1] |= 0x80;
+    else np2cfg.dipsw[1] &= ~0x80;
+}
+
+static void apply_gdc_clock(void) {
+    if (configured_gdc_clock == 25) gdc.clock &= ~0x80;
+    else gdc.clock |= 0x80;
+    gdc_updateclock();
+}
+
 int kairo98_machine_start(const char *image, const char *font_path, const char *bios_dir,
-                          int mhz_times_ten, int floppy) {
+                          int mhz_times_ten, int gdc_mhz_times_ten, int floppy) {
     size_t length = image ? strlen(image) : 0;
     size_t bios_length = bios_dir ? strlen(bios_dir) : 0;
     if (length >= (floppy ? sizeof(np2cfg.fddfile[0]) :
@@ -31,7 +45,10 @@ int kairo98_machine_start(const char *image, const char *font_path, const char *
         bios_length >= sizeof(np2cfg.biospath)) {
         return 1;
     }
-    if (mhz_times_ten != 20 && mhz_times_ten != 25) return 3;
+    if ((mhz_times_ten != 20 && mhz_times_ten != 25) ||
+        (gdc_mhz_times_ten != 25 && gdc_mhz_times_ten != 50)) return 3;
+    configured_gdc_clock = gdc_mhz_times_ten;
+    apply_gdc_dipswitch();
     np2cfg.baseclock = mhz_times_ten == 25 ? PCBASECLOCK25 : PCBASECLOCK20;
     np2cfg.sasihdd[0][0] = '\0';
     np2cfg.fddfile[0][0] = '\0';
@@ -48,6 +65,7 @@ int kairo98_machine_start(const char *image, const char *font_path, const char *
         return 4;
     }
     pccore_reset();
+    apply_gdc_clock();
     if (length) {
         if (floppy) {
             diskdrv_readyfddex(0, image, floppy_type(image), 0);
@@ -116,7 +134,9 @@ void kairo98_machine_exec(void) {
 int kairo98_machine_reset(void) {
     keystat_allrelease();
     if (flush_disk() != 0) return 1;
+    apply_gdc_dipswitch();
     pccore_reset();
+    apply_gdc_clock();
     return 0;
 }
 
@@ -125,7 +145,9 @@ int kairo98_machine_set_clock(int mhz_times_ten) {
     keystat_allrelease();
     if (flush_disk() != 0) return 1;
     np2cfg.baseclock = mhz_times_ten == 25 ? PCBASECLOCK25 : PCBASECLOCK20;
+    apply_gdc_dipswitch();
     pccore_reset();
+    apply_gdc_clock();
     return 0;
 }
 
@@ -144,7 +166,9 @@ int kairo98_machine_set_disk(const char *image) {
     sxsi_devclose(0);
     np2cfg.sasihdd[0][0] = '\0';
     if (length) memcpy(np2cfg.sasihdd[0], image, length + 1);
+    apply_gdc_dipswitch();
     pccore_reset();
+    apply_gdc_clock();
     if (length) {
         SXSIDEV drive = sxsi_getptr(0);
         if (!drive || !(drive->flag & SXSIFLAG_READY)) return 2;

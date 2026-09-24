@@ -1,4 +1,4 @@
-# Explicit 21/W rev104 BSD-only native inputs for the initial 286 build.
+# Explicit 21/W rev104 BSD-only native inputs for the portable IA-32 build.
 # Do not add fmgen, GPL MAME, or excluded DOSBox FPU files.
 set(NP21W_CORE_SOURCES
     ${NP21W_ROOT}/bios/bios.c
@@ -91,17 +91,46 @@ set(NP21W_CORE_SOURCES
     ${NP21W_ROOT}/generic/memdbg32.c
     ${NP21W_ROOT}/generic/softkbd.c
     ${NP21W_ROOT}/generic/unasm.c
-    ${NP21W_ROOT}/i286c/cpumem.c
-    ${NP21W_ROOT}/i286c/i286c.c
-    ${NP21W_ROOT}/i286c/i286c_0f.c
-    ${NP21W_ROOT}/i286c/i286c_8x.c
-    ${NP21W_ROOT}/i286c/i286c_ea.c
-    ${NP21W_ROOT}/i286c/i286c_f6.c
-    ${NP21W_ROOT}/i286c/i286c_fe.c
-    ${NP21W_ROOT}/i286c/i286c_mn.c
-    ${NP21W_ROOT}/i286c/i286c_rp.c
-    ${NP21W_ROOT}/i286c/i286c_sf.c
-    ${NP21W_ROOT}/i286c/v30patch.c
+    ${NP21W_ROOT}/i386c/cpucore.c
+    ${NP21W_ROOT}/i386c/cpumem.c
+    ${NP21W_ROOT}/i386c/ia32/interface.c
+    ${NP21W_ROOT}/i386c/ia32/ia32.c
+    ${NP21W_ROOT}/i386c/ia32/cpu.c
+    ${NP21W_ROOT}/i386c/ia32/cpu_io.c
+    ${NP21W_ROOT}/i386c/ia32/cpu_mem.c
+    ${NP21W_ROOT}/i386c/ia32/ctrlxfer.c
+    ${NP21W_ROOT}/i386c/ia32/debug.c
+    ${NP21W_ROOT}/i386c/ia32/disasm.c
+    ${NP21W_ROOT}/i386c/ia32/exception.c
+    ${NP21W_ROOT}/i386c/ia32/groups.c
+    ${NP21W_ROOT}/i386c/ia32/inst_table.c
+    ${NP21W_ROOT}/i386c/ia32/paging.c
+    ${NP21W_ROOT}/i386c/ia32/resolve.c
+    ${NP21W_ROOT}/i386c/ia32/segments.c
+    ${NP21W_ROOT}/i386c/ia32/task.c
+    ${NP21W_ROOT}/i386c/ia32/instructions/bin_arith.c
+    ${NP21W_ROOT}/i386c/ia32/instructions/bit_byte.c
+    ${NP21W_ROOT}/i386c/ia32/instructions/ctrl_trans.c
+    ${NP21W_ROOT}/i386c/ia32/instructions/data_trans.c
+    ${NP21W_ROOT}/i386c/ia32/instructions/dec_arith.c
+    ${NP21W_ROOT}/i386c/ia32/instructions/flag_ctrl.c
+    ${NP21W_ROOT}/i386c/ia32/instructions/fpu.c
+    ${NP21W_ROOT}/i386c/ia32/instructions/fpu/fpdummy.c
+    ${NP21W_ROOT}/i386c/ia32/instructions/mmx/mmx.c
+    ${NP21W_ROOT}/i386c/ia32/instructions/mmx/3dnow.c
+    ${NP21W_ROOT}/i386c/ia32/instructions/sse/sse.c
+    ${NP21W_ROOT}/i386c/ia32/instructions/sse2/sse2.c
+    ${NP21W_ROOT}/i386c/ia32/instructions/sse3/sse3.c
+    ${NP21W_ROOT}/i386c/ia32/instructions/ssse3/ssse3.c
+    ${NP21W_ROOT}/i386c/ia32/instructions/sse4/sse4_1.c
+    ${NP21W_ROOT}/i386c/ia32/instructions/sse4/sse4_2.c
+    ${NP21W_ROOT}/i386c/ia32/instructions/sse4a/sse4a.c
+    ${NP21W_ROOT}/i386c/ia32/instructions/logic_arith.c
+    ${NP21W_ROOT}/i386c/ia32/instructions/misc_inst.c
+    ${NP21W_ROOT}/i386c/ia32/instructions/seg_reg.c
+    ${NP21W_ROOT}/i386c/ia32/instructions/shift_rotate.c
+    ${NP21W_ROOT}/i386c/ia32/instructions/string_inst.c
+    ${NP21W_ROOT}/i386c/ia32/instructions/system_inst.c
     ${NP21W_ROOT}/io/artic.c
     ${NP21W_ROOT}/io/cgrom.c
     ${NP21W_ROOT}/io/cpuio.c

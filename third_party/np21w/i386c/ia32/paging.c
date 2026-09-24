@@ -254,8 +254,8 @@ do { \
 #define	TLBF_USER_WRITE		0x00000010UL // ƒ†[ƒU[ƒ‚[ƒh‘‚«‚İ‹–‰Â
 #define	TLBF_CODE_SUPER		0x00000020UL // ƒX[ƒp[ƒoƒCƒUƒ‚[ƒh–½—ßƒtƒFƒbƒ`‹–‰Â
 #define	TLBF_CODE_USER		0x00000040UL // ƒ†[ƒU[ƒ‚[ƒh–½—ßƒtƒFƒbƒ`‹–‰Â
-#define	TLBF_DIRECT_READ	0x00000100UL // host_pageƒ|ƒCƒ“ƒ^‚Ö’¼Ú“Ç‚İæ‚è‰Â”\
-#define	TLBF_DIRECT_WRITE	0x00000200UL // host_pageƒ|ƒCƒ“ƒ^‚Ö’¼Ú‘‚«‚İ‰Â”\
+#define	TLBF_DIRECT_READ	0x00000100UL // host_pageƒ|ƒCƒ“ƒ^‚Ö’¼Ú“Ç‚İæ‚è‰Â”
+#define	TLBF_DIRECT_WRITE	0x00000200UL // host_pageƒ|ƒCƒ“ƒ^‚Ö’¼Ú‘‚«‚İ‰Â”
 #endif
 
 #define	NTLB		2	/* 0: DTLB, 1: ITLB */

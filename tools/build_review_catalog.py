@@ -43,6 +43,9 @@ def generate(matches_path, gallery, assets, art_assets, ffmpeg, quality):
             metadata["description"] = entry["description"]
         if entry.get("aliases"):
             metadata["aliases"] = entry["aliases"]
+        for field in ("machine", "launch"):
+            if entry.get(field):
+                metadata[field] = entry[field]
         artwork = {}
         for gallery_kind, field, url_field in (
                 ("box", "boxArt", "boxArtUrl"),

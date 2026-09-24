@@ -19,6 +19,7 @@ class GameCatalog(private val context: Context) {
         val boxArtUrl: String?,
         val previewUrl: String?,
         val baseClockTenthsMHz: Int?,
+        val gdcClockTenthsMHz: Int?,
         val controllerProfile: String?,
         val controllerBindings: String?,
         val inputMode: String?,
@@ -89,6 +90,7 @@ class GameCatalog(private val context: Context) {
             artwork?.optString("boxArtUrl")?.takeIf(::validImageUrl),
             artwork?.optString("previewUrl")?.takeIf(::validImageUrl),
             machine?.optInt("baseClockTenthsMHz")?.takeIf { it == 20 || it == 25 },
+            machine?.optInt("gdcClockTenthsMHz")?.takeIf { it == 25 || it == 50 },
             controller?.optString("profile")?.takeIf { it.length in 1..64 },
             controller?.optJSONArray("bindings")?.toString(),
             input?.optString("mode")?.takeIf { it in INPUT_MODES },
@@ -176,7 +178,9 @@ class GameCatalog(private val context: Context) {
             !value.has(it) || validArtPath(value.optString(it))
         } && ART_URL_FIELDS.all { !value.has(it) || validImageUrl(value.optString(it)) }
         "machine" -> value is JSONObject && (!value.has("baseClockTenthsMHz") ||
-            (value.opt("baseClockTenthsMHz") is Int && value.optInt("baseClockTenthsMHz") in listOf(20, 25)))
+            (value.opt("baseClockTenthsMHz") is Int && value.optInt("baseClockTenthsMHz") in listOf(20, 25))) &&
+            (!value.has("gdcClockTenthsMHz") ||
+                (value.opt("gdcClockTenthsMHz") is Int && value.optInt("gdcClockTenthsMHz") in listOf(25, 50)))
         "controller" -> value is JSONObject && (!value.has("profile") ||
             (value.opt("profile") is String && value.optString("profile").length in 1..64)) &&
             (!value.has("bindings") || value.optJSONArray("bindings")?.let(ControllerBindings::valid) == true)

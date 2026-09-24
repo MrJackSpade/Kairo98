@@ -2815,6 +2815,10 @@ void SSE2_PAUSE(void)
 
 #else
 
+void SSE2_PSxxWimm(void) { EXCEPTION(UD_EXCEPTION, 0); }
+void SSE2_PSxxDimm(void) { EXCEPTION(UD_EXCEPTION, 0); }
+void SSE2_PSxxQimm(void) { EXCEPTION(UD_EXCEPTION, 0); }
+
 /*
  * SSE2 interface
  */

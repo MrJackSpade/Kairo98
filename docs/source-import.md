@@ -37,3 +37,7 @@ The vendored rev104 snapshot has two Kairo98-only, additive observation hooks. `
 ## Android/Linux include portability
 
 The imported `diskimage/fddfile.h` and `fdd/sxsicd.c` used `DiskImage/FD` and `DiskImage/CD` in quoted include paths while the actual directories are lowercase. Kairo98 changes those 11 include paths to `diskimage/fd` and `diskimage/cd` so the pinned snapshot builds on case-sensitive Linux CI runners. No code behavior changes.
+
+## Portable IA-32 core
+
+The Android build now compiles the pinned snapshot's portable `i386c/ia32` CPU core instead of its 286 core. The explicit source list includes the snapshot's disabled FPU, MMX, and SSE stubs, but excludes the DOSBox FPU implementations. Three local source corrections make that configuration compile: `i386c/cpumem.c` uses the non-PC-9821 memory handlers in its 32-bit table, `i386c/ia32/paging.c` removes trailing comment backslashes that accidentally continued preprocessor lines, and `i386c/ia32/instructions/sse2/sse2.c` supplies three undefined-instruction stubs in its disabled-SSE2 branch. The source archive above remains the provenance reference for all three files. The IA-32 source list needs to be included in the final binary license audit.

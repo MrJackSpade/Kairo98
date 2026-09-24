@@ -6,6 +6,8 @@ This is a planning record and preliminary source check, not a completed binary l
 
 The [21/W maintainer's license table](https://simk98.github.io/np21w/download.html) says most code is under a modified BSD license and provides a BSD-only source package based on rev104. It also identifies files with different terms. In particular, `sound/fmgen` is described as generally unavailable for commercial use. The imported BSD-only snapshot has no `sound/fmgen/` directory. Android build definitions must keep `SUPPORT_FMGEN` disabled. The optional GPLv2 `sound/mame/` and DOSBox FPU source files were also absent in the imported snapshot. Preserve `third_party/np21w/LICENSES/` and check each compiled component.
 
+The Android build uses the snapshot's portable IA-32 CPU sources and its disabled FPU instruction stubs. The DOSBox FPU implementations remain excluded. The expanded compiled-source list requires review before distribution.
+
 [ymfm](https://github.com/aaronsgiles/ymfm) identifies its sound cores as BSD-3-Clause. Its `LICENSE` notice is present in `third_party/ymfm/`, pinned to the commit recorded in [source import](source-import.md).
 
 The compiled ASCII bitmap glyphs come from [Spleen 8x16](https://github.com/fcambus/spleen), BSD-2-Clause. Its source BDF, generator, and copyright/license notice are in `third_party/spleen/`. Both GitHub and Play binary packages must reproduce the BSD-2-Clause notice in their documentation or other distributed materials.

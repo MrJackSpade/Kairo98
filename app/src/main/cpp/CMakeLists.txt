@@ -30,7 +30,7 @@ target_include_directories(np21w_core PRIVATE
     ${NP21W_ROOT}/cbus
     ${NP21W_ROOT}/generic
     ${NP21W_ROOT}/font
-    ${NP21W_ROOT}/i286c
+    ${NP21W_ROOT}/i386c
     ${NP21W_ROOT}/io
     ${NP21W_ROOT}/mem
     ${NP21W_ROOT}/network
@@ -38,7 +38,7 @@ target_include_directories(np21w_core PRIVATE
     ${NP21W_ROOT}/vram
     ${SPLEEN_ROOT}
 )
-target_compile_definitions(np21w_core PRIVATE SUPPORT_LARGE_HDD SUPPORT_KAI_IMAGES NP2_SDL2)
+target_compile_definitions(np21w_core PRIVATE SUPPORT_LARGE_HDD SUPPORT_KAI_IMAGES NP2_SDL2 CPUCORE_IA32 USE_TSC)
 target_compile_options(np21w_core PRIVATE -fsigned-char -fno-strict-aliasing)
 
 add_library(kairo98 SHARED native_bridge.cpp $<TARGET_OBJECTS:np21w_core>)
