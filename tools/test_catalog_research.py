@@ -4,12 +4,24 @@ import unittest
 import zipfile
 from pathlib import Path
 
-from catalog_review import propose, validate
+from catalog_review import audit_flags_document, propose, validate
 from extract_launchbox_snapshot import extract
 from inventory_neokobe import pc88_groups, pc98_groups
 
 
 class CatalogResearchTest(unittest.TestCase):
+    def test_flags_document_lists_each_held_image_once(self):
+        reviews = {"entries": [{"boxArt": {"review": "flagged", "url": "https://images.launchbox-app.com/a.png"},
+                                "screenshot": {"review": "checked", "url": "https://images.launchbox-app.com/b.png"}}]}
+        self.assertEqual(audit_flags_document(reviews,
+                         "[Image](https://images.launchbox-app.com/a.png)"), 1)
+        with self.assertRaises(ValueError):
+            audit_flags_document(reviews, "No image links")
+        with self.assertRaises(ValueError):
+            audit_flags_document(reviews,
+                "[Image](https://images.launchbox-app.com/a.png) "
+                "[Image](https://images.launchbox-app.com/a.png)")
+
     def test_extracts_only_target_platforms_and_source_linked_images(self):
         with tempfile.TemporaryDirectory() as directory:
             path = Path(directory) / "Metadata.zip"

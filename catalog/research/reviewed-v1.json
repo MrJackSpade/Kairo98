@@ -757,6 +757,90 @@
     },
     {
       "platform": "pc88",
+      "databaseId": "181159",
+      "title": "Castle Excellent",
+      "aliases": [],
+      "sourceGroups": [
+        "pc88:Castle Excellent (ASCII)"
+      ],
+      "contentIds": [],
+      "description": "Search a hundred castle rooms as a prince, collecting colored keys and solving platform puzzles to reach the princess.",
+      "pageUrl": "https://gamesdb.launchbox-app.com/games/details/131159",
+      "boxArt": {
+        "url": "https://images.launchbox-app.com/r2_586e3e64-d3c2-45ab-96c1-2ea1cf6fc891.jpg",
+        "review": "checked"
+      },
+      "screenshot": {
+        "url": "https://images.launchbox-app.com/4ae5db71-52d4-4033-a539-19f7818eef8c.png",
+        "review": "checked"
+      },
+      "notes": "Compared the live page title and platform with the on-disk group. Opened the selected box and gameplay image; redistribution rights remain unconfirmed."
+    },
+    {
+      "platform": "pc88",
+      "databaseId": "188164",
+      "title": "Chack'n Pop",
+      "aliases": [],
+      "sourceGroups": [
+        "pc88:Chack'n Pop (Nidecom Carry)"
+      ],
+      "contentIds": [],
+      "description": "Help Chack’n recover stolen hearts by dropping bombs on monsters and opening each maze’s exit.",
+      "pageUrl": "https://gamesdb.launchbox-app.com/games/details/138164",
+      "boxArt": {
+        "url": "https://images.launchbox-app.com/6911fe19-2e14-4225-af5f-c042eb8a6fe5.jpg",
+        "review": "checked"
+      },
+      "screenshot": {
+        "url": "https://images.launchbox-app.com/5670da0c-ee19-46c5-afdf-9c215a53e78d.png",
+        "review": "checked"
+      },
+      "notes": "Compared the live page title and platform with the on-disk group. Opened the selected box and gameplay image; redistribution rights remain unconfirmed."
+    },
+    {
+      "platform": "pc88",
+      "databaseId": "188385",
+      "title": "Championship Lode Runner",
+      "aliases": [],
+      "sourceGroups": [
+        "pc88:Championship Lode Runner (SystemSoft)"
+      ],
+      "contentIds": [],
+      "description": "Work through fifty expert Lode Runner stages, digging holes to evade enemies and gather every piece of gold.",
+      "pageUrl": "https://gamesdb.launchbox-app.com/games/details/138385",
+      "boxArt": {
+        "url": "https://images.launchbox-app.com/7aa41e67-bf45-40cc-ab87-5ba07df299bd.jpg",
+        "review": "checked"
+      },
+      "screenshot": {
+        "url": "https://images.launchbox-app.com/9b69665c-b46a-4eb8-909f-218f307a6693.png",
+        "review": "checked"
+      },
+      "notes": "Compared the live page title and platform with the on-disk group. Opened the selected box and gameplay image; redistribution rights remain unconfirmed."
+    },
+    {
+      "platform": "pc88",
+      "databaseId": "188389",
+      "title": "Choplifter!",
+      "aliases": [],
+      "sourceGroups": [
+        "pc88:Choplifter (SystemSoft)"
+      ],
+      "contentIds": [],
+      "description": "Fly a helicopter behind enemy lines, rescuing hostages while avoiding tanks and hostile aircraft.",
+      "pageUrl": "https://gamesdb.launchbox-app.com/games/details/138389",
+      "boxArt": {
+        "url": "https://images.launchbox-app.com/00e4bbc9-44b4-4478-89dc-88b6d59f9f57.jpg",
+        "review": "checked"
+      },
+      "screenshot": {
+        "url": "https://images.launchbox-app.com/d429deac-dc10-4962-aa86-69bcbfc562fb.png",
+        "review": "checked"
+      },
+      "notes": "Compared the live page title and platform with the on-disk group. Opened the selected box and gameplay image; redistribution rights remain unconfirmed."
+    },
+    {
+      "platform": "pc88",
       "databaseId": "199666",
       "title": "Dragon Slayer",
       "aliases": [],
@@ -775,6 +859,134 @@
         "review": "checked"
       },
       "notes": "Compared the live page title and platform with the on-disk group. Opened the selected box and gameplay image: both depict this game and show no visible nudity. Redistribution rights remain unconfirmed."
+    },
+    {
+      "platform": "pc88",
+      "databaseId": "190025",
+      "title": "Elthlead",
+      "aliases": [],
+      "sourceGroups": [
+        "pc88:Elthlead (NCS)"
+      ],
+      "contentIds": [],
+      "description": "Lead the kingdom of Elslead against Bozel’s dark forces in a fantasy strategy campaign.",
+      "pageUrl": "https://gamesdb.launchbox-app.com/games/details/140025",
+      "boxArt": {
+        "url": "https://images.launchbox-app.com/6e54cd90-a3ef-491c-9f79-7aa2f0cad894.jpg",
+        "review": "flagged"
+      },
+      "screenshot": {
+        "url": "https://images.launchbox-app.com/d0c9bdea-90df-49a3-9930-600e034b5162.png",
+        "review": "checked"
+      },
+      "notes": "Compared the live page title and platform with the on-disk group. Opened the selected box and gameplay image; redistribution rights remain unconfirmed. Cover has a revealing costume; hold for user content review."
+    },
+    {
+      "platform": "pc88",
+      "databaseId": "188440",
+      "title": "Emerald Dragon",
+      "aliases": [],
+      "sourceGroups": [
+        "pc88:Emerald Dragon (Glodia)"
+      ],
+      "contentIds": [],
+      "description": "Atrushan becomes human to find Tamryn and lift a curse on dragons, traveling between towns and dungeons in a fantasy RPG.",
+      "pageUrl": "https://gamesdb.launchbox-app.com/games/details/138440",
+      "boxArt": {
+        "url": "https://images.launchbox-app.com/68ffe97d-a702-4f70-ab71-178c753f7dda.jpg",
+        "review": "flagged"
+      },
+      "screenshot": {
+        "url": "https://images.launchbox-app.com/e20c571c-f215-4a5b-9648-317a6d2ae3dc.png",
+        "review": "checked"
+      },
+      "notes": "Compared the live page title and platform with the on-disk group. Opened the selected box and gameplay image; redistribution rights remain unconfirmed. Selected image has no title or platform marking; identity needs a second visual source."
+    },
+    {
+      "platform": "pc88",
+      "databaseId": "188444",
+      "title": "F-15 Strike Eagle",
+      "aliases": [],
+      "sourceGroups": [
+        "pc88:F-15 Strike Eagle (MicroProse - SystemSoft)"
+      ],
+      "contentIds": [],
+      "description": "Fly an F-15 through seven combat missions, using missiles, bombs, and guns against air and ground targets.",
+      "pageUrl": "https://gamesdb.launchbox-app.com/games/details/138444",
+      "boxArt": {
+        "url": "https://images.launchbox-app.com/b57deedb-71e7-4bad-990e-f22e13d34f45.jpg",
+        "review": "checked"
+      },
+      "screenshot": {
+        "url": "https://images.launchbox-app.com/0e937d5c-c201-4dcd-b462-5c78be37d375.png",
+        "review": "checked"
+      },
+      "notes": "Compared the live page title and platform with the on-disk group. Opened the selected box and gameplay image; redistribution rights remain unconfirmed."
+    },
+    {
+      "platform": "pc88",
+      "databaseId": "188447",
+      "title": "Flappy",
+      "aliases": [],
+      "sourceGroups": [
+        "pc88:Flappy (dB-Soft)"
+      ],
+      "contentIds": [],
+      "description": "Push a blue stone onto its target in each maze, using movable red stones and gravity to get past enemies.",
+      "pageUrl": "https://gamesdb.launchbox-app.com/games/details/138447",
+      "boxArt": {
+        "url": "https://images.launchbox-app.com/a4017cb7-b365-40c4-9048-ebc063fd651c.jpg",
+        "review": "checked"
+      },
+      "screenshot": {
+        "url": "https://images.launchbox-app.com/d9493495-8b7a-4aca-8c13-ee6d1e211b78.png",
+        "review": "checked"
+      },
+      "notes": "Compared the live page title and platform with the on-disk group. Opened the selected box and gameplay image; redistribution rights remain unconfirmed."
+    },
+    {
+      "platform": "pc88",
+      "databaseId": "188489",
+      "title": "Gradius",
+      "aliases": [],
+      "sourceGroups": [
+        "pc88:Gradius (Konami)"
+      ],
+      "contentIds": [],
+      "description": "Pilot a fighter through side-scrolling stages, collecting power capsules for speed, weapons, and shields.",
+      "pageUrl": "https://gamesdb.launchbox-app.com/games/details/138489",
+      "boxArt": {
+        "url": "https://images.launchbox-app.com/r2_230210f3-5a82-4d92-8529-4c5ee9018262.png",
+        "review": "checked"
+      },
+      "screenshot": {
+        "url": "https://images.launchbox-app.com/2536cb76-47fb-4947-a87e-7f50838c85eb.png",
+        "review": "checked"
+      },
+      "notes": "Compared the live page title and platform with the on-disk group. Opened the selected box and gameplay image; redistribution rights remain unconfirmed."
+    },
+    {
+      "platform": "pc88",
+      "databaseId": "163698",
+      "title": "Hydlide",
+      "aliases": [
+        "ハイドライド"
+      ],
+      "sourceGroups": [
+        "pc88:Hydlide (T&E Soft)"
+      ],
+      "contentIds": [],
+      "description": "Guide Sir Jim through a cursed kingdom, finding three fairies and defeating Varalys to restore the princess.",
+      "pageUrl": "https://gamesdb.launchbox-app.com/games/details/113698",
+      "boxArt": {
+        "url": "https://images.launchbox-app.com/76e61b30-0f27-44e2-8383-7f88db6dda59.jpg",
+        "review": "checked"
+      },
+      "screenshot": {
+        "url": "https://images.launchbox-app.com/77e4ff60-0d31-4875-9158-d5428f544f77.png",
+        "review": "checked"
+      },
+      "notes": "Compared the live page title and platform with the on-disk group. Opened the selected box and gameplay image; redistribution rights remain unconfirmed."
     },
     {
       "platform": "pc88",
@@ -979,6 +1191,36 @@
         "review": "checked"
       },
       "notes": "Compared the live page title and platform with the on-disk group. Opened the selected box and gameplay image: both depict this game and show no visible nudity. Redistribution rights remain unconfirmed."
+    },
+    {
+      "platform": "pc98",
+      "databaseId": "156062",
+      "title": "Appareden: Fukuryuu no Shou",
+      "aliases": [
+        "Appare-den: Fukuryū no Shō",
+        "Appareden: The Sacrosanct Dragon",
+        "The Appareden: The Sacrosanct Dragon",
+        "あっぱれ伝 -伏龍の章-"
+      ],
+      "sourceGroups": [
+        "translated:apparedenthesacrosanctdragon",
+        "pc98:TGL.zip:Appareden - Fukuryuu no Shou"
+      ],
+      "contentIds": [
+        "sha256-hdi-v1:3bd965c4dc0a84dbeafda3c992a1b7b13b182d286207f735d13a8431dfa26c7c",
+        "sha256-hdi-v1:e379c4796d2728c9a1bee179ee1f8babaf614984b86de780c5e8b7fb4693db06"
+      ],
+      "description": "Gento and his feline companion Benimaru travel across Japan after an attack by Edo soldiers draws them into a struggle over a sealed dragon god.",
+      "pageUrl": "https://gamesdb.launchbox-app.com/games/details/106062",
+      "boxArt": {
+        "url": "https://images.launchbox-app.com/664fdfc5-19f6-490d-8c6d-83b78a4872d6.jpg",
+        "review": "checked"
+      },
+      "screenshot": {
+        "url": "https://images.launchbox-app.com/4046da45-903b-47f8-8731-54774564faa8.png",
+        "review": "checked"
+      },
+      "notes": "Compared the live page title and platform with the on-disk group. Opened the selected box and gameplay image; redistribution rights remain unconfirmed."
     },
     {
       "platform": "pc98",
@@ -1207,6 +1449,57 @@
     },
     {
       "platform": "pc98",
+      "databaseId": "156066",
+      "title": "Dead of the Brain",
+      "aliases": [
+        "Dead of the Brain: Cry of the Dead",
+        "デッド オブ ザ ブレイン 死霊の叫び"
+      ],
+      "sourceGroups": [
+        "translated:deadofthebraincryofthedead",
+        "pc98:Fairytale.zip:Dead of the Brain"
+      ],
+      "contentIds": [
+        "sha256-hdi-v1:6de1f9932ef56df423b4cf9979a57eefac562af68c64d8f6dbcea5d0e6092b9e"
+      ],
+      "description": "Cole and Dr. Cooger face a spreading zombie outbreak after an experimental resurrection medicine goes wrong in a graphic adventure.",
+      "pageUrl": "https://gamesdb.launchbox-app.com/games/details/106066",
+      "boxArt": {
+        "url": "https://images.launchbox-app.com/be09c421-348c-415e-adfd-dcefd95cd214.png",
+        "review": "flagged"
+      },
+      "screenshot": {
+        "url": "https://images.launchbox-app.com/9eb58355-185d-4cc3-b013-bd4dd1c54695.png",
+        "review": "checked"
+      },
+      "notes": "Compared the live page title and platform with both disk groups. Opened the gameplay screenshot. The box image download succeeded but the local viewer could not display it, so its visual content is unverified. Redistribution rights remain unconfirmed. Large image could not be opened by the local viewer; visual content remains unverified."
+    },
+    {
+      "platform": "pc98",
+      "databaseId": "156067",
+      "title": "Dead of the Brain 2",
+      "aliases": [],
+      "sourceGroups": [
+        "translated:deadofthebrain2",
+        "pc98:Fairytale.zip:Dead of the Brain 2"
+      ],
+      "contentIds": [
+        "sha256-hdi-v1:4148c7a68388ea3d603e0ddeb0c5de65a9fa64c920f6739a0b170dcf25d97fe0"
+      ],
+      "description": "Cole and Sheila confront new violence and signs that the resurrection drug survived in a sequel to Dead of the Brain.",
+      "pageUrl": "https://gamesdb.launchbox-app.com/games/details/106067",
+      "boxArt": {
+        "url": "https://images.launchbox-app.com/cc5ca9bd-ec76-4945-8d88-e174ef933174.jpg",
+        "review": "checked"
+      },
+      "screenshot": {
+        "url": "https://images.launchbox-app.com/86a0d143-6176-4005-ae7c-2191411ffbaf.png",
+        "review": "checked"
+      },
+      "notes": "Compared the live page title and platform with the on-disk group. Opened the selected box and gameplay image; redistribution rights remain unconfirmed."
+    },
+    {
+      "platform": "pc98",
       "databaseId": "187121",
       "title": "Derby Stallion",
       "aliases": [],
@@ -1269,6 +1562,33 @@
         "review": "checked"
       },
       "notes": "Compared the live page title and platform with the on-disk group. Opened the selected box and gameplay image: both depict this game and show no visible nudity. Redistribution rights remain unconfirmed."
+    },
+    {
+      "platform": "pc98",
+      "databaseId": "156054",
+      "title": "EVE Burst Error",
+      "aliases": [
+        "Eve: Burst Error",
+        "イヴ バーストエラー"
+      ],
+      "sourceGroups": [
+        "translated:evebursterror",
+        "pc98:CsWare.zip:Eve Burst Error"
+      ],
+      "contentIds": [
+        "sha256-hdi-v1:4661e1bf68de73b06200e72275e5cc586e7d211e1fe1adea189f7a6408c91b2e"
+      ],
+      "description": "Switch between intelligence agent Marina and detective Kojiroh as their separate investigations converge on a murder conspiracy.",
+      "pageUrl": "https://gamesdb.launchbox-app.com/games/details/106054",
+      "boxArt": {
+        "url": "https://images.launchbox-app.com/8bc5bd5e-5644-4d98-a34b-72bc3bbd4163.jpg",
+        "review": "checked"
+      },
+      "screenshot": {
+        "url": "https://images.launchbox-app.com/07e233d0-42c6-44bc-ae9c-e38578258a28.png",
+        "review": "checked"
+      },
+      "notes": "Compared the live page title and platform with the on-disk group. Opened the selected box and gameplay image; redistribution rights remain unconfirmed. The package carries an adults-only purchase label; the selected images show no exposed nudity."
     },
     {
       "platform": "pc98",
@@ -1693,6 +2013,31 @@
     },
     {
       "platform": "pc98",
+      "databaseId": "189396",
+      "title": "Little Vampire",
+      "aliases": [],
+      "sourceGroups": [
+        "translated:littlevampire",
+        "pc98:ChampionSoft.zip:Little Vampire"
+      ],
+      "contentIds": [
+        "sha256-hdi-v1:e017fca45eabaf3a025efe04d639b82d1b068de142086e85412ce4be9948d280",
+        "sha256-hdi-v1:e2e6976ad88cf4426524c8342dc1ac2e403360bab4e698a8d16c794c0972a43f"
+      ],
+      "description": "Kentarou and Miki seek a way home after escaping Dracula’s castle in an illustrated, all-ages adventure.",
+      "pageUrl": "https://gamesdb.launchbox-app.com/games/details/139396",
+      "boxArt": {
+        "url": "https://images.launchbox-app.com/30580a23-860d-43f0-8529-614c4f2f7383.png",
+        "review": "flagged"
+      },
+      "screenshot": {
+        "url": "https://images.launchbox-app.com/r2_96405bc9-5ca7-4326-8eef-ab28688aa1ba.png",
+        "review": "checked"
+      },
+      "notes": "Compared the live page title and platform with the on-disk group. Opened the selected box and gameplay image; redistribution rights remain unconfirmed. Selected cover explicitly says MSX2 and is wrong-platform art for the PC-98 record."
+    },
+    {
+      "platform": "pc98",
       "databaseId": "190887",
       "title": "Log!cal",
       "aliases": [
@@ -1713,6 +2058,34 @@
         "review": "checked"
       },
       "notes": "Compared the live page title and platform with the on-disk group. Opened the selected box and gameplay image: both depict this game and show no visible nudity. Redistribution rights remain unconfirmed."
+    },
+    {
+      "platform": "pc98",
+      "databaseId": "133232",
+      "title": "Makyouden",
+      "aliases": [
+        "Makyoden",
+        "Makyōden",
+        "魔京伝"
+      ],
+      "sourceGroups": [
+        "translated:makyouden",
+        "pc98:NihonCreate.zip:Makyouden"
+      ],
+      "contentIds": [
+        "sha256-hdi-v1:d9fbbe922009e83ccc38704d514b62a3af88eb3307c5315fe23253072d10a245"
+      ],
+      "description": "Explore a ruined Tokyo from a third-person view, talking with survivors as supernatural forces threaten the city.",
+      "pageUrl": "https://gamesdb.launchbox-app.com/games/details/83232",
+      "boxArt": {
+        "url": "https://images.launchbox-app.com/cdf93d8b-2300-4c8f-b430-ea9eb8a8e480.jpg",
+        "review": "checked"
+      },
+      "screenshot": {
+        "url": "https://images.launchbox-app.com/e9581176-2424-46af-b516-e033bfe46644.jpg",
+        "review": "checked"
+      },
+      "notes": "Compared the live page title and platform with the on-disk group. Opened the selected box and gameplay image; redistribution rights remain unconfirmed."
     },
     {
       "platform": "pc98",
@@ -1762,6 +2135,28 @@
         "review": "flagged"
       },
       "notes": "Compared the live PC-98 page with the Japanese NeoKobe folder and English translation archive. Opened the selected box and gameplay image; both depict this game and show no visible exposed nudity. Redistribution rights remain unconfirmed. Source describes sexualized young characters; hold all selected art for user content review. Source describes sexualized young characters; hold all selected art for user content review."
+    },
+    {
+      "platform": "pc98",
+      "databaseId": "183054",
+      "title": "Master of Monsters",
+      "aliases": [],
+      "sourceGroups": [
+        "translated:masterofmonsters",
+        "pc98:SystemSoft.zip:Master of Monsters"
+      ],
+      "contentIds": [],
+      "description": "Choose a wizard, summon monsters, and seize towers across hex-grid battles in a turn-based fantasy strategy game.",
+      "pageUrl": "https://gamesdb.launchbox-app.com/games/details/133054",
+      "boxArt": {
+        "url": "https://images.launchbox-app.com/242eedc0-7bc9-470f-ae84-2bf69b0d07c7.jpg",
+        "review": "flagged"
+      },
+      "screenshot": {
+        "url": "https://images.launchbox-app.com/818c58af-6d45-4de9-8117-9f5535e6ef1c.png",
+        "review": "checked"
+      },
+      "notes": "Compared the live page title and platform with the on-disk group. Opened the selected box and gameplay image; redistribution rights remain unconfirmed. Cover has revealing fantasy costume; hold for user content review."
     },
     {
       "platform": "pc98",
@@ -1879,6 +2274,30 @@
         "review": "checked"
       },
       "notes": "Compared the live page title and platform with the on-disk group. Opened the selected box and gameplay image: both depict this game and show no visible nudity. Redistribution rights remain unconfirmed."
+    },
+    {
+      "platform": "pc98",
+      "databaseId": "189268",
+      "title": "Progenitor",
+      "aliases": [],
+      "sourceGroups": [
+        "translated:progenitor",
+        "pc98:Koei.zip:Progenitor"
+      ],
+      "contentIds": [
+        "sha256-hdi-v1:5151f53355781e1b988327e512a545266fb09a29d9947e452a390435938db445"
+      ],
+      "description": "Travel between planets as space pirate Kenny, trading goods and taking jobs while searching for his missing father.",
+      "pageUrl": "https://gamesdb.launchbox-app.com/games/details/139268",
+      "boxArt": {
+        "url": "https://images.launchbox-app.com/240fe621-1656-4160-ad17-dccd931ef991.jpg",
+        "review": "checked"
+      },
+      "screenshot": {
+        "url": "https://images.launchbox-app.com/394b469d-3b43-4960-9b7c-0297d8f4aa56.png",
+        "review": "checked"
+      },
+      "notes": "Compared the live page title and platform with the on-disk group. Opened the selected box and gameplay image; redistribution rights remain unconfirmed."
     },
     {
       "platform": "pc98",
@@ -2022,6 +2441,32 @@
         "review": "checked"
       },
       "notes": "Compared the live PC-98 page with the Japanese NeoKobe folder and English translation archive. Opened the selected box and gameplay image; both depict this game and show no visible exposed nudity. Redistribution rights remain unconfirmed. Box scan has a large damaged/blank lower section; seek a better source."
+    },
+    {
+      "platform": "pc98",
+      "databaseId": "191004",
+      "title": "Tamashii no Mon: Dante Shinkyoku yori",
+      "aliases": [
+        "Gate of Souls - From Dante's Divine Comedy "
+      ],
+      "sourceGroups": [
+        "translated:gateofsoulsfromdantesdivinecomedy",
+        "pc98:Koei.zip:Tamashii no Mon - Dante Shinkyoku yori"
+      ],
+      "contentIds": [
+        "sha256-hdi-v1:cc81e9029e94b30598341cf1ad41604032d430aec17b56c4951f065bb4b244de"
+      ],
+      "description": "Fight through an action adventure inspired by Dante’s Divine Comedy, crossing hostile landscapes and supernatural encounters.",
+      "pageUrl": "https://gamesdb.launchbox-app.com/games/details/141004",
+      "boxArt": {
+        "url": "https://images.launchbox-app.com/5cf3e4ec-0986-4261-8620-7d63e1bfd4b7.jpg",
+        "review": "checked"
+      },
+      "screenshot": {
+        "url": "https://images.launchbox-app.com/97dd5dda-33c1-4f70-bedd-d613c9ec1b37.png",
+        "review": "checked"
+      },
+      "notes": "Compared the live page title and platform with the on-disk group. Opened the selected box and gameplay image; redistribution rights remain unconfirmed."
     },
     {
       "platform": "pc98",
@@ -2266,6 +2711,28 @@
         "review": "checked"
       },
       "notes": "Compared the live page title and platform with the on-disk group. Opened the selected box and gameplay image: both depict this game and show no visible nudity. Redistribution rights remain unconfirmed."
+    },
+    {
+      "platform": "pc98",
+      "databaseId": "183481",
+      "title": "Xak II: Rising of the Redmoon",
+      "aliases": [],
+      "sourceGroups": [
+        "translated:xakiirisingoftheredmoon",
+        "pc98:MicroCabin.zip:Xak II - Rising of The Redmoon"
+      ],
+      "contentIds": [],
+      "description": "Latok pursues a necromancer who threatens Xak, fighting monsters in real time and gaining strength across connected regions.",
+      "pageUrl": "https://gamesdb.launchbox-app.com/games/details/133481",
+      "boxArt": {
+        "url": "https://images.launchbox-app.com/84a33234-86d9-4d1b-a8c4-df000d32c42d.jpg",
+        "review": "checked"
+      },
+      "screenshot": {
+        "url": "https://images.launchbox-app.com/f7c5b0d1-cfe1-4a71-9be6-a6d7efddc0d9.png",
+        "review": "checked"
+      },
+      "notes": "Compared the live page title and platform with the on-disk group. Opened the selected box and gameplay image; redistribution rights remain unconfirmed."
     }
   ]
 }

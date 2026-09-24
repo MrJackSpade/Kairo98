@@ -6,7 +6,7 @@ Image URLs are source references, not permission to redistribute. No LaunchBox a
 
 ## Progress and target
 
-The current realistic milestone is **100 manually reviewed games**. It is complete: 40 PC-88 and 60 PC-98 records cover 124 on-disk groups. Twenty Japanese/English PC-98 translation pairs and two A-Train original/reissue pairs share records, with the English HDI hashes where available. Of 200 possible box/screenshot selections, 183 are checked and 17 flagged; none are packaged. One reviewed item, *Derby Stallion Expert Kit*, is a non-standalone expansion and will need a base-game dependency before launch support.
+The current realistic milestone is **120 manually reviewed games**. It is complete: 50 PC-88 and 70 PC-98 records cover 154 on-disk groups. Thirty Japanese/English PC-98 translation pairs and two A-Train original/reissue pairs share records, with the English HDI hashes where available. Of 240 possible box/screenshot selections, 218 are checked and 22 flagged; none are packaged. One reviewed item, *Derby Stallion Expert Kit*, is a non-standalone expansion and will need a base-game dependency before launch support.
 
 This is a small portion of the full library. The local inventory contains 2,037 PC-88 folders and 3,308 Japanese PC-98 game folders inside publisher ZIPs, plus 130 translated PC-98 title groups. Some folders may be compilations, utilities, or duplicates. Exact LaunchBox title/alias candidates exist for 884 PC-88 groups and 2,162 PC-98 groups. An exact match is only a review lead: the rest need alternate-title searches, and all matches need live page and image verification. Continue with LaunchBox until its useful records are exhausted, then evaluate other sources. No claim is made that the unreviewed games are cataloged.
 
@@ -37,6 +37,9 @@ python tools/catalog_review.py validate \
 python tools/catalog_review.py coverage \
   .downloads/launchbox/review-backlog.json \
   catalog/research/reviewed-v1.json
+python tools/catalog_review.py audit-flags \
+  catalog/research/reviewed-v1.json \
+  catalog/research/flags.md
 ```
 
 `Metadata.zip` comes from the official [LaunchBox database dump](https://gamesdb.launchbox-app.com/Metadata.zip). The [LaunchBox Games Database](https://gamesdb.launchbox-app.com/) provides the live pages. For each proposed entry, compare the live page's title and platform with the disk group, read the game's description to write original prose, and open both selected images. Mark an absent image `missing`, a questionable one `flagged`, and record the reason in `notes`. A snapshot DatabaseID and a public page URL may use different numbers; check the live page rather than constructing an unverified link.

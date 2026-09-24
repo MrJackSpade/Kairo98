@@ -3,6 +3,7 @@
 
 import argparse
 import json
+import re
 from pathlib import Path
 
 
@@ -110,6 +111,20 @@ def coverage(backlog, reviews):
             print(f"  FLAGGED {title}: {field}")
 
 
+def audit_flags_document(reviews, markdown):
+    expected = [entry[field]["url"] for entry in reviews["entries"]
+                for field in ("boxArt", "screenshot")
+                if entry[field]["review"] == "flagged"]
+    documented = re.findall(r"\[Image\]\((https://images\.launchbox-app\.com/[^)]+)\)", markdown)
+    if len(documented) != len(set(documented)):
+        raise ValueError("duplicate image link in flags document")
+    missing = set(expected) - set(documented)
+    extra = set(documented) - set(expected)
+    if missing or extra:
+        raise ValueError(f"flags document differs from ledger: missing={sorted(missing)} extra={sorted(extra)}")
+    return len(expected)
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     sub = parser.add_subparsers(dest="command", required=True)
@@ -124,9 +139,16 @@ def main():
     summary = sub.add_parser("coverage")
     summary.add_argument("backlog", type=Path)
     summary.add_argument("reviews", type=Path)
+    flags = sub.add_parser("audit-flags")
+    flags.add_argument("reviews", type=Path)
+    flags.add_argument("markdown", type=Path)
     args = parser.parse_args()
     if args.command == "coverage":
         coverage(load(args.backlog), load(args.reviews))
+        return
+    if args.command == "audit-flags":
+        count = audit_flags_document(load(args.reviews), args.markdown.read_text(encoding="utf-8"))
+        print(f"Validated {count} flagged images in {args.markdown}")
         return
     backlog = load(args.backlog)
     snapshots = {"pc88": load(args.pc88_snapshot), "pc98": load(args.pc98_snapshot)}
