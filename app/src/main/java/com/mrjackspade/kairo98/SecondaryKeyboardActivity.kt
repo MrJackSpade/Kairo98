@@ -7,7 +7,7 @@ import android.view.Display
 import android.view.View
 import android.view.WindowManager
 
-/** RG DS host for the keyboard when the lower panel is Android's default display. */
+/** Hosts the secondary panel when Android identifies it as the default display. */
 class SecondaryKeyboardActivity : Activity() {
     private var owner: SecondaryKeyboardDisplay? = null
     private lateinit var content: SecondaryKeyboardContent
