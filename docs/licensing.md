@@ -1,6 +1,6 @@
 # Licensing plan
 
-This is a planning record and preliminary source check, not a completed binary license audit. The user requested the public, debug-signed `v0.1.0-beta.1` prerelease for phone testing before that audit was complete. It is labeled as a test build. Do not describe it as release-ready or publish a stable binary until the final build inputs have been checked.
+This is a planning record and preliminary source check, not a completed binary license audit. The user requested the public `v0.2.0` GitHub Release before completing that audit. Its notes identify the debug build configuration and the open audit. Do not describe the binary as release-ready until the final build inputs have been checked and a game boot has been verified on the exact release build.
 
 ## Native components
 
