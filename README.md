@@ -1,24 +1,18 @@
 # Kairo98
 
-**PC-98 games on Android.** Kairo98 turns a folder of disk images into a browsable game library. Pick a game, read about it, and press **Play**. Use a physical controller, optional touch controls, or the on-screen PC-98 keyboard.
+Kairo98 is a PC-98 emulator for Android, built for phones and handhelds. Browse your games, open one to see its details, and play with a controller or touch controls.
 
-Kairo98 is an independent project built from a pinned Neko Project 21/W core with [ymfm](https://github.com/aaronsgiles/ymfm) sound emulation. It is in active development, and game compatibility varies.
+Kairo98 is in active development, and game compatibility varies.
 
-## See it in action
+## Screenshots
 
-Browse your disk images with game titles and artwork when a catalog match is available:
+| Game library | Game details |
+| --- | --- |
+| ![Kairo98 game library showing translated PC-98 games](docs/screenshots/library.png) | ![Rusty game details in Kairo98](docs/screenshots/game-details.png) |
+| Playing a game | On-screen keyboard |
+| ![Rusty running in Kairo98 on Android](docs/screenshots/running-game.png) | ![Kairo98 on-screen PC-98 keyboard](docs/screenshots/keyboard.png) |
 
-![Kairo98 game library showing translated PC-98 games](docs/screenshots/library.png)
-
-Open a game to see its screenshot, description, and Play button:
-
-![Rusty game details in Kairo98](docs/screenshots/game-details.png)
-
-Play with the full PC-98 picture visible. Unused screen space stays black:
-
-![Rusty running in Kairo98 on Android](docs/screenshots/running-game.png)
-
-These screenshots show a development build on a Retroid Pocket Classic. The published `v0.2.0` APKs predate some changes shown here. Games and firmware are not included with Kairo98.
+These screenshots show a development build on a Retroid Pocket Classic. The published `v0.2.0` APKs predate some changes shown here.
 
 ## Get started
 
@@ -29,6 +23,8 @@ These screenshots show a development build on a Retroid Pocket Classic. The publ
 The library reads HDI hard disks and supported floppy formats, including FDI, D88, NFD, HDM, and XDF. Images can be loose files or inside ZIP archives. Kairo98 matches known games by the disk image's contents, so recompressing a ZIP does not change its catalog match. Some games need a separate boot floppy or a specific setup; support for those is still being expanded.
 
 The Releases page offers two APKs. **With images** includes the offline catalog artwork; **without images** is a smaller download. Both have the same emulator, game information, settings, and controls. A paid Google Play edition is planned with the same features as the free GitHub edition.
+
+Games and firmware are not included with Kairo98.
 
 ## Playing and controls
 
@@ -44,4 +40,6 @@ You can import your own BIOS ROM, font bitmap, and YM2608 rhythm ROM from **Mach
 
 Kairo98 is still being tested across PC-98 games. If a game fails to boot, has graphics or sound problems, or needs a disk change the app cannot handle, [open an issue](https://github.com/MrJackSpade/Kairo98/issues) with the game name and what happened.
 
-See the [roadmap](docs/roadmap.md), [game catalog notes](docs/game-catalog.md), and [licensing and credits](docs/licensing.md) for more detail. Kairo98 is not an official Neko Project 21/W release.
+Kairo98 is an independent project built from a pinned Neko Project 21/W core with [ymfm](https://github.com/aaronsgiles/ymfm) sound emulation. It is not an official Neko Project 21/W release.
+
+See the [roadmap](docs/roadmap.md), [game catalog notes](docs/game-catalog.md), and [licensing and credits](docs/licensing.md) for more detail.
