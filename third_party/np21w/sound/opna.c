@@ -11,6 +11,14 @@
 #include "sound.h"
 #include "s98.h"
 #include "generic/keydisp.h"
+#if defined(SUPPORT_YMFM)
+#include "ymfm_bridge.h"
+
+static void SOUNDCALL ymfm_getpcm(void *hdl, SINT32 *pcm, UINT count)
+{
+	kairo_ymfm_mix(hdl, pcm, count);
+}
+#endif
 
 static void writeRegister(POPNA opna, UINT nAddress, REG8 cData);
 static void writeExtendedRegister(POPNA opna, UINT nAddress, REG8 cData);
@@ -22,6 +30,9 @@ static void writeExtendedRegister(POPNA opna, UINT nAddress, REG8 cData);
 void opna_construct(POPNA opna)
 {
 	memset(opna, 0, sizeof(*opna));
+#if defined(SUPPORT_YMFM)
+	opna->userdata = (INTPTR)kairo_ymfm_create();
+#endif
 }
 
 /**
@@ -30,6 +41,10 @@ void opna_construct(POPNA opna)
  */
 void opna_destruct(POPNA opna)
 {
+#if defined(SUPPORT_YMFM)
+	kairo_ymfm_destroy((void *)opna->userdata);
+	opna->userdata = 0;
+#endif
 }
 
 /**
@@ -63,6 +78,20 @@ void opna_reset(POPNA opna, REG8 cCaps)
 	psggen_reset(&opna->psg);
 	rhythm_reset(&opna->rhythm);
 	adpcm_reset(&opna->adpcm);
+#if defined(SUPPORT_YMFM)
+	if (cCaps & OPNA_HAS_FM)
+	{
+		OEMCHAR rhythm_rom_path[MAX_PATH];
+		getbiospath(rhythm_rom_path, OEMTEXT("ym2608_adpcm_rom.bin"),
+			NELEMENTS(rhythm_rom_path));
+		kairo_ymfm_reset((void *)opna->userdata,
+			(cCaps & OPNA_HAS_EXTENDEDFM) != 0, soundcfg.rate,
+			opna->adpcm.buf, sizeof(opna->adpcm.buf), rhythm_rom_path);
+		kairo_ymfm_set_volume((void *)opna->userdata,
+			np2cfg.vol_fm * np2cfg.vol_master / 100,
+			np2cfg.vol_ssg * np2cfg.vol_master / 100);
+	}
+#endif
 }
 
 /**
@@ -146,8 +175,16 @@ void opna_bind(POPNA opna)
 
 	if (cCaps & OPNA_HAS_PSG)
 	{
+#if !defined(SUPPORT_YMFM)
 		sound_streamregist(&opna->psg, (SOUNDCB)psggen_getpcm);
+#endif
 	}
+#if defined(SUPPORT_YMFM)
+	if (cCaps & OPNA_HAS_FM)
+	{
+		sound_streamregist((void *)opna->userdata, ymfm_getpcm);
+	}
+#else
 	if (cCaps & OPNA_HAS_VR)
 	{
 		sound_streamregist(&opna->opngen, (SOUNDCB)opngen_getpcmvr);
@@ -156,13 +193,20 @@ void opna_bind(POPNA opna)
 	{
 		sound_streamregist(&opna->opngen, (SOUNDCB)opngen_getpcm);
 	}
-	if (cCaps & OPNA_HAS_RHYTHM)
+#endif
+	if ((cCaps & OPNA_HAS_RHYTHM)
+#if defined(SUPPORT_YMFM)
+		&& !kairo_ymfm_has_rhythm_rom((void *)opna->userdata)
+#endif
+	)
 	{
 		rhythm_bind(&opna->rhythm);
 	}
 	if (cCaps & OPNA_HAS_ADPCM)
 	{
+#if !defined(SUPPORT_YMFM)
 		sound_streamregist(&opna->adpcm, (SOUNDCB)adpcm_getpcm);
+#endif
 	}
 }
 
@@ -235,6 +279,14 @@ static void writeRegister(POPNA opna, UINT nAddress, REG8 cData)
 {
 	const UINT8 cCaps = opna->s.cCaps;
 	REG8 cChannel;
+
+#if defined(SUPPORT_YMFM)
+	if (cCaps & OPNA_HAS_FM)
+	{
+		sound_sync();
+		kairo_ymfm_write((void *)opna->userdata, 0, nAddress, cData);
+	}
+#endif
 
 	if (nAddress < 0x10)
 	{
@@ -337,6 +389,14 @@ void opna_writeExtendedRegister(POPNA opna, UINT nAddress, REG8 cData)
 static void writeExtendedRegister(POPNA opna, UINT nAddress, REG8 cData)
 {
 	const UINT8 cCaps = opna->s.cCaps;
+
+#if defined(SUPPORT_YMFM)
+	if (cCaps & OPNA_HAS_EXTENDEDFM)
+	{
+		sound_sync();
+		kairo_ymfm_write((void *)opna->userdata, 1, nAddress, cData);
+	}
+#endif
 
 	if (nAddress < 0x12)
 	{

@@ -3,6 +3,7 @@ project(kairo98 LANGUAGES C CXX)
 
 get_filename_component(NP21W_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/../../../../third_party/np21w" ABSOLUTE)
 get_filename_component(SPLEEN_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/../../../../third_party/spleen" ABSOLUTE)
+get_filename_component(YMFM_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/../../../../third_party/ymfm" ABSOLUTE)
 include(np21w-sources.cmake)
 
 add_library(np21w_core OBJECT
@@ -38,11 +39,18 @@ target_include_directories(np21w_core PRIVATE
     ${NP21W_ROOT}/vram
     ${SPLEEN_ROOT}
 )
-target_compile_definitions(np21w_core PRIVATE SUPPORT_LARGE_HDD SUPPORT_KAI_IMAGES NP2_SDL2 CPUCORE_IA32 USE_TSC)
+target_compile_definitions(np21w_core PRIVATE SUPPORT_LARGE_HDD SUPPORT_KAI_IMAGES NP2_SDL2 CPUCORE_IA32 USE_TSC SUPPORT_YMFM)
 target_compile_options(np21w_core PRIVATE -fsigned-char -fno-strict-aliasing
     $<$<CONFIG:Debug>:-O2>)
 
-add_library(kairo98 SHARED native_bridge.cpp $<TARGET_OBJECTS:np21w_core>)
+add_library(kairo98 SHARED
+    native_bridge.cpp
+    android_host/ymfm_bridge.cpp
+    ${YMFM_ROOT}/src/ymfm_opn.cpp
+    ${YMFM_ROOT}/src/ymfm_adpcm.cpp
+    ${YMFM_ROOT}/src/ymfm_ssg.cpp
+    $<TARGET_OBJECTS:np21w_core>)
+target_include_directories(kairo98 PRIVATE ${YMFM_ROOT}/src)
 target_compile_features(kairo98 PRIVATE cxx_std_17)
 target_compile_options(kairo98 PRIVATE $<$<CONFIG:Debug>:-O2>)
 target_link_libraries(kairo98 PRIVATE log android aaudio)

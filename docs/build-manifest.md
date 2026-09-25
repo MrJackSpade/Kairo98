@@ -1,43 +1,21 @@
-﻿# Android native build manifest
+# Android build manifest
 
-Status: Stage 2 debug build, 22 September 2026. The Android device booted a user-supplied HDI to DOS; this is not a completed binary license audit or a game compatibility claim.
+Current local development build: `0.2.0-ymfm-dev`, 25 September 2026. The [license audit](licensing.md) records the exact debug APK and release AAB hashes and remaining artwork rights question. The published `v0.2.0` binaries were built before ymfm and before notices were packaged.
 
-## Toolchain and build
+## Toolchain and variants
 
-- Gradle 8.13 via the checked-in wrapper; Android Gradle Plugin 8.13.2; Kotlin plugin 2.2.20; JDK 17.
-- Android platform API 36, target API 36, minimum API 26, build tools 36.0.0, CMake 3.22.1, NDK r28c (`28.2.13676358`).
-- Application ID: `com.mrjackspade.kairo98`. Initial ABI: `arm64-v8a`.
-- Build from the repository root with `ANDROID_HOME` pointing to an SDK containing those packages, then run `./gradlew :app:assembleWithImagesDebug :app:assembleWithoutImagesDebug` (or `gradlew.bat` on Windows). Shared catalog metadata is included in both APKs; `withImages` alone packages `app/src/withImages/assets/art/`.
-- Debug APK: `app/build/outputs/apk/debug/app-debug.apk`. It is an internal diagnostic build.
+Gradle 8.13, Android Gradle Plugin 8.13.2, Kotlin 2.2.20, JDK 17, Android SDK API 36, CMake 3.22.1, NDK 28.2.13676358. Package ID `com.mrjackspade.kairo98`; minimum API 26; `arm64-v8a` only. Build both debug APKs and both release AABs from the same revision. All contain the same emulator, JSON catalog, and third-party notices; only `withImages` contains `art/` assets. There are no app-level Maven runtime dependencies. C++ is statically linked into `libkairo98.so`.
 
-The exact 185 base 21/W C source paths are frozen in [`app/src/main/cpp/np21w-sources.cmake`](../app/src/main/cpp/np21w-sources.cmake). CMake adds eight further 21/W sources: SDL2 host `dosio.c`, `timemng.c`, `joymng.c`, `mousemng.c`, and `fontmng.c`, plus `cbus/boardmo.c`, `lio/gpaint.c`, and `lio/groll.c`. Five project-owned C adapters (`android_host/np2sysp.c`, `platform.c`, `core_probe.c`, `font_overlay.c`, `machine.c`) and one JNI C++ bridge complete the native library. The ASCII bitmap table is generated from the pinned BSD-2-Clause Spleen 8x16 BDF in `third_party/spleen/`. The resulting APK contains `lib/arm64-v8a/libkairo98.so`.
+The Android CMake compile database has 234 native translation units: 221 21/W rev104 BSD-only units, three pinned ymfm units, and ten project-owned host/bridge units. The explicit 21/W core source list is in [`app/src/main/cpp/np21w-sources.cmake`](../app/src/main/cpp/np21w-sources.cmake); extra host and board sources are in [`CMakeLists.txt`](../app/src/main/cpp/CMakeLists.txt). The pinned ymfm files compiled are exactly `third_party/ymfm/src/ymfm_opn.cpp`, `ymfm_adpcm.cpp`, and `ymfm_ssg.cpp`. Project-owned `android_host/ymfm_bridge.cpp` connects these to the 21/W OPNA bus and mixer. The core definitions include `CPUCORE_IA32`, `NP2_SDL2`, `SUPPORT_KAI_IMAGES`, `SUPPORT_LARGE_HDD`, `USE_TSC`, and `SUPPORT_YMFM`; no fmgen or GPL sound definition is enabled.
 
-The 21/W core compile defines `SUPPORT_LARGE_HDD` and `NP2_SDL2`, with signed `char` and strict aliasing disabled to match existing host build assumptions. Android's `compiler.h` derives from the imported iOS host header; `commng.h` derives from the Windows host; `mousemng.h` and `sysmng.h` derive from the SDL2 host. These copied headers are part of the 21/W attribution and must be checked in the release audit.
+## Sound path
 
-A detached clean worktree at commit `1dcdf06` also built `:app:assembleDebug` successfully using the pinned local SDK. This verifies that the build does not depend on untracked source files in the working tree.
+YM2203 and YM2608 FM, SSG, and YM2608 ADPCM-B register writes feed ymfm. The adapter uses the existing 21/W ADPCM RAM, generates at the minimum-fidelity ymfm native rate, and averages samples to 44.1 kHz stereo. FM/ADPCM and SSG buses have separate volume gains. The 21/W guest-visible timer/status/IRQ model remains in control of emulation timing; ymfm's timer callbacks clock its internal sound engine. The app can import a user-supplied 8 KiB `ym2608_adpcm_rom.bin` into private firmware storage for ymfm's rhythm samples. Without it, the 21/W rhythm WAV stream remains available for optional user-provided `2608_*.wav` samples. No rhythm ROM or audio sample is bundled. The existing OPL3 implementation remains for non-OPNA sound boards. Legacy FM/SSG/ADPCM generators still compile for register-side behavior and other boards, but OPNA output uses ymfm.
 
-## Deliberate first-stage limits
+Save states are not exposed on Android: `statsave.c` is omitted and serialization entry points return failure. Therefore the ymfm state is reset and restored from OPNA shadow registers during normal reset/rebind, but there is no user-facing state load to support yet. Future save-state work must serialize ymfm's full state rather than only 21/W register shadows.
 
-- The compiled source list excludes `fmgen`, GPL MAME, the omitted DOSBox FPU code, and the older `sound/mamebsd/` copy. ymfm integration is [issue #7](https://github.com/MrJackSpade/Kairo98/issues/7).
-- This profile starts the portable 286 CPU and PC-98 machine state. PC-9821/IA-32 support is [issue #15](https://github.com/MrJackSpade/Kairo98/issues/15).
-- `android_host/platform.c` still uses disconnected serial/printer devices. Stage 2 sends its 640x400 frame surface to `ANativeWindow` and mixes core PCM to AAudio. The document picker imports an HDI into private app storage; normal disk management and frontend intents are later stages.
-- Save states are unavailable: `statsave.c` is omitted and the two serialization entry points return failure. The optional NP2 guest-service commands are also stubbed. Both require deliberate follow-up before they can be advertised.
-- The first-boot profile has no floppy seek sound, SCSI, or external ROM/firmware files. It does not bundle any game, BIOS, or operating system.
+The test program [`tools/ymfm_smoke.cpp`](../tools/ymfm_smoke.cpp) runs directly on the Retroid and checks YM2203/YM2608 FM and SSG, YM2608 ADPCM-B, Timer A status, reset, and timer progress while muted. Night Slave boots on the Retroid with the ymfm build. The left pane reports emulator frames, nonzero audio buffers, and AAudio xrun count for device checks. Further game-level sound comparisons are recorded in [ymfm validation](ymfm-validation.md).
 
-## Imported source adjustments
+## Redistribution
 
-The following changes to the pinned 21/W snapshot were required for this arm64 build. They are local Kairo98 changes; there is no upstream sync remote.
-
-- `sound/fmboard.h`: guard the Sound Blaster type when that optional board is disabled.
-- `io/printif.c`: pass an integer zero through its integer-typed message API.
-- `sdl2/dosio.c`: use Android's `futimens` for file timestamps in place of `futimes`; skip `fflush`/`fsync` for read-only file descriptors so read-only HDIs close cleanly.
-
-## Stage 1 device check
-
-On a Retroid Pocket Classic running Android 14 (API 34, `arm64-v8a`, 4 KB pages), the APK installed and loaded its native library. The diagnostic button calls `pccore_init()`, `pccore_reset()`, reads the CPU reset vector, then calls `pccore_term()`. It returned `CS:IP=f000:fff0` and remained running after two more repeated probes. [Device screenshot](evidence/stage1-retroid-reset.png). A later diagnostic build mounted and read sector 0 from a user-supplied HDI through the 21/W SASI disk code; [details](compatibility.md). A later Stage 2 build booted the user-supplied HDI to a DOS prompt; [results](compatibility.md).
-
-## Stage 2 native path and device check
-
-`android_host/machine.c` owns core startup, the 2.5 MHz default, SASI HDD 0 mount, execution, key events, reset, clock configuration, and disk flush/teardown. The JNI bridge runs `pccore_exec(TRUE)` on one 60 Hz worker and queues input, pause, resume, reset, disk, clock, and stop commands there. It copies RGB565 frames to `ANativeWindow` and sends 44.1 kHz stereo PCM to AAudio. The Kotlin activity handles document import, physical keyboard events, lifecycle, and the basic test controls. The app does not ship an HDI or BIOS.
-
-The latest debug APK tested here has SHA-256 `857fd9ef83b88d90a9e5233dd14a2b707fe7c1276474ba23b6f3c91cbdd6d111`. It was built from implementation revision `f295a02` using `:app:assembleDebug --offline`. On the Retroid Pocket Classic (Android 14 / API 34), it reached the DOS prompt after deleting all font caches, generated a Japanese font overlay from device fonts, rendered the pinned Spleen ASCII bitmap, accepted physical keys, and emitted nonzero PCM buffers. [Compatibility record and screenshots](compatibility.md). A visible Windows 21/W comparison was recorded; full game execution and FM fidelity remain unverified.
+The APK contains one native library and the `THIRD_PARTY_NOTICES.txt` asset. About → Licenses displays the notice. `tools/generate_third_party_notices.ps1` regenerates it from the pinned 21/W, ymfm, and Spleen license files. `tools/audit_distribution.ps1` checks compile paths and flags, forbidden package entries, notices, native library parity, and shared asset parity. No BIOS, font ROM, operating system, or game media is bundled.

@@ -110,6 +110,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
     private lateinit var swapStatus: TextView
     @Volatile private var biosBusy = false
     @Volatile private var fontBusy = false
+    @Volatile private var rhythmBusy = false
     private var currentTitle: String? = null
     private var currentGame: GameCatalog.Game? = null
     private var commandCancelled = AtomicBoolean(false)
@@ -266,8 +267,8 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
         root.addView(swapStatus, FrameLayout.LayoutParams(-2, -2,
             Gravity.TOP or Gravity.CENTER_HORIZONTAL).apply { topMargin = dp(20) })
         firstRunSetup = FirstRunSetup(this, ::chooseRomFolder, ::advanceFirstRunFirmware,
-            ::chooseBiosFile, ::chooseFontFile, ::finishFirstRun,
-            { biosFile().isFile }, { fontBitmapFile().isFile })
+            ::chooseBiosFile, ::chooseFontFile, ::chooseRhythmFile, ::finishFirstRun,
+            { biosFile().isFile }, { fontBitmapFile().isFile }, { rhythmRomFile().isFile })
         root.addView(firstRunSetup, FrameLayout.LayoutParams(-1, -1))
         handler.post(updateStatus)
         root.post {
@@ -377,7 +378,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
         section(content, "SETTINGS")
         menuItem(content, "Graphics", "Scaling and display") { showGraphics() }
         menuItem(content, "Input mode", "Auto, keyboard, or mouse touchpad") { showInputMode() }
-        menuItem(content, "Machine", "Clock, BIOS ROM, and font") { showMachine() }
+        menuItem(content, "Machine", "Clock and firmware") { showMachine() }
         menuItem(content, "Controller", "Gamepad and on-screen controls") { showControllerScope() }
         menuItem(content, "Audio", "Sound output") { showAudio() }
 
@@ -1488,14 +1489,17 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
     private fun showMachine() {
         val bios = biosFile()
         val font = fontBitmapFile()
+        val rhythm = rhythmRomFile()
         AlertDialog.Builder(this).setTitle("Machine")
             .setItems(arrayOf("Base clock  ·  ${if (clock == 25) "2.5" else "2"} MHz",
                 "BIOS ROM  ·  ${if (bios.isFile) "Imported" else "None"}",
-                "Font BMP  ·  ${if (font.isFile) "Imported" else "Generated"}")) { _, which ->
+                "Font BMP  ·  ${if (font.isFile) "Imported" else "Generated"}",
+                "YM2608 rhythm ROM  ·  ${if (rhythm.isFile) "Imported" else "None"}")) { _, which ->
                 when (which) {
                     0 -> showMachineClock()
                     1 -> showBiosRom()
-                    else -> showFontBitmap()
+                    2 -> showFontBitmap()
+                    else -> showRhythmRom()
                 }
             }.setNegativeButton("Close", null).showStyled()
     }
@@ -1560,6 +1564,27 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
         }, FONT_REQUEST)
     }
 
+    private fun showRhythmRom() {
+        val dialog = AlertDialog.Builder(this).setTitle("YM2608 rhythm ROM")
+            .setPositiveButton("Choose file") { _, _ -> chooseRhythmFile() }
+            .setNegativeButton("Close", null)
+        if (rhythmRomFile().isFile) dialog.setNeutralButton("Remove") { _, _ ->
+            if (!rhythmBusy) {
+                if (rhythmRomFile().delete()) toast("Rhythm ROM removed" +
+                    if (currentDisk != null) ". Restart the game to apply." else ".")
+                else toast("Could not remove rhythm ROM")
+            }
+        }
+        dialog.showStyled()
+    }
+
+    private fun chooseRhythmFile() {
+        startActivityForResult(Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
+            addCategory(Intent.CATEGORY_OPENABLE)
+            type = "*/*"
+        }, RHYTHM_REQUEST)
+    }
+
     private fun showAudio() {
         val options = arrayOf("Sound on", "Muted")
         AlertDialog.Builder(this).setTitle("Audio")
@@ -1614,7 +1639,22 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
         val version = packageManager.getPackageInfo(packageName, 0).versionName
         AlertDialog.Builder(this).setTitle("Kairo98 $version")
             .setMessage("Open the menu with a controller Mode/Home button when Android delivers it, Back, Menu, or a swipe from the left edge. Swipe inward from the right edge to open the PC-98 keyboard. Android reserves the system Home key.\n\nPhysical keyboard input goes to the PC-98 while the menu is closed.")
+            .setNeutralButton("Licenses") { _, _ -> showThirdPartyNotices() }
             .setPositiveButton("Done", null).showStyled()
+    }
+
+    private fun showThirdPartyNotices() {
+        val notice = assets.open("THIRD_PARTY_NOTICES.txt").bufferedReader().use { it.readText() }
+        val padding = (20 * resources.displayMetrics.density).toInt()
+        val content = TextView(this).apply {
+            text = notice
+            textSize = 12f
+            setTextColor(Color.WHITE)
+            setPadding(padding, padding, padding, padding)
+        }
+        val scroll = ScrollView(this).apply { addView(content) }
+        AlertDialog.Builder(this).setTitle("Third-party licenses")
+            .setView(scroll).setPositiveButton("Done", null).showStyled()
     }
 
     private fun globalControllerBindings() =
@@ -1823,6 +1863,10 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
             if (resultCode == RESULT_OK && data?.data != null) importFontBitmap(data.data!!)
             return
         }
+        if (requestCode == RHYTHM_REQUEST) {
+            if (resultCode == RESULT_OK && data?.data != null) importRhythmRom(data.data!!)
+            return
+        }
         if (requestCode !in listOf(HDI_REQUEST, FLOPPY_A_REQUEST, FLOPPY_B_REQUEST) ||
             resultCode != RESULT_OK || data?.data == null) return
         val uri = data.data ?: return
@@ -2017,6 +2061,50 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
             } finally { partial.delete() }
             runOnUiThread {
                 fontBusy = false
+                firstRunSetup.setBusy(null)
+                firstRunSetup.refreshFirmware()
+                if (menuOpen) menuStatus.text = result
+                toast(result)
+            }
+        }.start()
+    }
+
+    private fun importRhythmRom(uri: Uri) {
+        if (rhythmBusy) return
+        rhythmBusy = true
+        val restartNeeded = currentDisk != null
+        if (firstRunSetup.isOpen) firstRunSetup.setBusy("Importing rhythm ROM…")
+        if (menuOpen) menuStatus.text = "Importing rhythm ROM…"
+        toast("Importing rhythm ROM")
+        Thread {
+            val directory = firmwareDir()
+            val partial = File(directory, "ym2608_adpcm_rom.bin.part")
+            val result = try {
+                require(directory.isDirectory || directory.mkdirs()) { "Cannot create firmware directory" }
+                contentResolver.openInputStream(uri).use { input ->
+                    requireNotNull(input) { "Unable to open selected file" }
+                    partial.outputStream().use { output ->
+                        val buffer = ByteArray(8192)
+                        var size = 0L
+                        while (true) {
+                            val count = input.read(buffer)
+                            if (count < 0) break
+                            size += count
+                            require(size <= RHYTHM_ROM_BYTES) { "Rhythm ROM must be exactly 8 KiB" }
+                            output.write(buffer, 0, count)
+                        }
+                        require(size == RHYTHM_ROM_BYTES) { "Rhythm ROM must be exactly 8 KiB" }
+                    }
+                }
+                Files.move(partial.toPath(), rhythmRomFile().toPath(),
+                    StandardCopyOption.REPLACE_EXISTING)
+                if (restartNeeded) "Rhythm ROM imported. Restart the game to apply."
+                else "Rhythm ROM imported."
+            } catch (error: Exception) {
+                "Rhythm ROM import failed: ${error.message ?: "Unknown error"}"
+            } finally { partial.delete() }
+            runOnUiThread {
+                rhythmBusy = false
                 firstRunSetup.setBusy(null)
                 firstRunSetup.refreshFirmware()
                 if (menuOpen) menuStatus.text = result
@@ -2357,6 +2445,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
     private fun firmwareDir() = File(filesDir, "firmware")
     private fun biosFile() = File(firmwareDir(), "bios.rom")
     private fun fontBitmapFile() = File(firmwareDir(), "font.bmp")
+    private fun rhythmRomFile() = File(firmwareDir(), "ym2608_adpcm_rom.bin")
 
     private fun dp(value: Int): Int = (value * resources.displayMetrics.density).roundToInt()
 
@@ -2367,7 +2456,9 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
         private const val FLOPPY_B_REQUEST = 101
         private const val BIOS_REQUEST = 102
         private const val FONT_REQUEST = 103
+        private const val RHYTHM_REQUEST = 104
         private const val BIOS_ROM_BYTES = 0x18000L
+        private const val RHYTHM_ROM_BYTES = 0x2000L
         init { System.loadLibrary("kairo98") }
     }
 }

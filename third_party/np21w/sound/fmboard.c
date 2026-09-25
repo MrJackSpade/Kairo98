@@ -28,6 +28,9 @@
 #include	"soundrom.h"
 #include	"keydisp.h"
 #include	"keystat.h"
+#if defined(SUPPORT_YMFM)
+#include "ymfm_bridge.h"
+#endif
 
 
 	SOUNDID g_nSoundID;
@@ -129,6 +132,11 @@ void fmboard_updatevolume(){
 	for (i = 0; i < _countof(g_opna); i++)
 	{
 		rhythm_update(&g_opna[i].rhythm);
+#if defined(SUPPORT_YMFM)
+		kairo_ymfm_set_volume((void *)g_opna[i].userdata,
+			np2cfg.vol_fm * volex / 15 * np2cfg.vol_master / 100,
+			np2cfg.vol_ssg * volex / 15 * np2cfg.vol_master / 100);
+#endif
 	}
 
 	oplgen_setvol(np2cfg.vol_fm * np2cfg.vol_master / 100);

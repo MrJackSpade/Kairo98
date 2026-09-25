@@ -19,9 +19,11 @@ internal class FirstRunSetup(
     private val skipRomFolder: () -> Unit,
     private val selectBios: () -> Unit,
     private val selectFont: () -> Unit,
+    private val selectRhythm: () -> Unit,
     private val finish: () -> Unit,
     private val hasBios: () -> Boolean,
-    private val hasFont: () -> Boolean
+    private val hasFont: () -> Boolean,
+    private val hasRhythm: () -> Boolean
 ) : FrameLayout(activity) {
     enum class Step { ROM_FOLDER, FIRMWARE }
 
@@ -113,15 +115,17 @@ internal class FirstRunSetup(
             button("Select ROM folder", "Find games on this device", true, selectRomFolder)
             button("Skip for now", "You can choose one from the library later", false, skipRomFolder)
         } else {
-            text("Optional BIOS and font", 30f, Color.WHITE, bold = true, bottom = 14)
+            text("Optional firmware and font", 30f, Color.WHITE, bold = true, bottom = 14)
             text("Import them now, or add them later from Library → Machine.",
                 17f, 0xffbdc8d5.toInt(), bottom = 28)
             button("Import BIOS ROM", if (hasBios()) "Imported" else "Not set",
                 false, selectBios, busy == null)
             button("Import Font BMP", if (hasFont()) "Imported" else "Using generated font",
                 false, selectFont, busy == null)
+            button("Import YM2608 rhythm ROM", if (hasRhythm()) "Imported" else "Not set",
+                false, selectRhythm, busy == null)
             busy?.let { text(it, 15f, 0xff80d4df.toInt(), bottom = 10) }
-            button(if (hasBios() || hasFont()) "Continue to library" else "Skip for now",
+            button(if (hasBios() || hasFont() || hasRhythm()) "Continue to library" else "Skip for now",
                 "Open the game library", true, finish, busy == null)
         }
         if (busy == null) card.post {

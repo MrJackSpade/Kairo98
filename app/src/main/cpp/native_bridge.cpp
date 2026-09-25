@@ -67,7 +67,10 @@ unsigned long long frame_count = 0;
 unsigned short last_cs = 0, last_ip = 0;
 unsigned long long audio_buffers = 0;
 unsigned long long audible_buffers = 0;
+int32_t audio_xruns = 0;
 std::string audio_state = "off";
+std::string audio_config;
+std::string audio_profile;
 std::atomic<bool> audio_muted{false};
 std::atomic<bool> dos_prompt_ready{false};
 // A passive host-side observation of the complete 640x400 RGB565 guest image.
@@ -179,6 +182,14 @@ void run_machine(std::string image, std::string font_path, std::string bios_dir,
     {
         std::lock_guard<std::mutex> guard(command_mutex);
         audio_state = audio ? "on" : "off";
+        if (audio) {
+            char config[80];
+            std::snprintf(config, sizeof(config), "buf %d/%d/%d",
+                AAudioStream_getBufferSizeInFrames(audio),
+                AAudioStream_getBufferCapacityInFrames(audio),
+                AAudioStream_getFramesPerBurst(audio));
+            audio_config = config;
+        } else audio_config.clear();
     }
     bool paused = false;
     bool stop = false;
@@ -186,6 +197,12 @@ void run_machine(std::string image, std::string font_path, std::string bios_dir,
     short audio_samples[512 * 2];
     auto next_frame = std::chrono::steady_clock::now();
     auto next_hash = next_frame;
+    unsigned int profile_frames = 0;
+    int64_t profile_core_us = 0, profile_render_us = 0;
+    int64_t profile_mix_us = 0, profile_write_us = 0;
+    int32_t profile_previous_xruns = 0;
+    int32_t profile_partial_writes = 0;
+    int32_t profile_buffered_frames = 0;
     while (!stop) {
         std::deque<Command> pending;
         {
@@ -269,7 +286,10 @@ void run_machine(std::string image, std::string font_path, std::string bios_dir,
             }
         }
         if (stop || paused) continue;
+        const auto core_start = std::chrono::steady_clock::now();
         kairo98_machine_exec();
+        const auto core_end = std::chrono::steady_clock::now();
+        profile_core_us += std::chrono::duration_cast<std::chrono::microseconds>(core_end - core_start).count();
         prompt_frames = kairo98_machine_dos_prompt() ? prompt_frames + 1 : 0;
         dos_prompt_ready.store(prompt_frames >= 15);
         if (screen_hash_sampling.load(std::memory_order_relaxed) &&
@@ -279,13 +299,24 @@ void run_machine(std::string image, std::string font_path, std::string bios_dir,
             next_hash = std::chrono::steady_clock::now() + std::chrono::milliseconds(100);
         }
         render_frame();
+        const auto render_end = std::chrono::steady_clock::now();
+        profile_render_us += std::chrono::duration_cast<std::chrono::microseconds>(render_end - core_end).count();
         audio_due += 44100;
         while (audio_due >= 60 * 512) {
             audio_due -= 60 * 512;
+            const auto mix_start = std::chrono::steady_clock::now();
             int filled = kairo98_fill_audio(audio_samples, 512);
+            const auto mix_end = std::chrono::steady_clock::now();
+            profile_mix_us += std::chrono::duration_cast<std::chrono::microseconds>(mix_end - mix_start).count();
             if (audio_muted.load()) std::memset(audio_samples, 0, sizeof(audio_samples));
             if (audio) {
                 aaudio_result_t written = AAudioStream_write(audio, audio_samples, 512, 2000000);
+                if (written != 512) ++profile_partial_writes;
+                profile_buffered_frames = static_cast<int32_t>(
+                    AAudioStream_getFramesWritten(audio) - AAudioStream_getFramesRead(audio));
+                profile_write_us += std::chrono::duration_cast<std::chrono::microseconds>(
+                    std::chrono::steady_clock::now() - mix_end).count();
+                const int32_t xruns = AAudioStream_getXRunCount(audio);
                 if (written > 0) {
                     bool audible = false;
                     for (int i = 0; i < written * 2; ++i) {
@@ -294,6 +325,7 @@ void run_machine(std::string image, std::string font_path, std::string bios_dir,
                     std::lock_guard<std::mutex> guard(command_mutex);
                     ++audio_buffers;
                     if (filled && audible) ++audible_buffers;
+                    if (xruns >= 0) audio_xruns = xruns;
                 }
             }
         }
@@ -304,6 +336,23 @@ void run_machine(std::string image, std::string font_path, std::string bios_dir,
             ++frame_count;
             last_cs = cs;
             last_ip = ip;
+        }
+        if (++profile_frames == 600) {
+            char result[130];
+            std::snprintf(result, sizeof(result),
+                "c%.1f r%.1f m%.1f w%.1f x+%d p%d q%d",
+                profile_core_us / 600000.0, profile_render_us / 600000.0,
+                profile_mix_us / 600000.0, profile_write_us / 600000.0,
+                audio_xruns - profile_previous_xruns, profile_partial_writes,
+                profile_buffered_frames);
+            {
+                std::lock_guard<std::mutex> guard(command_mutex);
+                audio_profile = result;
+            }
+            profile_previous_xruns = audio_xruns;
+            profile_frames = 0;
+            profile_core_us = profile_render_us = profile_mix_us = profile_write_us = 0;
+            profile_partial_writes = 0;
         }
         next_frame += std::chrono::microseconds(16667);
         auto now = std::chrono::steady_clock::now();
@@ -363,6 +412,9 @@ Java_com_mrjackspade_kairo98_MainActivity_nativeStart(JNIEnv *env, jobject, jstr
         commands.clear();
         frame_count = 0;
         audio_buffers = audible_buffers = 0;
+        audio_xruns = 0;
+        audio_profile.clear();
+        audio_config.clear();
         audio_state = "off";
         last_cs = last_ip = 0;
         machine_error.clear();
@@ -462,12 +514,13 @@ Java_com_mrjackspade_kairo98_MainActivity_nativeFloppy(JNIEnv *env, jobject, jin
 
 extern "C" JNIEXPORT jstring JNICALL
 Java_com_mrjackspade_kairo98_MainActivity_nativeStatus(JNIEnv *env, jobject) {
-    char text[240];
+    char text[320];
     std::lock_guard<std::mutex> guard(command_mutex);
-    std::snprintf(text, sizeof(text), "%s%s%s | frames %llu | CS:IP %04x:%04x | audio %s %llu/%llu",
+    std::snprintf(text, sizeof(text), "%s%s%s | frames %llu | CS:IP %04x:%04x | audio %s %llu/%llu | xruns %d | %s | %s",
                   machine_state.c_str(), machine_error.empty() ? "" : ": ",
                   machine_error.c_str(), frame_count, last_cs, last_ip,
-                  audio_state.c_str(), audible_buffers, audio_buffers);
+                  audio_state.c_str(), audible_buffers, audio_buffers, audio_xruns,
+                  audio_config.c_str(), audio_profile.c_str());
     return env->NewStringUTF(text);
 }
 
