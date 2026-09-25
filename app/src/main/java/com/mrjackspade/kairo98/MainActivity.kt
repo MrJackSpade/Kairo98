@@ -126,7 +126,6 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
     private lateinit var menuStatus: TextView
     private lateinit var mediaLabel: TextView
     private lateinit var pauseTitle: TextView
-    private lateinit var pauseDetail: TextView
     private val menuItems = ArrayList<View>()
     private var selectedMenuIndex = 0
     private var menuOpen = false
@@ -134,6 +133,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
     private var activityVisible = false
     private var integerScaling = true
     private var integerCrop = false
+    private var portraitNotchPadding = 0
     private var muted = false
     private var clock = 25
     private var exiting = false
@@ -205,8 +205,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
             pendingDebugGame = intent.getStringExtra("kairo98.selectGame64")
                 ?.let(::decodeDebugGameQuery) ?: intent.getStringExtra("kairo98.selectGame")
         }
-        integerScaling = preferences.getBoolean("integer_scaling", true)
-        integerCrop = preferences.getBoolean("integer_crop", false)
+        loadGraphicsSettings()
         muted = preferences.getBoolean("muted", false)
         clock = preferences.getInt("base_clock", 25).let { if (it == 20) 20 else 25 }
         globalInputMode = InputModeDecider.parse(preferences.getString("input_mode", "auto"))
@@ -249,11 +248,12 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
             { gamepadMapper.deadZone }, { value ->
                 gamepadMapper.deadZone = value
                 preferences.edit().putFloat("controller_dead_zone", value).apply()
-            }, ::applyPauseState)
+            }, ::applyPauseState, ::showOnScreenControls)
         libraryScreen = LibraryScreen(this, romLibrary.catalog,
             ::chooseRomFolder, { refreshLibrary(false) }, { refreshLibrary(true) },
             { libraryScreen.closeActions(); showMachine() },
-            { libraryScreen.closeActions(); showOnScreenControls() },
+            { libraryScreen.closeActions(); showControllerScope() },
+            { libraryScreen.closeActions(); showAbout() },
             ::launchEntry, ::showDetailPreview, ::showGameDetails)
         root.addView(libraryScreen, FrameLayout.LayoutParams(-1, -1))
         swapStatus = TextView(this).apply {
@@ -356,34 +356,30 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
             setPadding(dp(12), 0, dp(12), dp(12))
         }
         content.addView(menuStatus)
-        section(content, "SESSION")
-        menuItem(content, "Continue", "Return to the machine") {
+        val sessionActions = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL }
+        content.addView(sessionActions, LinearLayout.LayoutParams(-1, dp(58)).apply {
+            bottomMargin = dp(8)
+        })
+        sessionIcon(sessionActions, "▶", "Continue") {
             userPaused = false
             closeMenu()
         }
-        menuItem(content, "Restart", "Reset the current machine") { restartMachine() }
-        menuItem(content, "Game library", "Choose another disk") { showLibrary() }
-        menuItem(content, "Choose disk image", "Import a hard disk or floppy") { chooseHdi() }
-        menuItem(content, "Floppy A", "Insert, swap, or eject a disk") { showFloppyMenu(0) }
-        menuItem(content, "Floppy B", "Insert, swap, or eject a disk") { showFloppyMenu(1) }
-        val pauseItem = menuItem(content, "Pause", "Keep the machine paused") {
+        sessionIcon(sessionActions, "↻", "Restart") { restartMachine() }
+        pauseTitle = sessionIcon(sessionActions, "❚❚", "Pause") {
             userPaused = !userPaused
             closeMenu()
         }
-        pauseTitle = pauseItem.second
-        pauseDetail = (pauseItem.first as LinearLayout).getChildAt(1) as TextView
+        sessionIcon(sessionActions, "■", "Game library") { showLibrary() }
+        section(content, "SESSION")
+        menuItem(content, "Mount", "Hard disk and floppy images") { showMountMenu() }
         menuItem(content, "Exit", "Stop and close Kairo98") { exitApp() }
 
         section(content, "SETTINGS")
         menuItem(content, "Graphics", "Scaling and display") { showGraphics() }
         menuItem(content, "Input mode", "Auto, keyboard, or mouse touchpad") { showInputMode() }
         menuItem(content, "Machine", "Clock, BIOS ROM, and font") { showMachine() }
-        menuItem(content, "Controller", "Gamepad buttons, sticks and hats") { showControllerScope() }
-        menuItem(content, "On-screen controls", "Show, hide, and arrange touch buttons") {
-            showOnScreenControls()
-        }
+        menuItem(content, "Controller", "Gamepad and on-screen controls") { showControllerScope() }
         menuItem(content, "Audio", "Sound output") { showAudio() }
-        menuItem(content, "About & controls", "Version and shortcuts") { showAbout() }
 
         setContentView(root)
         screen.requestFocus()
@@ -397,6 +393,36 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
             setTextColor(0xff66d6df.toInt())
             setPadding(dp(12), dp(15), dp(12), dp(5))
         })
+    }
+
+    private fun sessionIcon(row: LinearLayout, icon: String, label: String,
+                            action: () -> Unit): TextView {
+        val button = TextView(this).apply {
+            text = icon
+            textSize = 27f
+            gravity = Gravity.CENTER
+            setTextColor(Color.WHITE)
+            contentDescription = label
+            isFocusable = true
+            isClickable = true
+            background = StateListDrawable().apply {
+                val highlight = GradientDrawable().apply {
+                    setColor(0xff30475b.toInt())
+                    cornerRadius = dp(8).toFloat()
+                }
+                addState(intArrayOf(android.R.attr.state_focused), highlight)
+                addState(intArrayOf(android.R.attr.state_selected), highlight)
+                addState(intArrayOf(android.R.attr.state_pressed), highlight)
+                addState(intArrayOf(), ColorDrawable(Color.TRANSPARENT))
+            }
+            setOnClickListener { clicked ->
+                focusMenuItem(menuItems.indexOf(clicked))
+                action()
+            }
+        }
+        row.addView(button, LinearLayout.LayoutParams(0, -1, 1f))
+        menuItems.add(button)
+        return button
     }
 
     private fun menuItem(content: LinearLayout, title: String, detail: String,
@@ -456,7 +482,9 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
         if (!::root.isInitialized || root.width <= 0 || root.height <= 0) return
         val keyboardHeight = if (::keyboardPanel.isInitialized &&
             keyboardPanel.visibility == View.VISIBLE) keyboardPanel.layoutParams.height else 0
-        val availableHeight = (root.height - keyboardHeight).coerceAtLeast(1)
+        val portrait = root.height * 4L >= root.width * 5L
+        val topPadding = if (portrait) dp(portraitNotchPadding) else 0
+        val availableHeight = (root.height - keyboardHeight - topPadding).coerceAtLeast(1)
         val fit = minOf(root.width / 640f, availableHeight / 400f)
         if (fit <= 0f) return
         val scale = if (integerScaling && fit >= 1f) {
@@ -465,7 +493,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
         val width = (640 * scale).roundToInt().coerceAtLeast(1)
         val height = (400 * scale).roundToInt().coerceAtLeast(1)
         val params = screen.layoutParams as FrameLayout.LayoutParams
-        val top = if (root.height * 4L >= root.width * 5L) 0
+        val top = if (portrait) topPadding
             else ((availableHeight - height) / 2).coerceAtLeast(0)
         if (params.width != width || params.height != height || params.topMargin != top ||
             params.gravity != (Gravity.TOP or Gravity.CENTER_HORIZONTAL)) {
@@ -484,8 +512,8 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
         nativePause(true)
         drawer.scrollTo(0, 0)
         focusMenuItem(0)
-        pauseTitle.text = if (userPaused) "Resume" else "Pause"
-        pauseDetail.text = if (userPaused) "Continue running" else "Keep the machine paused"
+        pauseTitle.text = if (userPaused) "▶" else "❚❚"
+        pauseTitle.contentDescription = if (userPaused) "Resume" else "Pause"
         mediaLabel.text = currentTitle ?: "No disk selected"
         menuStatus.text = if (preparingFont) "Preparing PC-98 font" else nativeStatus()
         backdrop.visibility = View.VISIBLE
@@ -878,9 +906,11 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
             val hashes = game.launchScreenHashes.getOrNull(index) ?: emptySet()
             StartupHashMatcher.Step("Launch command ${index + 1}: $command", command, true,
                 hashes, hashes.isEmpty(), game.launchTimeoutMs)
-        } + choices.map { (choice, option) ->
-            StartupHashMatcher.Step(choice.title, option.key.toString(), option.enter,
-                choice.screenHashes, false, 120000)
+        } + choices.flatMap { (choice, option) ->
+            option.inputs.mapIndexed { index, input ->
+                StartupHashMatcher.Step("${choice.title}: ${option.label} (${index + 1}/${option.inputs.size})",
+                    input.key.toString(), input.enter, input.screenHashes, false, 120000)
+            }
         }
         scheduleStartupSteps(steps)
     }
@@ -1133,7 +1163,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
             setPadding(dp(16), 0, dp(16), dp(12))
         }
         content.addView(hint)
-        val dialog = AlertDialog.Builder(this).setTitle(game.title).setView(content)
+        val dialog = AlertDialog.Builder(this).setView(content)
             .setPositiveButton("Done") { _, _ -> if (returnToSettings) showGameDetails(entry) }
             .showStyled()
         if (url != null) view.setOnClickListener {
@@ -1335,6 +1365,22 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
             }.setNegativeButton("Cancel", null).showStyled()
     }
 
+    private fun showMountMenu() {
+        val hardDisk = currentEntry?.displayName ?: currentTitle ?: "Empty"
+        AlertDialog.Builder(this).setTitle("Mount")
+            .setItems(arrayOf(
+                "Hard disk  ·  $hardDisk",
+                "Floppy A  ·  ${mountedFloppies[0] ?: "Empty"}",
+                "Floppy B  ·  ${mountedFloppies[1] ?: "Empty"}"
+            )) { _, which ->
+                when (which) {
+                    0 -> chooseHdi()
+                    1 -> showFloppyMenu(0)
+                    2 -> showFloppyMenu(1)
+                }
+            }.setNegativeButton("Close", null).showStyled()
+    }
+
     private fun changeFloppy(drive: Int, entry: LibraryEntry?) {
         if (!beginFloppyChange()) return
         menuStatus.text = if (entry == null) "Ejecting floppy ${'A' + drive}…"
@@ -1376,21 +1422,66 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
     }
 
     private fun showGraphics() {
+        val orientation = if (isPortrait()) "portrait" else "landscape"
+        val scaling = when {
+            !integerScaling -> "Fit display"
+            integerCrop -> "Integer crop"
+            else -> "Integer full image"
+        }
+        val items = if (orientation == "portrait")
+            arrayOf("Scaling  ·  $scaling", "Notch padding  ·  $portraitNotchPadding dp")
+        else arrayOf("Scaling  ·  $scaling")
+        AlertDialog.Builder(this).setTitle("Graphics · $orientation")
+            .setItems(items) { _, which ->
+                if (which == 0) showScalingChoices(orientation) else showNotchPadding()
+            }.setNegativeButton("Close", null).showStyled()
+    }
+
+    private fun isPortrait() = resources.configuration.orientation == Configuration.ORIENTATION_PORTRAIT
+
+    private fun loadGraphicsSettings() {
+        val suffix = if (isPortrait()) "portrait" else "landscape"
+        integerScaling = preferences.getBoolean("integer_scaling_$suffix",
+            preferences.getBoolean("integer_scaling", true))
+        integerCrop = preferences.getBoolean("integer_crop_$suffix",
+            preferences.getBoolean("integer_crop", false))
+        portraitNotchPadding = preferences.getInt("portrait_notch_padding", 0).coerceIn(0, 240)
+    }
+
+    private fun showScalingChoices(orientation: String) {
         val options = arrayOf(
             "Integer  ·  full image (default)",
             "Integer  ·  crop edges",
             "Fit display  ·  fractional scale"
         )
-        AlertDialog.Builder(this).setTitle("Graphics")
+        AlertDialog.Builder(this).setTitle("Scaling · $orientation")
             .setSingleChoiceItems(options, if (!integerScaling) 2 else if (integerCrop) 1 else 0) { dialog, which ->
                 integerScaling = which != 2
                 integerCrop = which == 1
                 preferences.edit()
-                    .putBoolean("integer_scaling", integerScaling)
-                    .putBoolean("integer_crop", integerCrop)
+                    .putBoolean("integer_scaling_$orientation", integerScaling)
+                    .putBoolean("integer_crop_$orientation", integerCrop)
                     .apply()
                 updateViewport()
                 dialog.dismiss()
+            }.setNegativeButton("Cancel", null).showStyled()
+    }
+
+    private fun showNotchPadding() {
+        val input = EditText(this).apply {
+            inputType = android.text.InputType.TYPE_CLASS_NUMBER
+            setSingleLine(true)
+            setText(portraitNotchPadding.toString())
+            selectAll()
+        }
+        AlertDialog.Builder(this).setTitle("Portrait notch padding (dp)")
+            .setView(input)
+            .setPositiveButton("Save") { _, _ ->
+                val value = input.text.toString().toIntOrNull()?.coerceIn(0, 240)
+                if (value == null) { toast("Enter a number from 0 to 240"); return@setPositiveButton }
+                portraitNotchPadding = value
+                preferences.edit().putInt("portrait_notch_padding", value).apply()
+                updateViewport()
             }.setNegativeButton("Cancel", null).showStyled()
     }
 
@@ -1482,14 +1573,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
 
     private fun showInputMode() {
         val entry = currentEntry?.takeIf { it.contentId != null }
-        if (entry == null) {
-            showInputModeChoices(null)
-            return
-        }
-        AlertDialog.Builder(this).setTitle("Input mode")
-            .setItems(arrayOf("This game", "Global default")) { _, which ->
-                showInputModeChoices(if (which == 0) entry else null)
-            }.setNegativeButton("Cancel", null).showStyled()
+        showInputModeChoices(entry)
     }
 
     private fun showInputModeChoices(entry: LibraryEntry?) {
@@ -1588,7 +1672,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
         closeMenu()
         releaseInputs()
         hideKeyboard()
-        controllerEditor.show(currentEntry, startPhysical = true)
+        controllerEditor.show(currentEntry?.takeIf { !libraryVisible && it.contentId != null })
     }
 
     private fun showOnScreenControls() {
@@ -1682,6 +1766,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
 
     override fun onConfigurationChanged(newConfig: Configuration) {
         super.onConfigurationChanged(newConfig)
+        loadGraphicsSettings()
         root.post { updateViewport() }
     }
 

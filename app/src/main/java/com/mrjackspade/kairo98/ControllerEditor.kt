@@ -29,7 +29,8 @@ class ControllerEditor(
     private val resetPhysical: () -> Unit,
     private val getDeadZone: () -> Float,
     private val setDeadZone: (Float) -> Unit,
-    private val onVisibilityChanged: () -> Unit
+    private val onVisibilityChanged: () -> Unit,
+    private val onScreenSettings: () -> Unit
 ) {
     private enum class Stage { LIST, SOURCES, CAPTURE, MANUAL, TARGET, VIRTUAL, KEYS, JOYSTICK, MOUSE, ACTIONS, DEAD_ZONE, RESET }
     private data class Source(val group: String, val name: String, val input: String)
@@ -265,12 +266,9 @@ class ControllerEditor(
 
     private fun renderList() {
         val tabs = LinearLayout(activity).apply { orientation = LinearLayout.HORIZONTAL }
-        tabs.addView(tab("Physical", physicalScope) { physicalScope = true; scope = null; render() },
+        tabs.addView(tab("Physical", physicalScope) { physicalScope = true; render() },
             LinearLayout.LayoutParams(0, dp(48), 1f))
-        tabs.addView(tab("Global", !physicalScope && scope == null) {
-            physicalScope = false; scope = null; render()
-        }, LinearLayout.LayoutParams(0, dp(48), 1f))
-        if (game != null) tabs.addView(tab("This game", !physicalScope && scope != null) {
+        tabs.addView(tab(if (game == null) "Global" else "This game", !physicalScope) {
             physicalScope = false; scope = game; render()
         }, LinearLayout.LayoutParams(0, dp(48), 1f))
         body.addView(tabs)
@@ -280,9 +278,7 @@ class ControllerEditor(
                 .filter { it.supportsSource(InputDevice.SOURCE_GAMEPAD) ||
                     it.supportsSource(InputDevice.SOURCE_JOYSTICK) }
                 .joinToString { it.name }
-            note(if (controllers.isEmpty()) "No controller connected. You can still assign controls."
-                else "Connected: " + controllers)
-            note("Select a virtual control, then press the device input to assign it.")
+            if (controllers.isNotEmpty()) note("Connected: " + controllers)
             val bindings = loadPhysical().groupBy { it.control }
             for (control in PHYSICAL_DISPLAY_CONTROLS) {
                 val sources = bindings[control].orEmpty()
@@ -324,6 +320,10 @@ class ControllerEditor(
             }
         }
         section("OPTIONS")
+        row("On-screen controls", "Show, hide, and arrange touch buttons", true) {
+            close()
+            onScreenSettings()
+        }
         if (physicalScope) row("Stick dead zone", (getDeadZone() * 100).toInt().toString() + "%", true) {
             stage = Stage.DEAD_ZONE
             render()
@@ -655,8 +655,12 @@ class ControllerEditor(
     }
 
     private fun physicalInputLabel(input: String): String {
-        val source = commonSources().firstOrNull { it.input == input } ?: return inputLabel(input)
-        return if (source.group == "Buttons") source.name else source.group + " " + source.name
+        val parts = input.split(':')
+        if (parts.size == 2 && parts[0] == "button") {
+            val code = parts[1].toIntOrNull() ?: return input
+            return "Android ${KeyEvent.keyCodeToString(code)} ($code)"
+        }
+        return inputLabel(input)
     }
 
     private fun inputLabel(input: String): String {

@@ -69,7 +69,31 @@
               "label": "Episode 6",
               "key": "6",
               "enter": false
-            }
+            },
+            {"id": "episode-7", "label": "Episode 7", "steps": [
+              {"key": "9", "enter": false, "screenHashes": ["7184142527792879", "055cfcfcfbcc6379"]},
+              {"key": "1", "enter": false, "screenHashes": ["69866fbc10668a7f", "4c96fc6239ad9d7f"]}
+            ]},
+            {"id": "episode-8", "label": "Episode 8", "steps": [
+              {"key": "9", "enter": false, "screenHashes": ["7184142527792879", "055cfcfcfbcc6379"]},
+              {"key": "2", "enter": false, "screenHashes": ["69866fbc10668a7f", "4c96fc6239ad9d7f"]}
+            ]},
+            {"id": "episode-9", "label": "Episode 9", "steps": [
+              {"key": "9", "enter": false, "screenHashes": ["7184142527792879", "055cfcfcfbcc6379"]},
+              {"key": "3", "enter": false, "screenHashes": ["69866fbc10668a7f", "4c96fc6239ad9d7f"]}
+            ]},
+            {"id": "episode-10", "label": "Episode 10", "steps": [
+              {"key": "9", "enter": false, "screenHashes": ["7184142527792879", "055cfcfcfbcc6379"]},
+              {"key": "4", "enter": false, "screenHashes": ["69866fbc10668a7f", "4c96fc6239ad9d7f"]}
+            ]},
+            {"id": "episode-11", "label": "Episode 11", "steps": [
+              {"key": "9", "enter": false, "screenHashes": ["7184142527792879", "055cfcfcfbcc6379"]},
+              {"key": "5", "enter": false, "screenHashes": ["69866fbc10668a7f", "4c96fc6239ad9d7f"]}
+            ]},
+            {"id": "episode-12", "label": "Episode 12", "steps": [
+              {"key": "9", "enter": false, "screenHashes": ["7184142527792879", "055cfcfcfbcc6379"]},
+              {"key": "6", "enter": false, "screenHashes": ["69866fbc10668a7f", "4c96fc6239ad9d7f"]}
+            ]}
           ]
         }
       ]
@@ -377,7 +401,31 @@
               "label": "Episode 6",
               "key": "6",
               "enter": false
-            }
+            },
+            {"id": "episode-7", "label": "Episode 7", "steps": [
+              {"key": "9", "enter": false, "screenHashes": ["7184142527792879", "055cfcfcfbcc6379"]},
+              {"key": "1", "enter": false, "screenHashes": ["69866fbc10668a7f", "4c96fc6239ad9d7f"]}
+            ]},
+            {"id": "episode-8", "label": "Episode 8", "steps": [
+              {"key": "9", "enter": false, "screenHashes": ["7184142527792879", "055cfcfcfbcc6379"]},
+              {"key": "2", "enter": false, "screenHashes": ["69866fbc10668a7f", "4c96fc6239ad9d7f"]}
+            ]},
+            {"id": "episode-9", "label": "Episode 9", "steps": [
+              {"key": "9", "enter": false, "screenHashes": ["7184142527792879", "055cfcfcfbcc6379"]},
+              {"key": "3", "enter": false, "screenHashes": ["69866fbc10668a7f", "4c96fc6239ad9d7f"]}
+            ]},
+            {"id": "episode-10", "label": "Episode 10", "steps": [
+              {"key": "9", "enter": false, "screenHashes": ["7184142527792879", "055cfcfcfbcc6379"]},
+              {"key": "4", "enter": false, "screenHashes": ["69866fbc10668a7f", "4c96fc6239ad9d7f"]}
+            ]},
+            {"id": "episode-11", "label": "Episode 11", "steps": [
+              {"key": "9", "enter": false, "screenHashes": ["7184142527792879", "055cfcfcfbcc6379"]},
+              {"key": "5", "enter": false, "screenHashes": ["69866fbc10668a7f", "4c96fc6239ad9d7f"]}
+            ]},
+            {"id": "episode-12", "label": "Episode 12", "steps": [
+              {"key": "9", "enter": false, "screenHashes": ["7184142527792879", "055cfcfcfbcc6379"]},
+              {"key": "6", "enter": false, "screenHashes": ["69866fbc10668a7f", "4c96fc6239ad9d7f"]}
+            ]}
           ]
         }
       ]

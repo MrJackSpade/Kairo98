@@ -29,6 +29,8 @@ class GameDetailPage(
     private val description = TextView(context)
     private val playButton = TextView(context)
     private val scroll = ScrollView(context)
+    private val hero = LinearLayout(context)
+    private val right = LinearLayout(context)
     private val imageExecutor = Executors.newSingleThreadExecutor()
     private var currentEntry: LibraryEntry? = null
     private var imageGeneration = 0
@@ -61,7 +63,7 @@ class GameDetailPage(
         }
         body.addView(backButton, LinearLayout.LayoutParams(-1, dp(48)))
 
-        val hero = LinearLayout(context).apply {
+        hero.apply {
             orientation = LinearLayout.HORIZONTAL
             gravity = Gravity.TOP
         }
@@ -90,7 +92,7 @@ class GameDetailPage(
         }
         imagePanel.addView(imageFallback, LayoutParams(-1, -1))
 
-        val right = LinearLayout(context).apply {
+        right.apply {
             orientation = LinearLayout.VERTICAL
             setPadding(dp(18), 0, 0, 0)
         }
@@ -126,6 +128,32 @@ class GameDetailPage(
         body.addView(description, LinearLayout.LayoutParams(-1, -2).apply {
             topMargin = dp(28)
         })
+        updateHeroLayout(resources.configuration.orientation ==
+            android.content.res.Configuration.ORIENTATION_PORTRAIT)
+    }
+
+    private fun updateHeroLayout(portrait: Boolean) {
+        hero.orientation = if (portrait) LinearLayout.VERTICAL else LinearLayout.HORIZONTAL
+        hero.layoutParams = (hero.layoutParams as LinearLayout.LayoutParams).apply {
+            height = if (portrait) -2 else dp(220)
+        }
+        imagePanel.layoutParams = if (portrait) LinearLayout.LayoutParams(-1, dp(220))
+            else LinearLayout.LayoutParams(0, -1, 1.15f)
+        right.setPadding(if (portrait) 0 else dp(18), if (portrait) dp(18) else 0, 0, 0)
+        right.layoutParams = if (portrait) LinearLayout.LayoutParams(-1, -2)
+            else LinearLayout.LayoutParams(0, -1, 0.85f)
+        title.layoutParams = LinearLayout.LayoutParams(-1, if (portrait) -2 else 0,
+            if (portrait) 0f else 1f)
+        playButton.layoutParams = LinearLayout.LayoutParams(
+            if (portrait) dp(180) else -1, dp(56)).apply {
+            if (portrait) topMargin = dp(18)
+        }
+    }
+
+    override fun onConfigurationChanged(newConfig: android.content.res.Configuration) {
+        super.onConfigurationChanged(newConfig)
+        updateHeroLayout(newConfig.orientation ==
+            android.content.res.Configuration.ORIENTATION_PORTRAIT)
     }
 
     fun show(entry: LibraryEntry) {

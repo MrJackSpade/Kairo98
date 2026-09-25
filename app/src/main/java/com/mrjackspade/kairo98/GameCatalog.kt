@@ -9,7 +9,8 @@ import java.text.Normalizer
 
 /** Versioned, data-only metadata. Nothing in this file is executed by Android. */
 class GameCatalog(private val context: Context) {
-    data class StartupOption(val id: String, val label: String, val key: Char, val enter: Boolean)
+    data class StartupInput(val key: Char, val enter: Boolean, val screenHashes: Set<Long>)
+    data class StartupOption(val id: String, val label: String, val inputs: List<StartupInput>)
     data class StartupChoice(val id: String, val title: String, val screenHashes: Set<Long>,
                              val options: List<StartupOption>)
     data class DiskSwap(val id: String, val drive: Int, val contentId: String,
@@ -111,8 +112,16 @@ class GameCatalog(private val context: Context) {
                     parseHashes(item.getJSONArray("screenHashes")),
                     (0 until options.length()).map { optionIndex ->
                         val option = options.getJSONObject(optionIndex)
-                        StartupOption(option.getString("id"), option.getString("label"),
-                            option.getString("key")[0], option.getBoolean("enter"))
+                        val steps = option.optJSONArray("steps")
+                        val inputs = if (steps == null) listOf(StartupInput(
+                            option.getString("key")[0], option.getBoolean("enter"),
+                            parseHashes(item.getJSONArray("screenHashes"))))
+                        else (0 until steps.length()).map { stepIndex ->
+                            val step = steps.getJSONObject(stepIndex)
+                            StartupInput(step.getString("key")[0], step.getBoolean("enter"),
+                                parseHashes(step.getJSONArray("screenHashes")))
+                        }
+                        StartupOption(option.getString("id"), option.getString("label"), inputs)
                     })
             }
         } ?: emptyList()
@@ -283,8 +292,20 @@ class GameCatalog(private val context: Context) {
                             options.optJSONObject(optionIndex)?.let { option ->
                                 validShortId(option.optString("id")) &&
                                 validLabel(option.optString("label")) &&
-                                option.optString("key").matches(Regex("[A-Za-z0-9]")) &&
-                                option.opt("enter") is Boolean
+                                (if (option.has("steps")) {
+                                    !option.has("key") && !option.has("enter") &&
+                                    option.optJSONArray("steps")?.let { steps ->
+                                        steps.length() in 2..4 && (0 until steps.length()).all { stepIndex ->
+                                            steps.optJSONObject(stepIndex)?.let { step ->
+                                                step.length() == 3 &&
+                                                step.optString("key").matches(Regex("[A-Za-z0-9]")) &&
+                                                step.opt("enter") is Boolean &&
+                                                validHashes(step.optJSONArray("screenHashes"))
+                                            } == true
+                                        }
+                                    } == true
+                                } else option.optString("key").matches(Regex("[A-Za-z0-9]")) &&
+                                    option.opt("enter") is Boolean)
                             } == true
                         } && (0 until options.length()).map { options.getJSONObject(it).getString("id") }
                             .distinct().size == options.length()

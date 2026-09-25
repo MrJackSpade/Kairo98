@@ -39,15 +39,28 @@ def valid_startup_choices(choices):
         ids.add(name)
         option_ids = set()
         for option in options:
-            if not isinstance(option, dict) or set(option) != {"id", "label", "key", "enter"}:
+            if not isinstance(option, dict) or set(option) not in (
+                    {"id", "label", "key", "enter"}, {"id", "label", "steps"}):
                 return False
             option_id = option["id"]
             label = option["label"]
-            key = option["key"]
             if (not isinstance(option_id, str) or not SHORT_ID.fullmatch(option_id) or
                     option_id in option_ids or not isinstance(label, str) or
-                    not 0 < len(label.strip()) <= 100 or not isinstance(key, str) or
-                    not re.fullmatch(r"[A-Za-z0-9]", key) or type(option["enter"]) is not bool):
+                    not 0 < len(label.strip()) <= 100):
+                return False
+            if "steps" in option:
+                steps = option["steps"]
+                if (not isinstance(steps, list) or not 2 <= len(steps) <= 4 or
+                        any(not isinstance(step, dict) or
+                            set(step) != {"key", "enter", "screenHashes"} or
+                            not isinstance(step["key"], str) or
+                            not re.fullmatch(r"[A-Za-z0-9]", step["key"]) or
+                            type(step["enter"]) is not bool or
+                            not valid_hashes(step["screenHashes"]) for step in steps)):
+                    return False
+            elif (not isinstance(option["key"], str) or
+                    not re.fullmatch(r"[A-Za-z0-9]", option["key"]) or
+                    type(option["enter"]) is not bool):
                 return False
             option_ids.add(option_id)
     return True

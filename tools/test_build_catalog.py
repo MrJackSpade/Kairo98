@@ -49,12 +49,18 @@ class CatalogBuildTests(unittest.TestCase):
             "d7c067596b97be35", "daddf81acfadb135"], "options": [
                 {"id": "color", "label": "16-color", "key": "1", "enter": False}]}
         validate_record({**record, "startupChoices": [choice]})
+        later_episode = {"id": "episode-7", "label": "Episode 7", "steps": [
+            {"key": "9", "enter": False, "screenHashes": ["d7c067596b97be35"]},
+            {"key": "1", "enter": False, "screenHashes": ["daddf81acfadb135"]}]}
+        validate_record({**record, "startupChoices": [{**choice,
+            "options": choice["options"] + [later_episode]}]})
         validate_record({**record, "launch": {"type": "guestCommand", "text": "NS",
                                               "screenHashes": [["0123456789abcdef"]]}})
         for bad in (
             {**choice, "screenHashes": ["0123456789abcdef", "0123456789abcdef"]},
             {**choice, "screenHashes": ["0123456789abcdeg"]},
             {**choice, "options": [{**choice["options"][0], "key": ";"}]},
+            {**choice, "options": [{**later_episode, "steps": [later_episode["steps"][0]]}]},
             {**choice, "options": choice["options"] * 2},
         ):
             with self.subTest(bad=bad), self.assertRaisesRegex(ValueError, "invalid startup choices"):
