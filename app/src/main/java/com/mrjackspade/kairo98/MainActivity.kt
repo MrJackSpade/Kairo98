@@ -50,7 +50,7 @@ import kotlin.math.roundToInt
 class MainActivity : Activity(), SurfaceHolder.Callback {
     private external fun nativeStart(path: String?, fontPath: String, biosDir: String,
                                      fontBitmap: Boolean, mhzTimesTen: Int, gdcMhzTimesTen: Int,
-                                     floppy: Boolean): Boolean
+                                     floppy: Boolean, bootFloppyPath: String?): Boolean
     private external fun nativeFloppy(drive: Int, path: String?): Boolean
     private external fun nativeStop()
     private external fun nativePause(paused: Boolean)
@@ -609,8 +609,15 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
         libraryScreen.showStatus("Preparing ${entry.displayName}…")
         Thread {
             val result = try {
-                val disk = romLibrary.prepare(entry, cancelled) { message ->
+                val media = bootMediaFor(entry, libraryEntries, game.requiredBootFloppyId)
+                val primary = media?.hardDisk ?: entry
+                val disk = romLibrary.prepare(primary, cancelled) { message ->
                     runOnUiThread { if (generation == startGeneration) libraryScreen.showStatus(message) }
+                }
+                val bootFloppy = media?.bootFloppy?.let { companion ->
+                    romLibrary.prepare(companion, cancelled) { message ->
+                        runOnUiThread { if (generation == startGeneration) libraryScreen.showStatus(message) }
+                    }
                 }
                 val font = prepareFont()
                 if (generation != startGeneration) null
@@ -620,9 +627,10 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
                     else if (nativeStart(disk.absolutePath, font.path, firmwareDir().absolutePath,
                             font.bitmap,
                             game.baseClockTenthsMHz ?: clock,
-                            game.gdcClockTenthsMHz ?: 50, entry.isFloppy)) {
+                            game.gdcClockTenthsMHz ?: 50, primary.isFloppy,
+                            bootFloppy?.absolutePath)) {
                         awaitMachineReady()?.let(::error)
-                        disk
+                        disk to media?.bootFloppy
                     }
                     else error("Unable to start machine")
                 }
@@ -638,9 +646,10 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
                     preparingFont = false
                     if (result != null) {
                         currentEntry = entry
-                        currentDisk = result
-                        currentIsFloppy = entry.isFloppy
-                        mountedFloppies[0] = if (entry.isFloppy) entry.displayName else null
+                        currentDisk = result.first
+                        currentIsFloppy = result.second == null && entry.isFloppy
+                        mountedFloppies[0] = result.second?.displayName
+                            ?: if (entry.isFloppy) entry.displayName else null
                         mountedFloppies[1] = null
                         currentTitle = game.title
                         currentGame = game
@@ -1583,7 +1592,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
                 if (generation != startGeneration) "Start cancelled"
                 else if (nativeStart(disk.absolutePath, font.path, firmwareDir().absolutePath,
                         font.bitmap, clock,
-                        50, DiskFormat.isFloppy(name)))
+                        50, DiskFormat.isFloppy(name), null))
                     awaitMachineReady()?.let { "Disk start failed: $it" } ?: "Starting $name"
                 else "Unable to start machine"
             } catch (error: Exception) {
@@ -1745,7 +1754,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
                 nativeStop()
                 if (generation != startGeneration) "Start cancelled"
                 else if (nativeStart(disk.absolutePath, font.path, firmwareDir().absolutePath,
-                        font.bitmap, clock, 50, floppy))
+                        font.bitmap, clock, 50, floppy, null))
                     awaitMachineReady()?.let { "Disk start failed: $it" } ?: message
                 else "Unable to start machine"
             } catch (error: Exception) {

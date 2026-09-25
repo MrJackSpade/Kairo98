@@ -23,7 +23,7 @@ extern "C" int kairo98_hdi_probe(const char *path, unsigned int *cylinders,
                                  unsigned int *sector_size, unsigned int *first_word);
 extern "C" int kairo98_machine_start(const char *image, const char *font_path,
                                       const char *bios_dir, int font_bitmap, int mhz_times_ten,
-                                      int gdc_mhz_times_ten, int floppy);
+                                      int gdc_mhz_times_ten, int floppy, const char *boot_floppy);
 extern "C" int kairo98_machine_dos_prompt(void);
 extern "C" void kairo98_machine_exec(void);
 extern "C" int kairo98_machine_reset(void);
@@ -139,7 +139,8 @@ void report_state(const char *state, const char *error = "") {
 }
 
 void run_machine(std::string image, std::string font_path, std::string bios_dir,
-                 bool font_bitmap, int mhz_times_ten, int gdc_mhz_times_ten, bool floppy) {
+                 bool font_bitmap, int mhz_times_ten, int gdc_mhz_times_ten, bool floppy,
+                 std::string boot_floppy) {
     dos_prompt_ready.store(false);
     clear_screen_hash();
     kairo98_input_telemetry_reset();
@@ -147,7 +148,8 @@ void run_machine(std::string image, std::string font_path, std::string bios_dir,
     unsigned int prompt_frames = 0;
     int start_result = kairo98_machine_start(image.c_str(), font_path.c_str(), bios_dir.c_str(),
                                              font_bitmap ? 1 : 0, mhz_times_ten,
-                                             gdc_mhz_times_ten, floppy ? 1 : 0);
+                                             gdc_mhz_times_ten, floppy ? 1 : 0,
+                                             boot_floppy.c_str());
     if (start_result != 0) {
         report_state("Error", start_result == 2 ? "HDI did not mount" :
                               start_result == 3 ? "Invalid clock setting" :
@@ -335,7 +337,7 @@ Java_com_mrjackspade_kairo98_MainActivity_nativeStart(JNIEnv *env, jobject, jstr
                               jstring font_path, jstring bios_dir, jboolean font_bitmap,
                                                       jint mhz_times_ten,
                                                       jint gdc_mhz_times_ten,
-                                                      jboolean floppy) {
+                                                      jboolean floppy, jstring boot_floppy_path) {
     std::lock_guard<std::mutex> lifecycle(lifecycle_mutex);
     if (worker.joinable()) return JNI_FALSE;
     const char *chars = image_path ? env->GetStringUTFChars(image_path, nullptr) : nullptr;
@@ -347,6 +349,9 @@ Java_com_mrjackspade_kairo98_MainActivity_nativeStart(JNIEnv *env, jobject, jstr
     const char *bios_chars = bios_dir ? env->GetStringUTFChars(bios_dir, nullptr) : nullptr;
     std::string bios = bios_chars ? bios_chars : "";
     if (bios_chars) env->ReleaseStringUTFChars(bios_dir, bios_chars);
+    const char *boot_chars = boot_floppy_path ? env->GetStringUTFChars(boot_floppy_path, nullptr) : nullptr;
+    std::string boot_floppy = boot_chars ? boot_chars : "";
+    if (boot_chars) env->ReleaseStringUTFChars(boot_floppy_path, boot_chars);
     {
         std::lock_guard<std::mutex> guard(command_mutex);
         commands.clear();
@@ -360,7 +365,7 @@ Java_com_mrjackspade_kairo98_MainActivity_nativeStart(JNIEnv *env, jobject, jstr
     }
     worker = std::thread(run_machine, std::move(path), std::move(font), std::move(bios),
                          font_bitmap == JNI_TRUE, mhz_times_ten, gdc_mhz_times_ten,
-                         floppy == JNI_TRUE);
+                         floppy == JNI_TRUE, std::move(boot_floppy));
     return JNI_TRUE;
 }
 

@@ -34,6 +34,37 @@ data class LibraryEntry(
     val isFloppy: Boolean get() = DiskFormat.isFloppy(displayName)
 }
 
+data class BootMedia(val hardDisk: LibraryEntry, val bootFloppy: LibraryEntry)
+
+/** Resolve an explicit catalog dependency, or a clearly labelled pair in one archive. */
+fun bootMediaFor(entry: LibraryEntry, entries: List<LibraryEntry>, requiredFloppyId: String?): BootMedia? {
+    if (!entry.playable) return null
+    if (!entry.isFloppy && requiredFloppyId != null) {
+        val candidates = entries.filter { it.playable && it.isFloppy &&
+            it.contentId == requiredFloppyId }
+        val floppy = candidates.firstOrNull { it.uri == entry.uri } ?: candidates.firstOrNull()
+            ?: error("Required boot disk is missing from the library")
+        return BootMedia(entry, floppy)
+    }
+    if (entry.zipEntry == null) {
+        if (entry.isFloppy && entry.contentId == requiredFloppyId)
+            error("Matching hard disk is missing from the library")
+        return null
+    }
+    val siblings = entries.filter { it.playable && it.zipEntry != null && it.uri == entry.uri }
+    val hardDisks = siblings.filter { !it.isFloppy }
+    val bootFloppies = siblings.filter {
+        it.isFloppy && Regex("(?i)\\bboot[ _-]*disk\\b").containsMatchIn(it.displayName)
+    }
+    if (hardDisks.size != 1 || bootFloppies.size != 1) {
+        if (entry.isFloppy && entry.contentId == requiredFloppyId)
+            error("Matching hard disk is missing or ambiguous in this archive")
+        return null
+    }
+    val pair = BootMedia(hardDisks.single(), bootFloppies.single())
+    return pair.takeIf { entry.id == it.hardDisk.id || entry.id == it.bootFloppy.id }
+}
+
 object DiskFormat {
     private val floppyExtensions = setOf("fdi", "d88", "88d", "d98", "98d",
         "nfd", "fdd", "dcp", "dcu", "hdm", "xdf")

@@ -14,6 +14,17 @@ voice-patch variant and wider game regressions remain to be checked. Device
 captures are in ignored `.downloads/ultima-*.png`; no game media or screenshot
 was added to Git.
 
+## Giten Megami Tensei paired boot on Retroid, 24 September 2026
+
+Both translated archives contain one HDI and the same Boot Disk FDI (content ID
+`sha256-fd-v1:45ae7823bf4992b53b7a7327eba64293536c4a0b7de7fcb0d26d9e8d6ca5eeca`).
+The catalog now requires that floppy hash for Giten. On the Retroid Pocket
+Classic, launching either HDI with the FDI mounted in A before boot reached
+the game's New Game / Continue title menu. Enter on New Game in the 0.3
+translation reached an English opening scene and interactive game view. The
+earlier HDI-only test had stopped at a host date/time prompt and DOS. The
+test used ignored local archives; no game media or capture was added to Git.
+
 ## Night Slave launch on Retroid, 24 September 2026
 
 With the full user-selected library folder, a debug ADB selector opened the exact `Night Slave [T-En by BabaJeanmel, Valley Bell & Kirinn B v1.0]` detail page. Play booted its user-supplied HDI, entered `NS` at the DOS prompt from catalog metadata, passed the game's 2.5 MHz GDC check, showed the English music-driver selection menu, and reached the animated *Night Slave* title logo on the Retroid Pocket Classic. The native build used the portable IA-32 core; the previous 286 build returned to DOS. The HDI and BIOS remain outside Git and APK assets.

@@ -26,6 +26,7 @@ class GameCatalog(private val context: Context) {
         val controllerProfile: String?,
         val controllerBindings: String?,
         val inputMode: String?,
+        val requiredBootFloppyId: String?,
         val launchCommand: String?,
         val launchCommands: List<String>,
         val launchScreenHashes: List<Set<Long>>,
@@ -86,6 +87,7 @@ class GameCatalog(private val context: Context) {
         val machine = merged.optJSONObject("machine")
         val controller = merged.optJSONObject("controller")
         val input = merged.optJSONObject("input")
+        val media = merged.optJSONArray("media")
         val launch = merged.optJSONObject("launch")
         val commands = launch?.takeIf { validField("launch", it) }?.let { value ->
             value.optJSONArray("commands")?.let { array ->
@@ -122,6 +124,11 @@ class GameCatalog(private val context: Context) {
             controller?.optString("profile")?.takeIf { it.length in 1..64 },
             controller?.optJSONArray("bindings")?.toString(),
             input?.optString("mode")?.takeIf { it in INPUT_MODES },
+            media?.let { items ->
+                (0 until items.length()).mapNotNull { items.optJSONObject(it) }
+                    .firstOrNull { it.optString("role") == "bootFloppy" }
+                    ?.optString("contentId")?.takeIf(::validId)
+            },
             commands.joinToString("; ").takeIf { commands.isNotEmpty() },
             commands,
             commandHashes,

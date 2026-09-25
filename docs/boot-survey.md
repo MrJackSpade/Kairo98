@@ -42,7 +42,7 @@ Tuned Heart and Viper CTR were later seen advancing past intro fades.
 | Farland Story, translated HDI `262c6581` | Menu: **1 Start game**, **2 Watch opening**, **3 Quit**. | Start game and Watch opening are now labeled prelaunch choices. |
 | Foxy, translated HDI `b9076012` | Menu: **1 Game**, **2 Special disk**, **3 Character edit**, **4 Quit**. | The three non-quit paths are now labeled prelaunch choices. |
 | Starfire, translated HDI `8fde4af0` | Menu: **1 16-color version**, **2 256-color version**, **3 Quit**. | Both display versions are now labeled prelaunch choices. |
-| Giten Megami Tensei, incomplete translation 0.3 HDI `e760379a` | Asks for a date, then a time. Enter accepts the shown values; it then reaches DOS. Running `CD DDS98`, `DDS98` printed diagnostics and returned to DOS in this run. | Investigate the intended boot disk/media arrangement before assigning a command. |
+| Giten Megami Tensei, incomplete translation 0.3 HDI `e760379a` | HDI alone asks for a date and time, then reaches DOS; `CD DDS98`, `DDS98` returned to DOS in the earlier run. The archive also contains Boot Disk FDI `45ae7823`. With the HDI and FDI mounted before boot, the Retroid reached the title menu; Enter on New Game advanced to the translated opening scene. | Require Boot Disk FDI `45ae7823` by catalog hash. No DOS command. |
 | Metajo, incomplete translation 0.1 HDI `c1df4b95` | Started a game logo and advanced to a graphical menu without a catalog command. The graphical menu text looked corrupted in the capture. | Keep normal boot; investigate the menu rendering separately. |
 
 The later [startup-choice implementation](startup-choices.md) found that both
@@ -268,8 +268,8 @@ startup captures remain unresolved until a longer run.
 | 163 | Briganty | `GIGA` intro. |
 | 164 | Canaan | Game-specific intro. |
 | 165 | Gate of Souls | `KOEI PRESENTS` intro. |
-| 166 | Giten Megami Tensei 0.3 | Date prompt; see longer investigation above. |
-| 167 | Giten Megami Tensei 0.2 | Date prompt. |
+| 166 | Giten Megami Tensei 0.3 | HDI alone: date prompt. HDI plus boot FDI: title menu and New Game scene. |
+| 167 | Giten Megami Tensei 0.2 | HDI alone: date prompt. Paired boot FDI: title menu. |
 | 168 | Holy Girl Force Lakers III | DOS startup text at 10 s; check later. |
 | 169 | Metajo | Black at 10 s here; separate longer run reached its graphical menu. |
 | 170 | Primal Space | DOS startup text at 10 s; check later. |
@@ -358,8 +358,8 @@ under ignored `.downloads/run-starfire-title-launch.png` and
 
 Check Madou Monogatari in a longer live run; the 22-second black captures do
 not establish a failure. Investigate Flix Mix's transient graphics and retest
-the Ultima VIII voice-patch variant. Investigate Peret em Heru and Giten
-Megami Tensei's return to DOS. Test companion disk insertion for Cybernetic
+the Ultima VIII voice-patch variant. Investigate Peret em Heru's return to DOS.
+Test companion disk insertion for Cybernetic
 Hi-School 2.0 and Reserve, and determine Belloncho Body Inspection's BASIC
 file-count answer.
 Typed-number startup menus have an [app choice-panel design](startup-choices.md).

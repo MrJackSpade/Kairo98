@@ -37,12 +37,15 @@ static void apply_gdc_clock(void) {
 }
 
 int kairo98_machine_start(const char *image, const char *font_path, const char *bios_dir,
-                          int font_bitmap, int mhz_times_ten, int gdc_mhz_times_ten, int floppy) {
+                          int font_bitmap, int mhz_times_ten, int gdc_mhz_times_ten, int floppy,
+                          const char *boot_floppy) {
     size_t length = image ? strlen(image) : 0;
+    size_t boot_length = boot_floppy ? strlen(boot_floppy) : 0;
     size_t bios_length = bios_dir ? strlen(bios_dir) : 0;
     size_t font_length = font_path ? strlen(font_path) : 0;
     if (length >= (floppy ? sizeof(np2cfg.fddfile[0]) :
                             sizeof(np2cfg.sasihdd[0])) ||
+        boot_length >= sizeof(np2cfg.fddfile[0]) || (floppy && boot_length) ||
         bios_length >= sizeof(np2cfg.biospath) || !font_length ||
         (font_bitmap && font_length >= sizeof(np2cfg.fontfile))) {
         return 1;
@@ -70,20 +73,21 @@ int kairo98_machine_start(const char *image, const char *font_path, const char *
     }
     pccore_reset();
     apply_gdc_clock();
-    if (length) {
-        if (floppy) {
-            diskdrv_readyfddex(0, image, floppy_type(image), 0);
-            if (!fdd_diskready(0)) {
-                pccore_term();
-                np2cfg.fddfile[0][0] = '\0';
-                return 5;
-            }
-        } else {
-            SXSIDEV drive = sxsi_getptr(0);
-            if (drive && (drive->flag & SXSIFLAG_READY)) return 0;
+    if (length && !floppy) {
+        SXSIDEV drive = sxsi_getptr(0);
+        if (!drive || !(drive->flag & SXSIFLAG_READY)) {
             pccore_term();
             np2cfg.sasihdd[0][0] = '\0';
             return 2;
+        }
+    }
+    const char *first_floppy = boot_length ? boot_floppy : (floppy ? image : NULL);
+    if (first_floppy) {
+        diskdrv_readyfddex(0, first_floppy, floppy_type(first_floppy), 0);
+        if (!fdd_diskready(0)) {
+            pccore_term();
+            np2cfg.fddfile[0][0] = '\0';
+            return 5;
         }
     }
     return 0;
