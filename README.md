@@ -31,6 +31,7 @@ Games and firmware are not included with Kairo98.
 - Map controller buttons to PC-98 keys, joystick buttons, mouse actions, or app controls. Keep a global layout or customize one game.
 - Turn on on-screen controls for phones and position them separately in portrait and landscape.
 - Swipe in from the **right edge** for the PC-98 keyboard. Tapping the game screen opens the keyboard or acts as a mouse touchpad, depending on the input mode. You can change that mode for each game if Auto chooses poorly.
+- On a dual-screen Android handheld, the PC-98 keyboard appears on the other screen during play while the game fills the main screen. If the second screen disconnects, the right-edge keyboard remains available.
 - Open the in-game menu with **Android Back**, a swipe from the **left edge**, or a controller Menu/Mode button when the device sends it to the app. From there you can pause, restart, change disks, open settings, or return to the library.
 - The default display mode keeps the entire picture visible with integer scaling. Cropped integer scaling and fit-to-screen scaling are optional.
 

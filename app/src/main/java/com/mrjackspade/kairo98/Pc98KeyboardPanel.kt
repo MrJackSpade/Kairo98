@@ -16,7 +16,8 @@ import android.widget.TextView
 internal class Pc98KeyboardPanel(
     context: Context,
     private val input: InputRouter,
-    private val onClose: () -> Unit
+    private val onClose: () -> Unit,
+    private val showClose: Boolean = true
 ) : LinearLayout(context) {
     private data class Key(
         val label: String,
@@ -58,13 +59,15 @@ internal class Pc98KeyboardPanel(
                 setMargins(dp(2), 0, dp(2), 0)
             })
         }
-        header.addView(TextView(context).apply {
-            text = "Close ×"
-            gravity = Gravity.CENTER
-            textSize = 14f
-            setTextColor(0xffa6e3ec.toInt())
-            setOnClickListener { onClose() }
-        }, LayoutParams(dp(76), dp(34)))
+        if (showClose) {
+            header.addView(TextView(context).apply {
+                text = "Close ×"
+                gravity = Gravity.CENTER
+                textSize = 14f
+                setTextColor(0xffa6e3ec.toInt())
+                setOnClickListener { onClose() }
+            }, LayoutParams(dp(76), dp(34)))
+        }
         addView(header, LayoutParams(-1, dp(42)))
         addView(content, LayoutParams(-1, 0, 1f))
         showPage(Page.ABC)

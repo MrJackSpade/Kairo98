@@ -1,6 +1,7 @@
 package com.mrjackspade.kairo98
 
 import android.app.Activity
+import android.app.ActivityOptions
 import android.app.AlertDialog
 import android.content.Intent
 import android.content.res.Configuration
@@ -10,6 +11,7 @@ import android.graphics.drawable.ColorDrawable
 import android.graphics.drawable.GradientDrawable
 import android.graphics.drawable.StateListDrawable
 import android.hardware.input.InputManager
+import android.hardware.display.DisplayManager
 import android.os.Bundle
 import android.os.Build
 import android.os.Handler
@@ -18,6 +20,7 @@ import android.net.Uri
 import android.provider.OpenableColumns
 import android.provider.DocumentsContract
 import android.view.Gravity
+import android.view.Display
 import android.view.InputDevice
 import android.view.KeyEvent
 import android.view.MotionEvent
@@ -88,6 +91,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
     private lateinit var root: FrameLayout
     private lateinit var screen: SurfaceView
     private lateinit var keyboardPanel: Pc98KeyboardPanel
+    private lateinit var secondaryKeyboard: SecondaryKeyboardDisplay
     private lateinit var onScreenControls: OnScreenControls
     private lateinit var libraryScreen: LibraryScreen
     private lateinit var firstRunSetup: FirstRunSetup
@@ -141,6 +145,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
     private var muted = false
     private var clock = 25
     private var exiting = false
+    private var relocating = false
     private var edgeSwipeX: Float? = null
     private var edgeSwipeY = 0f
     private var edgeSwipeConsumed = false
@@ -196,6 +201,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        if (routeRgDsToUpperDisplay()) return
         if (Build.VERSION.SDK_INT >= 33) {
             onBackInvokedDispatcher.registerOnBackInvokedCallback(
                 OnBackInvokedDispatcher.PRIORITY_DEFAULT) { handleBack() }
@@ -244,6 +250,13 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
                 WindowInsets.Type.navigationBars())
         }
         buildUi()
+        secondaryKeyboard = SecondaryKeyboardDisplay(this, inputRouter) { available ->
+            if (available && keyboardPanel.visibility == View.VISIBLE) {
+                keyboardPanel.close()
+                updateViewport()
+                applyPauseState()
+            }
+        }
         romLibrary = RomLibrary(this)
         controllerEditor = ControllerEditor(this, root,
             ::loadControllerBindings, ::saveControllerBindings, ::resetControllerBindings,
@@ -292,6 +305,33 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
             }
             if (setupStep < 2) firstRunSetup.show(if (setupStep == 0)
                 FirstRunSetup.Step.ROM_FOLDER else FirstRunSetup.Step.FIRMWARE)
+        }
+    }
+
+    private fun routeRgDsToUpperDisplay(): Boolean {
+        if (!Build.MODEL.equals("RG DS", ignoreCase = true) ||
+            intent.getBooleanExtra("kairo98.displayRedirected", false)) return false
+        val displays = (getSystemService(DISPLAY_SERVICE) as DisplayManager).displays
+        val upper = displays.firstOrNull { it.displayId != Display.DEFAULT_DISPLAY &&
+            it.isValid && it.state != Display.STATE_OFF } ?: return false
+        @Suppress("DEPRECATION")
+        val currentId = windowManager.defaultDisplay.displayId
+        if (currentId == upper.displayId) return false
+        return try {
+            val redirected = Intent(intent).apply {
+                setClass(this@MainActivity, MainActivity::class.java)
+                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_MULTIPLE_TASK)
+                putExtra("kairo98.displayRedirected", true)
+            }
+            val options = ActivityOptions.makeBasic().setLaunchDisplayId(upper.displayId)
+            startActivity(redirected, options.toBundle())
+            relocating = true
+            finish()
+            true
+        } catch (_: SecurityException) {
+            false
+        } catch (_: IllegalArgumentException) {
+            false
         }
     }
 
@@ -515,7 +555,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
         if (menuOpen) return
         menuOpen = true
         onScreenControls.refreshVisibility(false)
-        nativePause(true)
+        applyPauseState()
         drawer.scrollTo(0, 0)
         focusMenuItem(0)
         pauseTitle.text = if (userPaused) "▶" else "❚❚"
@@ -554,6 +594,9 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
 
     private fun applyPauseState() {
         val editingControls = ::onScreenControls.isInitialized && onScreenControls.isOpen
+        if (::secondaryKeyboard.isInitialized) secondaryKeyboard.setActive(
+            activityVisible && !libraryVisible && !menuOpen && !editingControls &&
+                !preparingFont && !(::controllerEditor.isInitialized && controllerEditor.isOpen))
         nativePause(userPaused || menuOpen || libraryVisible || !activityVisible || preparingFont ||
             (::controllerEditor.isInitialized && controllerEditor.isOpen) || editingControls)
         if (::onScreenControls.isInitialized) onScreenControls.refreshVisibility(
@@ -866,6 +909,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
         currentGame?.inputMode?.let(InputModeDecider::parse) ?: globalInputMode
 
     private fun showKeyboard() {
+        if (::secondaryKeyboard.isInitialized && secondaryKeyboard.isShowing) return
         if (keyboardPanel.visibility == View.VISIBLE) return
         keyboardPanel.visibility = View.VISIBLE
         updateViewport()
@@ -1862,27 +1906,33 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
     }
 
     override fun onPause() {
+        if (relocating) { super.onPause(); return }
         commandCancelled.set(true)
         releaseInputs()
         activityVisible = false
         applyPauseState()
+        secondaryKeyboard.stop()
         super.onPause()
     }
 
     override fun onResume() {
         super.onResume()
+        if (relocating) return
+        secondaryKeyboard.start(handler)
         activityVisible = true
         applyPauseState()
     }
 
     override fun onConfigurationChanged(newConfig: Configuration) {
         super.onConfigurationChanged(newConfig)
+        if (relocating) return
         loadGraphicsSettings()
         root.post { updateViewport() }
     }
 
     override fun onWindowFocusChanged(hasFocus: Boolean) {
         super.onWindowFocusChanged(hasFocus)
+        if (relocating) return
         if (!hasFocus) {
             commandCancelled.set(true)
             releaseInputs()
@@ -1890,10 +1940,12 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
     }
 
     override fun onDestroy() {
+        if (relocating) { super.onDestroy(); return }
         startGeneration++
         scanCancelled.set(true)
         artworkDownloadCancelled.set(true)
         releaseInputs()
+        secondaryKeyboard.stop()
         inputManager.unregisterInputDeviceListener(inputDeviceListener)
         handler.removeCallbacks(updateStatus)
         handler.removeCallbacks(traceHashes)

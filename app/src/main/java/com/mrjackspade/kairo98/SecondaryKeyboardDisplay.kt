@@ -1,0 +1,119 @@
+package com.mrjackspade.kairo98
+
+import android.app.Activity
+import android.app.Presentation
+import android.content.Context
+import android.graphics.Color
+import android.hardware.display.DisplayManager
+import android.os.Bundle
+import android.os.Handler
+import android.view.Display
+import android.view.View
+import android.view.WindowManager
+import android.widget.FrameLayout
+
+/** Places the guest keyboard on another Android display when one is available. */
+internal class SecondaryKeyboardDisplay(
+    private val activity: Activity,
+    private val input: InputRouter,
+    private val onAvailabilityChanged: (Boolean) -> Unit
+) : DisplayManager.DisplayListener {
+    private val displayManager = activity.getSystemService(Context.DISPLAY_SERVICE) as DisplayManager
+    private var started = false
+    private var active = false
+    private var presentation: KeyboardPresentation? = null
+
+    val isShowing: Boolean get() = presentation?.isShowing == true
+
+    fun start(handler: Handler) {
+        if (started) return
+        started = true
+        displayManager.registerDisplayListener(this, handler)
+        refresh()
+    }
+
+    fun stop() {
+        if (!started) return
+        started = false
+        displayManager.unregisterDisplayListener(this)
+        dismiss()
+    }
+
+    fun setActive(value: Boolean) {
+        active = value
+        refresh()
+    }
+
+    override fun onDisplayAdded(displayId: Int) = refresh()
+    override fun onDisplayRemoved(displayId: Int) = refresh()
+    override fun onDisplayChanged(displayId: Int) = refresh()
+
+    private fun refresh() {
+        if (!started || !active) {
+            dismiss()
+            return
+        }
+        @Suppress("DEPRECATION")
+        val primaryId = activity.windowManager.defaultDisplay.displayId
+        val presentationDisplays = displayManager.getDisplays(DisplayManager.DISPLAY_CATEGORY_PRESENTATION)
+        val target = (presentationDisplays.asList() + displayManager.displays.asList())
+            .firstOrNull { it.displayId != primaryId && it.isValid &&
+                it.state != Display.STATE_OFF }
+        if (target == null) {
+            dismiss()
+            return
+        }
+        if (presentation?.display?.displayId == target.displayId && isShowing) return
+        dismiss()
+        val next = KeyboardPresentation(activity, target, input)
+        try {
+            next.show()
+            presentation = next
+            next.setOnDismissListener {
+                if (presentation === next) {
+                    presentation = null
+                    onAvailabilityChanged(false)
+                }
+            }
+            onAvailabilityChanged(true)
+        } catch (_: WindowManager.InvalidDisplayException) {
+            next.dismiss()
+        } catch (_: SecurityException) {
+            next.dismiss()
+        }
+    }
+
+    private fun dismiss() {
+        val previous = presentation ?: return
+        presentation = null
+        previous.dismiss()
+        onAvailabilityChanged(false)
+    }
+
+    private class KeyboardPresentation(
+        activity: Activity,
+        display: Display,
+        private val input: InputRouter
+    ) : Presentation(activity, display) {
+        private lateinit var keyboard: Pc98KeyboardPanel
+
+        override fun onCreate(savedInstanceState: Bundle?) {
+            super.onCreate(savedInstanceState)
+            window?.addFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN)
+            @Suppress("DEPRECATION")
+            window?.decorView?.systemUiVisibility = View.SYSTEM_UI_FLAG_FULLSCREEN or
+                View.SYSTEM_UI_FLAG_HIDE_NAVIGATION or View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
+            val root = FrameLayout(context).apply { setBackgroundColor(Color.BLACK) }
+            keyboard = Pc98KeyboardPanel(context, input, {}, showClose = false).apply {
+                visibility = View.VISIBLE
+            }
+            root.addView(keyboard, FrameLayout.LayoutParams(-1, -1))
+            setContentView(root)
+        }
+
+        override fun onStop() {
+            if (::keyboard.isInitialized) keyboard.close()
+            super.onStop()
+        }
+    }
+}
