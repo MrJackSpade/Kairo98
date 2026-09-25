@@ -3,6 +3,7 @@ package com.mrjackspade.kairo98
 import android.app.Activity
 import android.app.AlertDialog
 import android.content.Intent
+import android.content.res.Configuration
 import android.graphics.Color
 import android.graphics.BitmapFactory
 import android.graphics.drawable.ColorDrawable
@@ -87,6 +88,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
     private lateinit var keyboardPanel: Pc98KeyboardPanel
     private lateinit var onScreenControls: OnScreenControls
     private lateinit var libraryScreen: LibraryScreen
+    private lateinit var firstRunSetup: FirstRunSetup
     private lateinit var romLibrary: RomLibrary
     private lateinit var controllerEditor: ControllerEditor
     private var libraryVisible = true
@@ -258,21 +260,27 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
         }
         root.addView(swapStatus, FrameLayout.LayoutParams(-2, -2,
             Gravity.TOP or Gravity.CENTER_HORIZONTAL).apply { topMargin = dp(20) })
+        firstRunSetup = FirstRunSetup(this, ::chooseRomFolder, ::advanceFirstRunFirmware,
+            ::chooseBiosFile, ::chooseFontFile, ::finishFirstRun,
+            { biosFile().isFile }, { fontBitmapFile().isFile })
+        root.addView(firstRunSetup, FrameLayout.LayoutParams(-1, -1))
         handler.post(updateStatus)
         root.post {
             val saved = preferences.getString("rom_tree", null)
             romTree = saved?.let(Uri::parse)
+            val setupStep = preferences.getInt("onboarding_step_v1", if (romTree == null) 0 else 2)
             libraryScreen.showFolder(romTree?.let(::folderLabel))
             if (romTree == null) {
                 libraryScreen.showStatus("Choose a ROM folder to find disk images and ZIP games")
-                chooseRomFolder()
             } else if (!hasRomGrant(romTree!!)) {
                 libraryScreen.showStatus("Folder access expired. Select the ROM folder again.")
             } else {
                 libraryEntries = romLibrary.cached(romTree!!)
                 libraryScreen.showEntries(libraryEntries)
-                if (!selectPendingDebugGame()) refreshLibrary(false)
+                if (setupStep >= 2 && !selectPendingDebugGame()) refreshLibrary(false)
             }
+            if (setupStep < 2) firstRunSetup.show(if (setupStep == 0)
+                FirstRunSetup.Step.ROM_FOLDER else FirstRunSetup.Step.FIRMWARE)
         }
     }
 
@@ -529,6 +537,19 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
         }, ROM_FOLDER_REQUEST)
     }
 
+    private fun advanceFirstRunFirmware() {
+        preferences.edit().putInt("onboarding_step_v1", 1).apply()
+        firstRunSetup.show(FirstRunSetup.Step.FIRMWARE)
+    }
+
+    private fun finishFirstRun() {
+        preferences.edit().putInt("onboarding_step_v1", 2).apply()
+        firstRunSetup.close()
+        val tree = romTree
+        if (tree != null && hasRomGrant(tree)) refreshLibrary(false)
+        else libraryScreen.showStatus("Choose a ROM folder from the library menu when you're ready")
+    }
+
     private fun refreshLibrary(forceHash: Boolean) {
         val tree = romTree ?: run {
             libraryScreen.showStatus("Select a ROM folder first")
@@ -726,6 +747,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
         releaseInputs()
         hideKeyboard()
         libraryScreen.closeActions()
+        libraryScreen.closeDetail()
         libraryVisible = true
         closeMenu()
         libraryScreen.visibility = View.VISIBLE
@@ -1392,15 +1414,12 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
     private fun showBiosRom() {
         val installed = biosFile().isFile
         val dialog = AlertDialog.Builder(this).setTitle("BIOS ROM")
-            .setPositiveButton("Choose file") { _, _ ->
-                startActivityForResult(Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
-                    addCategory(Intent.CATEGORY_OPENABLE)
-                    type = "*/*"
-                }, BIOS_REQUEST)
-            }.setNegativeButton("Close", null)
+            .setPositiveButton("Choose file") { _, _ -> chooseBiosFile() }
+            .setNegativeButton("Close", null)
         if (installed) dialog.setNeutralButton("Remove") { _, _ ->
             if (!biosBusy) {
-                if (biosFile().delete()) toast("BIOS ROM removed. Restart the game to apply.")
+                if (biosFile().delete()) toast("BIOS ROM removed" +
+                    if (currentDisk != null) ". Restart the game to apply." else ".")
                 else toast("Could not remove BIOS ROM")
             }
         }
@@ -1409,19 +1428,30 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
 
     private fun showFontBitmap() {
         val dialog = AlertDialog.Builder(this).setTitle("Font BMP")
-            .setPositiveButton("Choose file") { _, _ ->
-                startActivityForResult(Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
-                    addCategory(Intent.CATEGORY_OPENABLE)
-                    type = "*/*"
-                }, FONT_REQUEST)
-            }.setNegativeButton("Close", null)
+            .setPositiveButton("Choose file") { _, _ -> chooseFontFile() }
+            .setNegativeButton("Close", null)
         if (fontBitmapFile().isFile) dialog.setNeutralButton("Remove") { _, _ ->
             if (!fontBusy) {
-                if (fontBitmapFile().delete()) toast("Font BMP removed. Restart the game to apply.")
+                if (fontBitmapFile().delete()) toast("Font BMP removed" +
+                    if (currentDisk != null) ". Restart the game to apply." else ".")
                 else toast("Could not remove Font BMP")
             }
         }
         dialog.showStyled()
+    }
+
+    private fun chooseBiosFile() {
+        startActivityForResult(Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
+            addCategory(Intent.CATEGORY_OPENABLE)
+            type = "*/*"
+        }, BIOS_REQUEST)
+    }
+
+    private fun chooseFontFile() {
+        startActivityForResult(Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
+            addCategory(Intent.CATEGORY_OPENABLE)
+            type = "*/*"
+        }, FONT_REQUEST)
     }
 
     private fun showAudio() {
@@ -1635,6 +1665,11 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
         applyPauseState()
     }
 
+    override fun onConfigurationChanged(newConfig: Configuration) {
+        super.onConfigurationChanged(newConfig)
+        root.post { updateViewport() }
+    }
+
     override fun onWindowFocusChanged(hasFocus: Boolean) {
         super.onWindowFocusChanged(hasFocus)
         if (!hasFocus) {
@@ -1668,9 +1703,12 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
                     preferences.edit().putString("rom_tree", tree.toString()).apply()
                     libraryScreen.showFolder(folderLabel(tree))
                     libraryScreen.showEntries(emptyList())
-                    refreshLibrary(false)
+                    if (firstRunSetup.isChoosingRomFolder) advanceFirstRunFirmware()
+                    else refreshLibrary(false)
                 } catch (error: Exception) {
-                    libraryScreen.showStatus("Cannot keep folder access: ${error.message}")
+                    val message = "Cannot keep folder access: ${error.message}"
+                    libraryScreen.showStatus(message)
+                    if (firstRunSetup.isOpen) toast(message)
                 }
             } else if (romTree == null) {
                 libraryScreen.showStatus("Choose a ROM folder when you're ready")
@@ -1802,6 +1840,8 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
     private fun importBiosRom(uri: Uri) {
         if (biosBusy) return
         biosBusy = true
+        val restartNeeded = currentDisk != null
+        if (firstRunSetup.isOpen) firstRunSetup.setBusy("Importing BIOS ROM…")
         if (menuOpen) menuStatus.text = "Importing BIOS ROM…"
         toast("Importing BIOS ROM")
         Thread {
@@ -1826,12 +1866,15 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
                 }
                 Files.move(partial.toPath(), biosFile().toPath(),
                     StandardCopyOption.REPLACE_EXISTING)
-                "BIOS ROM imported. Restart the game to apply."
+                if (restartNeeded) "BIOS ROM imported. Restart the game to apply."
+                else "BIOS ROM imported."
             } catch (error: Exception) {
                 "BIOS import failed: ${error.message ?: "Unknown error"}"
             } finally { partial.delete() }
             runOnUiThread {
                 biosBusy = false
+                firstRunSetup.setBusy(null)
+                firstRunSetup.refreshFirmware()
                 if (menuOpen) menuStatus.text = result
                 toast(result)
             }
@@ -1841,6 +1884,8 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
     private fun importFontBitmap(uri: Uri) {
         if (fontBusy) return
         fontBusy = true
+        val restartNeeded = currentDisk != null
+        if (firstRunSetup.isOpen) firstRunSetup.setBusy("Importing Font BMP…")
         if (menuOpen) menuStatus.text = "Importing Font BMP…"
         toast("Importing Font BMP")
         Thread {
@@ -1865,12 +1910,15 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
                 Pc98FontBitmap.validate(partial)
                 Files.move(partial.toPath(), fontBitmapFile().toPath(),
                     StandardCopyOption.REPLACE_EXISTING)
-                "Font BMP imported. Restart the game to apply."
+                if (restartNeeded) "Font BMP imported. Restart the game to apply."
+                else "Font BMP imported."
             } catch (error: Exception) {
                 "Font BMP import failed: ${error.message ?: "Unknown error"}"
             } finally { partial.delete() }
             runOnUiThread {
                 fontBusy = false
+                firstRunSetup.setBusy(null)
+                firstRunSetup.refreshFirmware()
                 if (menuOpen) menuStatus.text = result
                 toast(result)
             }
@@ -1923,6 +1971,8 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
     }
 
     override fun dispatchKeyEvent(event: KeyEvent): Boolean {
+        if (::firstRunSetup.isInitialized && firstRunSetup.isOpen)
+            return firstRunSetup.handleKey(event)
         if (::onScreenControls.isInitialized && onScreenControls.isOpen) {
             if (onScreenControls.handleKey(event)) return true
             return super.dispatchKeyEvent(event)
@@ -2006,6 +2056,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
     }
 
     override fun dispatchGenericMotionEvent(event: MotionEvent): Boolean {
+        if (::firstRunSetup.isInitialized && firstRunSetup.isOpen) return true
         if (::onScreenControls.isInitialized && onScreenControls.isOpen) return true
         if (::controllerEditor.isInitialized && controllerEditor.isOpen)
             return controllerEditor.captureMotion(event)
@@ -2014,6 +2065,8 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
     }
 
     override fun dispatchTouchEvent(event: MotionEvent): Boolean {
+        if (::firstRunSetup.isInitialized && firstRunSetup.isOpen)
+            return super.dispatchTouchEvent(event)
         if (::onScreenControls.isInitialized && onScreenControls.isOpen)
             return super.dispatchTouchEvent(event)
         if (::controllerEditor.isInitialized && controllerEditor.isOpen)
@@ -2112,6 +2165,10 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
 
     @Deprecated("The platform Back callback is the reliable menu shortcut on API 26+")
     override fun onBackPressed() {
+        if (::firstRunSetup.isInitialized && firstRunSetup.isOpen) {
+            firstRunSetup.back()
+            return
+        }
         if (::onScreenControls.isInitialized && onScreenControls.isOpen) {
             onScreenControls.back()
             return
