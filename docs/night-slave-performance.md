@@ -1,6 +1,6 @@
 # Night Slave performance investigation
 
-Measured on the Retroid Android device on 2026-09-24 with the same Night Slave HDI and native `-O2` build. Each interval covers 600 emulated frames. The comparison build retained the same temporary profiler, with only the interpreter signal-mask change between runs. The profiler has since been removed from source.
+Measured on the Retroid Android device on 2026-09-24 with the same Night Slave HDI and native `-O2` build. Each interval covers 600 emulated frames. The comparison build retained the same temporary profiler, with only the interpreter signal-mask change between runs. A compact per-frame profiler is now available through the Android debug status for follow-up measurements.
 
 | Combat interval | Before | After |
 | --- | ---: | ---: |
@@ -21,3 +21,15 @@ The actual serial event callback fired about 61 times per emulated frame in both
 Rendering cost about 1–2 ms per combat frame and audio mixing about 0.02–0.03 ms. Moving those operations to separate threads would add synchronization and cannot account for the measured signal-mask cost. The profiler showed AAudio underruns while writes were complete, linking the audible crackle to missed production deadlines rather than partial writes.
 
 The patched build booted Night Slave and reached visible combat on the device. In that run it held 60.0 frames/s in the sampled combat intervals, with 1–5 AAudio underruns per 600 frames. Gameplay was reported as smooth during the device run. Longer play and other games still need regression testing.
+
+## RG DS combat diagnosis, 2026-09-25
+
+`tools/adb_advance_game.ps1` now cold-starts Night Slave, chooses its regular music driver with the catalog's exact-screen matcher, and sends Space from a debug-only app thread every 100 ms. The complete 240-second run sent 2,400 presses in 240.4 seconds. No interval exceeded 125 ms; the longest was 105.2 ms. The saved final frame visibly shows battle. Local evidence is under `.downloads/performance/night-slave/20260925-203302-attempt1/` and is excluded from Git.
+
+For presses 1,600–2,400, the native profiler averaged 29.48 ms in `pccore_exec` per emulated frame, 1.21 ms rendering, and 435 AAudio underruns per 600 emulated frames. All sampled 600-frame battle windows missed the 16.67 ms host frame deadline. Audio mixing rounded below 0.1 ms per frame. The emulator core alone exceeds the frame budget, so moving rendering or mixing off-thread cannot close this gap.
+
+A battle `simpleperf` sample attributed the largest flat CPU shares to event progression (`nevent_progress`, 5.6%), instruction dispatch (`exec_allstep`, 4.9%), instruction fetch (`cpu_codefetch`, 4.8%; protected-mode linear byte fetch, 4.5%), and the interpreter's exception boundary (`sigsetjmp`, 3.4%). The load is spread through the interpreted x86 execution path. A frame-pointer call graph placed about 93% of sampled worker-thread cycles under `pccore_exec`; its nested stacks across `siglongjmp` are not reliable for attributing individual instruction handlers.
+
+A diagnostic build changed only the PC-98 core's debug compiler setting from `-O2` to `-O3`. The same battle window measured 29.69 ms core time and 440 underruns per 600 frames. The compiler setting was restored to `-O2`, and the baseline build was reinstalled. This rules out that compiler setting as a useful fix for this workload.
+
+The next execution change needs a named hot path, an explanation of which guest operation it accelerates without changing guest timing, and a repeat of this automated battle comparison. A focused next measurement is the number of guest instructions, interpreter entries, and code-fetch cache misses per frame. That distinguishes dispatch cost from address-translation misses and helps bound the speedup available from either path. The current profile does not justify changing the scheduler, audio buffering, or guest CPU clock.

@@ -34,30 +34,41 @@ class DebugAutoAdvance(
         val holdNs = minOf(55_000_000L, intervalNs / 2)
         val count = (durationSeconds * 1000L / intervalMs).toInt()
         val started = SystemClock.elapsedRealtimeNanos()
+        var nextTarget = started
+        var previousPress = 0L
         var sent = 0
         var late = 0
         var maxLateNs = 0L
+        var slow = 0
+        var maxGapNs = 0L
         try {
             output.appendText("state\trunning\tcount=$count\tintervalMs=$intervalMs\n")
             while (sent < count && !cancelled) {
-                val target = started + sent * intervalNs
                 while (!cancelled) {
-                    val remaining = target - SystemClock.elapsedRealtimeNanos()
+                    val remaining = nextTarget - SystemClock.elapsedRealtimeNanos()
                     if (remaining <= 0) break
                     LockSupport.parkNanos(remaining)
                 }
                 if (cancelled) break
                 val actual = SystemClock.elapsedRealtimeNanos()
-                val delay = max(0L, actual - target)
+                val delay = max(0L, actual - nextTarget)
                 if (delay > intervalNs) late++
                 maxLateNs = max(maxLateNs, delay)
+                if (previousPress != 0L) {
+                    val gap = actual - previousPress
+                    if (gap > intervalNs * 5 / 4) slow++
+                    maxGapNs = max(maxGapNs, gap)
+                }
+                previousPress = actual
+                nextTarget = max(nextTarget + intervalNs, actual + intervalNs)
                 input.hold(owner, listOf(0x34))
                 LockSupport.parkNanos(holdNs)
                 input.release(owner)
                 sent++
                 if (sent % max(1, 10_000 / intervalMs) == 0 || sent == count) {
                     output.appendText("sample\t$sent\t${(SystemClock.elapsedRealtimeNanos() - started) / 1_000_000}" +
-                        "\tlate=$late\tmaxLateMs=${maxLateNs / 1_000_000.0}\t${status()}\n")
+                        "\tlate=$late\tmaxLateMs=${maxLateNs / 1_000_000.0}" +
+                        "\tslow=$slow\tmaxGapMs=${maxGapNs / 1_000_000.0}\t${status()}\n")
                 }
             }
             output.appendText("state\t${if (cancelled) "cancelled" else "complete"}\t$sent" +

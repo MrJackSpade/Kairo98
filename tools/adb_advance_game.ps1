@@ -2,6 +2,7 @@ param(
     [Parameter(Mandatory = $true)][string]$Serial,
     [ValidateRange(1, 3600)][int]$DurationSeconds = 240,
     [ValidateRange(75, 10000)][int]$IntervalMilliseconds = 100,
+    [ValidateRange(0, 32)][int]$DisplayId = 2,
     [ValidateRange(1, 20)][int]$MaxAttempts = 3,
     [string]$Package = 'com.mrjackspade.kairo98',
     [string]$Activity = 'com.mrjackspade.kairo98/.MainActivity',
@@ -17,6 +18,8 @@ New-Item -ItemType Directory -Force -Path $output | Out-Null
 $expected = [int][Math]::Floor($DurationSeconds * 1000.0 / $IntervalMilliseconds)
 
 function Device([string[]]$arguments) {
+    # adb prints successful pull and simpleperf progress to stderr on Windows.
+    $ErrorActionPreference = 'Continue'
     $result = & $adb -s $Serial @arguments 2>&1
     if ($LASTEXITCODE -ne 0) {
         throw "ADB failed ($LASTEXITCODE): $($arguments -join ' ')`n$($result -join "`n")"
@@ -39,7 +42,8 @@ for ($attempt = 1; $attempt -le $MaxAttempts; $attempt++) {
         [void](Device @('shell', 'am', 'force-stop', $Package))
         [void](Device @('exec-out', 'run-as', $Package, 'rm', '-f',
             'files/performance-auto.txt'))
-        [void](Device @('shell', 'am', 'start', '-n', $Activity,
+        [void](Device @('shell', 'am', 'start', '-S', '--display', "$DisplayId",
+            '-f', '0x10008000', '-n', $Activity,
             '--es', 'kairo98.launchGame', $Game,
             '--es', 'kairo98.startupOption', $StartupOption,
             '--ei', 'kairo98.autoAdvanceSeconds', "$DurationSeconds",
@@ -73,6 +77,8 @@ for ($attempt = 1; $attempt -le $MaxAttempts; $attempt++) {
                     throw "Incomplete key sequence: $complete"
                 }
                 [IO.File]::WriteAllLines((Join-Path $run 'performance-auto.txt'), $metrics)
+                $pidText = [string](Device @('shell', 'pidof', $Package))
+                if ($pidText -notmatch '^\d+') { throw 'App exited before profiling' }
                 $stat = @(Device @('shell', 'simpleperf', 'stat', '--app', $Package,
                     '--duration', '10', '--csv'))
                 [IO.File]::WriteAllLines((Join-Path $run 'simpleperf-stat.csv'), $stat)
@@ -80,7 +86,7 @@ for ($attempt = 1; $attempt -le $MaxAttempts; $attempt++) {
                     [void](Device @('shell', 'simpleperf', 'record', '--app', $Package,
                         '-e', 'cpu-cycles', '-f', '400', '--duration', '10',
                         '-o', '/data/local/tmp/kairo98-perf.data'))
-                    $report = @(Device @('shell', 'simpleperf', 'report', '--stdio',
+                    $report = @(Device @('shell', 'simpleperf', 'report',
                         '-i', '/data/local/tmp/kairo98-perf.data', '--sort', 'symbol'))
                     [IO.File]::WriteAllLines((Join-Path $run 'simpleperf-report.txt'), $report)
                 } catch {
