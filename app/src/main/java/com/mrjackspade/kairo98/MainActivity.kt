@@ -126,6 +126,10 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
     private var traceScreenHashes = false
     private var skipDebugChoices = false
     private var skipDebugCommands = false
+    private var debugStartupOption: String? = null
+    private var debugAdvanceSeconds = 0
+    private var debugAdvanceIntervalMs = 100
+    private var debugAutoAdvance: DebugAutoAdvance? = null
     private var lastTraceSerial = 0L
     private var libraryEntries = emptyList<LibraryEntry>()
     private var pendingDebugGame: String? = null
@@ -211,6 +215,11 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
             traceScreenHashes = intent.getBooleanExtra("kairo98.traceScreenHashes", false)
             skipDebugChoices = intent.getBooleanExtra("kairo98.skipStartupChoices", false)
             skipDebugCommands = intent.getBooleanExtra("kairo98.skipLaunchCommands", false)
+            debugStartupOption = intent.getStringExtra("kairo98.startupOption")
+            debugAdvanceSeconds = intent.getIntExtra("kairo98.autoAdvanceSeconds", 0)
+                .coerceIn(0, 3600)
+            debugAdvanceIntervalMs = intent.getIntExtra("kairo98.autoAdvanceIntervalMs", 100)
+                .coerceIn(75, 10000)
             pendingDebugLaunch = intent.getStringExtra("kairo98.launchGame64")
                 ?.let(::decodeDebugGameQuery) ?: intent.getStringExtra("kairo98.launchGame")
             pendingDebugGame = intent.getStringExtra("kairo98.selectGame64")
@@ -799,6 +808,18 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
             return
         }
         val game = romLibrary.catalog.resolve(entry.contentId!!, entry.displayName)
+        debugStartupOption?.let { requested ->
+            val selected = game.startupChoices.mapNotNull { choice ->
+                choice.options.firstOrNull { it.id == requested }?.let { choice to it }
+            }
+            if (selected.size == game.startupChoices.size) {
+                startEntry(entry, game, selected)
+                return
+            }
+            File(filesDir, "performance-auto.txt").writeText(
+                "state\terror\tstartup option $requested unavailable\n")
+            return
+        }
         if (game.startupChoices.isNotEmpty() && !skipDebugChoices) {
             chooseStartupOptions(entry, game, 0, emptyList())
         } else startEntry(entry, game, emptyList())
@@ -1062,14 +1083,17 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
     }
 
     private fun scheduleStartupSteps(steps: List<StartupHashMatcher.Step>) {
-        if (steps.isEmpty()) return
+        if (steps.isEmpty()) {
+            scheduleDebugAutoAdvance(startGeneration)
+            return
+        }
         val cancelled = AtomicBoolean(false)
         commandCancelled = cancelled
         val generation = startGeneration
         acquireScreenHashes()
         Thread {
             try {
-                StartupHashMatcher(::nativeScreenHashSnapshot, ::nativeDosPromptReady,
+                val ready = StartupHashMatcher(::nativeScreenHashSnapshot, ::nativeDosPromptReady,
                     { nativeStatus().startsWith("Running") },
                     { cancelled.get() || generation != startGeneration },
                     { step -> sendStartupKeys(step, cancelled, generation) },
@@ -1077,6 +1101,8 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
                         if (!cancelled.get() && generation == startGeneration)
                             showStartupTimeout(steps, step)
                     } }).run(steps)
+                if (ready && !cancelled.get() && generation == startGeneration)
+                    scheduleDebugAutoAdvance(generation)
             } catch (error: Exception) {
                 runOnUiThread {
                     if (!cancelled.get() && generation == startGeneration)
@@ -1087,6 +1113,17 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
                 releaseScreenHashes()
             }
         }.start()
+    }
+
+    private fun scheduleDebugAutoAdvance(generation: Int) {
+        if (debugAdvanceSeconds <= 0) return
+        handler.postDelayed({
+            if (generation != startGeneration || libraryVisible) return@postDelayed
+            debugAutoAdvance?.cancel()
+            debugAutoAdvance = DebugAutoAdvance(inputRouter, ::nativeStatus,
+                File(filesDir, "performance-auto.txt"), debugAdvanceSeconds,
+                debugAdvanceIntervalMs).also { it.start() }
+        }, 2000)
     }
 
     private fun sendStartupKeys(step: StartupHashMatcher.Step, cancelled: AtomicBoolean,
@@ -1820,6 +1857,8 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
     }
 
     private fun releaseInputs() {
+        debugAutoAdvance?.cancel()
+        debugAutoAdvance = null
         gamepadMapper.releaseAll()
         inputRouter.releaseAll()
         pendingMouseHold?.let(handler::removeCallbacks)
