@@ -47,6 +47,7 @@ jobs:
           fi
           echo "KAIRO98_VERSION_NAME=$version" >> "$GITHUB_ENV"
           echo "KAIRO98_VERSION_CODE=$GITHUB_RUN_NUMBER" >> "$GITHUB_ENV"
+          echo "KAIRO98_ARTIFACT_REF=${GITHUB_REF_NAME//\//-}" >> "$GITHUB_ENV"
       - name: Prepare persistent beta signing key
         env:
           KEYSTORE_B64: ${{ secrets.KAIRO98_BETA_KEYSTORE_B64 }}
@@ -89,13 +90,13 @@ jobs:
           app/build/outputs/apk/withoutImages/debug/app-withoutImages-debug.apk
       - uses: actions/upload-artifact@v4
         with:
-          name: kairo98-${{ github.ref_name }}-with-images
+          name: kairo98-${{ env.KAIRO98_ARTIFACT_REF }}-with-images
           path: app/build/outputs/apk/withImages/debug/app-withImages-debug.apk
           if-no-files-found: error
           retention-days: 30
       - uses: actions/upload-artifact@v4
         with:
-          name: kairo98-${{ github.ref_name }}-without-images
+          name: kairo98-${{ env.KAIRO98_ARTIFACT_REF }}-without-images
           path: app/build/outputs/apk/withoutImages/debug/app-withoutImages-debug.apk
           if-no-files-found: error
           retention-days: 30
