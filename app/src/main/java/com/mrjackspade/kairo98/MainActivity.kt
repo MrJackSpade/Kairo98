@@ -1912,12 +1912,27 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
 
     override fun onPause() {
         if (relocating) { super.onPause(); return }
+        if (::secondaryKeyboard.isInitialized && secondaryKeyboard.isCompanionActive) {
+            super.onPause()
+            return
+        }
         commandCancelled.set(true)
         releaseInputs()
         activityVisible = false
         applyPauseState()
         secondaryKeyboard.stop()
         super.onPause()
+    }
+
+    override fun onStop() {
+        if (!relocating) {
+            commandCancelled.set(true)
+            releaseInputs()
+            activityVisible = false
+            applyPauseState()
+            secondaryKeyboard.stop()
+        }
+        super.onStop()
     }
 
     override fun onResume() {

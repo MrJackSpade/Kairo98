@@ -1,8 +1,10 @@
 package com.mrjackspade.kairo98
 
 import android.app.Activity
+import android.app.ActivityOptions
 import android.app.Presentation
 import android.content.Context
+import android.content.Intent
 import android.graphics.Color
 import android.hardware.display.DisplayManager
 import android.os.Bundle
@@ -24,9 +26,13 @@ internal class SecondaryKeyboardDisplay(
     private var keyboardVisible = false
     private var backgroundColor = Color.BLACK
     private var presentation: KeyboardPresentation? = null
+    private var companion: SecondaryKeyboardActivity? = null
+    private var companionStarting = false
 
-    val isShowing: Boolean get() = presentation?.isShowing == true
+    val isShowing: Boolean get() = presentation?.isShowing == true ||
+        companion?.isFinishing == false
     val isKeyboardVisible: Boolean get() = isShowing && keyboardVisible
+    val isCompanionActive: Boolean get() = companionStarting || companion != null
 
     fun start(handler: Handler) {
         if (started) return
@@ -46,7 +52,8 @@ internal class SecondaryKeyboardDisplay(
         keyboardVisible = showKeyboard
         backgroundColor = color
         refresh()
-        presentation?.setAppearance(keyboardVisible, backgroundColor)
+        presentation?.content?.setAppearance(keyboardVisible, backgroundColor)
+        companion?.setAppearance(keyboardVisible, backgroundColor)
     }
 
     override fun onDisplayAdded(displayId: Int) = refresh()
@@ -67,13 +74,20 @@ internal class SecondaryKeyboardDisplay(
             dismiss()
             return
         }
+        if (target.displayId == Display.DEFAULT_DISPLAY) {
+            dismissPresentation()
+            if (companion != null || companionStarting) return
+            launchCompanion(target)
+            return
+        }
+        dismissCompanion()
         if (presentation?.display?.displayId == target.displayId && isShowing) return
-        dismiss()
+        dismissPresentation()
         val next = KeyboardPresentation(activity, target, input)
         try {
             next.show()
             presentation = next
-            next.setAppearance(keyboardVisible, backgroundColor)
+            next.content.setAppearance(keyboardVisible, backgroundColor)
             next.setOnDismissListener {
                 if (presentation === next) {
                     presentation = null
@@ -90,11 +104,65 @@ internal class SecondaryKeyboardDisplay(
         }
     }
 
+    private fun launchCompanion(target: Display) {
+        companionStarting = true
+        pendingCompanion = this
+        try {
+            val intent = Intent(activity, SecondaryKeyboardActivity::class.java).apply {
+                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_MULTIPLE_TASK)
+            }
+            val options = ActivityOptions.makeBasic().setLaunchDisplayId(target.displayId)
+            activity.startActivity(intent, options.toBundle())
+        } catch (error: RuntimeException) {
+            companionStarting = false
+            if (pendingCompanion === this) pendingCompanion = null
+            Log.w("Kairo98", "Could not open keyboard activity on display ${target.displayId}", error)
+        }
+    }
+
+    internal fun attachCompanion(value: SecondaryKeyboardActivity): Pc98KeyboardPanel {
+        companionStarting = false
+        companion = value
+        onAvailabilityChanged(true)
+        return Pc98KeyboardPanel(value, input, {}, showClose = false)
+    }
+
+    internal fun updateCompanion(value: SecondaryKeyboardActivity) {
+        if (companion === value) value.setAppearance(keyboardVisible, backgroundColor)
+    }
+
+    internal fun detachCompanion(value: SecondaryKeyboardActivity) {
+        if (companion !== value) return
+        companion = null
+        if (pendingCompanion === this) pendingCompanion = null
+        onAvailabilityChanged(false)
+    }
+
     private fun dismiss() {
+        dismissPresentation()
+        dismissCompanion()
+    }
+
+    private fun dismissPresentation() {
         val previous = presentation ?: return
         presentation = null
         previous.dismiss()
         onAvailabilityChanged(false)
+    }
+
+    private fun dismissCompanion() {
+        val previous = companion
+        companion = null
+        companionStarting = false
+        if (pendingCompanion === this) pendingCompanion = null
+        if (previous != null) {
+            previous.finish()
+            onAvailabilityChanged(false)
+        }
+    }
+
+    companion object {
+        internal var pendingCompanion: SecondaryKeyboardDisplay? = null
     }
 
     private class KeyboardPresentation(
@@ -102,8 +170,8 @@ internal class SecondaryKeyboardDisplay(
         display: Display,
         private val input: InputRouter
     ) : Presentation(activity, display) {
-        private lateinit var root: FrameLayout
-        private lateinit var keyboard: Pc98KeyboardPanel
+        lateinit var content: SecondaryKeyboardContent
+            private set
 
         override fun onCreate(savedInstanceState: Bundle?) {
             super.onCreate(savedInstanceState)
@@ -111,24 +179,30 @@ internal class SecondaryKeyboardDisplay(
             @Suppress("DEPRECATION")
             window?.decorView?.systemUiVisibility = View.SYSTEM_UI_FLAG_FULLSCREEN or
                 View.SYSTEM_UI_FLAG_HIDE_NAVIGATION or View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
-            root = FrameLayout(context).apply { setBackgroundColor(Color.BLACK) }
-            keyboard = Pc98KeyboardPanel(context, input, {}, showClose = false).apply {
-                visibility = View.GONE
-            }
-            root.addView(keyboard, FrameLayout.LayoutParams(-1, -1))
-            setContentView(root)
-        }
-
-        fun setAppearance(showKeyboard: Boolean, color: Int) {
-            if (!::root.isInitialized) return
-            root.setBackgroundColor(color)
-            if (showKeyboard) keyboard.visibility = View.VISIBLE
-            else if (keyboard.visibility == View.VISIBLE) keyboard.close()
+            content = SecondaryKeyboardContent(context,
+                Pc98KeyboardPanel(context, input, {}, showClose = false))
+            setContentView(content)
         }
 
         override fun onStop() {
-            if (::keyboard.isInitialized) keyboard.close()
+            if (::content.isInitialized) content.close()
             super.onStop()
         }
     }
+}
+
+internal class SecondaryKeyboardContent(context: Context, private val keyboard: Pc98KeyboardPanel) :
+    FrameLayout(context) {
+    init {
+        setBackgroundColor(Color.BLACK)
+        addView(keyboard, LayoutParams(-1, -1))
+    }
+
+    fun setAppearance(showKeyboard: Boolean, color: Int) {
+        setBackgroundColor(color)
+        if (showKeyboard) keyboard.visibility = View.VISIBLE
+        else if (keyboard.visibility == View.VISIBLE) keyboard.close()
+    }
+
+    fun close() = keyboard.close()
 }
