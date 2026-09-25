@@ -7,6 +7,7 @@ import android.graphics.Color
 import android.hardware.display.DisplayManager
 import android.os.Bundle
 import android.os.Handler
+import android.util.Log
 import android.view.Display
 import android.view.View
 import android.view.WindowManager
@@ -57,8 +58,7 @@ internal class SecondaryKeyboardDisplay(
             dismiss()
             return
         }
-        @Suppress("DEPRECATION")
-        val primaryId = activity.windowManager.defaultDisplay.displayId
+        val primaryId = activity.window.decorView.display?.displayId ?: Display.DEFAULT_DISPLAY
         val presentationDisplays = displayManager.getDisplays(DisplayManager.DISPLAY_CATEGORY_PRESENTATION)
         val target = (presentationDisplays.asList() + displayManager.displays.asList())
             .firstOrNull { it.displayId != primaryId && it.isValid &&
@@ -81,9 +81,11 @@ internal class SecondaryKeyboardDisplay(
                 }
             }
             onAvailabilityChanged(true)
-        } catch (_: WindowManager.InvalidDisplayException) {
+        } catch (error: WindowManager.InvalidDisplayException) {
+            Log.w("Kairo98", "Secondary keyboard rejected display ${target.displayId}; game display $primaryId", error)
             next.dismiss()
-        } catch (_: SecurityException) {
+        } catch (error: SecurityException) {
+            Log.w("Kairo98", "Secondary keyboard cannot use display ${target.displayId}", error)
             next.dismiss()
         }
     }
