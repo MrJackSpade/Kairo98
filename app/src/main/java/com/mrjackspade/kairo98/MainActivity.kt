@@ -1143,7 +1143,10 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
                 val larger = try { fetchLargerArt(url) } catch (_: Exception) { null }
                 runOnUiThread {
                     if (dialog.isShowing) {
-                        if (larger == null) hint.text = "Could not load larger image"
+                        if (larger == null) {
+                            hint.text = "Could not load larger image"
+                            view.isEnabled = true
+                        }
                         else {
                             view.setImageBitmap(larger)
                             hint.text = "Larger image loaded"
@@ -1162,14 +1165,18 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
         connection.readTimeout = 20000
         try {
             if (connection.responseCode != HttpURLConnection.HTTP_OK ||
-                connection.contentLengthLong > 16L * 1024 * 1024) return null
+                connection.contentLengthLong > 16L * 1024 * 1024) {
+                return null
+            }
             val bytes = ByteArrayOutputStream()
             connection.inputStream.use { input ->
                 val buffer = ByteArray(8192)
                 while (true) {
                     val count = input.read(buffer)
                     if (count < 0) break
-                    if (bytes.size() + count > 16 * 1024 * 1024) return null
+                    if (bytes.size() + count > 16 * 1024 * 1024) {
+                        return null
+                    }
                     bytes.write(buffer, 0, count)
                 }
             }
@@ -1177,8 +1184,10 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
             val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
             BitmapFactory.decodeByteArray(data, 0, data.size, bounds)
             if (bounds.outWidth < 1 || bounds.outHeight < 1 ||
-                bounds.outWidth.toLong() * bounds.outHeight > 32_000_000L) return null
-            val options = BitmapFactory.Options()
+                bounds.outWidth.toLong() * bounds.outHeight > 32_000_000L) {
+                return null
+            }
+            val options = BitmapFactory.Options().apply { inSampleSize = 1 }
             while (bounds.outWidth / options.inSampleSize > 2048 ||
                 bounds.outHeight / options.inSampleSize > 2048) options.inSampleSize *= 2
             return BitmapFactory.decodeByteArray(data, 0, data.size, options)
@@ -1987,6 +1996,10 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
             if (controllerEditor.handleKey(event)) return true
             return super.dispatchKeyEvent(event)
         }
+        if (event.keyCode == KeyEvent.KEYCODE_BACK) {
+            if (event.action == KeyEvent.ACTION_DOWN && event.repeatCount == 0) handleBack()
+            return true
+        }
         if (libraryVisible) {
             val control = uiControl(event)
             if (libraryScreen.detailOpen) {
@@ -2027,8 +2040,6 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
         }
         if ((event.keyCode == KeyEvent.KEYCODE_BUTTON_MODE &&
             !gamepadMapper.hasButton(event.keyCode)) ||
-            (event.keyCode == KeyEvent.KEYCODE_BACK &&
-                !gamepadMapper.hasButton(event.keyCode)) ||
             event.keyCode == KeyEvent.KEYCODE_MENU || event.keyCode == KeyEvent.KEYCODE_HOME) {
             if (event.action == KeyEvent.ACTION_DOWN && event.repeatCount == 0) {
                 if (menuOpen) closeMenu() else openMenu()
