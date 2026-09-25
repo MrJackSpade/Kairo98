@@ -18,4 +18,4 @@ The test program [`tools/ymfm_smoke.cpp`](../tools/ymfm_smoke.cpp) runs directly
 
 ## Redistribution
 
-The APK contains one native library and the `THIRD_PARTY_NOTICES.txt` asset. About → Licenses displays the notice. `tools/generate_third_party_notices.ps1` regenerates it from the pinned 21/W, ymfm, and Spleen license files. `tools/audit_distribution.ps1` checks compile paths and flags, forbidden package entries, notices, native library parity, and shared asset parity. No BIOS, font ROM, operating system, or game media is bundled.
+The APK contains one native library and the `THIRD_PARTY_NOTICES.txt` asset. About → Licenses displays the notice. `tools/generate_third_party_notices.ps1` regenerates it from the pinned 21/W, ymfm, Spleen, and Android NDK LLVM notice files. `tools/audit_distribution.ps1` checks compile paths and flags, forbidden package entries, notices, native library parity, and shared asset parity. No BIOS, font ROM, operating system, or game media is bundled.

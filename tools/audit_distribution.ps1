@@ -39,6 +39,12 @@ if ($ymfm.Count -ne 3 -or @($hostSources | Where-Object { $_ -match '/ymfm_bridg
 }
 
 Add-Type -AssemblyName System.IO.Compression.FileSystem
+$noticeFile = [System.IO.File]::OpenRead((Join-Path $root 'app/src/main/assets/THIRD_PARTY_NOTICES.txt'))
+try { $expectedNoticeHash = Sha256 $noticeFile } finally { $noticeFile.Dispose() }
+$noticeText = [System.IO.File]::ReadAllText((Join-Path $root 'app/src/main/assets/THIRD_PARTY_NOTICES.txt'))
+if ($noticeText -notmatch 'Android NDK 28\.2\.13676358 LLVM' -or $noticeText -notmatch 'libc\+\+abi') {
+    throw 'Static C++ runtime notice missing'
+}
 $packages = @()
 $sharedAssets = @{}
 $nativeHashes = @()
@@ -70,6 +76,9 @@ foreach ($relativePath in @($apkPaths) + @($bundlePaths)) {
             try { $assetHashes[$entry.FullName.Substring($prefix.Length)] = Sha256 $stream } finally { $stream.Dispose() }
         }
         $sharedAssets[$relativePath] = $assetHashes
+        if ($assetHashes['assets/THIRD_PARTY_NOTICES.txt'] -ne $expectedNoticeHash) {
+            throw "Packaged notices differ from source in $relativePath"
+        }
         $packages += [pscustomobject]@{
             path = $relativePath
             sha256 = $apkHash

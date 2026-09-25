@@ -6,7 +6,7 @@ Audited 25 September 2026 against two locally built `0.2.0-ymfm-dev` debug APKs 
 
 The Android CMake compile database lists 234 translation units: 221 from the pinned 21/W rev104 BSD-only snapshot, three from pinned ymfm commit `81aec25ccbb98f4873a255f7551ac4dadac59b4a`, and ten project-owned Android adapter files. The core is built for arm64, Android API 26, portable IA-32, with `SUPPORT_YMFM` and without `SUPPORT_FMGEN`, `USE_MAME`, GPL MAME, or DOSBox FPU definitions. The compiled 21/W sources include `fpdummy.c` and SIMD stubs, so their notices apply. `lio/gcircle.c` invokes its MIT notice. No `sound/fmgen`, GPL `sound/mame`, DOSBox FPU, or `np2tool` translation unit is compiled. `tools/audit_distribution.ps1` checks the selected source paths and definitions against `compile_commands.json`.
 
-The generated Spleen 8x16 ASCII glyph table derives from pinned commit `57f9219328c9f5873085320fe8bc8f7dd34b8791`. The binary notices include the relevant 21/W base, IA-32, FPU, SIMD, and LIO texts, plus the full [ymfm BSD-3-Clause license](https://github.com/aaronsgiles/ymfm/blob/main/LICENSE) and [Spleen BSD-2-Clause license](https://github.com/fcambus/spleen/blob/master/LICENSE). `tools/generate_third_party_notices.ps1` assembles `app/src/main/assets/THIRD_PARTY_NOTICES.txt` from those pinned files. Both APKs and AABs include the same notice asset, accessible in About → Licenses. Neither Neko Project 21/W nor ymfm is used as the app's brand.
+The generated Spleen 8x16 ASCII glyph table derives from pinned commit `57f9219328c9f5873085320fe8bc8f7dd34b8791`. The binary notices include the relevant 21/W base, IA-32, FPU, SIMD, and LIO texts, plus the full [ymfm BSD-3-Clause license](https://github.com/aaronsgiles/ymfm/blob/main/LICENSE) and [Spleen BSD-2-Clause license](https://github.com/fcambus/spleen/blob/master/LICENSE). The C++ runtime is statically linked from Android NDK 28.2.13676358, so the pinned NDK LLVM toolchain `NOTICE` is included as well; it covers LLVM exception and legacy libc++/libc++abi terms. `tools/generate_third_party_notices.ps1` assembles `app/src/main/assets/THIRD_PARTY_NOTICES.txt` from those pinned files. Both APKs and AABs include the same notice asset, accessible in About → Licenses. Neither Neko Project 21/W nor ymfm is used as the app's brand.
 
 The sole packaged native library is `lib/arm64-v8a/libkairo98.so`; `llvm-readelf` reports only Android platform dependencies (`liblog`, `libandroid`, `libaaudio`, `libm`, `libdl`, `libc`). C++ is linked statically. The Gradle app module declares no external runtime libraries. Android Gradle Plugin, Kotlin, Gradle, JDK, SDK, and NDK are build tools rather than bundled app code.
 
@@ -16,12 +16,12 @@ The sole packaged native library is `lib/arm64-v8a/libkairo98.so`; `llvm-readelf
 
 | Variant | Package SHA-256 | Size | Assets | Native library SHA-256 |
 | --- | --- | ---: | ---: | --- |
-| withImages debug APK | `3cc28b85ae62e01ce774d71184eb7dca6d34d08fae6ce1f553acad14340abe0c` | 121,529,944 bytes | 6,273 | `d5c46af8f70001003e51e5e2ddea2a2345f54b6a2470bf2d17a0a663780aabde` |
-| withoutImages debug APK | `b283da94d8cd0a0c15930aa2ee8667a6e6f9ccbe1f79fc2aa71630b0a7c410ab` | 5,024,770 bytes | 149 | same debug library |
-| withImages release AAB | `9e4349dc8581842a69b8c1fc8b8b6e6f137ef36880a4f080811991d309f1ad89` | 119,409,034 bytes | 6,273 | `22d5306b1c68f0373b3ad046d0312fc7c57564a6954ff10159f1572739ed0df5` |
-| withoutImages release AAB | `93199c1f130e84b020b11ed594a8aad4821acf71b8aef2bc3fde7aace4a921e5` | 2,652,850 bytes | 149 | same release library |
+| withImages debug APK | `afa89920aa5aaeadabf01fe4b8e3a9e92534b5697fc23cabbee3d74e14ceec96` | 121,529,944 bytes | 6,273 | `d5c46af8f70001003e51e5e2ddea2a2345f54b6a2470bf2d17a0a663780aabde` |
+| withoutImages debug APK | `4219de2afe3132908a23c6a203f907c217fe2d77881fa09ec69e44773d969734` | 5,024,770 bytes | 149 | same debug library |
+| withImages release AAB | `4c153545e741e793e99a25dd0a69e01d7591af16310ec4a997b73560371c85e1` | 119,416,039 bytes | 6,273 | `22d5306b1c68f0373b3ad046d0312fc7c57564a6954ff10159f1572739ed0df5` |
+| withoutImages release AAB | `d3ca439444290e1a173327a589fbda24fc017aff8c9651f38be56b0d0722da50` | 2,659,855 bytes | 149 | same release library |
 
-Each variant pair has 149 identical non-artwork assets, including notice SHA-256 `a7c61565dfc8535c6f78a080a61776fee0c479f1821253e59b1ae1b61acbe327`. No BIOS, font ROM, operating system, game image, fmgen, GPL MAME, or DOSBox FPU file was found in any inspected package. User-supplied BIOS and test games remain outside Git and the packages. These release AABs are local unsigned audit artifacts, not published Play binaries.
+Each variant pair has 149 identical non-artwork assets, including notice SHA-256 `c18e990fa124eca8f0767c3a95ccf4474eddae3135c483a4f9ce2befc6a0d3b6`. No BIOS, font ROM, operating system, game image, fmgen, GPL MAME, or DOSBox FPU file was found in any inspected package. User-supplied BIOS and test games remain outside Git and the packages. These release AABs are local unsigned audit artifacts, not published Play binaries.
 
 ## Open distribution questions
 

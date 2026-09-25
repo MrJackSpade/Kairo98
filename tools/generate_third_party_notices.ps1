@@ -7,11 +7,12 @@ $notices = @(
     @('Neko Project 21/W SIMD stubs', 'third_party/np21w/LICENSES/LICENSE-I386C-SIMD.TXT', 932),
     @('Neko Project 21/W LIO', 'third_party/np21w/LICENSES/LICENSE-LIO.TXT', 932),
     @('ymfm', 'third_party/ymfm/LICENSE', 65001),
-    @('Spleen 8x16 bitmap font', 'third_party/spleen/LICENSE', 65001)
+    @('Spleen 8x16 bitmap font', 'third_party/spleen/LICENSE', 65001),
+    @('Android NDK 28.2.13676358 LLVM toolchain and statically linked C++ runtime', 'third_party/android-ndk-llvm-28.2.13676358/NOTICE', 65001)
 )
 $content = [System.Text.StringBuilder]::new()
 [void]$content.AppendLine('Kairo98 third-party notices')
-[void]$content.AppendLine('These notices apply to the emulator code and generated Spleen font bundled in this APK.')
+[void]$content.AppendLine('These notices apply to the emulator code, generated font, and statically linked C++ runtime in this package.')
 foreach ($notice in $notices) {
     $title, $relativePath, $codePage = $notice
     $path = Join-Path $root $relativePath

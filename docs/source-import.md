@@ -25,6 +25,7 @@ The ASCII ANK glyphs use [Spleen 8x16](https://github.com/fcambus/spleen), pinne
 | 21/W BSD-only source | rev104 | Outer ZIP SHA-256 `0630a6f7bc794e9e8a96a090b1a80434f912b6f0c14f744e07e7932e26d0d3fb`; nested source ZIP SHA-256 `5ef56e04c8304b5af527072b3ca356ecd865e11fb293da5eea6a9962b2d491ab` | Current Android compile inputs and notices audited in [licensing.md](licensing.md) | Yes, 2026-09-22 |
 | ymfm | `81aec25ccbb98f4873a255f7551ac4dadac59b4a` | ZIP SHA-256 `5be43559f608e53008b6ab742bcb11acfa1f97fc0e24d42e6b36745e49f94f7a` | BSD-3-Clause license and compiled sources audited | Yes, 2026-09-22 |
 | Spleen 8x16 | `57f9219328c9f5873085320fe8bc8f7dd34b8791` | BDF SHA-256 `b38b32a66920068965a3101f98071d310c5c74659fe86e55d346140770f8f6e8` | BSD-2-Clause notice packaged and audited | Yes, 2026-09-23 |
+| Android NDK LLVM runtime notice | NDK `28.2.13676358` | Toolchain `NOTICE` SHA-256 `f96f763beb66a7ba7a667647fc64c0226ace875e590c831fdd9579ec1c1d91e1` | Includes the LLVM exception and libc++/libc++abi notices for the statically linked runtime | Yes, 2026-09-25 |
 
 21/W archive: <https://drive.google.com/file/d/14_byhfNHKf06-nmC60svoGRehaMniL4D/view?usp=drive_link>. ymfm archive: <https://github.com/aaronsgiles/ymfm/archive/81aec25ccbb98f4873a255f7551ac4dadac59b4a.zip>.
 
