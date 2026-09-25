@@ -2,6 +2,7 @@ package com.mrjackspade.kairo98
 
 import android.app.Activity
 import android.content.SharedPreferences
+import android.content.res.Configuration
 import android.graphics.Color
 import android.graphics.drawable.GradientDrawable
 import android.view.Gravity
@@ -24,6 +25,11 @@ class OnScreenControls(
     private val preferences: SharedPreferences,
     private val onVisibilityChanged: () -> Unit
 ) {
+    private enum class LayoutOrientation(val label: String, val preference: String) {
+        PORTRAIT("Portrait", "onscreen_layout_portrait_v2"),
+        LANDSCAPE("Landscape", "onscreen_layout_landscape_v2")
+    }
+
     private data class Spec(val id: String, val label: String, val group: String,
                             val x: Float, val y: Float, val shown: Boolean)
     private data class State(var shown: Boolean, var x: Float, var y: Float)
@@ -49,7 +55,23 @@ class OnScreenControls(
         Spec("rsleft", "R←", "RIGHT STICK", .63f, .41f, false),
         Spec("rsright", "R→", "RIGHT STICK", .75f, .41f, false)
     )
-    private val states = LinkedHashMap<String, State>()
+    private val portraitPositions = mapOf(
+        "up" to (.18f to .62f), "down" to (.18f to .78f),
+        "left" to (.09f to .70f), "right" to (.27f to .70f),
+        "a" to (.84f to .77f), "b" to (.92f to .69f),
+        "x" to (.76f to .69f), "y" to (.84f to .61f),
+        "l1" to (.12f to .44f), "r1" to (.88f to .44f),
+        "l2" to (.12f to .53f), "r2" to (.88f to .53f),
+        "start" to (.59f to .91f), "select" to (.41f to .91f),
+        "menu" to (.50f to .54f),
+        "rsup" to (.51f to .66f), "rsdown" to (.51f to .78f),
+        "rsleft" to (.45f to .72f), "rsright" to (.57f to .72f)
+    )
+    private val layouts = LayoutOrientation.entries.associateWith { LinkedHashMap<String, State>() }
+    private var orientation = if (activity.resources.configuration.orientation ==
+        Configuration.ORIENTATION_PORTRAIT) LayoutOrientation.PORTRAIT
+        else LayoutOrientation.LANDSCAPE
+    private val states: LinkedHashMap<String, State> get() = layouts.getValue(orientation)
     private val buttons = LinkedHashMap<String, TextView>()
     private val heldPointers = HashMap<String, MutableSet<Int>>()
     private val overlay = FrameLayout(activity).apply {
@@ -61,6 +83,7 @@ class OnScreenControls(
     private var page: LinearLayout? = null
     private var settingsBody: LinearLayout? = null
     private var settingsScroll: ScrollView? = null
+    private var settingsTitle: TextView? = null
     private var arrangement: FrameLayout? = null
     private var requestedVisible = false
     private var enabled = preferences.getBoolean("onscreen_enabled",
@@ -74,7 +97,7 @@ class OnScreenControls(
     val isOpen: Boolean get() = page != null
 
     init {
-        loadLayout()
+        loadLayouts()
         root.addView(overlay, FrameLayout.LayoutParams(-1, -1))
         specs.forEach { spec ->
             buttons[spec.id] = controlView(spec, false).also {
@@ -107,6 +130,7 @@ class OnScreenControls(
 
     fun show() {
         if (isOpen) return
+        positionAll()
         val settings = LinearLayout(activity).apply {
             orientation = LinearLayout.VERTICAL
             setBackgroundColor(0xff10151d.toInt())
@@ -127,12 +151,13 @@ class OnScreenControls(
             gravity = Gravity.CENTER
             setOnClickListener { back() }
         }, LinearLayout.LayoutParams(dp(100), dp(48)))
-        bar.addView(TextView(activity).apply {
-            text = "On-screen controls"
+        settingsTitle = TextView(activity).apply {
+            text = "Controls · ${orientation.label}"
             textSize = 23f
             setTextColor(Color.WHITE)
             gravity = Gravity.CENTER_VERTICAL
-        }, LinearLayout.LayoutParams(0, dp(48), 1f))
+        }
+        bar.addView(settingsTitle, LinearLayout.LayoutParams(0, dp(48), 1f))
         settings.addView(bar)
         val body = LinearLayout(activity).apply {
             orientation = LinearLayout.VERTICAL
@@ -165,6 +190,7 @@ class OnScreenControls(
         page = null
         settingsBody = null
         settingsScroll = null
+        settingsTitle = null
         refreshVisibility(requestedVisible)
         onVisibilityChanged()
     }
@@ -183,7 +209,7 @@ class OnScreenControls(
         val body = settingsBody ?: return
         val scrollY = settingsScroll?.scrollY ?: 0
         body.removeAllViews()
-        note(body, "Use touch buttons while playing. Each button follows the Global or This game controller mapping.")
+        note(body, "Edit ${orientation.label.lowercase()} buttons here. Positions and visible buttons are saved separately for portrait and landscape. Each button follows the Global or This game controller mapping.")
         row(body, "Show on-screen controls", if (enabled) "On" else "Off") {
             enabled = !enabled
             preferences.edit().putBoolean("onscreen_enabled", enabled).apply()
@@ -205,7 +231,8 @@ class OnScreenControls(
         section(body, "RESET")
         row(body, "Reset positions", "Restore the standard layout") {
             specs.forEach { spec ->
-                states.getValue(spec.id).apply { x = spec.x; y = spec.y }
+                val default = defaultPosition(spec, orientation)
+                states.getValue(spec.id).apply { x = default.first; y = default.second }
             }
             saveLayout()
             positionAll()
@@ -336,6 +363,17 @@ class OnScreenControls(
 
     private fun positionAll() {
         if (root.width <= 0 || root.height <= 0) return
+        val next = if (root.height > root.width) LayoutOrientation.PORTRAIT
+            else LayoutOrientation.LANDSCAPE
+        if (next != orientation) {
+            orientation = next
+            mapper.releaseOnScreen()
+            heldPointers.values.forEach(MutableSet<Int>::clear)
+            buttons.values.forEach { it.isPressed = false; it.alpha = .72f }
+            settingsTitle?.text = "Controls · ${orientation.label}"
+            if (isOpen) renderSettings()
+            rebuildArrangementButtons()
+        }
         buttons.forEach { (id, view) ->
             val state = states.getValue(id)
             view.visibility = if (state.shown) View.VISIBLE else View.GONE
@@ -350,6 +388,16 @@ class OnScreenControls(
         }
     }
 
+    private fun rebuildArrangementButtons() {
+        val layer = arrangement ?: return
+        val bar = layer.getChildAt(layer.childCount - 1)
+        layer.removeAllViews()
+        specs.filter { states.getValue(it.id).shown }.forEach { spec ->
+            layer.addView(controlView(spec, true))
+        }
+        layer.addView(bar)
+    }
+
     private fun position(view: View, state: State, width: Int, height: Int) {
         val size = dp(54)
         val left = (state.x * width - size / 2f).roundToInt().coerceIn(0, (width - size).coerceAtLeast(0))
@@ -362,19 +410,29 @@ class OnScreenControls(
         view.layoutParams = params
     }
 
-    private fun loadLayout() {
-        val stored = try { JSONObject(preferences.getString("onscreen_layout_v1", "{}") ?: "{}") }
-            catch (_: Exception) { JSONObject() }
-        val controls = stored.optJSONObject("controls")
-        for (spec in specs) {
-            val item = controls?.optJSONObject(spec.id)
-            val x = item?.optDouble("x", spec.x.toDouble())?.toFloat() ?: spec.x
-            val y = item?.optDouble("y", spec.y.toDouble())?.toFloat() ?: spec.y
-            states[spec.id] = State(item?.optBoolean("shown", spec.shown) ?: spec.shown,
-                if (x.isFinite()) x.coerceIn(0f, 1f) else spec.x,
-                if (y.isFinite()) y.coerceIn(0f, 1f) else spec.y)
+    private fun loadLayouts() {
+        for (layout in LayoutOrientation.entries) {
+            val saved = preferences.getString(layout.preference, null)
+                ?: if (layout == orientation) preferences.getString("onscreen_layout_v1", null)
+                    else null
+            val stored = try { JSONObject(saved ?: "{}") } catch (_: Exception) { JSONObject() }
+            val controls = stored.optJSONObject("controls")
+            for (spec in specs) {
+                val item = controls?.optJSONObject(spec.id)
+                val default = defaultPosition(spec, layout)
+                val x = item?.optDouble("x", default.first.toDouble())?.toFloat() ?: default.first
+                val y = item?.optDouble("y", default.second.toDouble())?.toFloat() ?: default.second
+                layouts.getValue(layout)[spec.id] = State(
+                    item?.optBoolean("shown", spec.shown) ?: spec.shown,
+                    if (x.isFinite()) x.coerceIn(0f, 1f) else default.first,
+                    if (y.isFinite()) y.coerceIn(0f, 1f) else default.second)
+            }
         }
     }
+
+    private fun defaultPosition(spec: Spec, layout: LayoutOrientation): Pair<Float, Float> =
+        if (layout == LayoutOrientation.PORTRAIT) portraitPositions.getValue(spec.id)
+        else spec.x to spec.y
 
     private fun saveLayout() {
         val controls = JSONObject()
@@ -383,8 +441,8 @@ class OnScreenControls(
             controls.put(spec.id, JSONObject().put("shown", state.shown)
                 .put("x", state.x.toDouble()).put("y", state.y.toDouble()))
         }
-        preferences.edit().putString("onscreen_layout_v1",
-            JSONObject().put("version", 1).put("controls", controls).toString()).apply()
+        preferences.edit().putString(orientation.preference,
+            JSONObject().put("version", 2).put("controls", controls).toString()).apply()
     }
 
     private fun controlName(id: String) = when (id) {

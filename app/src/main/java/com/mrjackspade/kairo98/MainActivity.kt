@@ -27,6 +27,7 @@ import android.view.SurfaceView
 import android.view.View
 import android.view.WindowInsets
 import android.view.WindowManager
+import android.window.OnBackInvokedDispatcher
 import android.widget.FrameLayout
 import android.widget.EditText
 import android.widget.ImageView
@@ -191,6 +192,10 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        if (Build.VERSION.SDK_INT >= 33) {
+            onBackInvokedDispatcher.registerOnBackInvokedCallback(
+                OnBackInvokedDispatcher.PRIORITY_DEFAULT) { handleBack() }
+        }
         if (applicationInfo.flags and android.content.pm.ApplicationInfo.FLAG_DEBUGGABLE != 0) {
             traceScreenHashes = intent.getBooleanExtra("kairo98.traceScreenHashes", false)
             skipDebugChoices = intent.getBooleanExtra("kairo98.skipStartupChoices", false)
@@ -460,7 +465,8 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
         val width = (640 * scale).roundToInt().coerceAtLeast(1)
         val height = (400 * scale).roundToInt().coerceAtLeast(1)
         val params = screen.layoutParams as FrameLayout.LayoutParams
-        val top = ((availableHeight - height) / 2).coerceAtLeast(0)
+        val top = if (root.height * 4L >= root.width * 5L) 0
+            else ((availableHeight - height) / 2).coerceAtLeast(0)
         if (params.width != width || params.height != height || params.topMargin != top ||
             params.gravity != (Gravity.TOP or Gravity.CENTER_HORIZONTAL)) {
             screen.layoutParams = FrameLayout.LayoutParams(width, height,
@@ -2163,8 +2169,10 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
         return super.dispatchTouchEvent(event)
     }
 
-    @Deprecated("The platform Back callback is the reliable menu shortcut on API 26+")
-    override fun onBackPressed() {
+    @Deprecated("Legacy Back path; API 33+ also uses OnBackInvokedDispatcher")
+    override fun onBackPressed() = handleBack()
+
+    private fun handleBack() {
         if (::firstRunSetup.isInitialized && firstRunSetup.isOpen) {
             firstRunSetup.back()
             return
