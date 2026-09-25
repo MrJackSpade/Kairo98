@@ -49,6 +49,25 @@ class GamepadMapper(private val router: InputRouter,
 
     fun hasButton(keyCode: Int) = resolve("button:$keyCode") != null
 
+    fun pressVirtual(control: String, owner: String) {
+        if (control !in PhysicalControllerBindings.controls || !owner.startsWith("onscreen:")) return
+        val binding = bindings.firstOrNull { it.input == "virtual:$control" }
+            ?: if (control == "menu") ControllerBinding("virtual:menu", action = "menu") else null
+        if (binding != null) activate(owner, binding)
+    }
+
+    fun releaseVirtual(owner: String) {
+        if (owner.startsWith("onscreen:")) deactivate(owner)
+    }
+
+    fun releaseOnScreen() {
+        active.removeAll { it.startsWith("onscreen:") }
+        router.releasePrefix("onscreen:")
+        joystick.releasePrefix("onscreen:")
+        mouse.releasePrefix("onscreen:")
+        stopMouseTickIfIdle()
+    }
+
     fun controlForButton(event: KeyEvent): String? {
         if (!KeyEvent.isGamepadButton(event.keyCode) &&
             !event.isFromSource(InputDevice.SOURCE_GAMEPAD) &&
@@ -104,6 +123,7 @@ class GamepadMapper(private val router: InputRouter,
     }
 
     fun releaseAll() {
+        releaseOnScreen()
         active.clear()
         router.releasePrefix("gamepad:")
         joystick.releasePrefix("gamepad:")

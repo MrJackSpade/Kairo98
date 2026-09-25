@@ -11,6 +11,7 @@ LaunchBox or Android file picker
 Android activity -> content access -> disk image adapter
       |                              |
       +-> input mapping --------+    |
+      +-> touch controller -----+    |
       +-> flyout keyboard ------+    |
                                 v    v
                          native 21/W core
@@ -20,13 +21,15 @@ Android activity -> content access -> disk image adapter
                         Android audio output
 ```
 
-The Android layer should not depend on a particular emulator's host UI. It translates platform events into explicit emulator actions. The flyout keyboard and gamepad mapper use the same virtual key API so a key behaves identically from either source.
+The Android layer should not depend on a particular emulator's host UI. It translates platform events into explicit emulator actions. The flyout keyboard, physical gamepad, and on-screen controller use the same owned guest-input routers so simultaneous presses release correctly.
 
 The Android session flyout is an activity overlay above the 640×400 surface. It pauses the emulation worker while open and keeps its own pause choice when dismissed. A touch-only left-edge swipe, Android Back/Menu, or a delivered controller Mode event opens it; Android's system Home event is not delivered to applications. Graphics, base clock, and audio options persist in app preferences. The renderer writes nearest-neighbor RGB565 pixels into the selected viewport size. Integer scaling defaults to a contained whole-pixel multiple so every source pixel is visible. An optional cropped integer choice centers the next whole-pixel multiple and hides excess at the display edges. Fit uses the largest aspect-preserving fractional viewport.
 
 ## Input model
 
-Controller input has two mappings: physical Android buttons, hats, and axes to a stable virtual controller, then virtual controls to one to four PC-98 keys, one of the six joystick 1 controls, or an app action. The full-screen mapping page has Physical, Global, and This game tabs. Physical assignments are saved once across games; virtual-to-guest assignments have a global default and catalog or user game profiles. On the Physical tab, tapping a virtual control immediately listens for a controller button, D-pad direction, stick, or trigger and replaces that control's previous physical assignments. An advanced source-first flow adds alternate physical inputs; manual Android codes remain available. The Global and This game tabs use selectable PC-98 targets, so assigning a guest key never requires a physical keyboard. Each physical source produces matching press and release events; focus loss and controller disconnect release held guest keys and joystick controls. The Android joystick host adapter exposes active-low status to the existing FM sound board and AMD-98 guest read paths.
+Controller input has two mappings: physical Android buttons, hats, and axes to a stable virtual controller, then virtual controls to one to four PC-98 keys, joystick 1, mouse directions or buttons, or an app action. The full-screen mapping page has Physical, Global, and This game tabs. Physical assignments are saved once across games; virtual-to-guest assignments have a global default and catalog or user game profiles. On the Physical tab, tapping a virtual control immediately listens for a controller button, D-pad direction, stick, or trigger and replaces that control's previous physical assignments. An advanced source-first flow adds alternate physical inputs; manual Android codes remain available. The Global and This game tabs use selectable PC-98 targets, so assigning a guest key never requires a physical keyboard. Each physical source produces matching press and release events; focus loss and controller disconnect release held guest input. The Android joystick host adapter exposes active-low status to the existing FM sound board and AMD-98 guest read paths.
+
+The on-screen controller feeds the same virtual controls through separately owned press and release events, so game profiles apply to touch and physical input alike. Its global master switch and per-button visibility are stored with normalized positions in app preferences. A full-screen arrangement mode pauses the guest while controls are dragged. The overlay itself passes touches between buttons to the emulated display; it hides under the library, session menu, keyboard, and mapping pages. It defaults on only when no physical gamepad is detected at first launch, and the user's explicit switch takes precedence afterward.
 
 The optional keyboard slides up from the bottom without pausing the guest. Its fitted rows have ABC, ?123, and PC-98 pages; function, navigation, and numpad keys are on the PC-98 page. Shift and Caps update visible legends using the pinned BIOS key translation table. Switching pages clears latched Shift. A swipe inward from the right screen edge opens it in every input mode. Opening it reduces the available display area; the viewport is recomputed using the selected scaling policy.
 

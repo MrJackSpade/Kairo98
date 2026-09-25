@@ -26,6 +26,7 @@ class LibraryScreen(
     private val refresh: () -> Unit,
     private val rehash: () -> Unit,
     private val machineSettings: () -> Unit,
+    private val onScreenSettings: () -> Unit,
     private val play: (LibraryEntry) -> Unit,
     private val preview: (LibraryEntry) -> Unit,
     private val details: (LibraryEntry) -> Unit
@@ -242,6 +243,7 @@ class LibraryScreen(
             setPadding(dp(12), dp(18), dp(12), dp(5))
         })
         drawerAction("Machine", "Base clock and BIOS ROM", machineSettings)
+        drawerAction("On-screen controls", "Show and arrange touch buttons", onScreenSettings)
         addView(detailPage, FrameLayout.LayoutParams(-1, -1))
     }
 

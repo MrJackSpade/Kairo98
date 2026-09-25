@@ -85,6 +85,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
     private lateinit var root: FrameLayout
     private lateinit var screen: SurfaceView
     private lateinit var keyboardPanel: Pc98KeyboardPanel
+    private lateinit var onScreenControls: OnScreenControls
     private lateinit var libraryScreen: LibraryScreen
     private lateinit var romLibrary: RomLibrary
     private lateinit var controllerEditor: ControllerEditor
@@ -245,6 +246,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
         libraryScreen = LibraryScreen(this, romLibrary.catalog,
             ::chooseRomFolder, { refreshLibrary(false) }, { refreshLibrary(true) },
             { libraryScreen.closeActions(); showMachine() },
+            { libraryScreen.closeActions(); showOnScreenControls() },
             ::launchEntry, ::showDetailPreview, ::showGameDetails)
         root.addView(libraryScreen, FrameLayout.LayoutParams(-1, -1))
         swapStatus = TextView(this).apply {
@@ -284,6 +286,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
         }
         root.addView(screen, FrameLayout.LayoutParams(640, 400, Gravity.CENTER))
         root.addOnLayoutChangeListener { _, _, _, _, _, _, _, _, _ -> updateViewport() }
+        onScreenControls = OnScreenControls(this, root, gamepadMapper, preferences, ::applyPauseState)
 
         keyboardPanel = Pc98KeyboardPanel(this, inputRouter, ::hideKeyboard)
         root.addView(keyboardPanel, FrameLayout.LayoutParams(-1, dp(260), Gravity.BOTTOM))
@@ -363,6 +366,9 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
         menuItem(content, "Input mode", "Auto, keyboard, or mouse touchpad") { showInputMode() }
         menuItem(content, "Machine", "Clock, BIOS ROM, and font") { showMachine() }
         menuItem(content, "Controller", "Gamepad buttons, sticks and hats") { showControllerScope() }
+        menuItem(content, "On-screen controls", "Show, hide, and arrange touch buttons") {
+            showOnScreenControls()
+        }
         menuItem(content, "Audio", "Sound output") { showAudio() }
         menuItem(content, "About & controls", "Version and shortcuts") { showAbout() }
 
@@ -460,6 +466,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
         hideKeyboard()
         if (menuOpen) return
         menuOpen = true
+        onScreenControls.refreshVisibility(false)
         nativePause(true)
         drawer.scrollTo(0, 0)
         focusMenuItem(0)
@@ -498,8 +505,13 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
     }
 
     private fun applyPauseState() {
+        val editingControls = ::onScreenControls.isInitialized && onScreenControls.isOpen
         nativePause(userPaused || menuOpen || libraryVisible || !activityVisible || preparingFont ||
-            (::controllerEditor.isInitialized && controllerEditor.isOpen))
+            (::controllerEditor.isInitialized && controllerEditor.isOpen) || editingControls)
+        if (::onScreenControls.isInitialized) onScreenControls.refreshVisibility(
+            !libraryVisible && !menuOpen && !editingControls && activityVisible &&
+                !preparingFont && keyboardPanel.visibility != View.VISIBLE &&
+                !(::controllerEditor.isInitialized && controllerEditor.isOpen))
     }
 
     private fun hasRomGrant(uri: Uri) = contentResolver.persistedUriPermissions.any {
@@ -729,6 +741,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
         if (keyboardPanel.visibility == View.VISIBLE) return
         keyboardPanel.visibility = View.VISIBLE
         updateViewport()
+        applyPauseState()
         handler.postDelayed({
             if (keyboardPanel.visibility == View.VISIBLE && Build.VERSION.SDK_INT >= 30) {
                 window.insetsController?.hide(WindowInsets.Type.statusBars() or
@@ -741,6 +754,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
         if (!::keyboardPanel.isInitialized) return
         keyboardPanel.close()
         updateViewport()
+        if (::onScreenControls.isInitialized) applyPauseState()
         screen.requestFocus()
     }
 
@@ -1532,6 +1546,13 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
         controllerEditor.show(currentEntry, startPhysical = true)
     }
 
+    private fun showOnScreenControls() {
+        if (menuOpen) closeMenu()
+        releaseInputs()
+        hideKeyboard()
+        onScreenControls.show()
+    }
+
     private fun showControllerBindings(entry: LibraryEntry) {
         if (entry.contentId == null) { toast("Hash this game before editing its controls"); return }
         releaseInputs()
@@ -1902,6 +1923,10 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
     }
 
     override fun dispatchKeyEvent(event: KeyEvent): Boolean {
+        if (::onScreenControls.isInitialized && onScreenControls.isOpen) {
+            if (onScreenControls.handleKey(event)) return true
+            return super.dispatchKeyEvent(event)
+        }
         if (::controllerEditor.isInitialized && controllerEditor.isOpen) {
             if (controllerEditor.handleKey(event)) return true
             return super.dispatchKeyEvent(event)
@@ -1981,6 +2006,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
     }
 
     override fun dispatchGenericMotionEvent(event: MotionEvent): Boolean {
+        if (::onScreenControls.isInitialized && onScreenControls.isOpen) return true
         if (::controllerEditor.isInitialized && controllerEditor.isOpen)
             return controllerEditor.captureMotion(event)
         if (!menuOpen && !libraryVisible && gamepadMapper.motion(event)) return true
@@ -1988,6 +2014,8 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
     }
 
     override fun dispatchTouchEvent(event: MotionEvent): Boolean {
+        if (::onScreenControls.isInitialized && onScreenControls.isOpen)
+            return super.dispatchTouchEvent(event)
         if (::controllerEditor.isInitialized && controllerEditor.isOpen)
             return super.dispatchTouchEvent(event)
         if (!event.isFromSource(InputDevice.SOURCE_TOUCHSCREEN)) {
@@ -2014,12 +2042,14 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
                     menuSwipeX = event.x
                     menuSwipeY = event.y
                 }
-                if (!menuOpen && event.x <= dp(28)) {
+                if (!menuOpen && event.x <= dp(28) &&
+                    !onScreenControls.hitTest(event.x, event.y)) {
                     edgeSwipeX = event.x
                     edgeSwipeY = event.y
                     return true
                 }
-                if (!menuOpen && !libraryVisible && event.x >= root.width - dp(28)) {
+                if (!menuOpen && !libraryVisible && event.x >= root.width - dp(28) &&
+                    !onScreenControls.hitTest(event.x, event.y)) {
                     keyboardSwipeX = event.x
                     keyboardSwipeY = event.y
                     return true
@@ -2082,6 +2112,10 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
 
     @Deprecated("The platform Back callback is the reliable menu shortcut on API 26+")
     override fun onBackPressed() {
+        if (::onScreenControls.isInitialized && onScreenControls.isOpen) {
+            onScreenControls.back()
+            return
+        }
         if (::controllerEditor.isInitialized && controllerEditor.isOpen) {
             controllerEditor.back()
             return
