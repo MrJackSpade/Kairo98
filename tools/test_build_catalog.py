@@ -87,6 +87,7 @@ class CatalogBuildTests(unittest.TestCase):
             {"input": "virtual:a", "keys": [112, 29]},
             {"input": "axis:0:+", "action": "menu"},
             {"input": "hat:15:-", "joystick": "left"},
+            {"input": "virtual:rsright", "mouse": "moveRight"},
         ]}
         validate_record({**record, "controller": valid})
         for bindings in (
@@ -95,6 +96,8 @@ class CatalogBuildTests(unittest.TestCase):
             [{"input": "button:96", "keys": [True]}],
             [{"input": "button:96", "action": "shell"}],
             [{"input": "button:96", "joystick": "button3"}],
+            [{"input": "button:96", "mouse": "scroll"}],
+            [{"input": "button:96", "keys": [29], "mouse": "leftButton"}],
             [{"input": "button:96", "keys": [29], "joystick": "button1"}],
             [{"input": "button:96", "keys": [29]}, {"input": "button:96", "action": "menu"}],
             [{"input": "axis:0", "keys": [29]}],

@@ -4,9 +4,10 @@ import org.json.JSONArray
 import org.json.JSONObject
 
 data class ControllerBinding(val input: String, val keys: List<Int> = emptyList(),
-                             val action: String? = null, val joystick: String? = null)
+                             val action: String? = null, val joystick: String? = null,
+                             val mouse: String? = null)
 
-/** Assigns stable virtual controls to PC-98 keys, joystick inputs, or app actions. */
+/** Assigns stable virtual controls to PC-98 keys, joystick, mouse, or app actions. */
 object ControllerBindings {
     // Physical inputs remain valid while old user profiles are being migrated.
     private val INPUT = Regex("(?:virtual:[a-z0-9]+|button:[0-9]{1,4}|(?:axis|hat):[0-9]{1,3}:[+-])")
@@ -25,7 +26,9 @@ object ControllerBindings {
             val keys = item.optJSONArray("keys")
             val action = item.optString("action").takeIf(String::isNotEmpty)
             val joystick = item.optString("joystick").takeIf(String::isNotEmpty)
-            if (listOf(keys != null, action != null, joystick != null).count { it } != 1) return false
+            val mouse = item.optString("mouse").takeIf(String::isNotEmpty)
+            if (listOf(keys != null, action != null, joystick != null, mouse != null)
+                    .count { it } != 1) return false
             if (keys != null) {
                 if (keys.length() !in 1..4) return false
                 val scans = ArrayList<Int>()
@@ -38,6 +41,7 @@ object ControllerBindings {
             }
             if (action != null && action !in ACTIONS) return false
             if (joystick != null && joystick !in JOYSTICK) return false
+            if (mouse != null && mouse !in MouseInputRouter.TARGETS) return false
         }
         return true
     }
@@ -53,7 +57,8 @@ object ControllerBindings {
                 ControllerBinding(item.getString("input"),
                     if (keys == null) emptyList() else (0 until keys.length()).map(keys::getInt),
                     item.optString("action").takeIf(String::isNotEmpty),
-                    item.optString("joystick").takeIf(String::isNotEmpty))
+                    item.optString("joystick").takeIf(String::isNotEmpty),
+                    item.optString("mouse").takeIf(String::isNotEmpty))
             }
         }
     } catch (_: Exception) { defaults() }
@@ -64,6 +69,7 @@ object ControllerBindings {
             when {
                 binding.action != null -> item.put("action", binding.action)
                 binding.joystick != null -> item.put("joystick", binding.joystick)
+                binding.mouse != null -> item.put("mouse", binding.mouse)
                 else -> item.put("keys", JSONArray(binding.keys))
             }
             array.put(item)
@@ -82,6 +88,10 @@ object ControllerBindings {
         ControllerBinding("virtual:up", listOf(0x3a)),
         ControllerBinding("virtual:down", listOf(0x3d)),
         ControllerBinding("virtual:left", listOf(0x3b)),
-        ControllerBinding("virtual:right", listOf(0x3c))
+        ControllerBinding("virtual:right", listOf(0x3c)),
+        ControllerBinding("virtual:rsup", mouse = "moveUp"),
+        ControllerBinding("virtual:rsdown", mouse = "moveDown"),
+        ControllerBinding("virtual:rsleft", mouse = "moveLeft"),
+        ControllerBinding("virtual:rsright", mouse = "moveRight")
     )
 }

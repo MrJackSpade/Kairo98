@@ -91,9 +91,12 @@ def valid_image_url(value):
         return False
 CONTROLLER_INPUT = re.compile(r"(?:virtual:[a-z0-9]+|button:[0-9]{1,4}|(?:axis|hat):[0-9]{1,3}:[+-])\Z")
 CONTROLLER_CONTROLS = {"up", "down", "left", "right", "a", "b", "x", "y",
-                       "l1", "r1", "l2", "r2", "start", "select", "menu"}
+                       "l1", "r1", "l2", "r2", "start", "select", "menu",
+                       "rsup", "rsdown", "rsleft", "rsright"}
 CONTROLLER_ACTIONS = {"menu", "pause", "restart", "exit"}
 CONTROLLER_JOYSTICK = {"up", "down", "left", "right", "button1", "button2"}
+CONTROLLER_MOUSE = {"moveUp", "moveDown", "moveLeft", "moveRight",
+                    "leftButton", "rightButton"}
 
 
 def require(condition, message):
@@ -107,7 +110,8 @@ def valid_bindings(bindings):
     seen = set()
     for binding in bindings:
         if not isinstance(binding, dict) or set(binding) not in (
-                {"input", "keys"}, {"input", "action"}, {"input", "joystick"}):
+                {"input", "keys"}, {"input", "action"}, {"input", "joystick"},
+                {"input", "mouse"}):
             return False
         source = binding.get("input")
         if not isinstance(source, str) or not CONTROLLER_INPUT.fullmatch(source) or source in seen:
@@ -128,6 +132,9 @@ def valid_bindings(bindings):
             return False
         elif "joystick" in binding and (not isinstance(binding["joystick"], str) or
                                         binding["joystick"] not in CONTROLLER_JOYSTICK):
+            return False
+        elif "mouse" in binding and (not isinstance(binding["mouse"], str) or
+                                     binding["mouse"] not in CONTROLLER_MOUSE):
             return False
     return True
 

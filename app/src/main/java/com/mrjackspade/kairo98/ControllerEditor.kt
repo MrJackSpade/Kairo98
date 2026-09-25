@@ -31,7 +31,7 @@ class ControllerEditor(
     private val setDeadZone: (Float) -> Unit,
     private val onVisibilityChanged: () -> Unit
 ) {
-    private enum class Stage { LIST, SOURCES, CAPTURE, MANUAL, TARGET, VIRTUAL, KEYS, JOYSTICK, ACTIONS, DEAD_ZONE, RESET }
+    private enum class Stage { LIST, SOURCES, CAPTURE, MANUAL, TARGET, VIRTUAL, KEYS, JOYSTICK, MOUSE, ACTIONS, DEAD_ZONE, RESET }
     private data class Source(val group: String, val name: String, val input: String)
 
     private lateinit var page: LinearLayout
@@ -120,7 +120,7 @@ class ControllerEditor(
             Stage.CAPTURE -> if (selectedControl == null) Stage.SOURCES else Stage.LIST
             Stage.MANUAL -> if (selectedControl == null) Stage.SOURCES else Stage.CAPTURE
             Stage.TARGET -> Stage.LIST
-            Stage.VIRTUAL, Stage.KEYS, Stage.JOYSTICK, Stage.ACTIONS -> Stage.TARGET
+            Stage.VIRTUAL, Stage.KEYS, Stage.JOYSTICK, Stage.MOUSE, Stage.ACTIONS -> Stage.TARGET
         }
         render()
     }
@@ -242,6 +242,7 @@ class ControllerEditor(
             Stage.VIRTUAL -> "Virtual controller"
             Stage.KEYS -> "PC-98 keys"
             Stage.JOYSTICK -> "PC-98 joystick 1"
+            Stage.MOUSE -> "PC-98 mouse"
             Stage.ACTIONS -> "Emulator actions"
             Stage.DEAD_ZONE -> "Stick dead zone"
             Stage.RESET -> "Reset bindings"
@@ -255,6 +256,7 @@ class ControllerEditor(
             Stage.VIRTUAL -> renderVirtual()
             Stage.KEYS -> renderKeys()
             Stage.JOYSTICK -> renderJoystick()
+            Stage.MOUSE -> renderMouse()
             Stage.ACTIONS -> renderActions()
             Stage.DEAD_ZONE -> renderDeadZone()
             Stage.RESET -> renderReset()
@@ -427,6 +429,10 @@ class ControllerEditor(
             stage = Stage.JOYSTICK
             render()
         }
+        row("PC-98 mouse", "Cursor directions or left/right button", true) {
+            stage = Stage.MOUSE
+            render()
+        }
         row("Emulator action", "Menu, pause, restart, or exit", true) {
             stage = Stage.ACTIONS
             render()
@@ -490,6 +496,17 @@ class ControllerEditor(
         ControllerBindings.JOYSTICK.forEachIndexed { index, control ->
             row(labels[index], "Joystick 1", true) {
                 change { put(ControllerBinding(selectedInput, joystick = control)) }
+            }
+        }
+    }
+
+    private fun renderMouse() {
+        note("Stick directions use analog speed. Buttons and D-pad directions move at full speed.")
+        val labels = listOf("Move up", "Move down", "Move left", "Move right",
+            "Left button", "Right button")
+        MouseInputRouter.TARGETS.forEachIndexed { index, target ->
+            row(labels[index], "PC-98 mouse", true) {
+                change { put(ControllerBinding(selectedInput, mouse = target)) }
             }
         }
     }
@@ -614,6 +631,11 @@ class ControllerEditor(
     }
 
     private fun targetLabel(binding: ControllerBinding): String = when {
+        binding.mouse != null -> "Mouse " + when (binding.mouse) {
+            "leftButton" -> "left button"
+            "rightButton" -> "right button"
+            else -> binding.mouse.removePrefix("move").lowercase()
+        }
         binding.joystick != null -> "Joystick 1 " + when (binding.joystick) {
             "button1" -> "Button 1"
             "button2" -> "Button 2"
@@ -625,6 +647,10 @@ class ControllerEditor(
 
     private fun virtualLabel(control: String): String = when (control) {
         "l1", "r1", "l2", "r2" -> control.uppercase()
+        "rsup" -> "Right stick up"
+        "rsdown" -> "Right stick down"
+        "rsleft" -> "Right stick left"
+        "rsright" -> "Right stick right"
         else -> control.replaceFirstChar(Char::uppercase)
     }
 
@@ -686,7 +712,8 @@ class ControllerEditor(
 
     companion object {
         private val PHYSICAL_DISPLAY_CONTROLS = listOf("a", "b", "x", "y", "up", "down",
-            "left", "right", "l1", "r1", "l2", "r2", "start", "select", "menu")
+            "left", "right", "l1", "r1", "l2", "r2", "start", "select", "menu",
+            "rsup", "rsdown", "rsleft", "rsright")
         private val MODIFIERS = setOf(0x70, 0x71, 0x72, 0x73, 0x74, 0x7d)
     }
 }

@@ -71,7 +71,8 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
 
     private val inputRouter = InputRouter(::nativeKey)
     private val joystickRouter = JoystickInputRouter(::nativeJoystick)
-    private val gamepadMapper = GamepadMapper(inputRouter, joystickRouter, ::controllerAction)
+    private val mouseRouter = MouseInputRouter(::nativeMouseMove, ::nativeMouseButton)
+    private val gamepadMapper = GamepadMapper(inputRouter, joystickRouter, mouseRouter, ::controllerAction)
     private lateinit var inputManager: InputManager
     private val inputDeviceListener = object : InputManager.InputDeviceListener {
         override fun onInputDeviceAdded(deviceId: Int) = Unit
@@ -765,7 +766,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
                 if (mouseTouchActive) {
                     pendingMouseRelease?.let(handler::removeCallbacks)
                     pendingMouseRelease = null
-                    nativeMouseButton(1, false)
+                    mouseRouter.release("touch")
                     mouseDragging = false
                     mouseMoved = false
                     mouseTouchStartX = event.x
@@ -777,7 +778,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
                     val hold = Runnable {
                         if (mouseTouchActive && !mouseMoved) {
                             mouseDragging = true
-                            nativeMouseButton(1, true)
+                            mouseRouter.hold("touch", "leftButton")
                         }
                         pendingMouseHold = null
                     }
@@ -799,11 +800,11 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
                     pendingMouseHold?.let(handler::removeCallbacks)
                     pendingMouseHold = null
                     moveGuestMouse(event)
-                    if (mouseDragging) nativeMouseButton(1, false)
+                    if (mouseDragging) mouseRouter.release("touch")
                     else if (!mouseMoved) {
-                        nativeMouseButton(1, true)
+                        mouseRouter.hold("touch", "leftButton")
                         val release = Runnable {
-                            nativeMouseButton(1, false)
+                            mouseRouter.release("touch")
                             pendingMouseRelease = null
                         }
                         pendingMouseRelease = release
@@ -818,7 +819,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
             MotionEvent.ACTION_CANCEL -> {
                 pendingMouseHold?.let(handler::removeCallbacks)
                 pendingMouseHold = null
-                if (mouseTouchActive) nativeMouseButton(1, false)
+                if (mouseTouchActive) mouseRouter.release("touch")
                 mouseTouchActive = false
                 mouseDragging = false
                 mouseMoved = false
@@ -1505,7 +1506,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
         pendingMouseHold = null
         pendingMouseRelease?.let(handler::removeCallbacks)
         pendingMouseRelease = null
-        nativeMouseButton(1, false)
+        mouseRouter.release("touch")
         mouseTouchActive = false
         mouseDragging = false
         mouseMoved = false

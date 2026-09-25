@@ -10,7 +10,8 @@ data class PhysicalControllerBinding(val input: String, val control: String)
 /** Maps Android controller events to a stable, device-independent control layout. */
 object PhysicalControllerBindings {
     val controls = listOf("up", "down", "left", "right", "a", "b", "x", "y",
-        "l1", "r1", "l2", "r2", "start", "select", "menu")
+        "l1", "r1", "l2", "r2", "start", "select", "menu",
+        "rsup", "rsdown", "rsleft", "rsright")
     private val inputPattern = Regex("(?:button:[0-9]{1,4}|(?:axis|hat):[0-9]{1,3}:[+-])")
 
     fun valid(array: JSONArray): Boolean {
@@ -66,6 +67,10 @@ object PhysicalControllerBindings {
         PhysicalControllerBinding("axis:${MotionEvent.AXIS_X}:+", "right"),
         PhysicalControllerBinding("axis:${MotionEvent.AXIS_Y}:-", "up"),
         PhysicalControllerBinding("axis:${MotionEvent.AXIS_Y}:+", "down"),
+        PhysicalControllerBinding("axis:${MotionEvent.AXIS_Z}:-", "rsleft"),
+        PhysicalControllerBinding("axis:${MotionEvent.AXIS_Z}:+", "rsright"),
+        PhysicalControllerBinding("axis:${MotionEvent.AXIS_RZ}:-", "rsup"),
+        PhysicalControllerBinding("axis:${MotionEvent.AXIS_RZ}:+", "rsdown"),
         PhysicalControllerBinding("axis:${MotionEvent.AXIS_LTRIGGER}:+", "l2"),
         PhysicalControllerBinding("axis:${MotionEvent.AXIS_RTRIGGER}:+", "r2")
     )
