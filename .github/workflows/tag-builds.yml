@@ -44,7 +44,14 @@ jobs:
             exit 1
           fi
           echo "KAIRO98_VERSION_NAME=$version" >> "$GITHUB_ENV"
-          echo "KAIRO98_VERSION_CODE=$GITHUB_RUN_NUMBER" >> "$GITHUB_ENV"
+          if [[ "$GITHUB_EVENT_NAME" == "push" ]]; then
+            IFS=. read -r major minor patch <<< "$version"
+            patch=${patch%%-*}
+            version_code=$((10#$major * 1000000 + 10#$minor * 100 + 10#$patch))
+          else
+            version_code=$GITHUB_RUN_NUMBER
+          fi
+          echo "KAIRO98_VERSION_CODE=$version_code" >> "$GITHUB_ENV"
           echo "KAIRO98_ARTIFACT_REF=${GITHUB_REF_NAME//\//-}" >> "$GITHUB_ENV"
       - name: Prepare persistent beta signing key
         env:
@@ -79,7 +86,13 @@ jobs:
             echo "Unexpected release signing certificate: $actual" >&2
             exit 1
           fi
-          jarsigner -strict -verify "$bundle"
+          jarsigner -verify "$bundle" | grep -F "jar verified"
+          bundle_signer=$(keytool -printcert -jarfile "$bundle" |
+            awk '/SHA256:/ {print $2}' | tr -d ':' | tr '[:upper:]' '[:lower:]')
+          if [[ "$bundle_signer" != "$expected" ]]; then
+            echo "Unexpected Play bundle signing certificate: $bundle_signer" >&2
+            exit 1
+          fi
           "$ANDROID_HOME/build-tools/36.0.0/aapt" dump badging "$apk" |
             grep -F "package: name='com.loxifi.kairo98'"
       - name: Audit distribution contents
