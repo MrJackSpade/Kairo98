@@ -9,7 +9,7 @@ android {
     ndkVersion = "28.2.13676358"
 
     defaultConfig {
-        applicationId = "com.mrjackspade.kairo98"
+        applicationId = "com.loxifi.kairo98"
         minSdk = 26
         targetSdk = 36
         versionCode = providers.gradleProperty("kairo98VersionCode").orNull?.toInt() ?: 1
@@ -45,6 +45,9 @@ android {
         }
         release {
             isMinifyEnabled = false
+            if (!providers.environmentVariable("KAIRO98_BETA_KEYSTORE").orNull.isNullOrBlank()) {
+                signingConfig = signingConfigs.getByName("beta")
+            }
         }
     }
 
