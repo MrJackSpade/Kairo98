@@ -23,6 +23,18 @@ def lookup_name(value):
 
 def generate(matches_path, gallery, assets, art_assets, ffmpeg, quality):
     matches = json.loads(matches_path.read_text(encoding="utf-8-sig"))["entries"]
+    descriptions_path = matches_path.parent / "descriptions-v1.json"
+    description_notes = json.loads(descriptions_path.read_text(encoding="utf-8"))
+    descriptions = description_notes["descriptions"]
+    known_keys = {f'{entry["platform"]}:{entry["databaseId"]}' for entry in matches}
+    unknown = (descriptions.keys() | description_notes.get("additionalSources", {}).keys()) - known_keys
+    if unknown:
+        raise ValueError(f"Descriptions without catalog matches: {sorted(unknown)[:5]}")
+    incomplete = [entry["title"] for entry in matches
+        if any(group.startswith("translated:") for group in entry.get("sourceGroups", []))
+        and not descriptions.get(f'{entry["platform"]}:{entry["databaseId"]}')]
+    if incomplete:
+        raise ValueError(f"Translated games missing descriptions: {incomplete[:5]}")
     profiles_path = matches_path.parent.parent / "startup-profiles-v1.json"
     profiles = json.loads(profiles_path.read_text(encoding="utf-8"))["games"] if profiles_path.is_file() else {}
     gallery_entries = json.loads((gallery / "manifest.json").read_text(encoding="utf-8-sig"))["entries"]
@@ -41,8 +53,9 @@ def generate(matches_path, gallery, assets, art_assets, ffmpeg, quality):
         if gallery_entry is None:
             raise ValueError(f"Missing gallery entry: {key}")
         metadata = {"title": entry["title"]}
-        if entry.get("description"):
-            metadata["description"] = entry["description"]
+        description = descriptions.get(key, entry.get("description"))
+        if description:
+            metadata["description"] = description
         if entry.get("aliases"):
             metadata["aliases"] = entry["aliases"]
         for field in ("machine", "launch", "controller"):
