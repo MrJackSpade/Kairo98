@@ -39,7 +39,7 @@ Enter at its title reached translated story text rather than the previous
 
 ## Night Slave launch on Retroid, 24 September 2026
 
-With the full user-selected library folder, a debug ADB selector opened the exact `Night Slave [T-En by BabaJeanmel, Valley Bell & Kirinn B v1.0]` detail page. Play booted its user-supplied HDI, entered `NS` at the DOS prompt from catalog metadata, passed the game's 2.5 MHz GDC check, showed the English music-driver selection menu, and reached the animated *Night Slave* title logo on the Retroid Pocket Classic. The native build used the portable IA-32 core; the previous 286 build returned to DOS. The HDI and BIOS remain outside Git and APK assets.
+With the full test library folder, a debug ADB selector opened the exact `Night Slave [T-En by BabaJeanmel, Valley Bell & Kirinn B v1.0]` detail page. Play booted its test HDI, entered `NS` at the DOS prompt from catalog metadata, passed the game's 2.5 MHz GDC check, showed the English music-driver selection menu, and reached the animated *Night Slave* title logo on the Retroid Pocket Classic. The native build used the portable IA-32 core; the previous 286 build returned to DOS. The HDI and BIOS remain outside Git and APK assets.
 
 The revised global gamepad defaults place Z/X/C/Space on A/B/X/Y. A held Android gamepad Y event sent Space and opened Night Slave's main menu from its title animation. The game now has a catalog profile that places Space on A. On the final build, held A opened the main menu, selected Start, selected data file 1, and advanced dialogue in the story opening; the game's HUD appeared before the dialogue scene. Combat controls have not yet been exercised. Brief synthetic taps did not register consistently in this slow game, so device checks used held gamepad events. Start/Select are mapped to Enter/Escape in both profiles.
 
@@ -51,7 +51,7 @@ The debug APK bundled 6,123 reviewed, 360-pixel-max cover and screenshot files, 
 
 ## Floppy boot and swap on Retroid, 24 September 2026
 
-Machine settings are accessible from both the library's right drawer and the emulator's left drawer. The BIOS picker copies a selected 96 KiB `bios.rom` into private Android app storage. The Android wrapper passes that firmware directory to the core on each machine start. Using a user-supplied ROM, Black Onyx Disk 1 advanced past the earlier BASIC firmware request to its English color/monochrome prompt. Pressing `C` advanced to the game's title scene. The imported file matched the source SHA-256 (`d0f5b6d96a01295ab5436d7852d2c9eea1faa87fcf016b7e6599cdd689266cd2`); neither file is in Git or the APK. This establishes a game boot on the test device, not broad BIOS or game compatibility.
+Machine settings are accessible from both the library's right drawer and the emulator's left drawer. The BIOS picker copies a selected 96 KiB `bios.rom` into private Android app storage. The Android wrapper passes that firmware directory to the core on each machine start. Using the test BIOS ROM, Black Onyx Disk 1 advanced past the earlier BASIC firmware request to its English color/monochrome prompt. Pressing `C` advanced to the game's title scene. The imported file matched the source SHA-256 (`d0f5b6d96a01295ab5436d7852d2c9eea1faa87fcf016b7e6599cdd689266cd2`); neither file is in Git or the APK. This establishes a game boot on the test device, not broad BIOS or game compatibility.
 
 An offline `:app:assembleDebug` build was installed on the Retroid Pocket Classic (Android 14, arm64-v8a). The app scanned private test ZIPs in `Documents/Kairo98Test` and listed each extracted floppy image. `Acrojet [T-En by MrRichard999 v1.0].d88` booted to its title screen. `Melpool Land [T-En by Nana v1.0].fdi` booted to its English opening text and graphics. The two FDI images in `Belloncho Body Inspection [T-En by Nana v1.10].zip` appeared as separate entries; Disk 1 mounted, the session flyout offered both disks for Floppy A, and changing to Disk 2 updated the mounted disk label. Belloncho's Disk 1 reached the PC-98 firmware request for a system disk, so that title's gameplay was not established by this run. The test ZIPs remain outside Git.
 
@@ -67,7 +67,7 @@ On device, Refresh returned four games with zero hashes; Rehash checked all four
 
 ## Current library completion on Retroid, 23 September 2026
 
-Core revision `50d406d` plus debug-only test instrumentation built with `:app:assembleDebug --offline` on a Retroid Pocket Classic (Android 14 / API 34, arm64-v8a). The test tree remained `Documents/Kairo98Test`. The second image came from the user-provided translation share and was copied only to ignored `.downloads/` and the device test folder; no HDI or ZIP is committed. The temporary grant-revocation activity was removed after this test.
+Core revision `50d406d` plus debug-only test instrumentation built with `:app:assembleDebug --offline` on a Retroid Pocket Classic (Android 14 / API 34, arm64-v8a). The test tree remained `Documents/Kairo98Test`. The second image came from the translation archive supplied for testing and was copied only to ignored `.downloads/` and the device test folder; no HDI or ZIP is committed. The temporary grant-revocation activity was removed after this test.
 
 | Check | Device observation |
 | --- | --- |
@@ -99,7 +99,7 @@ The missing-grant check changed the saved URI to an ungranted test URI; it did n
 
 ## Clean-font Android and visible 21/W checkpoint, 23 September 2026
 
-Implementation revision `f295a02` built with `:app:assembleDebug --offline` produced debug APK SHA-256 `857fd9ef83b88d90a9e5233dd14a2b707fe7c1276474ba23b6f3c91cbdd6d111`. On the Retroid Pocket Classic (Android 14 / API 34, arm64-v8a), I removed both temporary font caches, installed the APK, started the private user-supplied HDI, and reached `A:\NS>`. The app generated `android-font.bin` (253,686 bytes) from Android's installed fonts and a separate 21/W fallback `font.tmp` (524,350 bytes). No font cache copied from Windows was used in this final run. ASCII uses the pinned BSD-licensed Spleen 8x16 bitmap, and Japanese/halfwidth kana are rendered from device fonts. [Final device screenshot](evidence/stage1-retroid-final-boot.png).
+Implementation revision `f295a02` built with `:app:assembleDebug --offline` produced debug APK SHA-256 `857fd9ef83b88d90a9e5233dd14a2b707fe7c1276474ba23b6f3c91cbdd6d111`. On the Retroid Pocket Classic (Android 14 / API 34, arm64-v8a), both temporary font caches were removed, the APK was installed, and the private test HDI reached `A:\NS>`. The app generated `android-font.bin` (253,686 bytes) from Android's installed fonts and a separate 21/W fallback `font.tmp` (524,350 bytes). No font cache copied from Windows was used in this final run. ASCII uses the pinned BSD-licensed Spleen 8x16 bitmap, and Japanese/halfwidth kana are rendered from device fonts. [Final device screenshot](evidence/stage1-retroid-final-boot.png).
 
 Physical Android key events entered `DIR` and Enter and produced a directory listing at the prompt. AAudio reported `audio on 5/1358` on the boot screenshot and `5/7938` after `DIR`, including nonzero PCM buffers. The final app-process log had no `AndroidRuntime` or native fatal signal; the only entry was an OpenGL swap-behavior warning, which did not interrupt rendering. The private HDI SHA-256 was still `455d6639f0d3e9e5e72bfe7e89bd82026bdb64ae314a4d077a2cd1e3ed7ff766` after this run. [Final device log](evidence/stage1-retroid-final-log.txt).
 
@@ -109,7 +109,7 @@ Both runs show the 640×400 PC-98 text layout, including the same DOS prompt and
 
 ## Android first boot, 22 September 2026
 
-The Stage 2 debug APK booted a user-supplied *Night Slave* English translation HDI to the PC-98 MS-DOS 6.20 `A:\NS>` prompt on a Retroid Pocket Classic (Android 14 / API 34, arm64-v8a). The image is a 310-cylinder, 8-head, 33-sector, 256-byte/sector SASI HDI. Its 4,096-byte header and 20,951,040 data bytes make a 20,955,136-byte file. That earlier device run used the VX/286 profile with a 2.5 MHz CPU base clock; it had no separate GDC control. No external ROM was supplied. The ZIP, HDI, and README remain under ignored `roms/`; the installed app uses a private copy.
+The Stage 2 debug APK booted a private *Night Slave* English translation HDI to the PC-98 MS-DOS 6.20 `A:\NS>` prompt on a Retroid Pocket Classic (Android 14 / API 34, arm64-v8a). The image is a 310-cylinder, 8-head, 33-sector, 256-byte/sector SASI HDI. Its 4,096-byte header and 20,951,040 data bytes make a 20,955,136-byte file. That earlier device run used the VX/286 profile with a 2.5 MHz CPU base clock; it had no separate GDC control. No external ROM was supplied. The ZIP, HDI, and README remain under ignored `roms/`; the installed app uses a private copy.
 
 | Check | Observation |
 | --- | --- |
@@ -123,4 +123,4 @@ The debug APK was built with `:app:assembleDebug --offline` from implementation 
 
 ## Earlier Stage 1 checks
 
-The Stage 1 debug APK repeatedly initialized/reset the core on the same device, returning `CS:IP=f000:fff0`. The HDI read diagnostic mounted the user image and read sector 0 (`EB 0A`). [Reset screenshot](evidence/stage1-retroid-reset.png) · [HDI read screenshot](evidence/hdi-read-retroid.png).
+The Stage 1 debug APK repeatedly initialized/reset the core on the same device, returning `CS:IP=f000:fff0`. The HDI read diagnostic mounted the test image and read sector 0 (`EB 0A`). [Reset screenshot](evidence/stage1-retroid-reset.png) · [HDI read screenshot](evidence/hdi-read-retroid.png).

@@ -1,6 +1,6 @@
 # Artwork intake
 
-The user reviewed the 360-pixel catalog images and directed their inclusion in Git and the APK on 24 September 2026. `tools/build_review_catalog.py` imports 6,123 images from the local gallery into the `withImages` flavor and records each source URL and packaged SHA-256 in `app/src/withImages/assets/art/catalog-provenance-v1.json`. This is a review build input; the separate license audit remains incomplete. A future release audit must establish the creator and applicable redistribution and derivative rights for both the free GitHub and paid Play builds.
+The 360-pixel catalog images were approved for inclusion in Git and the development APK on 24 September 2026. `tools/build_review_catalog.py` imports 6,123 images from the local gallery into the `withImages` flavor and records each source URL and packaged SHA-256 in `app/src/withImages/assets/art/catalog-provenance-v1.json`. This is a development build input; the separate license audit remains incomplete. A future release audit must establish the creator and applicable redistribution and derivative rights for both the free GitHub and paid Play builds.
 
 `tools/import_art.py` remains the strict importer for individually documented assets. It requires a source file, SHA-256, creator, source, license or permission basis, and affirmative rights for both distribution channels and resizing. Its generated `art/provenance-v1.json` was used for the earlier synthetic fixture, not the current bulk catalog.
 

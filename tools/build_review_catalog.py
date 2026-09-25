@@ -126,7 +126,7 @@ def generate(matches_path, gallery, assets, art_assets, ffmpeg, quality):
     unique_names = {name: next(iter(keys)) for name, keys in sorted(names.items()) if len(keys) == 1}
     source = {"schemaVersion": 1, "datasets": [{"id": "reviewed-research-2026-09-24",
         "provenance": {"source": "Kairo98 local match catalog and LaunchBox image cache",
-                       "license": "User-approved review import; release rights audit pending",
+                       "license": "Artwork redistribution rights audit pending",
                        "attribution": "LaunchBox Games Database contributors; Kairo98 original descriptions"},
         "games": source_games}]}
     manifest, shards = build(source)

@@ -56,7 +56,7 @@ def page_url(game_id):
     # at DatabaseID - 34220. Samples in the 465xxx-470xxx block resolve at
     # DatabaseID - 34218, except Jewel Bem Hunter Lime volumes 05-12
     # (470837-470844), which resolve at DatabaseID - 34216. Remaining records
-    # in those blocks still need the user's final catalog check.
+    # in those blocks still need final catalog review.
     snapshot_id = int(game_id)
     if 453654 <= snapshot_id <= 453669:
         public_id = snapshot_id - 34876

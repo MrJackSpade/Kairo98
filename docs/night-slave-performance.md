@@ -20,4 +20,4 @@ The actual serial event callback fired about 61 times per emulated frame in both
 
 Rendering cost about 1–2 ms per combat frame and audio mixing about 0.02–0.03 ms. Moving those operations to separate threads would add synchronization and cannot account for the measured signal-mask cost. The profiler showed AAudio underruns while writes were complete, linking the audible crackle to missed production deadlines rather than partial writes.
 
-The patched build booted Night Slave and reached visible combat on the device. In that run it held 60.0 frames/s in the sampled combat intervals, with 1–5 AAudio underruns per 600 frames. The user reported that gameplay seemed smooth. Longer play and other games still need regression testing.
+The patched build booted Night Slave and reached visible combat on the device. In that run it held 60.0 frames/s in the sampled combat intervals, with 1–5 AAudio underruns per 600 frames. Gameplay was reported as smooth during the device run. Longer play and other games still need regression testing.

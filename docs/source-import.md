@@ -20,7 +20,7 @@ The ASCII ANK glyphs use [Spleen 8x16](https://github.com/fcambus/spleen), pinne
 
 ## Kairo98 launcher artwork
 
-The project owner supplied the launcher artwork on 25 September 2026. The original PNG is preserved as `app/src/main/res/drawable-nodpi/kairo98_icon_art.png` (SHA-256 `855676faeb93c96a852415aa2b305c71479d2603db0fae09fbffddf1109bb947`). Android uses it in both APK variants; the adaptive icon XML adds a dark background and inset without changing the PNG.
+The Kairo98 launcher artwork was added on 25 September 2026. The original PNG is preserved as `app/src/main/res/drawable-nodpi/kairo98_icon_art.png` (SHA-256 `855676faeb93c96a852415aa2b305c71479d2603db0fae09fbffddf1109bb947`). Android uses it in both APK variants; the adaptive icon XML adds a dark background and inset without changing the PNG.
 
 ## Provenance record
 
