@@ -99,8 +99,8 @@ jobs:
           path: app/build/outputs/apk/withoutImages/debug/app-withoutImages-debug.apk
           if-no-files-found: error
           retention-days: 30
-      - name: Attach APKs to beta prerelease
-        if: github.event_name == 'push' && contains(github.ref_name, '-')
+      - name: Attach APKs to GitHub Release
+        if: github.event_name == 'push'
         env:
           GH_TOKEN: ${{ github.token }}
         shell: bash
@@ -110,16 +110,22 @@ jobs:
           without_images="$RUNNER_TEMP/Kairo98-$tag-without-images.apk"
           cp app/build/outputs/apk/withImages/debug/app-withImages-debug.apk "$with_images"
           cp app/build/outputs/apk/withoutImages/debug/app-withoutImages-debug.apk "$without_images"
-          notes="$RUNNER_TEMP/kairo98-beta-notes.md"
-          cat > "$notes" <<'EOF'
-          Android beta test build. The with-images APK includes embedded catalog artwork; the without-images APK has the same emulator features and catalog metadata without that artwork.
+          notes="$RUNNER_TEMP/kairo98-release-notes.md"
+          cat > "$notes" <<EOF
+          Kairo98 $KAIRO98_VERSION_NAME, built from commit $GITHUB_SHA.
 
-          These APKs are debug signed. The final source and asset license audit remains open, so this is a test build rather than a stable release.
+          The with-images APK includes embedded catalog artwork. The without-images APK has the same emulator features and catalog metadata without artwork.
+
+          Both APKs use the project's persistent signing key and the Android debug build configuration. The source and asset license audit remains open in issue #17.
           EOF
           if gh release view "$tag" >/dev/null 2>&1; then
             gh release upload "$tag" "$with_images" "$without_images" --clobber
           else
+            release_flags=()
+            if [[ "$tag" == *-* ]]; then
+              release_flags+=(--prerelease)
+            fi
             gh release create "$tag" "$with_images" "$without_images" \
-              --verify-tag --prerelease --title "Kairo98 $KAIRO98_VERSION_NAME" \
+              --verify-tag "${release_flags[@]}" --title "Kairo98 $KAIRO98_VERSION_NAME" \
               --notes-file "$notes"
           fi
