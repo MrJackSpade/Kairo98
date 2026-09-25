@@ -15,7 +15,7 @@ import time
 from pathlib import Path
 
 
-PACKAGE = "com.mrjackspade.kairo98"
+PACKAGE = "com.loxifi.kairo98"
 ACTIVITY = f"{PACKAGE}/.MainActivity"
 
 

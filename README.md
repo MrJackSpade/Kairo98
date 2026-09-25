@@ -12,17 +12,17 @@ Kairo98 is in active development, and game compatibility varies.
 | Playing a game | On-screen keyboard |
 | ![Rusty running in Kairo98 on Android](docs/screenshots/running-game.png) | ![Kairo98 on-screen PC-98 keyboard](docs/screenshots/keyboard.png) |
 
-These screenshots show a development build on a Retroid Pocket Classic. The published `v0.2.0` APKs predate some changes shown here.
+These screenshots show a development build on a Retroid Pocket Classic. Game images in the screenshots are not bundled with the non-artwork app.
 
 ## Get started
 
-1. Download an APK from [GitHub Releases](https://github.com/MrJackSpade/Kairo98/releases) and install it on an **ARM64 device running Android 8.0 or newer**.
+1. Download the non-artwork APK from [GitHub Releases](https://github.com/MrJackSpade/Kairo98/releases) and install it on an **ARM64 device running Android 8.0 or newer**.
 2. On first launch, choose the folder containing your PC-98 disk images. You can skip this and choose a folder later from the library menu.
 3. Tap a game to open its details, then tap **Play**. A controller can navigate the library too.
 
 The library reads HDI hard disks and supported floppy formats, including FDI, D88, NFD, HDM, and XDF. Images can be loose files or inside ZIP archives. Kairo98 matches known games by the disk image's contents, so recompressing a ZIP does not change its catalog match. Some games need a separate boot floppy or a specific setup; support for those is still being expanded.
 
-The Releases page offers two APKs. **With images** includes the offline catalog artwork; **without images** is a smaller download. In the no-images build, use **Library menu → Download missing images** to fetch artwork for games in your library. Downloads are saved in the app and can be retried. Both APKs have the same emulator, game information, settings, and controls. A paid Google Play edition is planned with the same features as the free GitHub edition.
+The current release uses the `com.loxifi.kairo98` Android package and does not bundle game artwork. Earlier releases used a different package ID, so moving from `v0.3.0` or earlier requires a new install. Use **Library menu → Download missing images** to fetch artwork for games in your library. Downloads are saved in the app and can be retried. The paid Google Play edition is built from the same source revision with the same features and behavior.
 
 Games and firmware are not included with Kairo98.
 
