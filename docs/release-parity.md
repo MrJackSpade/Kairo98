@@ -8,7 +8,7 @@ The GitHub and Google Play releases are the same product. The Play purchase pays
 - Document unavoidable packaging differences such as APK versus Android App Bundle and signing, without changing user-visible capabilities.
 - Publish a version and source revision for every release so users can compare channels.
 
-The current package ID is `com.mrjackspade.kairo98`. Beta test APKs now have a persistent signing identity; stable GitHub and Google Play signing still needs a separate decision. Moving between distribution channels without reinstalling requires compatible signing identities as well as matching package IDs.
+The current package ID is `com.loxifi.kairo98`. Published GitHub APKs used `com.mrjackspade.kairo98`, so this change creates a separate Android install; existing users must reinstall to move to the new ID. Beta test APKs have a persistent signing identity; stable GitHub and Google Play signing still needs a separate decision. Moving between distribution channels without reinstalling requires compatible signing identities as well as matching package IDs.
 
 ## Tagged build artifacts
 

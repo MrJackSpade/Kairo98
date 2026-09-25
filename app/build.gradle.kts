@@ -9,7 +9,7 @@ android {
     ndkVersion = "28.2.13676358"
 
     defaultConfig {
-        applicationId = providers.gradleProperty("kairo98ApplicationId").orNull ?: "com.mrjackspade.kairo98"
+        applicationId = providers.gradleProperty("kairo98ApplicationId").orNull ?: "com.loxifi.kairo98"
         minSdk = 26
         targetSdk = 36
         versionCode = providers.gradleProperty("kairo98VersionCode").orNull?.toInt() ?: 1

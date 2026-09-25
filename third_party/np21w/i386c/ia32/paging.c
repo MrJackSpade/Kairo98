@@ -437,13 +437,18 @@ struct tlb_entry* MEMCALL tlb_lookup(UINT32 laddr, int ucrw);
 #define TLB_PAGE_OFFSET(laddr)	((laddr) & CPU_PAGE_MASK)
 #define TLB_PAGE_BASE(laddr)	((laddr) & ~CPU_PAGE_MASK)
 
+#if defined(KAIRO98_ANDROID_FETCH_FAST)
+__attribute__((visibility("hidden")))
+kairo98_codefetch_cache_entry_t kairo98_codefetch_cache;
+#define codefetch_cache kairo98_codefetch_cache
+#else
 typedef struct codefetch_cache_entry {
-	UINT32	lpage;		/* キャッシュ対象の線形ページ先頭アドレス　linear page base */
-	int	ucrw;		/* アクセス種別　permission key used to create this cache */
+	UINT32 key; /* page base plus ucrw in the unused low 12 bits */
 	UINT8	*host_page;	/* 直接アクセス可能な場合のポインタ　direct host pointer for this linear page */
 } codefetch_cache_entry_t;
 
 static codefetch_cache_entry_t codefetch_cache;
+#endif
 
 static void MEMCALL
 codefetch_cache_invalidate(void)
@@ -455,7 +460,7 @@ static void MEMCALL
 codefetch_cache_invalidate_page(UINT32 laddr)
 {
 	if (codefetch_cache.host_page != NULL &&
-	    codefetch_cache.lpage == TLB_PAGE_BASE(laddr)) {
+	    (codefetch_cache.key & ~CPU_PAGE_MASK) == TLB_PAGE_BASE(laddr)) {
 		codefetch_cache.host_page = NULL;
 	}
 }
@@ -464,8 +469,7 @@ static UINT8 * MEMCALL
 codefetch_cache_lookup(UINT32 laddr, int ucrw)
 {
 	if (codefetch_cache.host_page != NULL &&
-	    codefetch_cache.lpage == TLB_PAGE_BASE(laddr) &&
-	    codefetch_cache.ucrw == ucrw) {
+	    codefetch_cache.key == (TLB_PAGE_BASE(laddr) | (UINT32)ucrw)) {
 		return codefetch_cache.host_page;
 	}
 	return NULL;
@@ -475,8 +479,7 @@ static UINT8 * MEMCALL
 codefetch_cache_update(UINT32 laddr, int ucrw, struct tlb_entry *ep)
 {
 	if (ep != NULL && (ep->fast_flags & TLBF_DIRECT_READ)) {
-		codefetch_cache.lpage = TLB_PAGE_BASE(laddr);
-		codefetch_cache.ucrw = ucrw;
+		codefetch_cache.key = TLB_PAGE_BASE(laddr) | (UINT32)ucrw;
 		codefetch_cache.host_page = ep->host_page;
 		return ep->host_page;
 	}

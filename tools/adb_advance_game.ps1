@@ -8,6 +8,7 @@ param(
     [string]$Activity = 'com.mrjackspade.kairo98/.MainActivity',
     [string]$Game = 'Night',
     [string]$StartupOption = 'regular',
+    [switch]$SkipSimpleperf,
     [string]$OutputDirectory = '.downloads/performance/night-slave'
 )
 
@@ -79,18 +80,20 @@ for ($attempt = 1; $attempt -le $MaxAttempts; $attempt++) {
                 [IO.File]::WriteAllLines((Join-Path $run 'performance-auto.txt'), $metrics)
                 $pidText = [string](Device @('shell', 'pidof', $Package))
                 if ($pidText -notmatch '^\d+') { throw 'App exited before profiling' }
-                $stat = @(Device @('shell', 'simpleperf', 'stat', '--app', $Package,
-                    '--duration', '10', '--csv'))
-                [IO.File]::WriteAllLines((Join-Path $run 'simpleperf-stat.csv'), $stat)
-                try {
-                    [void](Device @('shell', 'simpleperf', 'record', '--app', $Package,
-                        '-e', 'cpu-cycles', '-f', '400', '--duration', '10',
-                        '-o', '/data/local/tmp/kairo98-perf.data'))
-                    $report = @(Device @('shell', 'simpleperf', 'report',
-                        '-i', '/data/local/tmp/kairo98-perf.data', '--sort', 'symbol'))
-                    [IO.File]::WriteAllLines((Join-Path $run 'simpleperf-report.txt'), $report)
-                } catch {
-                    [IO.File]::WriteAllText((Join-Path $run 'simpleperf-error.txt'), "$_")
+                if (-not $SkipSimpleperf) {
+                    $stat = @(Device @('shell', 'simpleperf', 'stat', '--app', $Package,
+                        '--duration', '10', '--csv'))
+                    [IO.File]::WriteAllLines((Join-Path $run 'simpleperf-stat.csv'), $stat)
+                    try {
+                        [void](Device @('shell', 'simpleperf', 'record', '--app', $Package,
+                            '-e', 'cpu-cycles', '-f', '400', '--duration', '10',
+                            '-o', '/data/local/tmp/kairo98-perf.data'))
+                        $report = @(Device @('shell', 'simpleperf', 'report',
+                            '-i', '/data/local/tmp/kairo98-perf.data', '--sort', 'symbol'))
+                        [IO.File]::WriteAllLines((Join-Path $run 'simpleperf-report.txt'), $report)
+                    } catch {
+                        [IO.File]::WriteAllText((Join-Path $run 'simpleperf-error.txt'), "$_")
+                    }
                 }
                 [void](Device @('shell', 'screencap', '-d', '1', '-p',
                     '/sdcard/Download/kairo98-perf-frame.png'))

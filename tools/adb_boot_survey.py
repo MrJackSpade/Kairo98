@@ -15,8 +15,8 @@ import time
 from pathlib import Path
 
 
-PACKAGE = "com.mrjackspade.kairo98"
-ACTIVITY = f"{PACKAGE}/.MainActivity"
+PACKAGE = "com.loxifi.kairo98"
+ACTIVITY = f"{PACKAGE}/com.mrjackspade.kairo98.MainActivity"
 
 
 def adb(executable, *args, binary=False):

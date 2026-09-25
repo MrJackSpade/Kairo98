@@ -39,7 +39,7 @@ target_include_directories(np21w_core PRIVATE
     ${NP21W_ROOT}/vram
     ${SPLEEN_ROOT}
 )
-target_compile_definitions(np21w_core PRIVATE SUPPORT_LARGE_HDD SUPPORT_KAI_IMAGES NP2_SDL2 CPUCORE_IA32 USE_TSC SUPPORT_YMFM)
+target_compile_definitions(np21w_core PRIVATE SUPPORT_LARGE_HDD SUPPORT_KAI_IMAGES NP2_SDL2 CPUCORE_IA32 USE_TSC SUPPORT_YMFM KAIRO98_ANDROID_IRQ_FAST KAIRO98_ANDROID_FETCH_FAST)
 target_compile_options(np21w_core PRIVATE -fsigned-char -fno-strict-aliasing
     $<$<CONFIG:Debug>:-O2>)
 
@@ -54,3 +54,6 @@ target_include_directories(kairo98 PRIVATE ${YMFM_ROOT}/src)
 target_compile_features(kairo98 PRIVATE cxx_std_17)
 target_compile_options(kairo98 PRIVATE $<$<CONFIG:Debug>:-O2>)
 target_link_libraries(kairo98 PRIVATE log android aaudio)
+# Core calls stay inside this shared library. Bind them locally to avoid the
+# measured PLT cost in the interpreter's instruction-fetch path.
+target_link_options(kairo98 PRIVATE "-Wl,-Bsymbolic")

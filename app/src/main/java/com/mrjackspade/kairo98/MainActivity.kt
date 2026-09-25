@@ -1814,7 +1814,22 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
         AlertDialog.Builder(this).setTitle("Kairo98 $version")
             .setMessage("Open the menu with a controller Mode/Home button when Android delivers it, Back, Menu, or a swipe from the left edge. Swipe inward from the right edge to open the PC-98 keyboard. Android reserves the system Home key.\n\nPhysical keyboard input goes to the PC-98 while the menu is closed.")
             .setNeutralButton("Licenses") { _, _ -> showThirdPartyNotices() }
+            .setNegativeButton("Privacy policy") { _, _ -> showPrivacyPolicy() }
             .setPositiveButton("Done", null).showStyled()
+    }
+
+    private fun showPrivacyPolicy() {
+        val policy = assets.open("PRIVACY_POLICY.txt").bufferedReader().use { it.readText() }
+        val padding = (20 * resources.displayMetrics.density).toInt()
+        val content = TextView(this).apply {
+            text = policy
+            textSize = 14f
+            setTextColor(Color.WHITE)
+            setPadding(padding, padding, padding, padding)
+        }
+        val scroll = ScrollView(this).apply { addView(content) }
+        AlertDialog.Builder(this).setTitle("Kairo98 Privacy Policy")
+            .setView(scroll).setPositiveButton("Done", null).showStyled()
     }
 
     private fun showThirdPartyNotices() {

@@ -122,6 +122,14 @@ extern "C" {
 
 #define CPU_PAGE_SIZE      	 0x1000
 #define CPU_PAGE_MASK       	(CPU_PAGE_SIZE - 1)
+#if defined(KAIRO98_ANDROID_FETCH_FAST)
+typedef struct {
+    UINT32 key;
+    UINT8 *host_page;
+} kairo98_codefetch_cache_entry_t;
+extern __attribute__((visibility("hidden")))
+    kairo98_codefetch_cache_entry_t kairo98_codefetch_cache;
+#endif
 
 /* ucrw */
 #define	CPU_PAGE_WRITE		(1 << 0)

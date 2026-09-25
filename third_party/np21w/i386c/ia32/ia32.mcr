@@ -75,13 +75,27 @@ do { \
 	CPU_REMCLOCK = -1; \
 } while (/*CONSTCOND*/ 0)
 
-#define	IRQCHECKTERM() \
+/* Keep running after flag-control instructions when no interrupt is pending. */
+#if defined(KAIRO98_ANDROID_IRQ_FAST)
+#define IRQCHECKTERM() \
 do { \
-	if (CPU_REMCLOCK > 0) { \
-		CPU_BASECLOCK -= CPU_REMCLOCK; \
-		CPU_REMCLOCK = 0; \
-	} \
+    if (CPU_REMCLOCK > 0 && \
+        (CPU_TRAP || CPU_RESETREQ || dmac.working || PICEXISTINTR)) { \
+        CPU_BASECLOCK -= CPU_REMCLOCK; \
+        CPU_REMCLOCK = 0; \
+    } \
 } while (/*CONSTCOND*/ 0)
+#else
+#define IRQCHECKTERM() \
+do { \
+    if (CPU_REMCLOCK > 0) { \
+        CPU_BASECLOCK -= CPU_REMCLOCK; \
+        CPU_REMCLOCK = 0; \
+    } \
+} while (/*CONSTCOND*/ 0)
+#endif
+
+
 
 
 /*

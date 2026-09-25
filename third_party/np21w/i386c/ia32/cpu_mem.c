@@ -395,8 +395,17 @@ cpu_codefetch(UINT32 offset)
 
 	if (!CPU_STAT_PM)
 		return cpu_memoryread_codefetch(addr);
-	if (offset <= sdp->u.seg.limit)
+	if (offset <= sdp->u.seg.limit) {
+#if defined(KAIRO98_ANDROID_FETCH_FAST)
+		if (CPU_STAT_PAGING) {
+			UINT8 *page = kairo98_codefetch_cache.host_page;
+			if (page != NULL &&
+			    kairo98_codefetch_cache.key == ((addr & ~CPU_PAGE_MASK) | (UINT32)ucrw))
+				return page[addr & CPU_PAGE_MASK];
+		}
+#endif
 		return cpu_lmemoryread_codefetch(addr, ucrw);
+	}
 
 	EXCEPTION(GP_EXCEPTION, 0);
 	return 0;	/* compiler happy */
