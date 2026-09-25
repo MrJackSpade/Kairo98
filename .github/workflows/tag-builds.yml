@@ -17,6 +17,8 @@ permissions:
 jobs:
   build:
     runs-on: ubuntu-24.04
+    permissions:
+      contents: write
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-java@v6
@@ -68,3 +70,27 @@ jobs:
           path: app/build/outputs/apk/withoutImages/debug/app-withoutImages-debug.apk
           if-no-files-found: error
           retention-days: 30
+      - name: Attach APKs to beta prerelease
+        if: github.event_name == 'push' && contains(github.ref_name, '-')
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          tag="$GITHUB_REF_NAME"
+          with_images="$RUNNER_TEMP/Kairo98-$tag-with-images.apk"
+          without_images="$RUNNER_TEMP/Kairo98-$tag-without-images.apk"
+          cp app/build/outputs/apk/withImages/debug/app-withImages-debug.apk "$with_images"
+          cp app/build/outputs/apk/withoutImages/debug/app-withoutImages-debug.apk "$without_images"
+          notes="$RUNNER_TEMP/kairo98-beta-notes.md"
+          cat > "$notes" <<'EOF'
+          Android beta test build. The with-images APK includes embedded catalog artwork; the without-images APK has the same emulator features and catalog metadata without that artwork.
+
+          These APKs are debug signed. The final source and asset license audit remains open, so this is a test build rather than a stable release.
+          EOF
+          if gh release view "$tag" >/dev/null 2>&1; then
+            gh release upload "$tag" "$with_images" "$without_images" --clobber
+          else
+            gh release create "$tag" "$with_images" "$without_images" \
+              --verify-tag --prerelease --title "Kairo98 $KAIRO98_VERSION_NAME" \
+              --notes-file "$notes"
+          fi

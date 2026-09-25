@@ -1,6 +1,6 @@
 # Licensing plan
 
-This is a planning record and preliminary source check, not a completed binary license audit. Do not distribute a binary until the final build inputs have been checked.
+This is a planning record and preliminary source check, not a completed binary license audit. The user requested the public, debug-signed `v0.1.0-beta.1` prerelease for phone testing before that audit was complete. It is labeled as a test build. Do not describe it as release-ready or publish a stable binary until the final build inputs have been checked.
 
 ## Native components
 
@@ -22,4 +22,4 @@ The reviewed 360-pixel catalog artwork is bundled in the `withImages` build at t
 
 ## Release gate
 
-Before the first public binary, review the complete source list, generated assets, bundled native libraries, build flags, notices, and APK/AAB contents. Record the results here. The source package's license table is version-specific, so this review repeats if the native source changes.
+Before a stable release, review the complete source list, generated assets, bundled native libraries, build flags, notices, and APK/AAB contents. Record the results here. The source package's license table is version-specific, so this review repeats if the native source changes. The beta APKs passed catalog parity checks and were scanned for bundled BIOS or game images; that does not complete the license audit.
