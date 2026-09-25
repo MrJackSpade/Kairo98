@@ -43,6 +43,7 @@ import java.net.HttpURLConnection
 import java.net.URL
 import java.nio.file.Files
 import java.nio.file.StandardCopyOption
+import java.util.concurrent.CancellationException
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.math.floor
 import kotlin.math.ceil
@@ -95,6 +96,8 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
     private var libraryVisible = true
     private var romTree: Uri? = null
     private var scanCancelled = AtomicBoolean(false)
+    private var artworkDownloadCancelled = AtomicBoolean(false)
+    @Volatile private var artworkDownloadRunning = false
     private var currentEntry: LibraryEntry? = null
     private var currentDisk: File? = null
     private var currentIsFloppy = false
@@ -252,6 +255,8 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
             }, ::applyPauseState, ::showOnScreenControls)
         libraryScreen = LibraryScreen(this, romLibrary.catalog,
             ::chooseRomFolder, { refreshLibrary(false) }, { refreshLibrary(true) },
+            if (resources.getBoolean(R.bool.catalog_art_download_enabled))
+                ::downloadMissingImages else null, ::cancelArtworkDownload,
             { libraryScreen.closeActions(); showMachine() },
             { libraryScreen.closeActions(); showControllerScope() },
             { libraryScreen.closeActions(); showAbout() },
@@ -623,6 +628,72 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
                 runOnUiThread {
                     if (!cancelled.get()) libraryScreen.showStatus(
                         "Scan failed: ${error.message ?: "Unknown error"}. Select folder or refresh.")
+                }
+            }
+        }.start()
+    }
+
+    private fun cancelArtworkDownload() { artworkDownloadCancelled.set(true) }
+
+    private fun downloadMissingImages() {
+        if (artworkDownloadRunning) {
+            toast("Images are already downloading")
+            return
+        }
+        val entries = libraryEntries.toList()
+        if (entries.none { it.playable }) {
+            toast("Add games to the library first")
+            return
+        }
+        artworkDownloadRunning = true
+        val cancelled = AtomicBoolean(false)
+        artworkDownloadCancelled = cancelled
+        libraryScreen.showArtworkProgress(0, 0, 0)
+        Thread {
+            var completed = 0
+            var downloaded = 0
+            var failures = 0
+            var total = 0
+            var errorMessage: String? = null
+            try {
+                val sources = romLibrary.catalog.missingArtworkFor(entries)
+                total = sources.size
+                runOnUiThread {
+                    if (!isDestroyed) libraryScreen.showArtworkProgress(0, total, 0)
+                }
+                for (source in sources) {
+                    if (cancelled.get()) break
+                    try {
+                        romLibrary.catalog.downloadArtwork(source, cancelled)
+                        downloaded++
+                    } catch (_: CancellationException) {
+                        break
+                    } catch (error: Exception) {
+                        failures++
+                        android.util.Log.w("Kairo98", "Artwork download failed: ${source.path}", error)
+                    }
+                    completed++
+                    val progress = completed
+                    val failed = failures
+                    runOnUiThread {
+                        if (!isDestroyed) libraryScreen.showArtworkProgress(progress, total, failed)
+                    }
+                }
+            } catch (error: Exception) {
+                errorMessage = error.message ?: "Unknown error"
+            }
+            val result = when {
+                errorMessage != null -> "Image download failed: $errorMessage"
+                total == 0 -> "No missing catalog images for this library"
+                cancelled.get() -> "Image download stopped · $downloaded saved"
+                failures == 0 -> "Downloaded $downloaded images"
+                else -> "Downloaded $downloaded images · $failures failed. Tap again to retry."
+            }
+            runOnUiThread {
+                artworkDownloadRunning = false
+                if (!isDestroyed) {
+                    libraryScreen.refreshArtwork()
+                    libraryScreen.finishArtworkDownload(result)
                 }
             }
         }.start()
@@ -1145,7 +1216,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
                     romLibrary.catalog.sourceOf(id, "artwork", urlKind)
             } == true }
         val bitmap = try {
-            assets.open(path).use { BitmapFactory.decodeStream(it, null,
+            romLibrary.catalog.openArtwork(path).use { BitmapFactory.decodeStream(it, null,
                 BitmapFactory.Options()) }
         } catch (_: Exception) { null }
         if (bitmap == null) {
@@ -1821,6 +1892,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
     override fun onDestroy() {
         startGeneration++
         scanCancelled.set(true)
+        artworkDownloadCancelled.set(true)
         releaseInputs()
         inputManager.unregisterInputDeviceListener(inputDeviceListener)
         handler.removeCallbacks(updateStatus)

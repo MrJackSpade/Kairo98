@@ -178,7 +178,7 @@ class GameDetailPage(
         val path = game.preview ?: return
         imageExecutor.execute {
             val bitmap = try {
-                context.assets.open(path).use { BitmapFactory.decodeStream(it) }
+                catalog.openArtwork(path).use { BitmapFactory.decodeStream(it) }
             } catch (_: Exception) { null }
             post {
                 if (generation == imageGeneration && isOpen) {
@@ -200,6 +200,8 @@ class GameDetailPage(
         visibility = View.GONE
         return true
     }
+
+    fun refreshArtwork() { currentEntry?.let(::show) }
 
     fun playSelected() { currentEntry?.takeIf { it.playable }?.let(play) }
 

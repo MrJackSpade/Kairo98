@@ -14,6 +14,7 @@ import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.ListView
 import android.widget.ProgressBar
+import android.widget.ScrollView
 import android.widget.TextView
 import android.widget.Toast
 import java.util.concurrent.Executors
@@ -25,6 +26,8 @@ class LibraryScreen(
     private val chooseFolder: () -> Unit,
     private val refresh: () -> Unit,
     private val rehash: () -> Unit,
+    private val downloadMissingImages: (() -> Unit)?,
+    private val cancelArtworkDownload: () -> Unit,
     private val machineSettings: () -> Unit,
     private val controllerSettings: () -> Unit,
     private val about: () -> Unit,
@@ -37,7 +40,10 @@ class LibraryScreen(
     private val list = ListView(context)
     private val emptyState = TextView(context)
     private val scanProgress = ProgressBar(context)
+    private val artworkBanner = LinearLayout(context)
+    private val artworkStatus = TextView(context)
     private val scrim = View(context)
+    private val actionsScroll = ScrollView(context)
     private val actionsDrawer = LinearLayout(context)
     private val actionItems = ArrayList<View>()
     private val detailPage = GameDetailPage(context, catalog, play, preview) { closeDetail() }
@@ -162,6 +168,31 @@ class LibraryScreen(
             setOnClickListener { openActions() }
         }, LinearLayout.LayoutParams(dp(48), dp(48)))
         body.addView(header)
+        artworkBanner.apply {
+            orientation = LinearLayout.HORIZONTAL
+            gravity = Gravity.CENTER_VERTICAL
+            visibility = View.GONE
+            setBackgroundColor(0xff263748.toInt())
+            setPadding(dp(12), dp(7), dp(8), dp(7))
+        }
+        artworkStatus.apply {
+            textSize = 13f
+            setTextColor(Color.WHITE)
+        }
+        artworkBanner.addView(artworkStatus, LinearLayout.LayoutParams(0, -2, 1f))
+        artworkBanner.addView(TextView(context).apply {
+            text = "Cancel"
+            textSize = 14f
+            setTextColor(0xff66d6df.toInt())
+            setPadding(dp(12), dp(6), dp(6), dp(6))
+            isClickable = true
+            isFocusable = true
+            setOnClickListener {
+                artworkStatus.text = "Stopping image download…"
+                cancelArtworkDownload()
+            }
+        })
+        body.addView(artworkBanner, LinearLayout.LayoutParams(-1, -2))
         val gameArea = FrameLayout(context)
         list.apply {
             divider = null
@@ -198,13 +229,19 @@ class LibraryScreen(
         addView(scrim, FrameLayout.LayoutParams(-1, -1))
         actionsDrawer.apply {
             orientation = LinearLayout.VERTICAL
-            visibility = View.GONE
-            elevation = dp(16).toFloat()
             setBackgroundColor(0xff171d27.toInt())
             setPadding(dp(16), dp(22), dp(16), dp(16))
         }
+        actionsScroll.apply {
+            visibility = View.GONE
+            elevation = dp(16).toFloat()
+            isFillViewport = true
+            overScrollMode = View.OVER_SCROLL_NEVER
+            setBackgroundColor(0xff171d27.toInt())
+            addView(actionsDrawer, FrameLayout.LayoutParams(-1, -2))
+        }
         val drawerWidth = minOf(dp(320), resources.displayMetrics.widthPixels - dp(40))
-        addView(actionsDrawer, FrameLayout.LayoutParams(drawerWidth, -1, Gravity.END))
+        addView(actionsScroll, FrameLayout.LayoutParams(drawerWidth, -1, Gravity.END))
         actionsDrawer.addView(TextView(context).apply {
             text = "LIBRARY"
             textSize = 24f
@@ -236,6 +273,8 @@ class LibraryScreen(
         drawerAction("Select ROM folder", "Choose where disk images and ZIP games are stored", chooseFolder)
         drawerAction("Refresh", "Scan for added, changed, or removed games", refresh)
         drawerAction("Rehash", "Recheck every game image", rehash)
+        if (downloadMissingImages != null) drawerAction("Download missing images",
+            "Fetch artwork for games in this library", downloadMissingImages)
         actionsDrawer.addView(TextView(context).apply {
             text = "SETTINGS"
             textSize = 11f
@@ -250,6 +289,22 @@ class LibraryScreen(
     }
 
     fun showFolder(label: String?) { folder.text = label ?: "No ROM folder selected" }
+    fun showArtworkProgress(completed: Int, total: Int, failures: Int) {
+        artworkBanner.visibility = View.VISIBLE
+        artworkStatus.text = if (total == 0) "Checking library artwork…"
+            else "Downloading images $completed/$total" +
+                (if (failures == 0) "" else " · $failures failed")
+    }
+    fun finishArtworkDownload(message: String) {
+        artworkBanner.visibility = View.GONE
+        showStatus(message)
+        Toast.makeText(context, message, Toast.LENGTH_LONG).show()
+    }
+    fun refreshArtwork() {
+        missingArt.clear()
+        adapter.notifyDataSetChanged()
+        detailPage.refreshArtwork()
+    }
     fun showStatus(message: String) {
         status.text = message
         scanProgress.visibility = if (message.startsWith("Scanning") ||
@@ -361,27 +416,27 @@ class LibraryScreen(
         if (actionsOpen) return
         actionsOpen = true
         scrim.animate().cancel()
-        actionsDrawer.animate().cancel()
+        actionsScroll.animate().cancel()
         scrim.visibility = View.VISIBLE
         scrim.alpha = 0f
-        actionsDrawer.visibility = View.VISIBLE
-        actionsDrawer.translationX = actionsDrawer.layoutParams.width.toFloat()
+        actionsScroll.visibility = View.VISIBLE
+        actionsScroll.translationX = actionsScroll.layoutParams.width.toFloat()
         focusAction(0)
         scrim.animate().alpha(1f).setDuration(180).start()
-        actionsDrawer.animate().translationX(0f).setDuration(180).start()
+        actionsScroll.animate().translationX(0f).setDuration(180).start()
     }
 
     fun closeActions(): Boolean {
         if (!actionsOpen) return false
         actionsOpen = false
         scrim.animate().cancel()
-        actionsDrawer.animate().cancel()
+        actionsScroll.animate().cancel()
         scrim.animate().alpha(0f).setDuration(160).withEndAction {
             if (!actionsOpen) scrim.visibility = View.GONE
         }.start()
-        actionsDrawer.animate().translationX(actionsDrawer.layoutParams.width.toFloat())
+        actionsScroll.animate().translationX(actionsScroll.layoutParams.width.toFloat())
             .setDuration(160).withEndAction {
-                if (!actionsOpen) actionsDrawer.visibility = View.GONE
+                if (!actionsOpen) actionsScroll.visibility = View.GONE
             }.start()
         return true
     }
@@ -432,7 +487,7 @@ class LibraryScreen(
         if (path in missingArt || !pendingArt.add(path)) return null
         artExecutor.execute {
             val bitmap = try {
-                context.assets.open(path).use { stream ->
+                catalog.openArtwork(path).use { stream ->
                     BitmapFactory.decodeStream(stream, null, BitmapFactory.Options().apply {
                         inSampleSize = 4
                     })

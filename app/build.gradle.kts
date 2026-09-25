@@ -50,8 +50,14 @@ android {
 
     flavorDimensions += "artwork"
     productFlavors {
-        create("withImages") { dimension = "artwork" }
-        create("withoutImages") { dimension = "artwork" }
+        create("withImages") {
+            dimension = "artwork"
+            resValue("bool", "catalog_art_download_enabled", "false")
+        }
+        create("withoutImages") {
+            dimension = "artwork"
+            resValue("bool", "catalog_art_download_enabled", "true")
+        }
     }
 
     externalNativeBuild {

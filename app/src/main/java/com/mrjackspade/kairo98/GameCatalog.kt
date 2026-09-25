@@ -4,8 +4,10 @@ import android.content.Context
 import android.util.AtomicFile
 import org.json.JSONObject
 import java.io.File
+import java.io.InputStream
 import java.net.URI
 import java.text.Normalizer
+import java.util.concurrent.atomic.AtomicBoolean
 
 /** Versioned, data-only metadata. Nothing in this file is executed by Android. */
 class GameCatalog(private val context: Context) {
@@ -16,6 +18,8 @@ class GameCatalog(private val context: Context) {
     data class DiskSwap(val id: String, val drive: Int, val contentId: String,
                         val screenHashes: Set<Long>, val key: String, val enter: Boolean)
     private val bundledImages = context.assets.list("art/catalog")?.isNotEmpty() == true
+    private val artworkStore = CatalogArtworkStore(context, bundledImages)
+    data class ArtworkSource(val path: String, val url: String)
     data class Game(
         val contentId: String,
         val title: String,
@@ -24,6 +28,8 @@ class GameCatalog(private val context: Context) {
         val preview: String?,
         val boxArtUrl: String?,
         val previewUrl: String?,
+        val boxArtCatalogPath: String?,
+        val previewCatalogPath: String?,
         val baseClockTenthsMHz: Int?,
         val gdcClockTenthsMHz: Int?,
         val controllerProfile: String?,
@@ -135,13 +141,16 @@ class GameCatalog(private val context: Context) {
                     item.getString("key"), item.getBoolean("enter"))
             }
         } ?: emptyList()
+        val boxArtPath = artwork?.optString("boxArt")?.takeIf(::validArtPath)
+        val previewPath = artwork?.optString("preview")?.takeIf(::validArtPath)
+        val boxArtUrl = artwork?.optString("boxArtUrl")?.takeIf(::validImageUrl)
+        val previewUrl = artwork?.optString("previewUrl")?.takeIf(::validImageUrl)
         return Game(
             contentId, title.ifBlank { fileName },
             merged.optString("description").takeIf(::validDescription),
-            artwork?.optString("boxArt")?.takeIf { bundledImages && validArtPath(it) },
-            artwork?.optString("preview")?.takeIf { bundledImages && validArtPath(it) },
-            artwork?.optString("boxArtUrl")?.takeIf(::validImageUrl),
-            artwork?.optString("previewUrl")?.takeIf(::validImageUrl),
+            artworkStore.availablePath(boxArtPath),
+            artworkStore.availablePath(previewPath),
+            boxArtUrl, previewUrl, boxArtPath, previewPath,
             machine?.optInt("baseClockTenthsMHz")?.takeIf { it == 20 || it == 25 },
             machine?.optInt("gdcClockTenthsMHz")?.takeIf { it == 25 || it == 50 },
             controller?.optString("profile")?.takeIf { it.length in 1..64 },
@@ -166,6 +175,32 @@ class GameCatalog(private val context: Context) {
             user?.keys()?.asSequence()?.toSet() ?: emptySet()
         )
     }
+
+    fun openArtwork(path: String): InputStream = artworkStore.open(path)
+
+    fun missingArtworkFor(entries: List<LibraryEntry>): List<ArtworkSource> {
+        if (bundledImages) return emptyList()
+        return entries.asSequence().filter { it.playable }
+            .flatMap { entry ->
+                val id = entry.contentId ?: ""
+                val game = resolve(id, entry.displayName)
+                listOfNotNull(
+                    game.boxArtCatalogPath?.takeIf { game.boxArtUrl != null &&
+                        sourceOf(id, "artwork", "boxArt") ==
+                            sourceOf(id, "artwork", "boxArtUrl") }
+                        ?.let { ArtworkSource(it, game.boxArtUrl!!) },
+                    game.previewCatalogPath?.takeIf { game.previewUrl != null &&
+                        sourceOf(id, "artwork", "preview") ==
+                            sourceOf(id, "artwork", "previewUrl") }
+                        ?.let { ArtworkSource(it, game.previewUrl!!) }).asSequence()
+            }
+            .distinctBy { it.path }
+            .filter { artworkStore.availablePath(it.path) == null }
+            .toList()
+    }
+
+    fun downloadArtwork(source: ArtworkSource, cancelled: AtomicBoolean) =
+        artworkStore.download(source.path, source.url, cancelled)
 
     @Synchronized fun setOverride(contentId: String, field: String, value: Any) {
         require(validId(contentId)) { "Invalid game ID" }
