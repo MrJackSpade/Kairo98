@@ -24,7 +24,25 @@ android {
         }
     }
 
+    signingConfigs {
+        create("beta") {
+            val keystore = providers.environmentVariable("KAIRO98_BETA_KEYSTORE").orNull
+            val password = providers.environmentVariable("KAIRO98_BETA_PASSWORD").orNull
+            if (!keystore.isNullOrBlank() && !password.isNullOrBlank()) {
+                storeFile = file(keystore)
+                storePassword = password
+                keyAlias = "kairo98-beta"
+                keyPassword = password
+            }
+        }
+    }
+
     buildTypes {
+        getByName("debug") {
+            if (!providers.environmentVariable("KAIRO98_BETA_KEYSTORE").orNull.isNullOrBlank()) {
+                signingConfig = signingConfigs.getByName("beta")
+            }
+        }
         release {
             isMinifyEnabled = false
         }

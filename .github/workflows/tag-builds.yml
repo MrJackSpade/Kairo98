@@ -47,12 +47,41 @@ jobs:
           fi
           echo "KAIRO98_VERSION_NAME=$version" >> "$GITHUB_ENV"
           echo "KAIRO98_VERSION_CODE=$GITHUB_RUN_NUMBER" >> "$GITHUB_ENV"
+      - name: Prepare persistent beta signing key
+        env:
+          KEYSTORE_B64: ${{ secrets.KAIRO98_BETA_KEYSTORE_B64 }}
+          KAIRO98_BETA_PASSWORD: ${{ secrets.KAIRO98_BETA_PASSWORD }}
+        shell: bash
+        run: |
+          if [[ -z "$KEYSTORE_B64" || -z "$KAIRO98_BETA_PASSWORD" ]]; then
+            echo "Beta signing secrets are missing" >&2
+            exit 1
+          fi
+          keystore="$RUNNER_TEMP/kairo98-beta.p12"
+          printf '%s' "$KEYSTORE_B64" | base64 --decode > "$keystore"
+          echo "KAIRO98_BETA_KEYSTORE=$keystore" >> "$GITHUB_ENV"
       - name: Build both APKs from this tag
+        env:
+          KAIRO98_BETA_PASSWORD: ${{ secrets.KAIRO98_BETA_PASSWORD }}
         run: >-
           ./gradlew --no-daemon
           :app:assembleWithImagesDebug :app:assembleWithoutImagesDebug
           -Pkairo98VersionName="$KAIRO98_VERSION_NAME"
           -Pkairo98VersionCode="$KAIRO98_VERSION_CODE"
+      - name: Verify persistent beta signer
+        shell: bash
+        run: |
+          expected="c321ec6b35e2509741362fcc3fede816c81510aa8133d791ea55ce0e1594a51c"
+          for apk in \
+            app/build/outputs/apk/withImages/debug/app-withImages-debug.apk \
+            app/build/outputs/apk/withoutImages/debug/app-withoutImages-debug.apk; do
+            actual=$("$ANDROID_HOME/build-tools/36.0.0/apksigner" verify --print-certs "$apk" |
+              awk '/Signer #1 certificate SHA-256 digest:/ {print $NF}')
+            if [[ "$actual" != "$expected" ]]; then
+              echo "Unexpected beta signing certificate for $apk: $actual" >&2
+              exit 1
+            fi
+          done
       - name: Verify catalog parity and artwork split
         run: >-
           python3 tools/verify_apk_variants.py
