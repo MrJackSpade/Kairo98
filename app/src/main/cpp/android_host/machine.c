@@ -38,14 +38,16 @@ static void apply_gdc_clock(void) {
 
 int kairo98_machine_start(const char *image, const char *font_path, const char *bios_dir,
                           int font_bitmap, int mhz_times_ten, int gdc_mhz_times_ten, int floppy,
-                          const char *boot_floppy) {
+                          const char *boot_floppy, const char *second_floppy) {
     size_t length = image ? strlen(image) : 0;
     size_t boot_length = boot_floppy ? strlen(boot_floppy) : 0;
+    size_t second_length = second_floppy ? strlen(second_floppy) : 0;
     size_t bios_length = bios_dir ? strlen(bios_dir) : 0;
     size_t font_length = font_path ? strlen(font_path) : 0;
     if (length >= (floppy ? sizeof(np2cfg.fddfile[0]) :
                             sizeof(np2cfg.sasihdd[0])) ||
         boot_length >= sizeof(np2cfg.fddfile[0]) || (floppy && boot_length) ||
+        second_length >= sizeof(np2cfg.fddfile[1]) ||
         bios_length >= sizeof(np2cfg.biospath) || !font_length ||
         (font_bitmap && font_length >= sizeof(np2cfg.fontfile))) {
         return 1;
@@ -57,6 +59,7 @@ int kairo98_machine_start(const char *image, const char *font_path, const char *
     np2cfg.baseclock = mhz_times_ten == 25 ? PCBASECLOCK25 : PCBASECLOCK20;
     np2cfg.sasihdd[0][0] = '\0';
     np2cfg.fddfile[0][0] = '\0';
+    np2cfg.fddfile[1][0] = '\0';
     np2cfg.biospath[0] = '\0';
     np2cfg.fontfile[0] = '\0';
     if (bios_length) memcpy(np2cfg.biospath, bios_dir, bios_length + 1);
@@ -88,6 +91,14 @@ int kairo98_machine_start(const char *image, const char *font_path, const char *
             pccore_term();
             np2cfg.fddfile[0][0] = '\0';
             return 5;
+        }
+    }
+    if (second_length) {
+        diskdrv_readyfddex(1, second_floppy, floppy_type(second_floppy), 0);
+        if (!fdd_diskready(1)) {
+            pccore_term();
+            np2cfg.fddfile[1][0] = '\0';
+            return 6;
         }
     }
     return 0;

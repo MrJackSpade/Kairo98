@@ -219,7 +219,7 @@ startup captures remain unresolved until a longer run.
 | 124 | Acrojet, D88 | Illustrated game title. |
 | 125 | Belloncho Body Inspection, FDI | BASIC asks “How many files (0–15)?”; investigate intended answer. |
 | 126 | The Black Onyx, FDD | Color or monochrome monitor choice. |
-| 127 | Cybernetic Hi-School 2.0, HDM | Loader asks for Disk B in drive 2; test companion-disk insertion. |
+| 127 | Cybernetic Hi-School 2.0, HDM | Loader asks for Disk B in drive 2. The two blinking full-frame hashes trigger an automatic mount of Disk 2 in B; the game advances to mouse/keyboard selection without a key. |
 | 128 | Dragon Slayer: The Legend of Heroes, NFD | Japanese warning says GDC is in 5 MHz mode and asks for DIP 2-8 OFF/reset. Added 2.5 MHz catalog setting; retest. |
 | 129 | Gage, D88 | Publisher intro. |
 | 130 | Hacchake Ayayo-san, D88 | Illustrated game screen and dialogue. |
@@ -237,7 +237,7 @@ startup captures remain unresolved until a longer run.
 
 | # | Archive | Screen after fresh launch |
 | --- | --- | --- |
-| 140 | Reserve, FDI | Guest reports disk not ready (`ERR-71`) and asks for a key; archive includes Disk 2. Test insertion in drive B or swap in A. |
+| 140 | Reserve, FDI | The Disk-1-only survey reported disk not ready (`ERR-71`). The translator's README specifies Disk 1 in A and Disk 2 in B. With both mounted before boot, Enter from the title advanced to the translated story scene. |
 | 141 | The Screamer, FDI | Character setup screen. |
 | 142 | The Sword of Kumdor, FDI | Black at 10 s; retry longer. |
 | 143 | Wind's Seed, FDI | Game-specific sky intro. |
@@ -359,8 +359,7 @@ under ignored `.downloads/run-starfire-title-launch.png` and
 Check Madou Monogatari in a longer live run; the 22-second black captures do
 not establish a failure. Investigate Flix Mix's transient graphics and retest
 the Ultima VIII voice-patch variant. Investigate Peret em Heru's return to DOS.
-Test companion disk insertion for Cybernetic
-Hi-School 2.0 and Reserve, and determine Belloncho Body Inspection's BASIC
+Determine Belloncho Body Inspection's BASIC
 file-count answer.
 Typed-number startup menus have an [app choice-panel design](startup-choices.md).
 Arrow-and-Enter menus remain on the guest screen. Some archives contain multiple

@@ -50,7 +50,8 @@ import kotlin.math.roundToInt
 class MainActivity : Activity(), SurfaceHolder.Callback {
     private external fun nativeStart(path: String?, fontPath: String, biosDir: String,
                                      fontBitmap: Boolean, mhzTimesTen: Int, gdcMhzTimesTen: Int,
-                                     floppy: Boolean, bootFloppyPath: String?): Boolean
+                                     floppy: Boolean, bootFloppyPath: String?,
+                                     secondFloppyPath: String?): Boolean
     private external fun nativeFloppy(drive: Int, path: String?): Boolean
     private external fun nativeStop()
     private external fun nativePause(paused: Boolean)
@@ -94,7 +95,14 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
     private var currentIsFloppy = false
     private val mountedFloppies = arrayOfNulls<String>(2)
     private val manualFloppies = arrayOfNulls<File>(2)
+    private data class PreparedLaunch(val disk: File, val bootFloppy: LibraryEntry?,
+                                      val floppyB: LibraryEntry?,
+                                      val swapSources: Map<String, LibraryEntry>)
     @Volatile private var floppyBusy = false
+    private val samplingLock = Any()
+    private var samplingUsers = 0
+    private val guestSequenceLock = Any()
+    private lateinit var swapStatus: TextView
     @Volatile private var biosBusy = false
     @Volatile private var fontBusy = false
     private var currentTitle: String? = null
@@ -238,6 +246,15 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
             { libraryScreen.closeActions(); showMachine() },
             ::launchEntry, ::showDetailPreview, ::showGameDetails)
         root.addView(libraryScreen, FrameLayout.LayoutParams(-1, -1))
+        swapStatus = TextView(this).apply {
+            visibility = View.GONE
+            setTextColor(Color.WHITE)
+            setBackgroundColor(0xe0202a36.toInt())
+            setPadding(dp(16), dp(10), dp(16), dp(10))
+            textSize = 16f
+        }
+        root.addView(swapStatus, FrameLayout.LayoutParams(-2, -2,
+            Gravity.TOP or Gravity.CENTER_HORIZONTAL).apply { topMargin = dp(20) })
         handler.post(updateStatus)
         root.post {
             val saved = preferences.getString("rom_tree", null)
@@ -610,11 +627,22 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
         Thread {
             val result = try {
                 val media = bootMediaFor(entry, libraryEntries, game.requiredBootFloppyId)
+                val swapSources = game.diskSwaps.map { rule ->
+                    rule.contentId to requiredFloppyFor(rule.contentId, entry, libraryEntries)
+                }.toMap()
+                val floppyB = game.initialFloppyBId?.let { id ->
+                    requiredFloppyFor(id, entry, libraryEntries)
+                }
                 val primary = media?.hardDisk ?: entry
                 val disk = romLibrary.prepare(primary, cancelled) { message ->
                     runOnUiThread { if (generation == startGeneration) libraryScreen.showStatus(message) }
                 }
                 val bootFloppy = media?.bootFloppy?.let { companion ->
+                    romLibrary.prepare(companion, cancelled) { message ->
+                        runOnUiThread { if (generation == startGeneration) libraryScreen.showStatus(message) }
+                    }
+                }
+                val secondFloppy = floppyB?.let { companion ->
                     romLibrary.prepare(companion, cancelled) { message ->
                         runOnUiThread { if (generation == startGeneration) libraryScreen.showStatus(message) }
                     }
@@ -628,9 +656,9 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
                             font.bitmap,
                             game.baseClockTenthsMHz ?: clock,
                             game.gdcClockTenthsMHz ?: 50, primary.isFloppy,
-                            bootFloppy?.absolutePath)) {
+                            bootFloppy?.absolutePath, secondFloppy?.absolutePath)) {
                         awaitMachineReady()?.let(::error)
-                        disk to media?.bootFloppy
+                        PreparedLaunch(disk, media?.bootFloppy, floppyB, swapSources)
                     }
                     else error("Unable to start machine")
                 }
@@ -646,11 +674,11 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
                     preparingFont = false
                     if (result != null) {
                         currentEntry = entry
-                        currentDisk = result.first
-                        currentIsFloppy = result.second == null && entry.isFloppy
-                        mountedFloppies[0] = result.second?.displayName
+                        currentDisk = result.disk
+                        currentIsFloppy = result.bootFloppy == null && entry.isFloppy
+                        mountedFloppies[0] = result.bootFloppy?.displayName
                             ?: if (entry.isFloppy) entry.displayName else null
-                        mountedFloppies[1] = null
+                        mountedFloppies[1] = result.floppyB?.displayName
                         currentTitle = game.title
                         currentGame = game
                         selectedStartup = choices
@@ -662,6 +690,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
                         libraryScreen.visibility = View.GONE
                         screen.requestFocus()
                         scheduleStartupQueue(game, choices)
+                        scheduleDiskSwaps(game.diskSwaps, result.swapSources)
                     }
                     applyPauseState()
                 }
@@ -813,15 +842,20 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
         scheduleStartupSteps(steps)
     }
 
+    private fun acquireScreenHashes() = synchronized(samplingLock) {
+        if (samplingUsers++ == 0 && !traceScreenHashes) nativeSetScreenHashSampling(true)
+    }
+
+    private fun releaseScreenHashes() = synchronized(samplingLock) {
+        if (--samplingUsers == 0 && !traceScreenHashes) nativeSetScreenHashSampling(false)
+    }
+
     private fun scheduleStartupSteps(steps: List<StartupHashMatcher.Step>) {
-        if (steps.isEmpty()) {
-            if (!traceScreenHashes) nativeSetScreenHashSampling(false)
-            return
-        }
+        if (steps.isEmpty()) return
         val cancelled = AtomicBoolean(false)
         commandCancelled = cancelled
         val generation = startGeneration
-        nativeSetScreenHashSampling(true)
+        acquireScreenHashes()
         Thread {
             try {
                 StartupHashMatcher(::nativeScreenHashSnapshot, ::nativeDosPromptReady,
@@ -839,27 +873,108 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
                 }
             } finally {
                 inputRouter.release("guest-command")
-                if (!traceScreenHashes && generation == startGeneration &&
-                    commandCancelled === cancelled)
-                    nativeSetScreenHashSampling(false)
+                releaseScreenHashes()
             }
         }.start()
     }
 
     private fun sendStartupKeys(step: StartupHashMatcher.Step, cancelled: AtomicBoolean,
-                                generation: Int) {
+                                generation: Int, source: String = "guest-command") =
+        synchronized(guestSequenceLock) {
         for (character in step.text) {
             if (cancelled.get() || generation != startGeneration) return
             val scans = guestCommandScans(character)
                 ?: error("Unsupported startup character: $character")
-            inputRouter.hold("guest-command", scans)
-            try { Thread.sleep(70) } finally { inputRouter.release("guest-command") }
+            inputRouter.hold(source, scans)
+            try { Thread.sleep(70) } finally { inputRouter.release(source) }
             Thread.sleep(70)
         }
         if (step.enter && !cancelled.get() && generation == startGeneration) {
-            inputRouter.hold("guest-command", listOf(0x1c))
-            try { Thread.sleep(70) } finally { inputRouter.release("guest-command") }
+            inputRouter.hold(source, listOf(0x1c))
+            try { Thread.sleep(70) } finally { inputRouter.release(source) }
         }
+    }
+
+    private fun scheduleDiskSwaps(rules: List<GameCatalog.DiskSwap>,
+                                  sources: Map<String, LibraryEntry>) {
+        if (rules.isEmpty()) return
+        val generation = startGeneration
+        acquireScreenHashes()
+        Thread {
+            var failedRule: GameCatalog.DiskSwap? = null
+            try {
+                DiskSwapMatcher(::nativeScreenHashSnapshot,
+                    { nativeStatus().startsWith("Running") },
+                    { generation != startGeneration },
+                    { rule ->
+                        failedRule = rule
+                        performDiskSwap(rule, sources.getValue(rule.contentId), generation)
+                    }).run(rules)
+            } catch (error: Exception) {
+                runOnUiThread {
+                    if (generation == startGeneration)
+                        showDiskSwapFailure(failedRule, error, rules, sources)
+                }
+            } finally {
+                releaseScreenHashes()
+            }
+        }.start()
+    }
+
+    @Synchronized private fun beginFloppyChange(): Boolean {
+        if (floppyBusy) return false
+        floppyBusy = true
+        return true
+    }
+
+    @Synchronized private fun endFloppyChange() { floppyBusy = false }
+
+    private fun performDiskSwap(rule: GameCatalog.DiskSwap, entry: LibraryEntry, generation: Int) {
+        while (!beginFloppyChange()) {
+            if (generation != startGeneration) return
+            Thread.sleep(100)
+        }
+        try {
+            runOnUiThread {
+                if (generation == startGeneration) {
+                    swapStatus.text = "Swapping Floppy ${'A' + rule.drive}: ${entry.displayName}"
+                    swapStatus.visibility = View.VISIBLE
+                }
+            }
+            val disk = romLibrary.prepare(entry, AtomicBoolean(false)) { message ->
+                runOnUiThread {
+                    if (generation == startGeneration) swapStatus.text = message
+                }
+            }
+            if (generation != startGeneration) return
+            if (!nativeFloppy(rule.drive, disk.absolutePath)) error("Floppy could not be mounted")
+            runOnUiThread {
+                if (generation == startGeneration) {
+                    manualFloppies[rule.drive]?.delete()
+                    manualFloppies[rule.drive] = null
+                    mountedFloppies[rule.drive] = entry.displayName
+                }
+            }
+            if (rule.key.isNotEmpty() || rule.enter) {
+                Thread.sleep(150)
+                sendStartupKeys(StartupHashMatcher.Step(rule.id, rule.key, rule.enter,
+                    emptySet(), false, 0), AtomicBoolean(false), generation, "disk-swap")
+            }
+        } finally {
+            endFloppyChange()
+            runOnUiThread { if (generation == startGeneration) swapStatus.visibility = View.GONE }
+        }
+    }
+
+    private fun showDiskSwapFailure(rule: GameCatalog.DiskSwap?, error: Exception,
+                                    rules: List<GameCatalog.DiskSwap>,
+                                    sources: Map<String, LibraryEntry>) {
+        AlertDialog.Builder(this).setTitle("Automatic disk swap failed")
+            .setMessage("${rule?.let { "Floppy ${'A' + it.drive}: " } ?: ""}" +
+                (error.message ?: "Unknown error") + ". The game is still running.")
+            .setPositiveButton("Retry") { _, _ -> scheduleDiskSwaps(rules, sources) }
+            .setNeutralButton("Choose floppy") { _, _ -> showFloppyMenu(rule?.drive ?: 0) }
+            .setNegativeButton("Continue manually", null).showStyled()
     }
 
     private fun showStartupTimeout(steps: List<StartupHashMatcher.Step>,
@@ -1169,8 +1284,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
     }
 
     private fun changeFloppy(drive: Int, entry: LibraryEntry?) {
-        if (floppyBusy) return
-        floppyBusy = true
+        if (!beginFloppyChange()) return
         menuStatus.text = if (entry == null) "Ejecting floppy ${'A' + drive}…"
             else "Preparing ${entry.displayName}…"
         Thread {
@@ -1182,7 +1296,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
                 null
             } catch (error: Exception) { error.message ?: "Floppy change failed" }
             runOnUiThread {
-                floppyBusy = false
+                endFloppyChange()
                 if (result == null) {
                     manualFloppies[drive]?.delete()
                     manualFloppies[drive] = null
@@ -1592,7 +1706,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
                 if (generation != startGeneration) "Start cancelled"
                 else if (nativeStart(disk.absolutePath, font.path, firmwareDir().absolutePath,
                         font.bitmap, clock,
-                        50, DiskFormat.isFloppy(name), null))
+                        50, DiskFormat.isFloppy(name), null, null))
                     awaitMachineReady()?.let { "Disk start failed: $it" } ?: "Starting $name"
                 else "Unable to start machine"
             } catch (error: Exception) {
@@ -1625,8 +1739,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
     }
 
     private fun importFloppyFile(drive: Int, uri: Uri, name: String) {
-        if (floppyBusy) return
-        floppyBusy = true
+        if (!beginFloppyChange()) return
         menuStatus.text = "Importing $name…"
         Thread {
             val disk = File(cacheDir, "manual-floppy-$drive-${System.nanoTime()}${DiskFormat.suffix(name)}")
@@ -1650,7 +1763,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
                 null
             } catch (error: Exception) { error.message ?: "Floppy import failed" }
             runOnUiThread {
-                floppyBusy = false
+                endFloppyChange()
                 if (result == null) {
                     manualFloppies[drive]?.delete()
                     manualFloppies[drive] = disk
@@ -1754,7 +1867,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
                 nativeStop()
                 if (generation != startGeneration) "Start cancelled"
                 else if (nativeStart(disk.absolutePath, font.path, firmwareDir().absolutePath,
-                        font.bitmap, clock, 50, floppy, null))
+                        font.bitmap, clock, 50, floppy, null, null))
                     awaitMachineReady()?.let { "Disk start failed: $it" } ?: message
                 else "Unable to start machine"
             } catch (error: Exception) {

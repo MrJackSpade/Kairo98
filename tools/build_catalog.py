@@ -10,7 +10,7 @@ from urllib.parse import urlsplit
 
 CONTENT_ID = re.compile(r"sha256-(?:hdi|fd)-v1:[0-9a-f]{64}\Z")
 ART_PATH = re.compile(r"art/(?!.*\.\.)[A-Za-z0-9_./-]{1,252}\Z")
-FIELDS = {"title", "description", "aliases", "artwork", "machine", "controller", "input", "media", "launch", "startupChoices"}
+FIELDS = {"title", "description", "aliases", "artwork", "machine", "controller", "input", "media", "launch", "startupChoices", "diskSwaps"}
 SCREEN_HASH = re.compile(r"[0-9a-f]{16}\Z")
 SHORT_ID = re.compile(r"[a-z0-9-]{1,40}\Z")
 
@@ -50,6 +50,31 @@ def valid_startup_choices(choices):
                     not re.fullmatch(r"[A-Za-z0-9]", key) or type(option["enter"]) is not bool):
                 return False
             option_ids.add(option_id)
+    return True
+
+
+def valid_disk_swaps(swaps):
+    if not isinstance(swaps, list) or not 1 <= len(swaps) <= 16:
+        return False
+    ids = set()
+    hashes = set()
+    for swap in swaps:
+        if not isinstance(swap, dict) or set(swap) != {
+                "id", "drive", "contentId", "screenHashes", "key", "enter"}:
+            return False
+        if (not isinstance(swap["id"], str) or not SHORT_ID.fullmatch(swap["id"]) or
+                swap["id"] in ids or type(swap["drive"]) is not int or
+                swap["drive"] not in (0, 1) or not isinstance(swap["contentId"], str) or
+                not swap["contentId"].startswith("sha256-fd-v1:") or
+                not CONTENT_ID.fullmatch(swap["contentId"]) or
+                not valid_hashes(swap["screenHashes"]) or
+                any(value in hashes for value in swap["screenHashes"]) or
+                not isinstance(swap["key"], str) or
+                not re.fullmatch(r"[A-Za-z0-9]?", swap["key"]) or
+                type(swap["enter"]) is not bool):
+            return False
+        ids.add(swap["id"])
+        hashes.update(swap["screenHashes"])
     return True
 
 
@@ -150,6 +175,11 @@ def validate_record(record):
                 re.fullmatch(r"[A-Za-z0-9_-]{1,32}", x["role"]) and
                 isinstance(x.get("contentId"), str) and CONTENT_ID.fullmatch(x["contentId"])
                 for x in media), "invalid media")
+    require(all(item["contentId"].startswith("sha256-fd-v1:")
+                for item in media if item["role"] in ("bootFloppy", "floppyB")),
+            "startup floppy must reference a floppy hash")
+    require(all(sum(item["role"] == role for item in media) <= 1
+                for role in ("bootFloppy", "floppyB")), "duplicate startup floppy role")
     launch = record.get("launch")
     if launch is not None:
         commands = launch.get("commands") if isinstance(launch, dict) else None
@@ -170,6 +200,8 @@ def validate_record(record):
                   all(valid_hashes(group) for group in launch["screenHashes"]))), "invalid launch")
     if "startupChoices" in record:
         require(valid_startup_choices(record["startupChoices"]), "invalid startup choices")
+    if "diskSwaps" in record:
+        require(valid_disk_swaps(record["diskSwaps"]), "invalid disk swaps")
     return {key: value for key, value in record.items() if key != "contentIds"}
 
 

@@ -1,6 +1,28 @@
 {
   "schemaVersion": 1,
   "games": {
+    "sha256-fd-v1:45ae7823bf4992b53b7a7327eba64293536c4a0b7de7fcb0d26d9e8d6ca5eeca": {
+      "media": [{"role": "bootFloppy", "contentId": "sha256-fd-v1:45ae7823bf4992b53b7a7327eba64293536c4a0b7de7fcb0d26d9e8d6ca5eeca"}]
+    },
+    "sha256-fd-v1:69a27511f5217bb124ed789b0375942cfcaa01e82ae5183749d4e2ae13f53c9b": {
+      "media": [{"role": "floppyB", "contentId": "sha256-fd-v1:7c552396bacfd0667585b26bc4124eadb4fd8d640aa2f5767a34d8f15cd958cb"}]
+    },
+    "sha256-fd-v1:e174d354a9c9075de1b67119fd3dc8c7274d2d858fa6be050f5d354e40f3399d": {
+      "diskSwaps": [{
+        "id": "insert-disk-b",
+        "drive": 1,
+        "contentId": "sha256-fd-v1:4994c13c143109c23a3d842c6fc652db93b6dfed9074a69c5afe940375015e94",
+        "screenHashes": ["24582161ac7732ff", "5eaa8b5b8c83deef"],
+        "key": "",
+        "enter": false
+      }]
+    },
+    "sha256-hdi-v1:bfc1ab2c358e566989911d7aa87758a724937be0e01c137e190deb3521f9cd28": {
+      "media": [{"role": "bootFloppy", "contentId": "sha256-fd-v1:45ae7823bf4992b53b7a7327eba64293536c4a0b7de7fcb0d26d9e8d6ca5eeca"}]
+    },
+    "sha256-hdi-v1:e760379a2d294bce6cb4e08ae07e81955f7c4cac730093e82547a6afc7b58584": {
+      "media": [{"role": "bootFloppy", "contentId": "sha256-fd-v1:45ae7823bf4992b53b7a7327eba64293536c4a0b7de7fcb0d26d9e8d6ca5eeca"}]
+    },
     "sha256-hdi-v1:00c508d1b69106b5441c60e459f2984b90de2148c2c76c7343f5348f9695895c": {
       "title": "Jewel Bem Hunter Lime",
       "startupChoices": [

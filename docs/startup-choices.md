@@ -8,6 +8,8 @@ The [startup profiles](../catalog/startup-profiles-v1.json) are keyed by extract
 
 For a selected game, the app collects its choices before boot. It queues fixed commands first and selected answers afterward. Each item waits for a fresh matching hash, then sends the cataloged character and optional Enter through the normal PC-98 input router. A timeout leaves the guest running and offers **Retry**, **Open keyboard**, or **Restart**. Stop, reset, a new game, and leaving the activity cancel pending input. A game without choices starts directly. The app can still use its DOS-prompt signal for a legacy fixed command that has no measured hashes yet; the measured GaoGao commands use only screen hashes.
 
+`diskSwaps` uses the same full-frame hash sampler throughout a game session. Each catalog rule identifies a floppy by extracted-content hash, drive A or B, prompt hashes, and an optional follow-up key and Enter. The app checks that every referenced floppy exists when Play is tapped. On a match it prepares an app-private working copy, mounts it through the normal floppy command, then sends the optional key. A prompt must disappear for three samples before the same rule can fire again. Missing or unreadable disks leave the game running and offer Retry or manual floppy selection. Games that need two disks present from the first instruction instead use the `media.floppyB` catalog role; Reserve is the verified example.
+
 ## Retroid observations
 
 The first listed path for each menu family was pressed on the device. The hashes were captured from the native guest buffer, not an Android screenshot. A repeated cold boot confirmed GaoGao's first DOS prompt hashes.
@@ -24,6 +26,7 @@ The first listed path for each menu family was pressed on the device. The hashes
 | Rance II + Hint Disk, revisions 1.5 and 2.0 | Game, Hint Disk | Game reached its intro. Hint Disk may need companion media. |
 | Starfire | 16-color, 256-color | The 16-color choice automatically reached the title from a fresh boot. |
 | GaoGao! 2nd | `CD PW`, then `GAO2` | Both distinct DOS prompt hashes matched; the game artwork appeared automatically. |
+| Cybernetic Hi-School Version 2.0 | Disk 2 in drive B at its insert prompt | Both blinking prompt hashes matched; the game advanced to its input selection without a key. |
 
 Night Slave's other translated image boots straight into its intro, so it has no prelaunch choice. Neither translated image reached a DOS prompt in a command-suppressed boot, so the stale `NS` catalog command was removed. The first image alone has the driver-choice profile.
 

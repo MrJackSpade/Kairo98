@@ -12,6 +12,8 @@ class GameCatalog(private val context: Context) {
     data class StartupOption(val id: String, val label: String, val key: Char, val enter: Boolean)
     data class StartupChoice(val id: String, val title: String, val screenHashes: Set<Long>,
                              val options: List<StartupOption>)
+    data class DiskSwap(val id: String, val drive: Int, val contentId: String,
+                        val screenHashes: Set<Long>, val key: String, val enter: Boolean)
     private val bundledImages = context.assets.list("art/catalog")?.isNotEmpty() == true
     data class Game(
         val contentId: String,
@@ -27,10 +29,12 @@ class GameCatalog(private val context: Context) {
         val controllerBindings: String?,
         val inputMode: String?,
         val requiredBootFloppyId: String?,
+        val initialFloppyBId: String?,
         val launchCommand: String?,
         val launchCommands: List<String>,
         val launchScreenHashes: List<Set<Long>>,
         val startupChoices: List<StartupChoice>,
+        val diskSwaps: List<DiskSwap>,
         val launchTimeoutMs: Int,
         val overriddenFields: Set<String>
     )
@@ -112,6 +116,16 @@ class GameCatalog(private val context: Context) {
                     })
             }
         } ?: emptyList()
+        val diskSwaps = merged.optJSONArray("diskSwaps")?.takeIf {
+            validField("diskSwaps", it)
+        }?.let { array ->
+            (0 until array.length()).map { index ->
+                val item = array.getJSONObject(index)
+                DiskSwap(item.getString("id"), item.getInt("drive"),
+                    item.getString("contentId"), parseHashes(item.getJSONArray("screenHashes")),
+                    item.getString("key"), item.getBoolean("enter"))
+            }
+        } ?: emptyList()
         return Game(
             contentId, title.ifBlank { fileName },
             merged.optString("description").takeIf(::validDescription),
@@ -129,10 +143,16 @@ class GameCatalog(private val context: Context) {
                     .firstOrNull { it.optString("role") == "bootFloppy" }
                     ?.optString("contentId")?.takeIf(::validId)
             },
+            media?.let { items ->
+                (0 until items.length()).mapNotNull { items.optJSONObject(it) }
+                    .firstOrNull { it.optString("role") == "floppyB" }
+                    ?.optString("contentId")?.takeIf(::validId)
+            },
             commands.joinToString("; ").takeIf { commands.isNotEmpty() },
             commands,
             commandHashes,
             choices,
+            diskSwaps,
             launch?.optInt("timeoutMs", 30000)?.coerceIn(1000, 120000) ?: 30000,
             user?.keys()?.asSequence()?.toSet() ?: emptySet()
         )
@@ -227,8 +247,14 @@ class GameCatalog(private val context: Context) {
             (0 until value.length()).all { index ->
                 value.optJSONObject(index)?.let { item ->
                     MEDIA_ROLE.matches(item.optString("role")) &&
-                        validId(item.optString("contentId"))
+                        validId(item.optString("contentId")) &&
+                        (item.optString("role") !in setOf("bootFloppy", "floppyB") ||
+                            item.optString("contentId").startsWith("sha256-fd-v1:"))
                 } == true
+            } && listOf("bootFloppy", "floppyB").all { role ->
+                (0 until value.length()).count {
+                    value.optJSONObject(it)?.optString("role") == role
+                } <= 1
             }
         "launch" -> value is JSONObject && value.optString("type") == "guestCommand" &&
             (if (value.has("commands")) {
@@ -266,6 +292,27 @@ class GameCatalog(private val context: Context) {
                 } == true
             } && (0 until value.length()).map { value.getJSONObject(it).getString("id") }
                 .distinct().size == value.length()
+        "diskSwaps" -> value is org.json.JSONArray && value.length() in 1..16 &&
+            (0 until value.length()).all { index ->
+                value.optJSONObject(index)?.let { swap ->
+                    swap.length() == 6 && listOf("id", "drive", "contentId", "screenHashes",
+                        "key", "enter").all(swap::has) && validShortId(swap.optString("id")) &&
+                        swap.opt("drive") is Int && swap.optInt("drive") in 0..1 &&
+                        swap.optString("contentId").startsWith("sha256-fd-v1:") &&
+                        validId(swap.optString("contentId")) &&
+                        validHashes(swap.optJSONArray("screenHashes")) &&
+                        (swap.opt("key") as? String)?.matches(Regex("[A-Za-z0-9]?")) == true &&
+                        swap.opt("enter") is Boolean
+                } == true
+            } && (0 until value.length()).map { value.getJSONObject(it).getString("id") }
+                .distinct().size == value.length() &&
+            (0 until value.length()).flatMap { index ->
+                value.getJSONObject(index).getJSONArray("screenHashes").let { hashes ->
+                    (0 until hashes.length()).map(hashes::getString)
+                }
+            }.distinct().size == (0 until value.length()).sumOf { index ->
+                value.getJSONObject(index).getJSONArray("screenHashes").length()
+            }
         else -> false
     }
 
@@ -346,7 +393,7 @@ class GameCatalog(private val context: Context) {
     companion object {
         private const val MAX_ASSET_JSON = 64 * 1024 * 1024
         private const val MAX_LOCAL_JSON = 8L * 1024 * 1024
-        private val FIELDS = setOf("title", "description", "aliases", "artwork", "machine", "controller", "input", "media", "launch", "startupChoices")
+        private val FIELDS = setOf("title", "description", "aliases", "artwork", "machine", "controller", "input", "media", "launch", "startupChoices", "diskSwaps")
         private val INPUT_MODES = setOf("auto", "keyboard", "mouse")
         private val ART_PATH_FIELDS = setOf("boxArt", "preview")
         private val ART_URL_FIELDS = setOf("boxArtUrl", "previewUrl")

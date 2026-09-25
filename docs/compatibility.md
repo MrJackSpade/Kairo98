@@ -25,6 +25,18 @@ translation reached an English opening scene and interactive game view. The
 earlier HDI-only test had stopped at a host date/time prompt and DOS. The
 test used ignored local archives; no game media or capture was added to Git.
 
+## Multi-disk launch on Retroid, 24 September 2026
+
+Cybernetic Hi-School Version 2.0 Disk 1 reached a loader screen asking for
+Disk B in drive 2. The complete guest framebuffer alternated between hashes
+`24582161ac7732ff` and `5eaa8b5b8c83deef`. Manual insertion of Disk 2 in
+drive B advanced to the mouse/keyboard choice without a key. A cataloged
+automatic swap reproduced that transition on a fresh Play tap, with no user
+interaction. Reserve's translation README instead requires Disk 1 in A and
+Disk 2 in B from startup. The catalog-linked drive-B mount booted Reserve;
+Enter at its title reached translated story text rather than the previous
+`ERR-71` disk-not-ready screen. All disk images and captures remain ignored.
+
 ## Night Slave launch on Retroid, 24 September 2026
 
 With the full user-selected library folder, a debug ADB selector opened the exact `Night Slave [T-En by BabaJeanmel, Valley Bell & Kirinn B v1.0]` detail page. Play booted its user-supplied HDI, entered `NS` at the DOS prompt from catalog metadata, passed the game's 2.5 MHz GDC check, showed the English music-driver selection menu, and reached the animated *Night Slave* title logo on the Retroid Pocket Classic. The native build used the portable IA-32 core; the previous 286 build returned to DOS. The HDI and BIOS remain outside Git and APK assets.

@@ -119,6 +119,30 @@ class CatalogBuildTests(unittest.TestCase):
         for media in ([{"role": "boot", "contentId": 7}], [{"contentId": record["contentIds"][0]}]):
             with self.subTest(media=media), self.assertRaisesRegex(ValueError, "invalid media"):
                 validate_record({**record, "media": media})
+        floppy = "sha256-fd-v1:" + "a" * 64
+        validate_record({**record, "media": [{"role": "floppyB", "contentId": floppy}]})
+        with self.assertRaisesRegex(ValueError, "startup floppy"):
+            validate_record({**record, "media": [{"role": "floppyB",
+                "contentId": record["contentIds"][0]}]})
+
+    def test_disk_swap_requires_unambiguous_screen_and_floppy_hash(self):
+        record = self.source["datasets"][0]["games"][0]
+        swap = {"id": "insert-disk-b", "drive": 1,
+                "contentId": "sha256-fd-v1:" + "a" * 64,
+                "screenHashes": ["24582161ac7732ff", "5eaa8b5b8c83deef"],
+                "key": "", "enter": False}
+        validate_record({**record, "diskSwaps": [swap]})
+        for bad in (
+            {**swap, "drive": 2},
+            {**swap, "contentId": record["contentIds"][0]},
+            {**swap, "screenHashes": ["24582161ac7732ff"] * 2},
+            {**swap, "key": ";"},
+        ):
+            with self.subTest(bad=bad), self.assertRaisesRegex(ValueError, "invalid disk swaps"):
+                validate_record({**record, "diskSwaps": [bad]})
+        with self.assertRaisesRegex(ValueError, "invalid disk swaps"):
+            validate_record({**record, "diskSwaps": [swap,
+                {**swap, "id": "another-disk"}]})
 
     def test_removed_hash_prunes_generated_shard(self):
         original = self.source["datasets"][0]["games"][0]

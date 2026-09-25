@@ -36,14 +36,18 @@ data class LibraryEntry(
 
 data class BootMedia(val hardDisk: LibraryEntry, val bootFloppy: LibraryEntry)
 
+fun requiredFloppyFor(contentId: String, source: LibraryEntry,
+                      entries: List<LibraryEntry>): LibraryEntry {
+    val candidates = entries.filter { it.playable && it.isFloppy && it.contentId == contentId }
+    return candidates.firstOrNull { it.uri == source.uri } ?: candidates.firstOrNull()
+        ?: error("Required floppy ${contentId.substringAfter(':').take(8)} is missing from the library")
+}
+
 /** Resolve an explicit catalog dependency, or a clearly labelled pair in one archive. */
 fun bootMediaFor(entry: LibraryEntry, entries: List<LibraryEntry>, requiredFloppyId: String?): BootMedia? {
     if (!entry.playable) return null
     if (!entry.isFloppy && requiredFloppyId != null) {
-        val candidates = entries.filter { it.playable && it.isFloppy &&
-            it.contentId == requiredFloppyId }
-        val floppy = candidates.firstOrNull { it.uri == entry.uri } ?: candidates.firstOrNull()
-            ?: error("Required boot disk is missing from the library")
+        val floppy = requiredFloppyFor(requiredFloppyId, entry, entries)
         return BootMedia(entry, floppy)
     }
     if (entry.zipEntry == null) {
