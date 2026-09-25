@@ -22,7 +22,8 @@ class SecondaryKeyboardActivity : Activity() {
         @Suppress("DEPRECATION")
         window.decorView.systemUiVisibility = View.SYSTEM_UI_FLAG_FULLSCREEN or
             View.SYSTEM_UI_FLAG_HIDE_NAVIGATION or View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
-        content = SecondaryKeyboardContent(this, session.attachCompanion(this))
+        content = SecondaryKeyboardContent(this, session.attachCompanion(this),
+            session::forwardGameSurface, session::forwardGameTouch)
         setContentView(content)
         session.updateCompanion(this)
     }
@@ -37,8 +38,8 @@ class SecondaryKeyboardActivity : Activity() {
         } else Log.i("Kairo98", "Keyboard activity ready on display 0")
     }
 
-    internal fun setAppearance(showKeyboard: Boolean, color: Int) {
-        if (::content.isInitialized) content.setAppearance(showKeyboard, color)
+    internal fun setAppearance(showKeyboard: Boolean, color: Int, swapped: Boolean) {
+        if (::content.isInitialized) content.setAppearance(showKeyboard, color, swapped)
     }
 
     override fun onDestroy() {

@@ -91,6 +91,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
     private lateinit var root: FrameLayout
     private lateinit var screen: SurfaceView
     private lateinit var keyboardPanel: Pc98KeyboardPanel
+    private lateinit var swappedKeyboardPanel: Pc98KeyboardPanel
     private lateinit var secondaryKeyboard: SecondaryKeyboardDisplay
     private lateinit var onScreenControls: OnScreenControls
     private lateinit var libraryScreen: LibraryScreen
@@ -250,14 +251,18 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
                 WindowInsets.Type.navigationBars())
         }
         buildUi()
-        secondaryKeyboard = SecondaryKeyboardDisplay(this, inputRouter) { available ->
-            if (available && secondaryKeyboard.isKeyboardVisible &&
-                keyboardPanel.visibility == View.VISIBLE) {
-                keyboardPanel.close()
-                updateViewport()
-                applyPauseState()
-            }
-        }
+        secondaryKeyboard = SecondaryKeyboardDisplay(this, inputRouter,
+            { available ->
+                if (available && secondaryKeyboard.isKeyboardVisible &&
+                    keyboardPanel.visibility == View.VISIBLE) {
+                    keyboardPanel.close()
+                    updateViewport()
+                    applyPauseState()
+                }
+            },
+            { surface, width, height -> nativeSetSurface(surface, width, height) },
+            { event, width, height -> handleScreenTouch(event, width, height) },
+            ::onSecondarySwapChanged)
         romLibrary = RomLibrary(this)
         controllerEditor = ControllerEditor(this, root,
             ::loadControllerBindings, ::saveControllerBindings, ::resetControllerBindings,
@@ -343,7 +348,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
             holder.addCallback(this@MainActivity)
             isFocusableInTouchMode = true
             contentDescription = "PC-98 display"
-            setOnTouchListener { _, event -> handleScreenTouch(event) }
+            setOnTouchListener { view, event -> handleScreenTouch(event, view.width, view.height) }
         }
         root.addView(screen, FrameLayout.LayoutParams(640, 400, Gravity.CENTER))
         root.addOnLayoutChangeListener { _, _, _, _, _, _, _, _, _ -> updateViewport() }
@@ -351,6 +356,9 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
 
         keyboardPanel = Pc98KeyboardPanel(this, inputRouter, ::hideKeyboard)
         root.addView(keyboardPanel, FrameLayout.LayoutParams(-1, dp(260), Gravity.BOTTOM))
+        swappedKeyboardPanel = Pc98KeyboardPanel(this, inputRouter, {}, showClose = false,
+            onSwap = { secondaryKeyboard.toggleSwap() })
+        root.addView(swappedKeyboardPanel, FrameLayout.LayoutParams(-1, -1))
 
         backdrop = View(this).apply {
             setBackgroundColor(0xb8000000.toInt())
@@ -596,9 +604,17 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
 
     private fun applyPauseState() {
         val editingControls = ::onScreenControls.isInitialized && onScreenControls.isOpen
+        val showingGuest = activityVisible && !libraryVisible && !menuOpen &&
+            !editingControls && !preparingFont &&
+            !(::controllerEditor.isInitialized && controllerEditor.isOpen)
+        if (::swappedKeyboardPanel.isInitialized) {
+            if (::secondaryKeyboard.isInitialized && secondaryKeyboard.swapped && showingGuest)
+                swappedKeyboardPanel.visibility = View.VISIBLE
+            else if (swappedKeyboardPanel.visibility == View.VISIBLE)
+                swappedKeyboardPanel.close()
+        }
         if (::secondaryKeyboard.isInitialized) secondaryKeyboard.setAppearance(
-            activityVisible && !libraryVisible && !menuOpen && !editingControls &&
-                !preparingFont && !(::controllerEditor.isInitialized && controllerEditor.isOpen),
+            showingGuest,
             if (::firstRunSetup.isInitialized && firstRunSetup.isOpen) 0xff10151d.toInt()
                 else Color.BLACK)
         nativePause(userPaused || menuOpen || libraryVisible || !activityVisible || preparingFont ||
@@ -606,6 +622,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
         if (::onScreenControls.isInitialized) onScreenControls.refreshVisibility(
             !libraryVisible && !menuOpen && !editingControls && activityVisible &&
                 !preparingFont && keyboardPanel.visibility != View.VISIBLE &&
+                !(::secondaryKeyboard.isInitialized && secondaryKeyboard.swapped) &&
                 !(::controllerEditor.isInitialized && controllerEditor.isOpen))
     }
 
@@ -935,10 +952,10 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
         screen.requestFocus()
     }
 
-    private fun moveGuestMouse(event: MotionEvent) {
-        if (screen.width <= 0 || screen.height <= 0) return
-        mouseFractionX += (event.x - mouseTouchLastX) * 640f / screen.width
-        mouseFractionY += (event.y - mouseTouchLastY) * 400f / screen.height
+    private fun moveGuestMouse(event: MotionEvent, width: Int, height: Int) {
+        if (width <= 0 || height <= 0) return
+        mouseFractionX += (event.x - mouseTouchLastX) * 640f / width
+        mouseFractionY += (event.y - mouseTouchLastY) * 400f / height
         mouseTouchLastX = event.x
         mouseTouchLastY = event.y
         val dx = mouseFractionX.toInt().coerceIn(-640, 640)
@@ -948,7 +965,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
         if (dx != 0 || dy != 0) nativeMouseMove(dx, dy)
     }
 
-    private fun handleScreenTouch(event: MotionEvent): Boolean {
+    private fun handleScreenTouch(event: MotionEvent, width: Int, height: Int): Boolean {
         if (libraryVisible || menuOpen) return false
         when (event.actionMasked) {
             MotionEvent.ACTION_DOWN -> {
@@ -984,13 +1001,13 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
                     pendingMouseHold?.let(handler::removeCallbacks)
                     pendingMouseHold = null
                 }
-                moveGuestMouse(event)
+                moveGuestMouse(event, width, height)
             }
             MotionEvent.ACTION_UP -> {
                 if (mouseTouchActive) {
                     pendingMouseHold?.let(handler::removeCallbacks)
                     pendingMouseHold = null
-                    moveGuestMouse(event)
+                    moveGuestMouse(event, width, height)
                     if (mouseDragging) mouseRouter.release("touch")
                     else if (!mouseMoved) {
                         mouseRouter.hold("touch", "leftButton")
@@ -1898,16 +1915,30 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
     private fun toast(message: String) =
         Toast.makeText(this, message, Toast.LENGTH_SHORT).show()
 
+    private fun onSecondarySwapChanged(swapped: Boolean) {
+        keyboardPanel.close()
+        updateViewport()
+        if (!swapped) {
+            val holder = screen.holder
+            if (holder.surface.isValid)
+                nativeSetSurface(holder.surface, screen.width, screen.height)
+        }
+        applyPauseState()
+    }
+
     override fun surfaceCreated(holder: SurfaceHolder) {
-        nativeSetSurface(holder.surface, holder.surfaceFrame.width(), holder.surfaceFrame.height())
+        if (!::secondaryKeyboard.isInitialized || !secondaryKeyboard.swapped)
+            nativeSetSurface(holder.surface, holder.surfaceFrame.width(), holder.surfaceFrame.height())
     }
 
     override fun surfaceChanged(holder: SurfaceHolder, format: Int, width: Int, height: Int) {
-        nativeSetSurface(holder.surface, width, height)
+        if (!::secondaryKeyboard.isInitialized || !secondaryKeyboard.swapped)
+            nativeSetSurface(holder.surface, width, height)
     }
 
     override fun surfaceDestroyed(holder: SurfaceHolder) {
-        nativeSetSurface(null, 0, 0)
+        if (!::secondaryKeyboard.isInitialized || !secondaryKeyboard.swapped)
+            nativeSetSurface(null, 0, 0)
     }
 
     override fun onPause() {

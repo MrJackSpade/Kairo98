@@ -11,15 +11,24 @@ import android.os.Bundle
 import android.os.Handler
 import android.util.Log
 import android.view.Display
+import android.view.Gravity
+import android.view.MotionEvent
+import android.view.Surface
+import android.view.SurfaceHolder
+import android.view.SurfaceView
 import android.view.View
 import android.view.WindowManager
 import android.widget.FrameLayout
+import kotlin.math.roundToInt
 
 /** Places the guest keyboard on another Android display when one is available. */
 internal class SecondaryKeyboardDisplay(
     private val activity: Activity,
     private val input: InputRouter,
-    private val onAvailabilityChanged: (Boolean) -> Unit
+    private val onAvailabilityChanged: (Boolean) -> Unit,
+    private val onGameSurface: (Surface?, Int, Int) -> Unit,
+    private val onGameTouch: (MotionEvent, Int, Int) -> Boolean,
+    private val onSwapChanged: (Boolean) -> Unit
 ) : DisplayManager.DisplayListener {
     private val displayManager = activity.getSystemService(Context.DISPLAY_SERVICE) as DisplayManager
     private var started = false
@@ -28,6 +37,8 @@ internal class SecondaryKeyboardDisplay(
     private var presentation: KeyboardPresentation? = null
     private var companion: SecondaryKeyboardActivity? = null
     private var companionStarting = false
+    var swapped = false
+        private set
 
     val isShowing: Boolean get() = presentation?.isShowing == true ||
         companion?.isFinishing == false
@@ -45,15 +56,27 @@ internal class SecondaryKeyboardDisplay(
         if (!started) return
         started = false
         displayManager.unregisterDisplayListener(this)
+        if (swapped) {
+            swapped = false
+            onSwapChanged(false)
+        }
         dismiss()
+    }
+
+    fun toggleSwap() {
+        if (!isShowing) return
+        swapped = !swapped
+        presentation?.content?.setAppearance(keyboardVisible, backgroundColor, swapped)
+        companion?.setAppearance(keyboardVisible, backgroundColor, swapped)
+        onSwapChanged(swapped)
     }
 
     fun setAppearance(showKeyboard: Boolean, color: Int) {
         keyboardVisible = showKeyboard
         backgroundColor = color
         refresh()
-        presentation?.content?.setAppearance(keyboardVisible, backgroundColor)
-        companion?.setAppearance(keyboardVisible, backgroundColor)
+        presentation?.content?.setAppearance(keyboardVisible, backgroundColor, swapped)
+        companion?.setAppearance(keyboardVisible, backgroundColor, swapped)
     }
 
     override fun onDisplayAdded(displayId: Int) = refresh()
@@ -71,6 +94,10 @@ internal class SecondaryKeyboardDisplay(
             .firstOrNull { it.displayId != primaryId && it.isValid &&
                 it.state != Display.STATE_OFF }
         if (target == null) {
+            if (swapped) {
+                swapped = false
+                onSwapChanged(false)
+            }
             dismiss()
             return
         }
@@ -83,11 +110,11 @@ internal class SecondaryKeyboardDisplay(
         dismissCompanion()
         if (presentation?.display?.displayId == target.displayId && isShowing) return
         dismissPresentation()
-        val next = KeyboardPresentation(activity, target, input)
+        val next = KeyboardPresentation(activity, target)
         try {
             next.show()
             presentation = next
-            next.content.setAppearance(keyboardVisible, backgroundColor)
+            next.content.setAppearance(keyboardVisible, backgroundColor, swapped)
             next.setOnDismissListener {
                 if (presentation === next) {
                     presentation = null
@@ -124,11 +151,11 @@ internal class SecondaryKeyboardDisplay(
         companionStarting = false
         companion = value
         onAvailabilityChanged(true)
-        return Pc98KeyboardPanel(value, input, {}, showClose = false)
+        return Pc98KeyboardPanel(value, input, {}, showClose = false, onSwap = ::toggleSwap)
     }
 
     internal fun updateCompanion(value: SecondaryKeyboardActivity) {
-        if (companion === value) value.setAppearance(keyboardVisible, backgroundColor)
+        if (companion === value) value.setAppearance(keyboardVisible, backgroundColor, swapped)
     }
 
     internal fun detachCompanion(value: SecondaryKeyboardActivity) {
@@ -165,10 +192,9 @@ internal class SecondaryKeyboardDisplay(
         internal var pendingCompanion: SecondaryKeyboardDisplay? = null
     }
 
-    private class KeyboardPresentation(
+    private inner class KeyboardPresentation(
         activity: Activity,
-        display: Display,
-        private val input: InputRouter
+        display: Display
     ) : Presentation(activity, display) {
         lateinit var content: SecondaryKeyboardContent
             private set
@@ -180,7 +206,8 @@ internal class SecondaryKeyboardDisplay(
             window?.decorView?.systemUiVisibility = View.SYSTEM_UI_FLAG_FULLSCREEN or
                 View.SYSTEM_UI_FLAG_HIDE_NAVIGATION or View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
             content = SecondaryKeyboardContent(context,
-                Pc98KeyboardPanel(context, input, {}, showClose = false))
+                Pc98KeyboardPanel(context, input, {}, showClose = false,
+                    onSwap = ::toggleSwap), ::forwardGameSurface, onGameTouch)
             setContentView(content)
         }
 
@@ -189,20 +216,66 @@ internal class SecondaryKeyboardDisplay(
             super.onStop()
         }
     }
+
+    internal fun forwardGameSurface(surface: Surface?, width: Int, height: Int) {
+        if (swapped) onGameSurface(surface, width, height)
+    }
+
+    internal fun forwardGameTouch(event: MotionEvent, width: Int, height: Int): Boolean =
+        swapped && onGameTouch(event, width, height)
 }
 
-internal class SecondaryKeyboardContent(context: Context, private val keyboard: Pc98KeyboardPanel) :
-    FrameLayout(context) {
+internal class SecondaryKeyboardContent(
+    context: Context,
+    private val keyboard: Pc98KeyboardPanel,
+    private val onGameSurface: (Surface?, Int, Int) -> Unit,
+    private val onGameTouch: (MotionEvent, Int, Int) -> Boolean
+) : FrameLayout(context), SurfaceHolder.Callback {
+    private val gameSurface = SurfaceView(context).apply {
+        visibility = View.GONE
+        holder.addCallback(this@SecondaryKeyboardContent)
+        setOnTouchListener { view, event -> onGameTouch(event, view.width, view.height) }
+    }
+    private var gameActive = false
+
     init {
         setBackgroundColor(Color.BLACK)
+        addView(gameSurface, LayoutParams(640, 400, Gravity.TOP or Gravity.CENTER_HORIZONTAL))
         addView(keyboard, LayoutParams(-1, -1))
     }
 
-    fun setAppearance(showKeyboard: Boolean, color: Int) {
+    override fun onSizeChanged(width: Int, height: Int, oldWidth: Int, oldHeight: Int) {
+        super.onSizeChanged(width, height, oldWidth, oldHeight)
+        if (width <= 0 || height <= 0) return
+        val scale = minOf(width / 640f, height / 400f)
+        val gameWidth = (640 * scale).roundToInt().coerceAtLeast(1)
+        val gameHeight = (400 * scale).roundToInt().coerceAtLeast(1)
+        gameSurface.layoutParams = LayoutParams(gameWidth, gameHeight,
+            Gravity.TOP or Gravity.CENTER_HORIZONTAL).apply {
+            topMargin = (height - gameHeight) / 2
+        }
+    }
+
+    fun setAppearance(showKeyboard: Boolean, color: Int, swapped: Boolean) {
         setBackgroundColor(color)
-        if (showKeyboard) keyboard.visibility = View.VISIBLE
+        gameActive = showKeyboard && swapped
+        gameSurface.visibility = if (gameActive) View.VISIBLE else View.GONE
+        if (showKeyboard && !swapped) keyboard.visibility = View.VISIBLE
         else if (keyboard.visibility == View.VISIBLE) keyboard.close()
+        if (!gameActive) onGameSurface(null, 0, 0)
     }
 
     fun close() = keyboard.close()
+
+    override fun surfaceCreated(holder: SurfaceHolder) {
+        if (gameActive) onGameSurface(holder.surface, gameSurface.width, gameSurface.height)
+    }
+
+    override fun surfaceChanged(holder: SurfaceHolder, format: Int, width: Int, height: Int) {
+        if (gameActive) onGameSurface(holder.surface, width, height)
+    }
+
+    override fun surfaceDestroyed(holder: SurfaceHolder) {
+        if (gameActive) onGameSurface(null, 0, 0)
+    }
 }

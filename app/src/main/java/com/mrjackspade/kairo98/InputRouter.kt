@@ -4,6 +4,13 @@ package com.mrjackspade.kairo98
 class InputRouter(private val send: (Int, Boolean) -> Unit) {
     private val owners = LinkedHashMap<String, List<Int>>()
     private val counts = IntArray(128)
+    private val listeners = LinkedHashSet<() -> Unit>()
+
+    @Synchronized fun addListener(listener: () -> Unit) { listeners.add(listener) }
+    @Synchronized fun removeListener(listener: () -> Unit) { listeners.remove(listener) }
+    @Synchronized fun pressedScans(): Set<Int> = counts.indices.filterTo(mutableSetOf()) {
+        counts[it] > 0
+    }
 
     @Synchronized fun hold(owner: String, scans: List<Int>) {
         require(owner.isNotBlank() && scans.isNotEmpty() && scans.size <= 8)
@@ -14,6 +21,7 @@ class InputRouter(private val send: (Int, Boolean) -> Unit) {
         for (scan in scans) {
             if (counts[scan]++ == 0) send(scan, true)
         }
+        listeners.toList().forEach { it() }
     }
 
     @Synchronized fun release(owner: String) {
@@ -21,6 +29,7 @@ class InputRouter(private val send: (Int, Boolean) -> Unit) {
         for (scan in scans.asReversed()) {
             if (--counts[scan] == 0) send(scan, false)
         }
+        listeners.toList().forEach { it() }
     }
 
     @Synchronized fun releasePrefix(prefix: String) {

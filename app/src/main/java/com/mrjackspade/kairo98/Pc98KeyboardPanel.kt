@@ -1,10 +1,14 @@
 package com.mrjackspade.kairo98
 
 import android.content.Context
+import android.content.res.ColorStateList
 import android.graphics.Color
 import android.graphics.drawable.GradientDrawable
+import android.graphics.drawable.RippleDrawable
+import android.graphics.drawable.StateListDrawable
 import android.os.Handler
 import android.os.Looper
+import android.os.SystemClock
 import android.util.TypedValue
 import android.view.Gravity
 import android.view.MotionEvent
@@ -17,7 +21,8 @@ internal class Pc98KeyboardPanel(
     context: Context,
     private val input: InputRouter,
     private val onClose: () -> Unit,
-    private val showClose: Boolean = true
+    private val showClose: Boolean = true,
+    private val onSwap: (() -> Unit)? = null
 ) : LinearLayout(context) {
     private data class Key(
         val label: String,
@@ -33,13 +38,43 @@ internal class Pc98KeyboardPanel(
     private val keyViews = mutableListOf<Pair<Key, TextView>>()
     private val pageViews = mutableMapOf<Page, TextView>()
     private val content = LinearLayout(context).apply { orientation = VERTICAL }
+    private val highlightUntil = mutableMapOf<Int, Long>()
+    private var lastPressed = emptySet<Int>()
+    private val inputListener: () -> Unit = {
+        if (Looper.myLooper() == Looper.getMainLooper()) updateHighlights()
+        else handler.post { updateHighlights() }
+    }
     private var page = Page.ABC
 
     init {
         orientation = VERTICAL
+        if (onSwap != null) gravity = Gravity.TOP or Gravity.CENTER_HORIZONTAL
         setBackgroundColor(0xff171d27.toInt())
         elevation = dp(14).toFloat()
         visibility = View.GONE
+
+        if (onSwap != null) {
+            val brand = LinearLayout(context).apply {
+                gravity = Gravity.CENTER_VERTICAL
+                setPadding(dp(14), dp(4), dp(8), dp(4))
+            }
+            brand.addView(TextView(context).apply {
+                text = "Kairo98"
+                textSize = 17f
+                setTextColor(Color.WHITE)
+                typeface = android.graphics.Typeface.DEFAULT_BOLD
+            }, LayoutParams(0, -2, 1f))
+            brand.addView(TextView(context).apply {
+                text = "\u2191\u2193"
+                contentDescription = "Swap game and keyboard screens"
+                gravity = Gravity.CENTER
+                textSize = 22f
+                setTextColor(Color.WHITE)
+                background = keyBackground()
+                setOnClickListener { onSwap.invoke() }
+            }, LayoutParams(dp(54), dp(40)))
+            addView(brand, LayoutParams(-1, dp(48)))
+        }
 
         val header = LinearLayout(context).apply {
             gravity = Gravity.CENTER_VERTICAL
@@ -54,6 +89,7 @@ internal class Pc98KeyboardPanel(
                 setTextColor(Color.WHITE)
                 setOnClickListener { showPage(target) }
             }
+            tab.background = keyBackground()
             pageViews[target] = tab
             header.addView(tab, LayoutParams(0, dp(34), 1f).apply {
                 setMargins(dp(2), 0, dp(2), 0)
@@ -69,8 +105,32 @@ internal class Pc98KeyboardPanel(
             }, LayoutParams(dp(76), dp(34)))
         }
         addView(header, LayoutParams(-1, dp(42)))
-        addView(content, LayoutParams(-1, 0, 1f))
+        addView(content, if (onSwap == null) LayoutParams(-1, 0, 1f)
+            else LayoutParams(-1, dp(320)))
         showPage(Page.ABC)
+    }
+
+    override fun onAttachedToWindow() {
+        super.onAttachedToWindow()
+        input.addListener(inputListener)
+        updateHighlights()
+    }
+
+    override fun onDetachedFromWindow() {
+        input.removeListener(inputListener)
+        handler.removeCallbacksAndMessages(null)
+        super.onDetachedFromWindow()
+    }
+
+    override fun onSizeChanged(width: Int, height: Int, oldWidth: Int, oldHeight: Int) {
+        super.onSizeChanged(width, height, oldWidth, oldHeight)
+        if (onSwap != null) {
+            val rowsHeight = minOf(dp(320), (height - dp(90)).coerceAtLeast(0))
+            val rowsWidth = minOf(width, dp(900))
+            if (content.layoutParams.height != rowsHeight ||
+                content.layoutParams.width != rowsWidth)
+                content.layoutParams = LayoutParams(rowsWidth, rowsHeight)
+        }
     }
 
     fun close() {
@@ -78,6 +138,8 @@ internal class Pc98KeyboardPanel(
         input.releasePrefix("touch-key:")
         input.releasePrefix("touch-mod:")
         latched.clear()
+        highlightUntil.clear()
+        lastPressed = emptySet()
         updateLegends()
     }
 
@@ -97,7 +159,7 @@ internal class Pc98KeyboardPanel(
             Page.PC98 -> pc98Rows()
         }
         rows.forEach(::row)
-        pageViews.forEach { (name, view) -> view.background = keyBackground(name == page) }
+        pageViews.forEach { (name, view) -> view.isActivated = name == page }
         updateLegends()
     }
 
@@ -188,6 +250,7 @@ internal class Pc98KeyboardPanel(
                     }
                 }
             }
+            view.background = keyBackground()
             keyViews.add(key to view)
             line.addView(view, LayoutParams(0, -1, key.width).apply {
                 setMargins(dp(2), dp(2), dp(2), dp(2))
@@ -197,11 +260,16 @@ internal class Pc98KeyboardPanel(
     }
 
     private fun press(key: Key) {
+        highlightUntil[key.scan] = SystemClock.uptimeMillis() + 90
         input.hold("touch-key:${key.scan}", if (key.chordShift) listOf(0x70, key.scan)
             else listOf(key.scan))
     }
 
-    private fun release(key: Key) = input.release("touch-key:${key.scan}")
+    private fun release(key: Key) {
+        input.release("touch-key:${key.scan}")
+        val delay = (highlightUntil[key.scan] ?: 0L) - SystemClock.uptimeMillis()
+        if (delay > 0) handler.postDelayed({ updateHighlights() }, delay)
+    }
 
     private fun toggleModifier(scan: Int) {
         if (latched.remove(scan)) input.release("touch-mod:$scan")
@@ -222,12 +290,41 @@ internal class Pc98KeyboardPanel(
                 key.shifted != null && shifted -> key.shifted
                 else -> key.label
             }
-            view.background = keyBackground(key.scan in latched)
+            view.isActivated = key.scan in latched
+        }
+        updateHighlights()
+    }
+
+    private fun updateHighlights() {
+        val pressed = input.pressedScans()
+        val now = SystemClock.uptimeMillis()
+        for (scan in pressed - lastPressed)
+            highlightUntil[scan] = now + 90
+        for (scan in lastPressed - pressed) {
+            val delay = (highlightUntil[scan] ?: 0L) - now
+            if (delay > 0) handler.postDelayed({ updateHighlights() }, delay)
+        }
+        lastPressed = pressed
+        val shifted = 0x70 in pressed || 0x7d in pressed
+        highlightUntil.entries.removeAll { it.value <= now }
+        for ((key, view) in keyViews) {
+            val matchingShift = !key.chordShift || shifted
+            view.isPressed = matchingShift &&
+                (key.scan in pressed || (highlightUntil[key.scan] ?: 0L) > now)
         }
     }
 
-    private fun keyBackground(selected: Boolean) = GradientDrawable().apply {
-        setColor(if (selected) 0xff304e63.toInt() else 0xff2a3543.toInt())
+    private fun keyBackground(): RippleDrawable {
+        val states = StateListDrawable().apply {
+            addState(intArrayOf(android.R.attr.state_pressed), keyShape(0xff4c7892.toInt()))
+            addState(intArrayOf(android.R.attr.state_activated), keyShape(0xff304e63.toInt()))
+            addState(intArrayOf(), keyShape(0xff2a3543.toInt()))
+        }
+        return RippleDrawable(ColorStateList.valueOf(0x80a6e3ec.toInt()), states, null)
+    }
+
+    private fun keyShape(color: Int) = GradientDrawable().apply {
+        setColor(color)
         cornerRadius = dp(5).toFloat()
     }
 
