@@ -41,7 +41,7 @@ The 21/W tree contains multiple CPU implementations and platform-specific build 
 
 ### Disk and Android document access
 
-The SDL2 host's `dosio.c` opens paths with `fopen`, while disk code expects seekable reads and often writes. Android `content://` URIs are not paths. Test whether a provider's file descriptor supports random access and writes; otherwise import a working copy into app storage and provide an explicit export/replace flow. Track image identity independently of a temporary path so per-game profiles and swap lists survive app restarts. Treat read-only providers as read-only disks and flush before closing. User-supplied firmware follows the same access rules.
+The SDL2 host's `dosio.c` opens paths with `fopen`, while disk code expects seekable reads and often writes. Android `content://` URIs are not paths. Test whether a provider's file descriptor supports random access and writes; otherwise import a working copy into app storage and provide an explicit export/replace flow. Track image identity independently of a temporary path so per-game profiles and swap lists survive app restarts. Treat read-only providers as read-only disks and flush before closing. Imported firmware follows the same access rules.
 
 ### Sound replacement
 

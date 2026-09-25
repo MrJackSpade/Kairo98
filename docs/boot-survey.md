@@ -1,7 +1,7 @@
 # PC-98 boot survey
 
 Run games on an Android device before assigning launch behavior. A disk's root
-directory or `AUTOEXEC.BAT` alone does not establish what the user sees: Rusty,
+directory or `AUTOEXEC.BAT` alone does not establish what appears on screen: Rusty,
 Ayayo, and Metajo all started without a root `AUTOEXEC.BAT` in the inspected
 HDI. The first pass records a timed screen after a fresh launch; it may land
 on an intro fade or loading transition. "Starts" does not mean a full
