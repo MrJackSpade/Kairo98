@@ -41,6 +41,8 @@ if ($ymfm.Count -ne 3 -or @($hostSources | Where-Object { $_ -match '/ymfm_bridg
 Add-Type -AssemblyName System.IO.Compression.FileSystem
 $noticeFile = [System.IO.File]::OpenRead((Join-Path $root 'app/src/main/assets/THIRD_PARTY_NOTICES.txt'))
 try { $expectedNoticeHash = Sha256 $noticeFile } finally { $noticeFile.Dispose() }
+$iconFile = [System.IO.File]::OpenRead((Join-Path $root 'app/src/main/res/drawable-nodpi/kairo98_icon_art.png'))
+try { $expectedIconHash = Sha256 $iconFile } finally { $iconFile.Dispose() }
 $noticeText = [System.IO.File]::ReadAllText((Join-Path $root 'app/src/main/assets/THIRD_PARTY_NOTICES.txt'))
 if ($noticeText -notmatch 'Android NDK 28\.2\.13676358 LLVM' -or $noticeText -notmatch 'libc\+\+abi') {
     throw 'Static C++ runtime notice missing'
@@ -48,6 +50,7 @@ if ($noticeText -notmatch 'Android NDK 28\.2\.13676358 LLVM' -or $noticeText -no
 $packages = @()
 $sharedAssets = @{}
 $nativeHashes = @()
+$iconHashes = @()
 foreach ($relativePath in @($apkPaths) + @($bundlePaths)) {
     $prefix = if ($relativePath -like '*.aab') { 'base/' } else { '' }
     $path = Join-Path $root $relativePath
@@ -66,6 +69,19 @@ foreach ($relativePath in @($apkPaths) + @($bundlePaths)) {
         }
         $notices = @($entries | Where-Object { $_.FullName -eq "${prefix}assets/THIRD_PARTY_NOTICES.txt" })
         if ($notices.Count -ne 1) { throw "Notices missing from $relativePath" }
+        $icons = @($entries | Where-Object { $_.FullName -eq "${prefix}res/drawable-nodpi-v4/kairo98_icon_art.png" })
+        if ($icons.Count -ne 1) { throw "Launcher artwork missing from $relativePath" }
+        $iconStream = $icons[0].Open()
+        try { $iconHash = Sha256 $iconStream } finally { $iconStream.Dispose() }
+        if (!$prefix -and $iconHash -ne $expectedIconHash) {
+            throw "Launcher artwork differs from source in $relativePath"
+        }
+        $iconHashes += $iconHash
+        foreach ($iconName in @('ic_launcher', 'ic_launcher_round')) {
+            if (@($entries | Where-Object { $_.FullName -eq "${prefix}res/mipmap-anydpi-v26/$iconName.xml" }).Count -ne 1) {
+                throw "Adaptive launcher icon $iconName missing from $relativePath"
+            }
+        }
         $libStream = $native[0].Open()
         try { $nativeHashes += Sha256 $libStream } finally { $libStream.Dispose() }
         $assets = @($entries | Where-Object { $_.FullName -like "${prefix}assets/*" })
@@ -87,6 +103,7 @@ foreach ($relativePath in @($apkPaths) + @($bundlePaths)) {
             assets = $assets.Count
             libSha256 = $nativeHashes[-1]
             noticeSha256 = $assetHashes['assets/THIRD_PARTY_NOTICES.txt']
+            iconSha256 = $iconHash
         }
     } finally { $zip.Dispose() }
 }
@@ -99,6 +116,7 @@ foreach ($pair in @(@($apkPaths), @($bundlePaths))) {
     }
 }
 if ($nativeHashes[0] -ne $nativeHashes[1] -or $nativeHashes[2] -ne $nativeHashes[3]) { throw 'Native libraries differ between variants' }
+if ($iconHashes[0] -ne $iconHashes[1] -or $iconHashes[2] -ne $iconHashes[3]) { throw 'Launcher artwork differs between variants' }
 if ($sharedAssets[$apkPaths[0]]['assets/THIRD_PARTY_NOTICES.txt'] -ne $sharedAssets[$bundlePaths[0]]['assets/THIRD_PARTY_NOTICES.txt']) { throw 'APK and AAB notices differ' }
 
 [pscustomobject]@{

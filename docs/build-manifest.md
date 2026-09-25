@@ -1,10 +1,10 @@
 # Android build manifest
 
-Current local development build: `0.2.0-ymfm-dev`, 25 September 2026. The [license audit](licensing.md) records the exact debug APK and release AAB hashes and remaining artwork rights question. The published `v0.2.0` binaries were built before ymfm and before notices were packaged.
+Current local development build: `0.2.0-icon-dev`, 25 September 2026. The [license audit](licensing.md) records the exact debug APK and release AAB hashes and remaining artwork rights question. The published `v0.2.0` binaries were built before ymfm and before notices were packaged.
 
 ## Toolchain and variants
 
-Gradle 8.13, Android Gradle Plugin 8.13.2, Kotlin 2.2.20, JDK 17, Android SDK API 36, CMake 3.22.1, NDK 28.2.13676358. Package ID `com.mrjackspade.kairo98`; minimum API 26; `arm64-v8a` only. Build both debug APKs and both release AABs from the same revision. All contain the same emulator, JSON catalog, and third-party notices; only `withImages` contains `art/` assets. There are no app-level Maven runtime dependencies. C++ is statically linked into `libkairo98.so`.
+Gradle 8.13, Android Gradle Plugin 8.13.2, Kotlin 2.2.20, JDK 17, Android SDK API 36, CMake 3.22.1, NDK 28.2.13676358. Package ID `com.mrjackspade.kairo98`; minimum API 26; `arm64-v8a` only. Build both debug APKs and both release AABs from the same revision. All contain the same emulator, JSON catalog, third-party notices, and user-supplied launcher icon; only `withImages` contains `art/` catalog assets. There are no app-level Maven runtime dependencies. C++ is statically linked into `libkairo98.so`.
 
 The Android CMake compile database has 234 native translation units: 221 21/W rev104 BSD-only units, three pinned ymfm units, and ten project-owned host/bridge units. The explicit 21/W core source list is in [`app/src/main/cpp/np21w-sources.cmake`](../app/src/main/cpp/np21w-sources.cmake); extra host and board sources are in [`CMakeLists.txt`](../app/src/main/cpp/CMakeLists.txt). The pinned ymfm files compiled are exactly `third_party/ymfm/src/ymfm_opn.cpp`, `ymfm_adpcm.cpp`, and `ymfm_ssg.cpp`. Project-owned `android_host/ymfm_bridge.cpp` connects these to the 21/W OPNA bus and mixer. The core definitions include `CPUCORE_IA32`, `NP2_SDL2`, `SUPPORT_KAI_IMAGES`, `SUPPORT_LARGE_HDD`, `USE_TSC`, and `SUPPORT_YMFM`; no fmgen or GPL sound definition is enabled.
 

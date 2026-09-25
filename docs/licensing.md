@@ -1,6 +1,6 @@
-# License audit: Android ymfm development build
+# License audit: Android development build
 
-Audited 25 September 2026 against two locally built `0.2.0-ymfm-dev` debug APKs and two release AABs. This audit applies to these exact inputs and packages, not the already published `v0.2.0` binaries. Repeat it after changes to sources or packaging. The [21/W maintainer's license table](https://simk98.github.io/np21w/download.html) identifies the rev104 BSD-only package and separately warns about fmgen and GPL components. Archive hashes and import details are in [source-import.md](source-import.md).
+Audited 25 September 2026 against two locally built `0.2.0-icon-dev` debug APKs and two release AABs. This audit applies to these exact inputs and packages, not the already published `v0.2.0` binaries. Repeat it after changes to sources or packaging. The [21/W maintainer's license table](https://simk98.github.io/np21w/download.html) identifies the rev104 BSD-only package and separately warns about fmgen and GPL components. Archive hashes and import details are in [source-import.md](source-import.md).
 
 ## Native source and flags
 
@@ -12,16 +12,16 @@ The sole packaged native library is `lib/arm64-v8a/libkairo98.so`; `llvm-readelf
 
 ## Package inspection
 
-`tools/audit_distribution.ps1` checks both APKs and both AABs, rejects forbidden native paths and firmware/game image filenames, verifies notices, compares native library hashes by build type, and compares every shared asset byte for byte. Results for the local build:
+`tools/audit_distribution.ps1` checks both APKs and both AABs, rejects forbidden native paths and firmware/game image filenames, verifies notices and the launcher artwork, compares native library hashes by build type, and compares every shared asset byte for byte. Results for the local build:
 
 | Variant | Package SHA-256 | Size | Assets | Native library SHA-256 |
 | --- | --- | ---: | ---: | --- |
-| withImages debug APK | `afa89920aa5aaeadabf01fe4b8e3a9e92534b5697fc23cabbee3d74e14ceec96` | 121,529,944 bytes | 6,273 | `d5c46af8f70001003e51e5e2ddea2a2345f54b6a2470bf2d17a0a663780aabde` |
-| withoutImages debug APK | `4219de2afe3132908a23c6a203f907c217fe2d77881fa09ec69e44773d969734` | 5,024,770 bytes | 149 | same debug library |
-| withImages release AAB | `4c153545e741e793e99a25dd0a69e01d7591af16310ec4a997b73560371c85e1` | 119,416,039 bytes | 6,273 | `22d5306b1c68f0373b3ad046d0312fc7c57564a6954ff10159f1572739ed0df5` |
-| withoutImages release AAB | `d3ca439444290e1a173327a589fbda24fc017aff8c9651f38be56b0d0722da50` | 2,659,855 bytes | 149 | same release library |
+| withImages debug APK | `96bf5212ea7103a62c714845b4e7af790c755374684c0de1497f28950f478063` | 121,446,830 bytes | 6,273 | `d5c46af8f70001003e51e5e2ddea2a2345f54b6a2470bf2d17a0a663780aabde` |
+| withoutImages debug APK | `cb89ee68386fd346975573ae0ae793984a3f67d52dd09d9c2407f2f88c38b590` | 4,939,648 bytes | 149 | same debug library |
+| withImages release AAB | `b8c3f9dbbadb8f235aaaeab5f492e72ce5e61e01ca0bfa7020c4475697783850` | 120,842,144 bytes | 6,273 | `22d5306b1c68f0373b3ad046d0312fc7c57564a6954ff10159f1572739ed0df5` |
+| withoutImages release AAB | `01be4ea5298a56bb60ccb0949d0b46b6c7243588a3b0a27f7db3f75576aed363` | 4,085,993 bytes | 149 | same release library |
 
-Each variant pair has 149 identical non-artwork assets, including notice SHA-256 `c18e990fa124eca8f0767c3a95ccf4474eddae3135c483a4f9ce2befc6a0d3b6`. No BIOS, font ROM, operating system, game image, fmgen, GPL MAME, or DOSBox FPU file was found in any inspected package. User-supplied BIOS and test games remain outside Git and the packages. These release AABs are local unsigned audit artifacts, not published Play binaries.
+Each variant pair has 149 identical non-artwork assets, including notice SHA-256 `c18e990fa124eca8f0767c3a95ccf4474eddae3135c483a4f9ce2befc6a0d3b6`. The project owner supplied the launcher icon, and it appears in both variants. APKs preserve the source PNG byte for byte (SHA-256 `855676faeb93c96a852415aa2b305c71479d2603db0fae09fbffddf1109bb947`); AAB resource processing recompresses it, but decoded RGBA pixels were compared and matched exactly. No BIOS, font ROM, operating system, game image, fmgen, GPL MAME, or DOSBox FPU file was found in any inspected package. User-supplied BIOS and test games remain outside Git and the packages. These release AABs are local unsigned audit artifacts, not published Play binaries.
 
 ## Open distribution questions
 
