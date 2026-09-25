@@ -20,10 +20,12 @@ internal class SecondaryKeyboardDisplay(
 ) : DisplayManager.DisplayListener {
     private val displayManager = activity.getSystemService(Context.DISPLAY_SERVICE) as DisplayManager
     private var started = false
-    private var active = false
+    private var keyboardVisible = false
+    private var backgroundColor = Color.BLACK
     private var presentation: KeyboardPresentation? = null
 
     val isShowing: Boolean get() = presentation?.isShowing == true
+    val isKeyboardVisible: Boolean get() = isShowing && keyboardVisible
 
     fun start(handler: Handler) {
         if (started) return
@@ -39,9 +41,11 @@ internal class SecondaryKeyboardDisplay(
         dismiss()
     }
 
-    fun setActive(value: Boolean) {
-        active = value
+    fun setAppearance(showKeyboard: Boolean, color: Int) {
+        keyboardVisible = showKeyboard
+        backgroundColor = color
         refresh()
+        presentation?.setAppearance(keyboardVisible, backgroundColor)
     }
 
     override fun onDisplayAdded(displayId: Int) = refresh()
@@ -49,7 +53,7 @@ internal class SecondaryKeyboardDisplay(
     override fun onDisplayChanged(displayId: Int) = refresh()
 
     private fun refresh() {
-        if (!started || !active) {
+        if (!started) {
             dismiss()
             return
         }
@@ -69,6 +73,7 @@ internal class SecondaryKeyboardDisplay(
         try {
             next.show()
             presentation = next
+            next.setAppearance(keyboardVisible, backgroundColor)
             next.setOnDismissListener {
                 if (presentation === next) {
                     presentation = null
@@ -95,6 +100,7 @@ internal class SecondaryKeyboardDisplay(
         display: Display,
         private val input: InputRouter
     ) : Presentation(activity, display) {
+        private lateinit var root: FrameLayout
         private lateinit var keyboard: Pc98KeyboardPanel
 
         override fun onCreate(savedInstanceState: Bundle?) {
@@ -103,12 +109,19 @@ internal class SecondaryKeyboardDisplay(
             @Suppress("DEPRECATION")
             window?.decorView?.systemUiVisibility = View.SYSTEM_UI_FLAG_FULLSCREEN or
                 View.SYSTEM_UI_FLAG_HIDE_NAVIGATION or View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
-            val root = FrameLayout(context).apply { setBackgroundColor(Color.BLACK) }
+            root = FrameLayout(context).apply { setBackgroundColor(Color.BLACK) }
             keyboard = Pc98KeyboardPanel(context, input, {}, showClose = false).apply {
-                visibility = View.VISIBLE
+                visibility = View.GONE
             }
             root.addView(keyboard, FrameLayout.LayoutParams(-1, -1))
             setContentView(root)
+        }
+
+        fun setAppearance(showKeyboard: Boolean, color: Int) {
+            if (!::root.isInitialized) return
+            root.setBackgroundColor(color)
+            if (showKeyboard) keyboard.visibility = View.VISIBLE
+            else if (keyboard.visibility == View.VISIBLE) keyboard.close()
         }
 
         override fun onStop() {

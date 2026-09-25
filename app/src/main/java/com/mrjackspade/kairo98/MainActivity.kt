@@ -251,7 +251,8 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
         }
         buildUi()
         secondaryKeyboard = SecondaryKeyboardDisplay(this, inputRouter) { available ->
-            if (available && keyboardPanel.visibility == View.VISIBLE) {
+            if (available && secondaryKeyboard.isKeyboardVisible &&
+                keyboardPanel.visibility == View.VISIBLE) {
                 keyboardPanel.close()
                 updateViewport()
                 applyPauseState()
@@ -305,6 +306,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
             }
             if (setupStep < 2) firstRunSetup.show(if (setupStep == 0)
                 FirstRunSetup.Step.ROM_FOLDER else FirstRunSetup.Step.FIRMWARE)
+            applyPauseState()
         }
     }
 
@@ -594,9 +596,11 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
 
     private fun applyPauseState() {
         val editingControls = ::onScreenControls.isInitialized && onScreenControls.isOpen
-        if (::secondaryKeyboard.isInitialized) secondaryKeyboard.setActive(
+        if (::secondaryKeyboard.isInitialized) secondaryKeyboard.setAppearance(
             activityVisible && !libraryVisible && !menuOpen && !editingControls &&
-                !preparingFont && !(::controllerEditor.isInitialized && controllerEditor.isOpen))
+                !preparingFont && !(::controllerEditor.isInitialized && controllerEditor.isOpen),
+            if (::firstRunSetup.isInitialized && firstRunSetup.isOpen) 0xff10151d.toInt()
+                else Color.BLACK)
         nativePause(userPaused || menuOpen || libraryVisible || !activityVisible || preparingFont ||
             (::controllerEditor.isInitialized && controllerEditor.isOpen) || editingControls)
         if (::onScreenControls.isInitialized) onScreenControls.refreshVisibility(
@@ -628,6 +632,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
     private fun finishFirstRun() {
         preferences.edit().putInt("onboarding_step_v1", 2).apply()
         firstRunSetup.close()
+        applyPauseState()
         val tree = romTree
         if (tree != null && hasRomGrant(tree)) refreshLibrary(false)
         else libraryScreen.showStatus("Choose a ROM folder from the library menu when you're ready")
@@ -909,7 +914,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
         currentGame?.inputMode?.let(InputModeDecider::parse) ?: globalInputMode
 
     private fun showKeyboard() {
-        if (::secondaryKeyboard.isInitialized && secondaryKeyboard.isShowing) return
+        if (::secondaryKeyboard.isInitialized && secondaryKeyboard.isKeyboardVisible) return
         if (keyboardPanel.visibility == View.VISIBLE) return
         keyboardPanel.visibility = View.VISIBLE
         updateViewport()
