@@ -27,8 +27,8 @@ class SecondaryKeyboardActivity : Activity() {
         session.updateCompanion(this)
     }
 
-    override fun onResume() {
-        super.onResume()
+    override fun onAttachedToWindow() {
+        super.onAttachedToWindow()
         if (owner == null) return
         val displayId = window.decorView.display?.displayId
         if (displayId != Display.DEFAULT_DISPLAY) {
