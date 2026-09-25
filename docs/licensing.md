@@ -16,10 +16,10 @@ The sole packaged native library is `lib/arm64-v8a/libkairo98.so`; `llvm-readelf
 
 | Variant | Package SHA-256 | Size | Assets | Native library SHA-256 |
 | --- | --- | ---: | ---: | --- |
-| withImages debug APK | `d431c0239b7f676f6120869a7fdc65f4389744f37a665f23bfa4b43cf0fa36e9` | 121,529,672 bytes | 6,273 | `54ffb05a6ae13962d416418b53278e0fa7ca4a06bbc549cafa006ab85c59397c` |
-| withoutImages debug APK | `1dfa9b68813b4a21bd108ecf82fd32c918b3e71c831cbf675eebd9314cca7635` | 5,024,498 bytes | 149 | same debug library |
-| withImages release AAB | `4e142edc35a538af4c2607f81c05806264c55366d73d188f375db9a12305d9c4` | 119,408,419 bytes | 6,273 | `dc8101728037e82ff83af1e767e8b344054ddbfcf576411554b51a70b344abca` |
-| withoutImages release AAB | `638e9c7a2d9ef89bb45b5decac0a8f651ef345a6c7d60f36dc8b1835c1487434` | 2,652,235 bytes | 149 | same release library |
+| withImages debug APK | `3cc28b85ae62e01ce774d71184eb7dca6d34d08fae6ce1f553acad14340abe0c` | 121,529,944 bytes | 6,273 | `d5c46af8f70001003e51e5e2ddea2a2345f54b6a2470bf2d17a0a663780aabde` |
+| withoutImages debug APK | `b283da94d8cd0a0c15930aa2ee8667a6e6f9ccbe1f79fc2aa71630b0a7c410ab` | 5,024,770 bytes | 149 | same debug library |
+| withImages release AAB | `9e4349dc8581842a69b8c1fc8b8b6e6f137ef36880a4f080811991d309f1ad89` | 119,409,034 bytes | 6,273 | `22d5306b1c68f0373b3ad046d0312fc7c57564a6954ff10159f1572739ed0df5` |
+| withoutImages release AAB | `93199c1f130e84b020b11ed594a8aad4821acf71b8aef2bc3fde7aace4a921e5` | 2,652,850 bytes | 149 | same release library |
 
 Each variant pair has 149 identical non-artwork assets, including notice SHA-256 `a7c61565dfc8535c6f78a080a61776fee0c479f1821253e59b1ae1b61acbe327`. No BIOS, font ROM, operating system, game image, fmgen, GPL MAME, or DOSBox FPU file was found in any inspected package. User-supplied BIOS and test games remain outside Git and the packages. These release AABs are local unsigned audit artifacts, not published Play binaries.
 

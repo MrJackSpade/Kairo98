@@ -200,6 +200,9 @@ void run_machine(std::string image, std::string font_path, std::string bios_dir,
     unsigned int profile_frames = 0;
     int64_t profile_core_us = 0, profile_render_us = 0;
     int64_t profile_mix_us = 0, profile_write_us = 0;
+    int64_t profile_max_core_us = 0, profile_max_render_us = 0;
+    int64_t profile_max_late_us = 0;
+    unsigned int profile_late_frames = 0;
     int32_t profile_previous_xruns = 0;
     int32_t profile_partial_writes = 0;
     int32_t profile_buffered_frames = 0;
@@ -289,7 +292,9 @@ void run_machine(std::string image, std::string font_path, std::string bios_dir,
         const auto core_start = std::chrono::steady_clock::now();
         kairo98_machine_exec();
         const auto core_end = std::chrono::steady_clock::now();
-        profile_core_us += std::chrono::duration_cast<std::chrono::microseconds>(core_end - core_start).count();
+        const auto core_us = std::chrono::duration_cast<std::chrono::microseconds>(core_end - core_start).count();
+        profile_core_us += core_us;
+        profile_max_core_us = std::max(profile_max_core_us, static_cast<int64_t>(core_us));
         prompt_frames = kairo98_machine_dos_prompt() ? prompt_frames + 1 : 0;
         dos_prompt_ready.store(prompt_frames >= 15);
         if (screen_hash_sampling.load(std::memory_order_relaxed) &&
@@ -300,7 +305,9 @@ void run_machine(std::string image, std::string font_path, std::string bios_dir,
         }
         render_frame();
         const auto render_end = std::chrono::steady_clock::now();
-        profile_render_us += std::chrono::duration_cast<std::chrono::microseconds>(render_end - core_end).count();
+        const auto render_us = std::chrono::duration_cast<std::chrono::microseconds>(render_end - core_end).count();
+        profile_render_us += render_us;
+        profile_max_render_us = std::max(profile_max_render_us, static_cast<int64_t>(render_us));
         audio_due += 44100;
         while (audio_due >= 60 * 512) {
             audio_due -= 60 * 512;
@@ -338,13 +345,15 @@ void run_machine(std::string image, std::string font_path, std::string bios_dir,
             last_ip = ip;
         }
         if (++profile_frames == 600) {
-            char result[130];
+            char result[180];
             std::snprintf(result, sizeof(result),
-                "c%.1f r%.1f m%.1f w%.1f x+%d p%d q%d",
+                "c%.1f r%.1f m%.1f w%.1f x+%d p%d q%d maxC%.1f maxR%.1f late%d/%.1f",
                 profile_core_us / 600000.0, profile_render_us / 600000.0,
                 profile_mix_us / 600000.0, profile_write_us / 600000.0,
                 audio_xruns - profile_previous_xruns, profile_partial_writes,
-                profile_buffered_frames);
+                profile_buffered_frames, profile_max_core_us / 1000.0,
+                profile_max_render_us / 1000.0, profile_late_frames,
+                profile_max_late_us / 1000.0);
             {
                 std::lock_guard<std::mutex> guard(command_mutex);
                 audio_profile = result;
@@ -352,11 +361,18 @@ void run_machine(std::string image, std::string font_path, std::string bios_dir,
             profile_previous_xruns = audio_xruns;
             profile_frames = 0;
             profile_core_us = profile_render_us = profile_mix_us = profile_write_us = 0;
+            profile_max_core_us = profile_max_render_us = profile_max_late_us = 0;
+            profile_late_frames = 0;
             profile_partial_writes = 0;
         }
         next_frame += std::chrono::microseconds(16667);
         auto now = std::chrono::steady_clock::now();
-        if (next_frame < now) next_frame = now;
+        if (next_frame < now) {
+            ++profile_late_frames;
+            profile_max_late_us = std::max(profile_max_late_us, static_cast<int64_t>(
+                std::chrono::duration_cast<std::chrono::microseconds>(now - next_frame).count()));
+            next_frame = now;
+        }
         std::unique_lock<std::mutex> guard(command_mutex);
         command_ready.wait_until(guard, next_frame, [] { return !commands.empty(); });
     }
