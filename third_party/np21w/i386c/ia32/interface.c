@@ -320,6 +320,7 @@ ia32_bioscall(void)
 {
 	UINT32 adrs;
 
+	KAIRO98_SIDE_EFFECT();
 	if (!CPU_STAT_PM || CPU_STAT_VM86) {
 #if 1
 		adrs = CPU_PREV_EIP + (CPU_CS << 4);

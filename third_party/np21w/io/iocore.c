@@ -638,6 +638,7 @@ void iocore_bind(void)
 }
 
 void IOOUTCALL iocore_out8(UINT port, REG8 dat) {
+	KAIRO98_SIDE_EFFECT();
 
 	IOFUNC	iof;
 
@@ -648,6 +649,7 @@ void IOOUTCALL iocore_out8(UINT port, REG8 dat) {
 }
 
 REG8 IOINPCALL iocore_inp8(UINT port) {
+	KAIRO98_SIDE_EFFECT();
 
 	IOFUNC	iof;
 	REG8	ret;
@@ -660,6 +662,7 @@ REG8 IOINPCALL iocore_inp8(UINT port) {
 }
 
 void IOOUTCALL iocore_out16(UINT port, REG16 dat) {
+	KAIRO98_SIDE_EFFECT();
 
 	IOFUNC	iof;
 
@@ -744,6 +747,7 @@ void IOOUTCALL iocore_out16(UINT port, REG16 dat) {
 }
 
 REG16 IOINPCALL iocore_inp16(UINT port) {
+	KAIRO98_SIDE_EFFECT();
 
 	IOFUNC	iof;
 	REG8	ret;
@@ -823,6 +827,7 @@ REG16 IOINPCALL iocore_inp16(UINT port) {
 }
 
 void IOOUTCALL iocore_out32(UINT port, UINT32 dat) {
+	KAIRO98_SIDE_EFFECT();
 
 	CPU_REMCLOCK -= iocore.busclock;
 #if defined(SUPPORT_PC9821)
@@ -853,6 +858,7 @@ void IOOUTCALL iocore_out32(UINT port, UINT32 dat) {
 }
 
 UINT32 IOINPCALL iocore_inp32(UINT port) {
+	KAIRO98_SIDE_EFFECT();
 
 	UINT32	ret;
 

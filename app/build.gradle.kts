@@ -9,7 +9,7 @@ android {
     ndkVersion = "28.2.13676358"
 
     defaultConfig {
-        applicationId = "com.loxifi.kairo98"
+        applicationId = providers.gradleProperty("kairo98ApplicationId").orNull ?: "com.loxifi.kairo98"
         minSdk = 26
         targetSdk = 36
         versionCode = providers.gradleProperty("kairo98VersionCode").orNull?.toInt() ?: 1
@@ -20,6 +20,21 @@ android {
         externalNativeBuild {
             cmake {
                 arguments += "-DANDROID_STL=c++_static"
+                providers.gradleProperty("kairo98PgoMode").orNull?.let {
+                    arguments += "-DKAIRO98_PGO_MODE=$it"
+                }
+                providers.gradleProperty("kairo98PgoProfile").orNull?.let {
+                    arguments += "-DKAIRO98_PGO_PROFILE=$it"
+                }
+                if (providers.gradleProperty("kairo98EgcVerify").orNull == "true") {
+                    arguments += "-DKAIRO98_EGC_VERIFY=ON"
+                }
+                if (providers.gradleProperty("kairo98GpuVerify").orNull == "true") {
+                    arguments += "-DKAIRO98_GPU_VERIFY=ON"
+                }
+                if (providers.gradleProperty("kairo98SynthVerify").orNull == "true") {
+                    arguments += "-DKAIRO98_SYNTH_VERIFY=ON"
+                }
             }
         }
     }

@@ -161,3 +161,33 @@ typedef signed char BOOL;
 #define SCRNCALL
 #define VERMOUTHCL
 #define INLINE inline
+
+/* Per-frame interpreter counters read by the Android debug status line. */
+#ifdef __cplusplus
+extern "C" {
+#endif
+extern unsigned long long kairo98_counter_slices;
+extern unsigned long long kairo98_counter_insts;
+extern unsigned long long kairo98_counter_sti;
+extern unsigned long long kairo98_counter_skips;
+/* Incremented each time the core redraws part of the host frame. */
+extern unsigned long long kairo98_counter_draws;
+/* Advanced by every guest memory write, non-RAM read, I/O access, interrupt,
+ * and mode change. The idle-loop detector in i386c/ia32/kairo98_idle.c only
+ * treats a loop as repeatable while this stays constant. */
+extern unsigned long long kairo98_side_effects;
+/* Host time spent per stage inside pccore_exec, for the debug status line. */
+extern unsigned long long kairo98_time_cpu_ns;
+extern unsigned long long kairo98_time_event_ns;
+extern unsigned long long kairo98_time_draw_ns;
+extern unsigned long long kairo98_time_fm_ns;
+#ifdef __cplusplus
+}
+#endif
+#define KAIRO98_SIDE_EFFECT() ((void)kairo98_side_effects++)
+
+static inline unsigned long long kairo98_now_ns(void) {
+	struct timespec now;
+	clock_gettime(CLOCK_MONOTONIC, &now);
+	return (unsigned long long)now.tv_sec * 1000000000ull + (unsigned long long)now.tv_nsec;
+}

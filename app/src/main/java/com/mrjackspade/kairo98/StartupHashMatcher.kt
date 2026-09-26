@@ -13,7 +13,7 @@ class StartupHashMatcher(
                     val hashes: Set<Long>, val legacyDosPrompt: Boolean,
                     val timeoutMs: Int)
 
-    fun run(steps: List<Step>) {
+    fun run(steps: List<Step>): Boolean {
         var consumedSerial = snapshot().getOrNull(0) ?: 0L
         for (step in steps) {
             val deadline = System.nanoTime() + step.timeoutMs * 1_000_000L
@@ -31,13 +31,14 @@ class StartupHashMatcher(
                 }
                 Thread.sleep(100)
             }
-            if (cancelled()) return
+            if (cancelled()) return false
             if (!matched) {
                 failed(step)
-                return
+                return false
             }
             // The next step must see an actual sample after the preceding keys were sent.
             consumedSerial = snapshot().getOrNull(0) ?: consumedSerial
         }
+        return !cancelled()
     }
 }

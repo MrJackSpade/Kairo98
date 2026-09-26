@@ -26,6 +26,8 @@
 #include "compiler.h"
 #include "ia32/cpu.h"
 #include "ia32/ia32.mcr"
+#include "pccore.h"
+#include "iocore.h"
 
 #include "flag_ctrl.h"
 
@@ -300,6 +302,7 @@ STI(void)
 		}
 	}
 	CPU_FLAG |= I_FLAG;
+	kairo98_counter_sti++;
 	CPU_TRAP = (CPU_FLAG & (T_FLAG)) == (T_FLAG);
 	exec_1step();
 	if (CPU_TRAP) {

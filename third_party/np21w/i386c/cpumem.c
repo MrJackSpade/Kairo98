@@ -471,6 +471,17 @@ static MEMFN0 memfn0 = {
 		memvram0_wr32,	memnc_wr32,		memnc_wr32,		memnc_wr32,		// e0
 		memmain_wr32,	memmain_wr32}};
 
+/* Word access through the bank table for a physical address below 1 MB whose
+ * word does not cross a 32 KB bank. This is the handler memp_read16 and
+ * memp_write16 reach after their range tests; callers must apply those tests. */
+REG16 MEMCALL memp_bank_read16(UINT32 address) {
+	return memfn0.rd16[address >> 15](address);
+}
+
+void MEMCALL memp_bank_write16(UINT32 address, REG16 value) {
+	memfn0.wr16[address >> 15](address, value);
+}
+
 static const MMAPTBL mmaptbl[2] = {
 		   {memmain_rd8,	memf800_rd8,	memnc_wr8,
 			memmain_rd16,	memf800_rd16,	memnc_wr16,
@@ -722,6 +733,7 @@ static const MEMFNF memfnf = {
 // ----- slow版 fastで処理される部分は省略されているので、fast版からの呼び出しのみ可能
 
 static REG8 MEMCALL memp_read8_slow(UINT32 address) {
+	KAIRO98_SIDE_EFFECT();
 #if defined(SUPPORT_WAB_GA1280A)
 	{
 		REG8 retValue;
@@ -819,6 +831,7 @@ static REG8 MEMCALL memp_read8_slow(UINT32 address) {
 }
 
 static REG16 MEMCALL memp_read16_slow(UINT32 address) {
+	KAIRO98_SIDE_EFFECT();
 	REG16 ret;
 
 	if ((address + 1) & 0x7fff) {			// non 32kb boundary
@@ -925,6 +938,7 @@ static REG16 MEMCALL memp_read16_slow(UINT32 address) {
 }
 
 static UINT32 MEMCALL memp_read32_slow(UINT32 address) {
+	KAIRO98_SIDE_EFFECT();
 	UINT32 ret;
 
 	if ((address & 0x7fff) <= 0x8000 - 4) {			// non 32kb boundary
@@ -1621,6 +1635,7 @@ static void MEMCALL memp_write32_paging_slow(UINT32 address, UINT32 value) {
 
 // ---- 通常メモリ読み込み関数
 REG8 MEMCALL memp_read8(UINT32 address) {
+	KAIRO98_SIDE_EFFECT();
 	
 #ifdef MEM_BDA_TRACEOUT
 	if(0x400 <= address && address < 0x600){
@@ -1744,6 +1759,7 @@ REG8 MEMCALL memp_read8(UINT32 address) {
 }
 
 REG16 MEMCALL memp_read16(UINT32 address) {
+	KAIRO98_SIDE_EFFECT();
 
 	REG16	ret;
 	
@@ -1873,6 +1889,7 @@ REG16 MEMCALL memp_read16(UINT32 address) {
 }
 
 UINT32 MEMCALL memp_read32(UINT32 address) {
+	KAIRO98_SIDE_EFFECT();
 
 	//UINT32	pos;
 	UINT32	ret;
@@ -2245,6 +2262,7 @@ PF_UINT32 MEMCALL memp_read32_paging_fast(UINT32 address) {
 
 // ---- 通常メモリ書き込み関数
 void MEMCALL memp_write8(UINT32 address, REG8 value) {
+	KAIRO98_SIDE_EFFECT();
 	
 #ifdef MEM_BDA_TRACEOUT
 	if(0x400 <= address && address < 0x600){
@@ -2384,6 +2402,7 @@ void MEMCALL memp_write8(UINT32 address, REG8 value) {
 }
 
 void MEMCALL memp_write16(UINT32 address, REG16 value) {
+	KAIRO98_SIDE_EFFECT();
 
 	
 #ifdef MEM_BDA_TRACEOUT
@@ -2523,6 +2542,7 @@ void MEMCALL memp_write16(UINT32 address, REG16 value) {
 }
 
 void MEMCALL memp_write32(UINT32 address, UINT32 value) {
+	KAIRO98_SIDE_EFFECT();
 
 	//UINT32	pos;
 	
@@ -2672,6 +2692,7 @@ void MEMCALL memp_write32(UINT32 address, UINT32 value) {
 
 // ---- 高速版書き込み　普通のメモリを優先的に処理する
 void MEMCALL memp_write8_fast(UINT32 address, REG8 value) {
+	KAIRO98_SIDE_EFFECT();
 	UINT32 raw = address;
 
 	if (address == 0x0457) return;
@@ -2688,6 +2709,7 @@ void MEMCALL memp_write8_fast(UINT32 address, REG8 value) {
 }
 
 void MEMCALL memp_write16_fast(UINT32 address, REG16 value) {
+	KAIRO98_SIDE_EFFECT();
 	UINT32 raw = address;
 
 	if (address < (I286_MEMWRITEMAX - 1)) {
@@ -2703,6 +2725,7 @@ void MEMCALL memp_write16_fast(UINT32 address, REG16 value) {
 }
 
 void MEMCALL memp_write32_fast(UINT32 address, UINT32 value) {
+	KAIRO98_SIDE_EFFECT();
 	UINT32 raw = address;
 
 	if (address < (I286_MEMWRITEMAX - 3)) {
@@ -2719,6 +2742,7 @@ void MEMCALL memp_write32_fast(UINT32 address, UINT32 value) {
 
 // ---- 通常メモリ書き込み関数（paging用）
 void MEMCALL memp_write8_paging(UINT32 address, REG8 value) {
+	KAIRO98_SIDE_EFFECT();
 	
 	//if (address==0x0457) return; // XXX: IDEのデータ破壊回避のための暫定
 	if (address < I286_MEMWRITEMAX) {
@@ -2754,6 +2778,7 @@ void MEMCALL memp_write8_paging(UINT32 address, REG8 value) {
 }
 
 void MEMCALL memp_write16_paging(UINT32 address, REG16 value) {
+	KAIRO98_SIDE_EFFECT();
 	
 	if (address < (I286_MEMWRITEMAX - 1)) {
 		STOREINTELWORD(mem + address, value);
@@ -2794,6 +2819,7 @@ void MEMCALL memp_write16_paging(UINT32 address, REG16 value) {
 }
 
 void MEMCALL memp_write32_paging(UINT32 address, UINT32 value) {
+	KAIRO98_SIDE_EFFECT();
 	
 	if (address < (I286_MEMWRITEMAX - 3)) {
 		STOREINTELDWORD(mem + address, value);
@@ -2843,6 +2869,7 @@ void MEMCALL memp_write32_paging(UINT32 address, UINT32 value) {
 
 // ---- 高速版書き込み（paging用）　普通のメモリを優先的に処理する
 void MEMCALL memp_write8_paging_fast(UINT32 address, REG8 value) {
+	KAIRO98_SIDE_EFFECT();
 	UINT32 raw = address;
 
 	if (address < I286_MEMWRITEMAX) {
@@ -2858,6 +2885,7 @@ void MEMCALL memp_write8_paging_fast(UINT32 address, REG8 value) {
 }
 
 void MEMCALL memp_write16_paging_fast(UINT32 address, REG16 value) {
+	KAIRO98_SIDE_EFFECT();
 	UINT32 raw = address;
 
 	if (address < (I286_MEMWRITEMAX - 1)) {
@@ -2873,6 +2901,7 @@ void MEMCALL memp_write16_paging_fast(UINT32 address, REG16 value) {
 }
 
 void MEMCALL memp_write32_paging_fast(UINT32 address, UINT32 value) {
+	KAIRO98_SIDE_EFFECT();
 	UINT32 raw = address;
 
 	if (address < (I286_MEMWRITEMAX - 3)) {
@@ -2889,6 +2918,7 @@ void MEMCALL memp_write32_paging_fast(UINT32 address, UINT32 value) {
 
 
 void MEMCALL memp_reads(UINT32 address, void *dat, UINT leng) {
+	KAIRO98_SIDE_EFFECT();
 
 	UINT8 *out = (UINT8 *)dat;
 	UINT diff;
@@ -2931,6 +2961,7 @@ void MEMCALL memp_reads(UINT32 address, void *dat, UINT leng) {
 }
 
 void MEMCALL memp_writes(UINT32 address, const void *dat, UINT leng) {
+	KAIRO98_SIDE_EFFECT();
 
 	const UINT8 *out = (UINT8 *)dat;
 	UINT diff;

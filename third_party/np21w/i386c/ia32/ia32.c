@@ -203,6 +203,7 @@ ia32_setemm(UINT frame, UINT32 addr) {
 void CPUCALL
 change_pm(BOOL onoff)
 {
+	KAIRO98_SIDE_EFFECT();
 
 	if (onoff) {
 		VERBOSE(("change_pm: Entering to Protected-Mode..."));
@@ -224,6 +225,7 @@ change_pm(BOOL onoff)
 void CPUCALL
 change_pg(BOOL onoff)
 {
+	KAIRO98_SIDE_EFFECT();
 
 	if (onoff) {
 		VERBOSE(("change_pg: Entering to Paging-Mode..."));
@@ -239,6 +241,7 @@ change_vm(BOOL onoff)
 {
 	int i;
 
+	KAIRO98_SIDE_EFFECT();
 	CPU_STAT_VM86 = onoff;
 	if (onoff) {
 		VERBOSE(("change_vm: Entering to Virtual-8086-Mode..."));
@@ -310,6 +313,7 @@ void CPUCALL
 set_cr3(UINT32 new_cr3)
 {
 
+	KAIRO98_SIDE_EFFECT();
 	VERBOSE(("set_CR3: old = %08x, new = 0x%08x", CPU_CR3, new_cr3));
 
 	CPU_CR3 = new_cr3 & CPU_CR3_MASK;

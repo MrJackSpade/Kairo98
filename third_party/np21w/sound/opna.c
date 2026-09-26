@@ -16,7 +16,9 @@
 
 static void SOUNDCALL ymfm_getpcm(void *hdl, SINT32 *pcm, UINT count)
 {
+	unsigned long long t0 = kairo98_now_ns();
 	kairo_ymfm_mix(hdl, pcm, count);
+	kairo98_time_fm_ns += kairo98_now_ns() - t0;
 }
 #endif
 
