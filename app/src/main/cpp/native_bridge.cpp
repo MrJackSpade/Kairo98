@@ -194,9 +194,12 @@ void present_loop() {
             {
                 std::lock_guard<std::mutex> guard(window_mutex);
                 target = window;
+                // Keep the window alive after the UI can replace its reference.
+                if (target) ANativeWindow_acquire(target);
             }
             attached_generation = generation;
             renderer.attach(target);
+            if (target) ANativeWindow_release(target);
             if (renderer.ready()) renderer.draw();
         }
         if (frame) {

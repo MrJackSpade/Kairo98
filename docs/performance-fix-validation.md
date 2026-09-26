@@ -35,6 +35,7 @@ Raw logs, APKs, isolated correctness harnesses, and screenshots are local under
 | Shared audio buffer | 8.744 | 19.333 | 60.004 | 0 |
 | Shared audio buffer, later repeat | 8.656 | 19.278 | 60.018 | 0 |
 | Preserve dropped GPU packets | 8.656 | 19.022 | 59.994 | 0 |
+| Native window reference | 8.722 | 19.189 | 59.990 | 0 |
 
 ## Audio wait ordering
 
@@ -102,3 +103,24 @@ The unchanged candidate completed startup on its third launch. Accepted: core
 plus mixing matched the immediately preceding comparison at 8.656 ms; heavy
 core time decreased, frame rate remained approximately 60 fps, and there were
 no combat underruns. Thermal status remained zero.
+
+## Native window lifetime
+
+The presenter acquires a temporary `ANativeWindow` reference while holding
+`window_mutex`, before Android can replace and release the shared reference.
+It releases that temporary reference after `GlPresenter::attach()` has taken
+its own reference (or handled attachment failure). The null-window path is
+unchanged. This adds one acquire/release pair per surface-generation change,
+outside the per-frame rendering path.
+
+Accepted: core plus mixing rose 0.066 ms from the preceding build, within the
+original baseline's 0.089 ms span and the 0.088 ms span of the two shared-buffer
+runs. Heavy core time was also within the observed baseline range. The run
+maintained approximately 60 fps with no combat underruns. Its first launch
+stalled before automation; the unchanged APK completed the next launch.
+
+Six background/foreground cycles recreated SurfaceView buffers while retaining
+the same app process. The battle image returned after the cycles, with no fatal
+signal or `eglSwapBuffers` failure in the captured log. This is a lifecycle smoke
+check; the reference ownership change closes the race independently of whether
+that particular interleaving occurs during the check.
