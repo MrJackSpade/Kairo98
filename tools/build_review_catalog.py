@@ -21,7 +21,9 @@ def lookup_name(value):
                    if char.isalnum())
 
 
-def generate(matches_path, gallery, assets, art_assets, ffmpeg, quality):
+def generate(matches_path, gallery, assets, art_assets, ffmpeg, quality, reuse_art=False):
+    """reuse_art keeps the committed artwork and provenance instead of re-encoding the
+    gallery, for metadata-only changes on a machine without the gallery or ffmpeg."""
     matches = json.loads(matches_path.read_text(encoding="utf-8-sig"))["entries"]
     descriptions_path = matches_path.parent / "descriptions-v1.json"
     description_notes = json.loads(descriptions_path.read_text(encoding="utf-8"))
@@ -37,8 +39,12 @@ def generate(matches_path, gallery, assets, art_assets, ffmpeg, quality):
         raise ValueError(f"Translated games missing descriptions: {incomplete[:5]}")
     profiles_path = matches_path.parent.parent / "startup-profiles-v1.json"
     profiles = json.loads(profiles_path.read_text(encoding="utf-8"))["games"] if profiles_path.is_file() else {}
-    gallery_entries = json.loads((gallery / "manifest.json").read_text(encoding="utf-8-sig"))["entries"]
-    gallery_index = {(item["platform"], item["pageUrl"]): item for item in gallery_entries}
+    if reuse_art:
+        committed = json.loads((assets / "catalog" / "name-index-v1.json").read_text(encoding="utf-8"))["games"]
+        gallery_index = {}
+    else:
+        gallery_entries = json.loads((gallery / "manifest.json").read_text(encoding="utf-8-sig"))["entries"]
+        gallery_index = {(item["platform"], item["pageUrl"]): item for item in gallery_entries}
     art_dir = art_assets / "art" / "catalog"
     art_dir.mkdir(parents=True, exist_ok=True)
     source_games = []
@@ -50,7 +56,7 @@ def generate(matches_path, gallery, assets, art_assets, ffmpeg, quality):
     for number, entry in enumerate(sorted(matches, key=lambda item: (item["platform"], item["databaseId"])), 1):
         key = f'{entry["platform"]}:{entry["databaseId"]}'
         gallery_entry = gallery_index.get((entry["platform"], entry["pageUrl"]))
-        if gallery_entry is None:
+        if gallery_entry is None and not reuse_art:
             raise ValueError(f"Missing gallery entry: {key}")
         metadata = {"title": entry["title"]}
         description = descriptions.get(key, entry.get("description"))
@@ -61,8 +67,8 @@ def generate(matches_path, gallery, assets, art_assets, ffmpeg, quality):
         for field in ("machine", "launch", "controller"):
             if entry.get(field):
                 metadata[field] = entry[field]
-        artwork = {}
-        for gallery_kind, field, url_field in (
+        artwork = dict(committed.get(key, {}).get("artwork", {})) if reuse_art else {}
+        for gallery_kind, field, url_field in () if reuse_art else (
                 ("box", "boxArt", "boxArtUrl"),
                 ("screenshot", "preview", "previewUrl")):
             image = gallery_entry.get("images", {}).get(gallery_kind)
@@ -141,8 +147,9 @@ def generate(matches_path, gallery, assets, art_assets, ffmpeg, quality):
     (catalog / "manifest-v1.json").write_bytes(compact(manifest))
     (catalog / "name-index-v1.json").write_bytes(compact({"schemaVersion": 1,
         "games": all_games, "names": unique_names}))
-    (art_assets / "art" / "catalog-provenance-v1.json").write_bytes(compact({"schemaVersion": 1,
-        "quality": quality, "assets": provenance}))
+    if not reuse_art:
+        (art_assets / "art" / "catalog-provenance-v1.json").write_bytes(compact({"schemaVersion": 1,
+            "quality": quality, "assets": provenance}))
     output_source = matches_path.parent.parent / "source-v1.json"
     output_source.write_bytes(compact(source))
     print(f"{len(source_games)} hashed games, {manifest['games']} content IDs, "
@@ -158,5 +165,8 @@ if __name__ == "__main__":
     parser.add_argument("--art-assets", type=Path, default=Path("app/src/withImages/assets"))
     parser.add_argument("--ffmpeg", type=Path, default=Path("C:/bin/ffmpeg.exe"))
     parser.add_argument("--quality", type=int, default=25)
+    parser.add_argument("--reuse-art", action="store_true",
+                        help="keep committed artwork; for metadata changes without the gallery")
     args = parser.parse_args()
-    generate(args.matches, args.gallery, args.assets, args.art_assets, args.ffmpeg, args.quality)
+    generate(args.matches, args.gallery, args.assets, args.art_assets, args.ffmpeg, args.quality,
+             args.reuse_art)
