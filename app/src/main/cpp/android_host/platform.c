@@ -136,15 +136,3 @@ int kairo98_fill_audio(SINT16 *destination, UINT frames) {
     return 1;
 }
 
-int statflag_read(STFLAGH state, void *destination, UINT size) {
-    (void)state;
-    (void)destination;
-    (void)size;
-    return FAILURE;
-}
-int statflag_write(STFLAGH state, const void *source, UINT size) {
-    (void)state;
-    (void)source;
-    (void)size;
-    return FAILURE;
-}

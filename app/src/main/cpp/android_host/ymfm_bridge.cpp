@@ -91,6 +91,10 @@ public:
         if (offset < m_ram.size()) m_ram[offset] = value;
     }
 
+    void ram_reload(const uint8_t *ram) {
+        if (ram) std::copy(ram, ram + m_ram.size(), m_ram.begin());
+    }
+
     // Adds `frames` output frames into pcm (stereo, interleaved).
     void mix(int32_t *pcm, uint32_t frames) {
         if (!pcm || !m_native_rate || !m_output_rate) return;
@@ -235,6 +239,16 @@ public:
     }
 
     const uint8_t *ram() const { return m_ram; }
+
+    // Emulation thread, after a state load replaced the core's ADPCM RAM.
+    void reload_ram() {
+        drain();
+        std::lock_guard<std::mutex> guard(m_mutex);
+        m_engine.ram_reload(m_ram);
+#if defined(KAIRO98_SYNTH_VERIFY)
+        m_shadow.ram_reload(m_ram);
+#endif
+    }
 
     void write(int bank, uint8_t address, uint8_t data) {
         post({Command::Write, 0, static_cast<uint32_t>(bank), address, data});
@@ -423,6 +437,11 @@ extern "C" void kairo_ymfm_mix(void *handle, int32_t *pcm, uint32_t frames) {
 extern "C" void kairo_ymfm_drain_all(void) {
     std::lock_guard<std::mutex> guard(g_registry_mutex);
     for (auto *worker : g_registry) worker->drain();
+}
+
+extern "C" void kairo_ymfm_reload_all_ram(void) {
+    std::lock_guard<std::mutex> guard(g_registry_mutex);
+    for (auto *worker : g_registry) worker->reload_ram();
 }
 
 extern "C" void kairo_ymfm_ram_changed(const uint8_t *adpcm_ram, uint32_t offset, uint8_t value) {

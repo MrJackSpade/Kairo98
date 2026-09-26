@@ -14,6 +14,7 @@ add_library(np21w_core OBJECT
     ${NP21W_ROOT}/cbus/boardmo.c
     ${NP21W_ROOT}/lio/gpaint.c
     ${NP21W_ROOT}/lio/groll.c
+    ${NP21W_ROOT}/statsave.c
     android_host/np2sysp.c
     android_host/platform.c
     android_host/core_probe.c

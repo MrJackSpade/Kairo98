@@ -8,7 +8,10 @@
 #include "diskimage/img_common.h"
 #include "dosio.h"
 #include "iocore.h"
+#include "mousemng.h"
+#include "statsave.h"
 #include <ctype.h>
+#include <stdio.h>
 #include <string.h>
 
 int kairo98_font_overlay_load(const char *path);
@@ -264,4 +267,120 @@ int kairo98_machine_stop(void) {
 void kairo98_machine_location(unsigned short *cs, unsigned short *ip) {
     *cs = CPU_CS;
     *ip = CPU_IP;
+}
+
+/*
+ * Save states. The core's state file records disk images by path only, so a
+ * slot also keeps a copy of every mounted image: loading an older state
+ * against a disk the guest has written since would leave the guest's cached
+ * file system out of step with the image. disks.txt maps each copy to the
+ * working path it came from.
+ */
+void kairo_ymfm_reload_all_ram(void);
+
+static int copy_file(const char *from, const char *to) {
+    FILE *in = fopen(from, "rb");
+    if (!in) return 1;
+    FILE *out = fopen(to, "wb");
+    if (!out) {
+        fclose(in);
+        return 1;
+    }
+    static char buffer[64 * 1024];
+    size_t count;
+    int failed = 0;
+    while ((count = fread(buffer, 1, sizeof(buffer), in)) > 0) {
+        if (fwrite(buffer, 1, count, out) != count) {
+            failed = 1;
+            break;
+        }
+    }
+    if (ferror(in)) failed = 1;
+    fclose(in);
+    if (fclose(out) != 0) failed = 1;
+    return failed;
+}
+
+static void slot_path(char *out, size_t size, const char *dir, const char *name) {
+    snprintf(out, size, "%s/%s", dir, name);
+}
+
+int kairo98_machine_save_state(const char *dir) {
+    char path[MAX_PATH * 2];
+    char copy[MAX_PATH * 2];
+    FILE *list;
+    int drive;
+    if (!dir || !*dir) return 1;
+    if (flush_disk() != 0) return 2;
+    slot_path(path, sizeof(path), dir, "disks.txt");
+    list = fopen(path, "w");
+    if (!list) return 3;
+    {
+        const OEMCHAR *hdd = sxsi_getfilename(0);
+        if (hdd && *hdd) {
+            slot_path(copy, sizeof(copy), dir, "hdd0.img");
+            if (copy_file(hdd, copy) != 0) {
+                fclose(list);
+                return 4;
+            }
+            fprintf(list, "hdd0.img\t%s\n", hdd);
+        }
+    }
+    for (drive = 0; drive < 2; drive++) {
+        UINT type;
+        int readonly;
+        const OEMCHAR *image = fdd_getfileex((REG8)drive, &type, &readonly);
+        if (!image || !*image) continue;
+        snprintf(copy, sizeof(copy), "%s/fdd%d.img", dir, drive);
+        if (copy_file(image, copy) != 0) {
+            fclose(list);
+            return 4;
+        }
+        fprintf(list, "fdd%d.img\t%s\n", drive, image);
+    }
+    if (fclose(list) != 0) return 3;
+    slot_path(path, sizeof(path), dir, "state.np2");
+    return statsave_save(path) == STATFLAG_SUCCESS ? 0 : 5;
+}
+
+int kairo98_machine_load_state(const char *dir) {
+    char path[MAX_PATH * 2];
+    char line[MAX_PATH * 2 + 32];
+    char copy[MAX_PATH * 2];
+    OEMCHAR message[256];
+    FILE *list;
+    int drive;
+    int result;
+    if (!dir || !*dir) return 1;
+    slot_path(path, sizeof(path), dir, "state.np2");
+    /* Reject a missing or incompatible state before touching the running machine.
+     * A disk change is expected: the images are restored below. */
+    result = statsave_check(path, message, NELEMENTS(message));
+    if (result == STATFLAG_FAILURE || (result & STATFLAG_VERSION)) return 2;
+    slot_path(path, sizeof(path), dir, "disks.txt");
+    list = fopen(path, "r");
+    if (!list) return 3;
+    keystat_allrelease();
+    flush_disk();
+    sxsi_alltrash();
+    for (drive = 0; drive < 2; drive++) diskdrv_setfddex((REG8)drive, NULL, FTYPE_NONE, 0);
+    result = 0;
+    while (fgets(line, sizeof(line), list)) {
+        char *tab = strchr(line, '\t');
+        char *end;
+        if (!tab) continue;
+        *tab = '\0';
+        end = tab + 1 + strcspn(tab + 1, "\r\n");
+        *end = '\0';
+        slot_path(copy, sizeof(copy), dir, line);
+        if (copy_file(copy, tab + 1) != 0) result = 4;
+    }
+    fclose(list);
+    if (result != 0) return result;
+    slot_path(path, sizeof(path), dir, "state.np2");
+    result = statsave_load(path);
+    if (result == STATFLAG_FAILURE) return 5;
+    kairo_ymfm_reload_all_ram();
+    mousemng_reset();
+    return 0;
 }

@@ -50,6 +50,8 @@ extern "C" void kairo98_machine_key(unsigned char code, int down);
 extern "C" void kairo98_mouse_move(int dx, int dy);
 extern "C" void kairo98_mouse_button(int button, int down);
 extern "C" void kairo98_mouse_warp(int x, int y, unsigned generation);
+extern "C" int kairo98_machine_save_state(const char *dir);
+extern "C" int kairo98_machine_load_state(const char *dir);
 extern "C" unsigned kairo98_mouse_warp_completed(void);
 extern "C" void kairo98_joy_set(int control, int down);
 extern "C" void kairo98_joy_release_all(void);
@@ -70,7 +72,7 @@ extern "C" int __llvm_profile_write_file(void);
 #endif
 
 namespace {
-enum class CommandType { Pause, Resume, Reset, Stop, Key, Disk, Floppy, Clock, MouseMove, MouseWarp, MouseButton, Joystick };
+enum class CommandType { Pause, Resume, Reset, Stop, Key, Disk, Floppy, Clock, MouseMove, MouseWarp, MouseButton, Joystick, SaveState, LoadState };
 struct Command {
     CommandType type;
     int key = 0;
@@ -431,6 +433,22 @@ void run_machine(std::string image, std::string font_path, std::string bios_dir,
                 case CommandType::Joystick:
                     kairo98_joy_set(command.key, command.down);
                     break;
+                case CommandType::SaveState: {
+                    int result = kairo98_machine_save_state(command.path.c_str());
+                    if (command.completion) command.completion->set_value(result);
+                    break;
+                }
+                case CommandType::LoadState: {
+                    kairo98_input_telemetry_reset();
+                    kairo98_joy_release_all();
+                    prompt_frames = 0;
+                    dos_prompt_ready.store(false);
+                    clear_screen_hash();
+                    int result = kairo98_machine_load_state(command.path.c_str());
+                    next_frame = std::chrono::steady_clock::now();
+                    if (command.completion) command.completion->set_value(result);
+                    break;
+                }
             }
         }
         if (stop || paused) continue;
@@ -736,6 +754,37 @@ Java_com_mrjackspade_kairo98_MainActivity_nativeMouseWarp(JNIEnv *, jobject, jin
 extern "C" JNIEXPORT jboolean JNICALL
 Java_com_mrjackspade_kairo98_MainActivity_nativeMouseWarpDone(JNIEnv *, jobject) {
     return kairo98_mouse_warp_completed() == mouse_warp_requested.load() ? JNI_TRUE : JNI_FALSE;
+}
+
+namespace {
+// Runs a state command on the emulation thread between frames and waits for its result.
+jint run_state_command(JNIEnv *env, CommandType type, jstring dir) {
+    if (!dir) return 1;
+    const char *chars = env->GetStringUTFChars(dir, nullptr);
+    if (!chars) return 1;
+    std::string path(chars);
+    env->ReleaseStringUTFChars(dir, chars);
+    auto completion = std::make_shared<std::promise<int>>();
+    auto response = completion->get_future();
+    {
+        std::lock_guard<std::mutex> guard(command_mutex);
+        if (!active) return 1;
+        commands.push_back({type, 0, false, std::move(path), 0, completion});
+        command_ready.notify_one();
+    }
+    if (response.wait_for(std::chrono::seconds(60)) != std::future_status::ready) return 6;
+    return response.get();
+}
+} // namespace
+
+extern "C" JNIEXPORT jint JNICALL
+Java_com_mrjackspade_kairo98_MainActivity_nativeSaveState(JNIEnv *env, jobject, jstring dir) {
+    return run_state_command(env, CommandType::SaveState, dir);
+}
+
+extern "C" JNIEXPORT jint JNICALL
+Java_com_mrjackspade_kairo98_MainActivity_nativeLoadState(JNIEnv *env, jobject, jstring dir) {
+    return run_state_command(env, CommandType::LoadState, dir);
 }
 
 extern "C" JNIEXPORT void JNICALL
