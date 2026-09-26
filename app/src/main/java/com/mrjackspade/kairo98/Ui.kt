@@ -72,7 +72,7 @@ object Ui {
      * with a bar in [accent] on its leading edge, so the current row reads from across the room.
      */
     fun rowBackground(context: Context, rest: Int = Color.TRANSPARENT, accent: Int = ACCENT,
-                      activeFill: Int = SELECTED): Drawable {
+                      activeFill: Int = SELECTED, activatedOnly: Boolean = false): Drawable {
         fun active(): Drawable = LayerDrawable(arrayOf(
             rounded(context, activeFill),
             rounded(context, accent, 2))).apply {
@@ -81,8 +81,11 @@ object Ui {
             setLayerGravity(1, Gravity.START or Gravity.FILL_VERTICAL)
         }
         return StateListDrawable().apply {
-            addState(intArrayOf(android.R.attr.state_focused), active())
-            addState(intArrayOf(android.R.attr.state_selected), active())
+            // List rows follow only the app's own selection, never a list's touch or focus state.
+            if (!activatedOnly) {
+                addState(intArrayOf(android.R.attr.state_focused), active())
+                addState(intArrayOf(android.R.attr.state_selected), active())
+            }
             addState(intArrayOf(android.R.attr.state_activated), active())
             addState(intArrayOf(android.R.attr.state_pressed), active())
             addState(intArrayOf(), if (rest == Color.TRANSPARENT) ColorDrawable(rest) else rounded(context, rest))

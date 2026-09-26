@@ -186,8 +186,8 @@ class LibraryScreen(
         holder.mark.visibility = if (bitmap == null) View.VISIBLE else View.GONE
         holder.art.setImageBitmap(bitmap)
         holder.mark.text = game.title.firstOrNull()?.uppercase() ?: "?"
-        view.background = if (pinned) Ui.rowBackground(context, Ui.PIN_SURFACE, Ui.PIN, Ui.PIN_SELECTED)
-            else Ui.rowBackground(context)
+        view.background = if (pinned) Ui.rowBackground(context, Ui.PIN_SURFACE, Ui.PIN, Ui.PIN_SELECTED, activatedOnly = true)
+            else Ui.rowBackground(context, activatedOnly = true)
         view.isActivated = index == selectedIndex
         view.alpha = if (entry.playable) 1f else 0.6f
         return view
@@ -267,6 +267,9 @@ class LibraryScreen(
             divider = ColorDrawable(Color.TRANSPARENT)
             dividerHeight = dp(4)
             selector = ColorDrawable(Color.TRANSPARENT)
+            // The library moves its own selection; the list must not keep a second one.
+            isFocusable = false
+            itemsCanFocus = false
             setPadding(0, dp(4), 0, dp(12))
             clipToPadding = false
             overScrollMode = View.OVER_SCROLL_NEVER
