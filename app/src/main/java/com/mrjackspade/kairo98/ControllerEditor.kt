@@ -460,7 +460,7 @@ class ControllerEditor(
             stage = Stage.MOUSE
             render()
         }
-        row("Emulator action", "Menu, pause, restart, or exit", true) {
+        row("Emulator action", "Menu, pause, fast forward, restart, or exit", true) {
             stage = Stage.ACTIONS
             render()
         }
@@ -540,7 +540,7 @@ class ControllerEditor(
 
     private fun renderActions() {
         val actions = listOf("menu" to "Open menu", "pause" to "Pause or resume",
-            "restart" to "Restart", "exit" to "Exit")
+            "fastForward" to "Fast forward while held", "restart" to "Restart", "exit" to "Exit")
         for ((id, label) in actions) row(label, "Emulator action", true) {
             change { put(ControllerBinding(selectedInput, action = id)) }
         }
@@ -662,6 +662,7 @@ class ControllerEditor(
             "button2" -> "Button 2"
             else -> binding.joystick.replaceFirstChar(Char::uppercase)
         }
+        binding.action == "fastForward" -> "Fast forward"
         binding.action != null -> binding.action.replaceFirstChar(Char::uppercase)
         else -> binding.keys.joinToString(" + ") { Pc98KeyNames.label(it) }
     }

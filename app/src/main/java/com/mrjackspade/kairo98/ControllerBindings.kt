@@ -11,7 +11,7 @@ data class ControllerBinding(val input: String, val keys: List<Int> = emptyList(
 object ControllerBindings {
     // Physical inputs remain valid while old user profiles are being migrated.
     private val INPUT = Regex("(?:virtual:[a-z0-9]+|button:[0-9]{1,4}|(?:axis|hat):[0-9]{1,3}:[+-])")
-    private val ACTIONS = setOf("menu", "pause", "restart", "exit")
+    private val ACTIONS = setOf("menu", "pause", "restart", "exit", "fastForward")
     val JOYSTICK = listOf("up", "down", "left", "right", "button1", "button2")
 
     fun valid(array: JSONArray): Boolean {

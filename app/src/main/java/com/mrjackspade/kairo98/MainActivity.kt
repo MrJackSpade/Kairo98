@@ -82,11 +82,13 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
     private external fun nativeScreenHashSnapshot(): LongArray
     private external fun nativeSetSurface(surface: Surface?, width: Int, height: Int)
     private external fun nativeSetMuted(muted: Boolean)
+    private external fun nativeSetFastForward(enabled: Boolean)
 
     private val inputRouter = InputRouter(::nativeKey)
     private val joystickRouter = JoystickInputRouter(::nativeJoystick)
     private val mouseRouter = MouseInputRouter(::nativeMouseMove, ::nativeMouseButton)
-    private val gamepadMapper = GamepadMapper(inputRouter, joystickRouter, mouseRouter, ::controllerAction)
+    private val gamepadMapper = GamepadMapper(inputRouter, joystickRouter, mouseRouter,
+        ::controllerAction, ::controllerActionReleased)
     private lateinit var inputManager: InputManager
     private val inputDeviceListener = object : InputManager.InputDeviceListener {
         override fun onInputDeviceAdded(deviceId: Int) = Unit
@@ -2109,7 +2111,12 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
             }
             "restart" -> confirmRestart()
             "exit" -> confirmExit()
+            "fastForward" -> nativeSetFastForward(true)
         }
+    }
+
+    private fun controllerActionReleased(action: String) {
+        if (action == "fastForward") nativeSetFastForward(false)
     }
 
     private fun showControllerScope() {

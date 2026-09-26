@@ -10,7 +10,8 @@ import android.os.Looper
 class GamepadMapper(private val router: InputRouter,
                     private val joystick: JoystickInputRouter,
                     private val mouse: MouseInputRouter,
-                    private val runAction: (String) -> Unit) {
+                    private val runAction: (String) -> Unit,
+                    private val releaseAction: (String) -> Unit) {
     var physicalBindings: List<PhysicalControllerBinding> = PhysicalControllerBindings.defaults()
         set(value) {
             releaseAll()
@@ -27,6 +28,7 @@ class GamepadMapper(private val router: InputRouter,
         set(value) { field = value.coerceIn(0.10f, 0.90f) }
 
     private val active = HashSet<String>()
+    private val heldActions = HashMap<String, String>()
     private var motionInputs = emptyList<String>()
     private val handler = Handler(Looper.getMainLooper())
     private var lastMouseTick = 0L
@@ -61,6 +63,7 @@ class GamepadMapper(private val router: InputRouter,
     }
 
     fun releaseOnScreen() {
+        releaseActions("onscreen:")
         active.removeAll { it.startsWith("onscreen:") }
         router.releasePrefix("onscreen:")
         joystick.releasePrefix("onscreen:")
@@ -115,6 +118,7 @@ class GamepadMapper(private val router: InputRouter,
 
     fun releaseDevice(deviceId: Int) {
         val prefix = "gamepad:$deviceId:"
+        releaseActions(prefix)
         active.removeAll { it.startsWith(prefix) }
         router.releasePrefix(prefix)
         joystick.releasePrefix(prefix)
@@ -124,6 +128,7 @@ class GamepadMapper(private val router: InputRouter,
 
     fun releaseAll() {
         releaseOnScreen()
+        releaseActions("gamepad:")
         active.clear()
         router.releasePrefix("gamepad:")
         joystick.releasePrefix("gamepad:")
@@ -151,17 +156,31 @@ class GamepadMapper(private val router: InputRouter,
                 startMouseTick()
             }
             binding.joystick != null -> joystick.hold(owner, binding.joystick)
-            binding.action != null -> runAction(binding.action)
+            binding.action != null -> {
+                heldActions[owner] = binding.action
+                runAction(binding.action)
+            }
             else -> router.hold(owner, binding.keys)
         }
     }
 
     private fun deactivate(owner: String) {
         active.remove(owner)
+        heldActions.remove(owner)?.let(::endAction)
         router.release(owner)
         joystick.release(owner)
         mouse.release(owner)
         stopMouseTickIfIdle()
+    }
+
+    /** Reports an action's release once no other input still holds it. */
+    private fun endAction(action: String) {
+        if (action !in heldActions.values) releaseAction(action)
+    }
+
+    private fun releaseActions(prefix: String) {
+        val owners = heldActions.keys.filter { it.startsWith(prefix) }
+        owners.mapNotNull(heldActions::remove).distinct().forEach(::endAction)
     }
 
     private fun startMouseTick() {

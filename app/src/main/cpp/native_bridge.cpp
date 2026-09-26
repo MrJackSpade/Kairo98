@@ -99,6 +99,9 @@ std::string audio_state = "off";
 std::string audio_config;
 std::string audio_profile;
 std::atomic<bool> audio_muted{false};
+// While set, frames run back to back instead of on the 60 Hz grid, and audio
+// is written only as far as the output buffer has room.
+std::atomic<bool> fast_forward{false};
 std::atomic<bool> dos_prompt_ready{false};
 std::atomic<unsigned> mouse_warp_requested{0};
 // A passive host-side observation of the complete 640x400 RGB565 guest image.
@@ -509,7 +512,8 @@ void run_machine(std::string image, std::string font_path, std::string bios_dir,
             profile_mix_us += std::chrono::duration_cast<std::chrono::microseconds>(mix_end - mix_start).count();
             if (audio_muted.load()) std::memset(audio_samples, 0, sizeof(audio_samples));
             if (audio) {
-                aaudio_result_t written = AAudioStream_write(audio, audio_samples, 512, 2000000);
+                aaudio_result_t written = AAudioStream_write(audio, audio_samples, 512,
+                    fast_forward.load(std::memory_order_relaxed) ? 0 : 2000000);
                 if (written != 512) ++profile_partial_writes;
                 profile_buffered_frames = static_cast<int32_t>(
                     AAudioStream_getFramesWritten(audio) - AAudioStream_getFramesRead(audio));
@@ -626,7 +630,9 @@ void run_machine(std::string image, std::string font_path, std::string bios_dir,
         // overrun) is the grid re-anchored to the present.
         next_frame += std::chrono::microseconds(16667);
         auto now = std::chrono::steady_clock::now();
-        if (next_frame < now) {
+        if (fast_forward.load(std::memory_order_relaxed)) {
+            next_frame = now;
+        } else if (next_frame < now) {
             ++profile_late_frames;
             profile_max_late_us = std::max(profile_max_late_us, static_cast<int64_t>(
                 std::chrono::duration_cast<std::chrono::microseconds>(now - next_frame).count()));
@@ -703,6 +709,7 @@ Java_com_mrjackspade_kairo98_MainActivity_nativeStart(JNIEnv *env, jobject, jstr
         machine_state = "Starting";
         active = true;
     }
+    fast_forward.store(false);
     worker = std::thread(run_machine, std::move(path), std::move(font), std::move(bios),
                          mhz_times_ten, gdc_mhz_times_ten, cpu_multiple,
                          floppy == JNI_TRUE, std::move(boot_floppy), std::move(second_floppy));
@@ -895,6 +902,11 @@ Java_com_mrjackspade_kairo98_MainActivity_nativeSetSurface(JNIEnv *env, jobject,
 extern "C" JNIEXPORT void JNICALL
 Java_com_mrjackspade_kairo98_MainActivity_nativeSetMuted(JNIEnv *, jobject, jboolean muted) {
     audio_muted.store(muted == JNI_TRUE);
+}
+
+extern "C" JNIEXPORT void JNICALL
+Java_com_mrjackspade_kairo98_MainActivity_nativeSetFastForward(JNIEnv *, jobject, jboolean enabled) {
+    fast_forward.store(enabled == JNI_TRUE);
 }
 
 extern "C" JNIEXPORT jstring JNICALL
