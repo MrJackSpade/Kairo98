@@ -45,6 +45,12 @@ class ControllerEditor(
     private var scope: LibraryEntry? = null
     private var physicalScope = false
     private var stage = Stage.LIST
+    private lateinit var scroll: ScrollView
+    private var renderedStage: Stage? = null
+    /** Where the mapping list was left, so returning from editing a row lands back on it. */
+    private var listKey: Pair<Boolean, String?>? = null
+    private var listScrollY = 0
+    private var listFocusIndex = -1
     private var selectedInput = ""
     private var selectedControl: String? = null
     private val selectedScans = linkedSetOf<Int>()
@@ -60,6 +66,8 @@ class ControllerEditor(
         physicalScope = startPhysical
         stage = Stage.LIST
         selectedControl = null
+        renderedStage = null
+        listKey = null
         page = LinearLayout(activity).apply {
             orientation = LinearLayout.VERTICAL
             setBackgroundColor(Ui.BG)
@@ -85,10 +93,11 @@ class ControllerEditor(
             orientation = LinearLayout.VERTICAL
             setPadding(dp(18), dp(12), dp(18), dp(16))
         }
-        page.addView(ScrollView(activity).apply {
+        scroll = ScrollView(activity).apply {
             isFillViewport = true
             addView(body)
-        }, LinearLayout.LayoutParams(-1, 0, 1f))
+        }
+        page.addView(scroll, LinearLayout.LayoutParams(-1, 0, 1f))
         footer = LinearLayout(activity).apply {
             orientation = LinearLayout.HORIZONTAL
             setPadding(dp(18), dp(4), dp(18), dp(8))
@@ -228,6 +237,10 @@ class ControllerEditor(
     }
 
     private fun render() {
+        if (renderedStage == Stage.LIST) {
+            listScrollY = scroll.scrollY
+            listFocusIndex = (0 until body.childCount).indexOfFirst { body.getChildAt(it).hasFocus() }
+        }
         body.removeAllViews()
         footer.removeAllViews()
         heading.text = when (stage) {
@@ -258,6 +271,19 @@ class ControllerEditor(
             Stage.DEAD_ZONE -> renderDeadZone()
             Stage.RESET -> renderReset()
         }
+        renderedStage = stage
+        // Back on the same mapping list: return to the row that was being edited.
+        // Anything else is a new page and starts at the top.
+        val key = physicalScope to scope?.id
+        if (stage == Stage.LIST && key == listKey) {
+            val y = listScrollY
+            val focus = listFocusIndex
+            scroll.post {
+                scroll.scrollTo(0, y)
+                if (focus >= 0) body.getChildAt(focus)?.requestFocus()
+            }
+        } else scroll.post { scroll.scrollTo(0, 0) }
+        if (stage == Stage.LIST) listKey = key
     }
 
     private fun renderList() {
