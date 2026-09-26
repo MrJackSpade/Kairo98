@@ -641,7 +641,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
         val media = entry.zipEntry ?: entry.path
         val tags = listOf(if (DiskFormat.isFloppy(media)) "Floppy disk" else "Hard disk") +
             ((variantLabel(entry.path) ?: entry.zipEntry?.let(::variantLabel))?.split("  ·  ") ?: emptyList())
-        val info = SecondaryKeyboardDisplay.LibraryInfo(game.title, tags,
+        val info = SecondaryKeyboardDisplay.LibraryInfo(game.title, listOf(fileLabel(entry)) + tags,
             game.description ?: "No description available yet.", null)
         secondaryKeyboard.setLibraryInfo(info)
         val art = game.boxArt ?: game.preview ?: return
