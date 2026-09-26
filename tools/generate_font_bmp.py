@@ -3,12 +3,14 @@
 The output uses the 2048x2048 monochrome layout that 21/W's FONT.BMP loader
 reads (font/fontpc98.c), assembled the way 21/W's font/fontmake.c builds one:
 
-- ANK 0x20-0x7E: Spleen 8x16 (BSD-2-Clause), the table the core already uses.
-- ANK 0xA1-0xDF: Shinonome 16 JIS X 0201 half-width katakana (public domain).
-- ANK 0x00-0x1F, 0x80-0x9F, 0xE0-0xFF: 21/W's built-in PC-98 graphic glyphs.
+- ANK 0x20-0x7E and 0xA1-0xDF: Shinonome 16 JIS X 0201 (public domain).
+- ANK 0x00-0x1F, 0x80-0x9F, 0xE0-0xFF: 21/W's built-in PC-98 graphic glyphs,
+  with 0xF1-0xF7 and 0xFC derived from Shinonome as fontmake.c does.
 - JIS X 0208 kanji and symbols: Shinonome 16 (public domain), with the PC-98
   JIS 78 code swaps and unassigned-code filter from fontmake.c.
-- Half-width rows 0x29-0x2B and NEC row 0x2C: 21/W's built-in glyphs.
+- Half-width rows 0x29-0x2A: the ANK glyphs, converted as fontmake.c does.
+- Half-width row 0x2B and NEC row 0x2C: 21/W's built-in glyphs, with the
+  0x2B74-0x2B7E brackets derived from Shinonome as fontmake.c does.
 
 Glyph ink is a 0 bit (palette black); the loader inverts it into font ROM.
 """
@@ -112,57 +114,133 @@ def is_pc98_jis(jis):
     return row not in (0x2e, 0x2f, 0x74, 0x75, 0x76, 0x77, 0x78, 0x7d, 0x7e, 0x7f)
 
 
-spleen = {}
-for index, match in enumerate(re.findall(
-        r"\{((?:0x[0-9a-f]{2}, ){15}0x[0-9a-f]{2})\}",
-        (root / "third_party/spleen/spleen_ascii_8x16.h").read_text(encoding="ascii"))):
-    spleen[0x20 + index] = [int(value, 16) for value in match.split(", ")]
-if sorted(spleen) != list(range(0x20, 0x7f)):
-    raise ValueError("Spleen table does not cover printable ASCII")
-
-kana = read_bdf(root / "third_party/shinonome/shnm8x16r.bdf")
+ank_font = read_bdf(root / "third_party/shinonome/shnm8x16r.bdf")
 kanji = read_bdf(root / "third_party/shinonome/shnmk16.bdf")
 fontdata_16 = read_res("fontdata_16")
-fontdata_29 = read_res("fontdata_29")
-fontdata_2a = read_res("fontdata_2a")
 fontdata_2b = read_res("fontdata_2b")
 fontdata_2c = read_res("fontdata_2c")
 for name, data, size in (("fontdata_16", fontdata_16, 3 * 32 * 16),
-                         ("fontdata_29", fontdata_29, 94 * 16),
-                         ("fontdata_2a", fontdata_2a, 94 * 16),
                          ("fontdata_2b", fontdata_2b, 94 * 16),
                          ("fontdata_2c", fontdata_2c, 76 * 16 * 2)):
     if len(data) != size:
         raise ValueError(f"{name}: expected {size} bytes, found {len(data)}")
 
-for code in range(0x20, 0x7f):
-    put_ank(code, spleen[code])
-for code in range(0xa1, 0xe0):
-    put_ank(code, kana[code])
+# Glyphs are 16 row bytes with 1 bits for ink, MSB leftmost. 16-dot glyphs
+# are 16 row words.
+ank = {code: list(ank_font[code]) for code in list(range(0x20, 0x7f)) + list(range(0xa1, 0xe0))}
 for block, base in enumerate((0x00, 0x80, 0xe0)):
     for index in range(32):
         start = (block * 32 + index) * 16
-        put_ank(base + index, fontdata_16[start:start + 16])
+        ank[base + index] = list(fontdata_16[start:start + 16])
 
-kanji_count = 0
+wide = {}
 for row in range(0x21, 0x80):
     for cell in range(0x21, 0x7f):
         jis = (row << 8) | cell
-        if not is_pc98_jis(jis):
-            continue
-        rows = kanji.get(swap.get(jis, jis))
-        if rows is None:
-            continue
-        put_kanji(row, cell, [bits >> 8 for bits in rows], [bits & 0xff for bits in rows])
-        kanji_count += 1
-
-for row, data in ((0x29, fontdata_29), (0x2a, fontdata_2a), (0x2b, fontdata_2b)):
-    for index in range(94):
-        put_kanji(row, 0x21 + index, data[index * 16:index * 16 + 16])
-# fontmake.c patchextfnt: each row pair is (left half, right half), cells 0x24-0x6F.
+        if is_pc98_jis(jis) and swap.get(jis, jis) in kanji:
+            wide[jis] = list(kanji[swap.get(jis, jis)])
+kanji_count = len(wide)
+half = {}  # 8-dot glyphs in JIS rows 0x29-0x2B
+for index in range(94):
+    half[0x2b21 + index] = list(fontdata_2b[index * 16:index * 16 + 16])
 for index in range(76):
     pairs = fontdata_2c[index * 32:index * 32 + 32]
-    put_kanji(0x2c, 0x24 + index, pairs[0::2], pairs[1::2])
+    wide[0x2c24 + index] = [(left << 8) | right for left, right in zip(pairs[0::2], pairs[1::2])]
+
+
+# fontmake.c copyglyph conversions from 16 to 8 dots and between 8-dot glyphs.
+def squeeze(rows):
+    """Merge each pair of columns, keeping ink from either."""
+    out = []
+    for bits in rows:
+        value = 0
+        for x in range(8):
+            if bits & (0xc000 >> (x * 2)):
+                value |= 0x80 >> x
+        out.append(value)
+    return out
+
+
+def adjust(rows, right):
+    """Take the 8 columns around the ink of a 16-dot bracket."""
+    used = 0
+    for bits in rows:
+        used |= bits
+    begin = next((x for x in range(16) if used & (0x8000 >> x)), 16)
+    end = next((x for x in range(16, begin, -1) if used & (0x10000 >> x)), begin)
+    if right:
+        begin = max(0, begin - (8 - (end - begin)))
+    elif end - begin < 8 and begin > 0:
+        begin -= 1
+    return [((bits << begin) >> 8) & 0xff for bits in rows]
+
+
+def mirror(rows):
+    out = [int(f"{bits:08b}"[::-1], 2) for bits in rows]
+    used = 0
+    for bits in out:
+        used |= bits
+    return [bits >> 1 for bits in out] if not used & 0x01 else out
+
+
+def narrow(rows):
+    """Close a 7-dot glyph to 6 dots when it has no empty right column."""
+    used = differs = 0
+    for bits in rows:
+        used |= bits
+        differs |= (bits ^ (bits << 1)) & 0xff
+    if not used & 0x01:
+        return rows
+    if not used & 0xc0:
+        return [(bits << 1) & 0xff for bits in rows]
+    if not differs & 0x08:
+        return [(bits & 0xf0) | ((bits & 0x07) << 1) for bits in rows]
+    if not differs & 0x10:
+        return [(bits & 0xe0) | ((bits & 0x0f) << 1) for bits in rows]
+    return rows
+
+
+def voiced(rows):
+    out = list(rows)
+    for y in (0, 1):
+        out[y] = (out[y] & ~0x07) | 0x05
+    return out
+
+
+def semivoiced(rows):
+    out = list(rows)
+    for y, mark in ((0, 0x02), (1, 0x05), (2, 0x05), (3, 0x02)):
+        out[y] = (out[y] & ~0x07) | mark
+    return out
+
+
+for code, jis in zip(range(0xf1, 0xf8), (0x315f, 0x472f, 0x376e, 0x467c, 0x3b7e, 0x4a2c, 0x4943)):
+    ank[code] = squeeze(wide[jis])  # 円年月日時分秒
+for index in range(0x5e):
+    glyph = ank[0x21 + index]
+    half[0x2921 + index] = narrow(glyph) if 0x20 <= index < 0x39 or 0x40 <= index < 0x59 else glyph
+for index in range(0x3f):
+    half[0x2a21 + index] = ank[0xa1 + index]
+for index, jis in enumerate((0x2570, 0x2571, 0x256e, 0x2575, 0x2576)):
+    half[0x2a60 + index] = squeeze(wide[jis])  # ヰヱヮヵヶ
+half[0x2a65] = voiced(ank[0xb3])
+for index in range(15):
+    half[0x2a66 + index] = voiced(ank[0xb6 + index])
+for index in range(5):
+    half[0x2a75 + index * 2] = voiced(ank[0xca + index])
+    half[0x2a75 + index * 2 + 1] = semivoiced(ank[0xca + index])
+for dst, jis in zip(range(0x2b74, 0x2b7e), (0x214c, 0x214d, 0x2152, 0x2153, 0x2154, 0x2155,
+                                           0x2158, 0x2159, 0x215a, 0x215b)):
+    half[dst] = adjust(wide[jis], dst % 2 == 0)  # 〔〕〈〉《》『』【】
+half[0x2b7e] = ank[ord("-")]
+ank[0xfc] = mirror(ank[ord("/")])  # backslash
+
+for code, rows in ank.items():
+    put_ank(code, rows)
+for jis, rows in wide.items():
+    put_kanji(jis >> 8, jis & 0xff, [bits >> 8 for bits in rows], [bits & 0xff for bits in rows])
+for jis, rows in half.items():
+    put_kanji(jis >> 8, jis & 0xff, rows)
 
 palette = bytes([0x00, 0x00, 0x00, 0x00, 0xff, 0xff, 0xff, 0x00])
 image = b"".join(bytes(pixels[y * STRIDE:(y + 1) * STRIDE]) for y in reversed(range(HEIGHT)))
