@@ -172,3 +172,8 @@ The timeout case needs the sampled hash and sampling progress captured during
 failure and compared with the catalog's expected hashes; a visible prompt alone
 does not establish what the matcher sampled. Neither startup issue is claimed
 fixed by these core performance corrections.
+
+The subsequent [startup reliability investigation](startup-reliability.md)
+captured the cancellation path and reproduced a separate stale-frame sampling
+race with controlled thread scheduling, including an exact comparison of the
+visible menu and sampled pixels.

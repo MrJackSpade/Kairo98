@@ -36,7 +36,7 @@ class InputRouter(private val send: (Int, Boolean) -> Unit) {
         owners.keys.filter { it.startsWith(prefix) }.toList().forEach(::release)
     }
 
-    @Synchronized fun releaseAll() {
-        owners.keys.toList().forEach(::release)
+    @Synchronized fun releaseAll(except: Set<String> = emptySet()) {
+        owners.keys.filter { it !in except }.toList().forEach(::release)
     }
 }

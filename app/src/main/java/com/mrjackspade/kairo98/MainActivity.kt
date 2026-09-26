@@ -2084,11 +2084,14 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
         else globalControllerBindings()
     }
 
-    private fun releaseInputs() {
-        debugAutoAdvance?.cancel()
-        debugAutoAdvance = null
+    private fun releaseInputs(preserveAutomation: Boolean = false) {
+        if (!preserveAutomation) {
+            debugAutoAdvance?.cancel()
+            debugAutoAdvance = null
+        }
         gamepadMapper.releaseAll()
-        inputRouter.releaseAll()
+        inputRouter.releaseAll(if (preserveAutomation)
+            setOf("guest-command", "disk-swap", "debug-auto-space") else emptySet())
         pendingMouseHold?.let(handler::removeCallbacks)
         pendingMouseHold = null
         pendingMouseRelease?.let(handler::removeCallbacks)
@@ -2456,8 +2459,9 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
         super.onWindowFocusChanged(hasFocus)
         if (relocating) return
         if (!hasFocus) {
-            commandCancelled.set(true)
-            releaseInputs()
+            // Automated keys go directly to the core and do not require focus.
+            // Release manual input without aborting or shortening those keys.
+            releaseInputs(preserveAutomation = true)
         }
     }
 
