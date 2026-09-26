@@ -5,6 +5,9 @@
 
 #include "compiler.h"
 #include "adpcm.h"
+#if defined(SUPPORT_YMFM)
+#include "ymfm_bridge.h"
+#endif
 
 #define	ADPCM_NBR	0x80000000
 
@@ -97,6 +100,9 @@ void SOUNDCALL adpcm_datawrite(ADPCM ad, REG8 data) {
 	pos = ad->pos & 0x1fffff;
 	if (!(ad->reg.ctrl2 & 2)) {
 		ad->buf[pos >> 3] = data;
+#if defined(SUPPORT_YMFM)
+		kairo_ymfm_ram_changed(ad->buf, pos >> 3, ad->buf[pos >> 3]);
+#endif
 		pos += 8;
 	}
 	else {
@@ -138,6 +144,15 @@ void SOUNDCALL adpcm_datawrite(ADPCM ad, REG8 data) {
 		if (data & 0x80) {
 			ptr[0x38000] |= bit;
 		}
+#if defined(SUPPORT_YMFM)
+		{
+			UINT32 base = (pos >> 3) & 0x7fff;
+			UINT plane;
+			for (plane = 0; plane < 8; plane++) {
+				kairo_ymfm_ram_changed(ad->buf, base + plane * 0x8000, ptr[plane * 0x8000]);
+			}
+		}
+#endif
 		pos++;
 	}
 	if (pos == ad->stop) {

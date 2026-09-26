@@ -35,6 +35,8 @@ extern "C" void kairo98_machine_exec(void);
 extern "C" void kairo98_machine_counters(unsigned long long *slices, unsigned long long *insts,
                                          unsigned long long *sti, unsigned long long *skips);
 extern "C" unsigned long long kairo98_machine_draw_count(void);
+extern "C" void kairo_ymfm_stats(unsigned long long *segments, unsigned long long *drain_waits,
+                                 unsigned long long *verify_mismatches);
 extern "C" void kairo98_machine_egc_stats(unsigned long long *writes, unsigned long long *reads,
                                           unsigned long long *fast_reads,
                                           unsigned long long *mismatch);
@@ -284,10 +286,19 @@ void run_machine(std::string image, std::string font_path, std::string bios_dir,
         AAudioStreamBuilder_setSampleRate(builder, 44100);
         AAudioStreamBuilder_setChannelCount(builder, 2);
         AAudioStreamBuilder_setFormat(builder, AAUDIO_FORMAT_PCM_I16);
+        AAudioStreamBuilder_setPerformanceMode(builder, AAUDIO_PERFORMANCE_MODE_LOW_LATENCY);
         if (AAudioStreamBuilder_openStream(builder, &audio) != AAUDIO_OK ||
             AAudioStream_requestStart(audio) != AAUDIO_OK) {
             if (audio) AAudioStream_close(audio);
             audio = nullptr;
+        }
+        if (audio) {
+            // Keep about three emulated frames (50 ms) of audio queued: enough
+            // to ride out a game-logic frame that overruns its slot, without
+            // the default 80 ms of output latency.
+            const int32_t burst = AAudioStream_getFramesPerBurst(audio);
+            const int32_t wanted = std::max<int32_t>(3 * 735, 2 * std::max<int32_t>(burst, 1));
+            AAudioStream_setBufferSizeInFrames(audio, wanted);
         }
     }
     if (builder) AAudioStreamBuilder_delete(builder);
@@ -332,6 +343,7 @@ void run_machine(std::string image, std::string font_path, std::string bios_dir,
     unsigned long long profile_previous_draw_ns = 0, profile_previous_fm_ns = 0;
     unsigned long long profile_previous_egc_writes = 0, profile_previous_egc_reads = 0;
     unsigned long long profile_previous_egc_fast = 0;
+    unsigned long long profile_previous_synth_waits = 0;
     while (!stop) {
         std::deque<Command> pending;
         {
@@ -512,6 +524,8 @@ void run_machine(std::string image, std::string font_path, std::string bios_dir,
             kairo98_machine_stage_times(&cpu_ns, &event_ns, &draw_ns, &fm_ns);
             unsigned long long egc_writes = 0, egc_reads = 0, egc_fast = 0, egc_bad = 0;
             kairo98_machine_egc_stats(&egc_writes, &egc_reads, &egc_fast, &egc_bad);
+            unsigned long long synth_segments = 0, synth_waits = 0, synth_bad = 0;
+            kairo_ymfm_stats(&synth_segments, &synth_waits, &synth_bad);
             unsigned int egc_snap[10] = {0};
             unsigned long long egc_dec = 0, egc_cpu = 0;
             kairo98_machine_egc_snapshot(egc_snap, &egc_dec, &egc_cpu);
@@ -525,7 +539,7 @@ void run_machine(std::string image, std::string font_path, std::string bios_dir,
             std::snprintf(result, sizeof(result),
                 "c%.1f r%.1f m%.1f w%.1f x+%d p%d q%d maxC%.1f maxR%.1f late%d/%.1f "
                 "sl%.0f in%.0f sti%.0f sk%.0f big%u drop%u cpu%.1f ev%.1f dr%.1f fm%.1f "
-                "ew%.0f er%.0f ef%.0f egcbad%llu hv%u/%.1f",
+                "ew%.0f er%.0f ef%.0f egcbad%llu hv%u/%.1f sw%llu synbad%llu",
                 profile_core_us / 600000.0, profile_render_us / 600000.0,
                 profile_mix_us / 600000.0, profile_write_us / 600000.0,
                 audio_xruns - profile_previous_xruns, profile_partial_writes,
@@ -545,7 +559,9 @@ void run_machine(std::string image, std::string font_path, std::string bios_dir,
                 (egc_reads - profile_previous_egc_reads) / 600.0,
                 (egc_fast - profile_previous_egc_fast) / 600.0, egc_bad,
                 profile_heavy_frames,
-                profile_heavy_frames ? profile_heavy_us / (profile_heavy_frames * 1000.0) : 0.0);
+                profile_heavy_frames ? profile_heavy_us / (profile_heavy_frames * 1000.0) : 0.0,
+                synth_waits - profile_previous_synth_waits, synth_bad);
+            profile_previous_synth_waits = synth_waits;
             profile_heavy_frames = 0;
             profile_heavy_us = 0;
             profile_previous_egc_writes = egc_writes;
@@ -577,13 +593,20 @@ void run_machine(std::string image, std::string font_path, std::string bios_dir,
             profile_late_frames = 0;
             profile_partial_writes = 0;
         }
+        // Frames are scheduled on a fixed 60 Hz grid. A frame that overruns
+        // its slot leaves next_frame in the past, so the following frames
+        // start immediately and the grid is recovered rather than shifted;
+        // otherwise every overrun would permanently lose its excess time,
+        // the emulator would run below 60 Hz, and the audio buffer would
+        // drain. Only when the backlog exceeds three frames (a stall, not an
+        // overrun) is the grid re-anchored to the present.
         next_frame += std::chrono::microseconds(16667);
         auto now = std::chrono::steady_clock::now();
         if (next_frame < now) {
             ++profile_late_frames;
             profile_max_late_us = std::max(profile_max_late_us, static_cast<int64_t>(
                 std::chrono::duration_cast<std::chrono::microseconds>(now - next_frame).count()));
-            next_frame = now;
+            if (now - next_frame > std::chrono::microseconds(50000)) next_frame = now;
         }
         std::unique_lock<std::mutex> guard(command_mutex);
         command_ready.wait_until(guard, next_frame, [] { return !commands.empty(); });
