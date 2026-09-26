@@ -132,14 +132,6 @@ jobs:
           without_images="$RUNNER_TEMP/Kairo98-$tag-without-images.apk"
           cp app/build/outputs/apk/withImages/release/app-withImages-release.apk "$with_images"
           cp app/build/outputs/apk/withoutImages/release/app-withoutImages-release.apk "$without_images"
-          notes="$RUNNER_TEMP/kairo98-release-notes.md"
-          cat > "$notes" <<EOF
-          Kairo98 $KAIRO98_VERSION_NAME, built from commit $GITHUB_SHA.
-
-          Both attached APKs are signed release builds with the same emulator features. The with-images APK includes embedded catalog artwork; the without-images APK downloads artwork on demand. The Google Play bundle is built from the same revision as the without-images APK. Supply your own legally obtained firmware and games; neither is included.
-
-          Automated build and package checks passed. Device boot testing and the full license audit, including artwork rights, must be completed before these binaries are described as release-ready.
-          EOF
           if gh release view "$tag" >/dev/null 2>&1; then
             gh release upload "$tag" "$with_images" "$without_images" --clobber
           else
@@ -149,5 +141,5 @@ jobs:
             fi
             gh release create "$tag" "$with_images" "$without_images" \
               --verify-tag "${release_flags[@]}" --title "Kairo98 $KAIRO98_VERSION_NAME" \
-              --notes-file "$notes"
+              --generate-notes
           fi
