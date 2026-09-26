@@ -23128,11 +23128,11 @@
       ],
       "description": "",
       "machine": {"cpuMultiple": 1},
-      "controller": {"profile": "dragoon-armor-v1", "bindings": [
-        {"input": "virtual:a", "keys": [98]},
+      "controller": {"profile": "dragoon-armor-v2", "bindings": [
+        {"input": "virtual:a", "keys": [100]},
         {"input": "virtual:b", "keys": [78]},
         {"input": "virtual:x", "keys": [99]},
-        {"input": "virtual:y", "keys": [100]},
+        {"input": "virtual:y", "keys": [98]},
         {"input": "virtual:l1", "keys": [57]},
         {"input": "virtual:r1", "keys": [56]},
         {"input": "virtual:start", "keys": [28]},
