@@ -47511,6 +47511,18 @@
       ],
       "description": "",
       "machine": {"gdcClockTenthsMHz": 25},
+      "controller": {"profile": "variable-geo-v1", "bindings": [
+        {"input": "virtual:a", "keys": [41]},
+        {"input": "virtual:b", "keys": [42]},
+        {"input": "virtual:x", "keys": [41]},
+        {"input": "virtual:y", "keys": [42]},
+        {"input": "virtual:start", "keys": [28]},
+        {"input": "virtual:select", "keys": [0]},
+        {"input": "virtual:up", "keys": [20]},
+        {"input": "virtual:down", "keys": [45]},
+        {"input": "virtual:left", "keys": [32]},
+        {"input": "virtual:right", "keys": [34]}
+      ]},
       "pageUrl": "https://gamesdb.launchbox-app.com/games/details/106033-vg-variable-geo",
       "boxArtUrl": "https://images.launchbox-app.com/e0763b8d-c856-4034-881a-984356563024.jpg",
       "screenshotUrl": "https://images.launchbox-app.com/b19eada3-bdb7-4b82-99a8-569745a70268.png"
