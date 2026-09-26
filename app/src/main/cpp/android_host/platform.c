@@ -118,14 +118,14 @@ int kairo98_fill_audio(SINT16 *destination, UINT frames) {
     const SINT32 *source;
     UINT i;
     if (frames != audio_buffer_frames || frames == 0) return 0;
-    /* The FM synthesizer adds into the stream buffer from its own thread;
-     * wait for everything issued so far before reading the buffer. */
-    kairo_ymfm_drain_all();
     source = sound_pcmlock();
     if (!source) {
         ZeroMemory(destination, frames * 2 * sizeof(*destination));
         return 0;
     }
+    /* Locking may prepare missing samples and queue more FM synthesis.
+     * Wait after that preparation, before reading or recycling the stream. */
+    kairo_ymfm_drain_all();
     for (i = 0; i < frames * 2; ++i) {
         SINT32 sample = source[i];
         if (sample > 32767) sample = 32767;
