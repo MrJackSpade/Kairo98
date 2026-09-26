@@ -17,8 +17,9 @@ uint8_t kairo_ymfm_read_status(void *handle, int bank);
 void kairo_ymfm_set_volume(void *handle, uint32_t fm_volume, uint32_t ssg_volume);
 void kairo_ymfm_mix(void *handle, int32_t *pcm, uint32_t frames);
 
-/* The synthesizer runs on its own thread and adds its samples into the
- * stream buffer regions handed to kairo_ymfm_mix later. Callers must drain
+/* The synthesizer generates into private storage on its own thread. Draining
+ * adds that output to the regions handed to kairo_ymfm_mix on the calling
+ * emulation thread, after other stream callbacks finish. Callers must drain
  * before those regions move or go away: before the host reads the stream,
  * before the stream is reset, and before it is destroyed. */
 void kairo_ymfm_drain_all(void);

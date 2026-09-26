@@ -14,6 +14,7 @@ static void write(void *chip, int bank, uint8_t reg, uint8_t value) {
 static int measure(void *chip, const char *name) {
     std::vector<int32_t> pcm(44100 * 2);
     kairo_ymfm_mix(chip, pcm.data(), 44100);
+    kairo_ymfm_drain_all();
     int64_t energy = 0;
     int32_t peak = 0;
     for (int32_t sample : pcm) {
@@ -31,6 +32,7 @@ int main() {
     int failures = 0;
     for (int extended = 0; extended <= 1; ++extended) {
         kairo_ymfm_reset(chip, extended, 44100, ram, sizeof(ram), nullptr);
+        kairo_ymfm_set_volume(chip, 128, 128);
         // SSG channel A: tone on, channel B/C and noise off.
         write(chip, 0, 0x00, 0x40);
         write(chip, 0, 0x01, 0x00);
@@ -39,6 +41,7 @@ int main() {
         failures += measure(chip, extended ? "YM2608 SSG" : "YM2203 SSG");
 
         kairo_ymfm_reset(chip, extended, 44100, ram, sizeof(ram), nullptr);
+        kairo_ymfm_set_volume(chip, 128, 128);
         // Four active operators, algorithm 7, channel 0 key on.
         for (uint8_t offset : {uint8_t(0), uint8_t(4), uint8_t(8), uint8_t(12)}) {
             write(chip, 0, 0x30 + offset, 0x01);
@@ -55,6 +58,7 @@ int main() {
         failures += measure(chip, extended ? "YM2608 FM" : "YM2203 FM");
 
         kairo_ymfm_reset(chip, extended, 44100, ram, sizeof(ram), nullptr);
+        kairo_ymfm_set_volume(chip, 128, 128);
         write(chip, 0, 0x24, 0xff);
         write(chip, 0, 0x25, 0x03);
         write(chip, 0, 0x27, 0x05); // start Timer A and enable its status flag
@@ -64,6 +68,7 @@ int main() {
         std::printf("%s Timer A status=%02x\n", extended ? "YM2608" : "YM2203", timerStatus);
         failures += (timerStatus & 0x01) == 0;
         kairo_ymfm_reset(chip, extended, 44100, ram, sizeof(ram), nullptr);
+        kairo_ymfm_set_volume(chip, 128, 128);
         failures += kairo_ymfm_read_status(chip, 0) != 0;
         write(chip, 0, 0x24, 0xff);
         write(chip, 0, 0x25, 0x03);
@@ -76,6 +81,7 @@ int main() {
     }
     std::fill(ram, ram + sizeof(ram), uint8_t(0x77));
     kairo_ymfm_reset(chip, 1, 44100, ram, sizeof(ram), nullptr);
+    kairo_ymfm_set_volume(chip, 128, 128);
     write(chip, 1, 0x01, 0xc0); // ADPCM-B pan both sides
     write(chip, 1, 0x02, 0x00); // start at zero
     write(chip, 1, 0x03, 0x00);
@@ -95,6 +101,7 @@ int main() {
         std::fclose(file);
     } else failures++;
     kairo_ymfm_reset(chip, 1, 44100, ram, sizeof(ram), rhythmPath);
+    kairo_ymfm_set_volume(chip, 128, 128);
     failures += !kairo_ymfm_has_rhythm_rom(chip);
     write(chip, 0, 0x11, 0x3f); // ADPCM-A total level
     write(chip, 0, 0x18, 0xdf); // both speakers, drum level

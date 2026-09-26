@@ -32,6 +32,7 @@ Raw logs, APKs, isolated correctness harnesses, and screenshots are local under
 | Baseline 3 | 8.611 | 19.189 | 59.994 | 0 |
 | Audio wait 1 | 8.733 | 19.367 | 60.001 | 0 |
 | Audio wait 2 | 8.678 | 19.367 | 59.993 | 1 |
+| Shared audio buffer | 8.744 | 19.333 | 60.004 | 0 |
 
 ## Audio wait ordering
 
@@ -49,3 +50,25 @@ versus 8.619 ms for the three baselines: a 0.087 ms increase, comparable to the
 against a baseline span of 0.178 ms. Frame rate and combat underruns remain in
 the baseline range. These measurements do not establish zero overhead, but the
 differences are within the practical variation observed in this comparison.
+
+## Shared audio buffer ownership
+
+The synthesizer retains completed segments in private, reusable storage.
+`drain()` waits for generation to finish and adds those samples on the emulation
+thread, after the synchronous PCM, rhythm, and beep callbacks. No worker writes
+the shared stream buffer, including configurations with multiple synthesizers.
+Generation remains asynchronous and storage capacity is retained across drains.
+
+`tools/ymfm_threading_test.cpp` compares two chips generating batched segments
+with synchronous generation, including register changes and another mixer
+contribution. Twelve comparisons reported zero differing samples. The Android
+`tools/ymfm_smoke.cpp` test passed FM, SSG, timers, ADPCM-B, and generated rhythm
+data. That older smoke test needed an explicit drain before reading its output
+and explicit volume setup after each reset, matching the app's reset sequence.
+Without the volume setup it failed identically on the accepted baseline and
+candidate, because reset discards a previously queued volume restore.
+
+Accepted: core plus mixing increased by 0.039 ms relative to the accepted
+audio-wait build's two-run mean, smaller than that build's 0.055 ms run span.
+Heavy core time decreased slightly, frame rate remained 60 fps, and the combat
+interval had no underruns.

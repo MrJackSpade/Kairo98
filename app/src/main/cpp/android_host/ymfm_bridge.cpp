@@ -6,9 +6,11 @@
 // RAM) is logged with the stream position it applies at, and every stream
 // region the core asks it to fill is queued as a segment. The worker thread
 // consumes segments in order, applying the logged inputs at their exact
-// positions, and adds the result into the region. The core only waits when
+// positions, retaining the result in private storage. The core only waits when
 // it is about to read, reset, or free the stream (kairo_ymfm_drain_all), so
-// the emulation thread no longer spends its frame budget on synthesis.
+// the emulation thread no longer spends its frame budget on synthesis. Draining
+// adds the completed output on the emulation thread, which also owns the other
+// stream callbacks; the worker never writes their shared mix buffer.
 //
 // KAIRO98_SYNTH_VERIFY keeps a second engine driven synchronously on the
 // emulation thread and compares its output with the worker's, sample by
@@ -189,6 +191,7 @@ struct Segment {
     int32_t *pcm;
     uint64_t position;
     uint32_t frames;
+    size_t output_offset = 0;
 #if defined(KAIRO98_SYNTH_VERIFY)
     std::vector<int32_t> expected;
 #endif
@@ -294,6 +297,15 @@ public:
             ++g_drain_waits;
             m_done.wait(guard, [this] { return m_segments.empty() && !m_busy; });
         }
+        // Other stream callbacks have finished their additions before the
+        // emulation thread drains. Only this thread writes the shared buffer.
+        for (const auto &segment : m_completed) {
+            const int32_t *output = m_output.data() + segment.output_offset;
+            for (size_t i = 0; i < static_cast<size_t>(segment.frames) * 2; ++i)
+                segment.pcm[i] += output[i];
+        }
+        m_completed.clear();
+        m_output.clear();
     }
 
 private:
@@ -320,7 +332,6 @@ private:
 
     void run() {
         std::vector<Command> pending;
-        std::vector<int32_t> scratch;
         std::unique_lock<std::mutex> guard(m_mutex);
         for (;;) {
             m_work.wait(guard, [this] { return !m_segments.empty() || m_stop; });
@@ -338,7 +349,10 @@ private:
             }
             guard.unlock();
 
-            scratch.assign(segment.frames * 2, 0);
+            segment.output_offset = m_output.size();
+            const size_t sample_count = static_cast<size_t>(segment.frames) * 2;
+            m_output.resize(segment.output_offset + sample_count, 0);
+            int32_t *output = m_output.data() + segment.output_offset;
             size_t next = 0;
             uint32_t done = 0;
             while (done < segment.frames) {
@@ -351,16 +365,16 @@ private:
                     run_frames = static_cast<uint32_t>(
                         std::min<uint64_t>(run_frames, pending[next].position - position));
                 }
-                m_engine.mix(scratch.data() + done * 2, run_frames);
+                m_engine.mix(output + done * 2, run_frames);
                 done += run_frames;
             }
-            for (size_t i = 0; i < scratch.size(); ++i) segment.pcm[i] += scratch[i];
 #if defined(KAIRO98_SYNTH_VERIFY)
-            for (size_t i = 0; i < scratch.size(); ++i) {
-                if (scratch[i] != segment.expected[i]) ++g_verify_mismatches;
+            for (size_t i = 0; i < sample_count; ++i) {
+                if (output[i] != segment.expected[i]) ++g_verify_mismatches;
             }
 #endif
             guard.lock();
+            m_completed.push_back(std::move(segment));
             m_busy = false;
             if (m_segments.empty()) m_done.notify_all();
         }
@@ -376,6 +390,10 @@ private:
     std::condition_variable m_done;
     std::deque<Command> m_commands;
     std::deque<Segment> m_segments;
+    std::vector<Segment> m_completed;
+    // Only the worker appends while busy. drain() consumes these after waiting
+    // for all segments; capacity is reused across drains to avoid allocations.
+    std::vector<int32_t> m_output;
     uint64_t m_issued = 0;
     bool m_busy = false;
     bool m_stop = false;
