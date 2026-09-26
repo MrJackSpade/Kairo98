@@ -2745,6 +2745,14 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
 
     private fun uiControl(event: KeyEvent): String? {
         gamepadMapper.controlForButton(event)?.let { return it }
+        // D-pad keys mean the same thing on menus from any source, including a built-in gamepad.
+        when (event.keyCode) {
+            KeyEvent.KEYCODE_DPAD_UP -> return "up"
+            KeyEvent.KEYCODE_DPAD_DOWN -> return "down"
+            KeyEvent.KEYCODE_DPAD_LEFT -> return "left"
+            KeyEvent.KEYCODE_DPAD_RIGHT -> return "right"
+            KeyEvent.KEYCODE_DPAD_CENTER -> return "a"
+        }
         when (event.keyCode) {
             KeyEvent.KEYCODE_ESCAPE, KeyEvent.KEYCODE_BACK -> return "b"
             KeyEvent.KEYCODE_MENU -> return "menu"
@@ -2813,6 +2821,8 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
                 when (control) {
                     "down" -> libraryScreen.moveSelection(1)
                     "up" -> libraryScreen.moveSelection(-1)
+                    // The list is one column; sideways must not wander to the header buttons.
+                    "left", "right" -> {}
                     "a" -> if (event.repeatCount == 0) libraryScreen.activateSelection()
                     "menu" -> if (event.repeatCount == 0) libraryScreen.openActions()
                     "b" -> if (event.repeatCount == 0) onBackPressed()
