@@ -7,12 +7,11 @@
  * slices, DMA disables this check, and I/O, interrupts, and writes advance
  * the side-effect counter. So when a backward jump lands on an address the
  * CPU already jumped to earlier in the same slice, with identical general,
- * segment, and flag registers and no side effects since, every remaining
- * iteration in this slice would repeat the same reads and produce the same
- * state. The remaining clocks of the slice are allowed to elapse instead,
- * exactly as HLT does. Event and interrupt timing is unchanged: the guest
- * clock still advances by the full slice, the loop resumes at its head, and
- * any interrupt is delivered at the same slice boundary it would have been.
+ * segment, and flag registers and no side effects since, complete iterations
+ * repeat the same reads and produce the same state. Skip only whole periods,
+ * measured from the remaining clocks at the two matching loop heads. Execute
+ * the residual instructions normally so the event boundary sees the same
+ * registers, instruction position, and cycle overshoot as normal execution.
  */
 
 #include "compiler.h"
@@ -28,6 +27,7 @@ typedef struct {
 	UINT32 eip;
 	UINT32 eflags;
 	SINT32 ov;
+	SINT32 remclock;
 	UINT32 regs[CPU_REG_NUM];
 	UINT16 sregs[CPU_SEGREG_NUM];
 	unsigned long long side_effects;
@@ -61,11 +61,16 @@ kairo98_idle_check(void)
 			if (snapshot.sregs[i] != CPU_REGS_SREG(i))
 				goto record;
 		}
-		/* Fixed point: let the rest of the slice elapse. */
-		CPU_REMCLOCK = 0;
-		kairo98_counter_skips++;
-		snapshot.valid = 0;
-		return;
+		/* A partial iteration can change state at the event boundary. */
+		{
+			const SINT32 loop_clocks = snapshot.remclock - CPU_REMCLOCK;
+			if (loop_clocks > 0 && CPU_REMCLOCK >= loop_clocks) {
+				CPU_REMCLOCK %= loop_clocks;
+				kairo98_counter_skips++;
+				snapshot.valid = 0;
+				return;
+			}
+		}
 	}
 
 record:
@@ -74,6 +79,7 @@ record:
 	snapshot.eip = CPU_EIP;
 	snapshot.eflags = CPU_EFLAG;
 	snapshot.ov = CPU_OV;
+	snapshot.remclock = CPU_REMCLOCK;
 	for (i = 0; i < CPU_REG_NUM; i++)
 		snapshot.regs[i] = CPU_REGS_DWORD(i);
 	for (i = 0; i < CPU_SEGREG_NUM; i++)

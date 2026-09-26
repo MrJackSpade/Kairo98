@@ -36,6 +36,7 @@ Raw logs, APKs, isolated correctness harnesses, and screenshots are local under
 | Shared audio buffer, later repeat | 8.656 | 19.278 | 60.018 | 0 |
 | Preserve dropped GPU packets | 8.656 | 19.022 | 59.994 | 0 |
 | Native window reference | 8.722 | 19.189 | 59.990 | 0 |
+| Idle-loop residual cycles (all fixes) | 8.667 | 19.244 | 60.004 | 0 |
 
 ## Audio wait ordering
 
@@ -124,3 +125,50 @@ the same app process. The battle image returned after the cycles, with no fatal
 signal or `eglSwapBuffers` failure in the captured log. This is a lifecycle smoke
 check; the reference ownership change closes the race independently of whether
 that particular interleaving occurs during the check.
+
+## Idle-loop event boundary
+
+The detector records remaining clocks at each candidate loop head, calculates
+the period between matching states, and skips only whole periods. Instructions
+in the residual part of the slice execute normally. This preserves both the
+state seen by an event and normal instruction-cycle overshoot, without disabling
+the idle-loop optimization.
+
+`tools/test_idle_loop.ps1` compiles the actual checker with mocked CPU state and an
+`INC AX / DEC AX / JMP` loop using the core's 2/2/7 instruction costs. It compares
+AX, EIP, flags, and remaining cycles against normal execution for budgets 1
+through 1,024, with no barrier, side effects, single-step trap, and active DMA:
+4,096 cases. The original checker fails 911 cases; the correction fails zero.
+Trap, DMA, and side-effect cases do not skip, while 992 ordinary cases still
+skip iterations. This checks event-boundary semantics without assuming the
+gameplay benchmark exposes them.
+
+Run the check from a Visual Studio developer PowerShell with
+`./tools/test_idle_loop.ps1`, or supply `-Compiler` with a host C compiler that
+accepts GCC-style arguments. Generated test files stay under `.downloads/`.
+
+Accepted: core plus mixing decreased 0.055 ms from the preceding window-reference
+build, with approximately 60 fps and no combat underruns. The cumulative build
+is also within the original baseline range: 8.667 ms versus 8.578–8.667 ms for
+core plus mixing, and 19.244 ms versus 19.122–19.300 ms for heavy core time.
+Instructions increased slightly, from roughly 50,901 to 50,964 per frame,
+consistent with executing the residual loop instructions; idle skips remain
+about 42 per frame. Thermal status remained zero. No measured regression calls
+for a runtime optimization toggle in this workload.
+
+## Separate startup reliability observations
+
+The user reports both intermittent silent stalls and explicit screen-match
+timeouts while the expected prompt is visible. These are distinct paths:
+`StartupHashMatcher` exits silently when its cancellation flag is set, whereas
+its timeout callback requires that matching continued without cancellation.
+`MainActivity.onWindowFocusChanged(false)` sets that flag unconditionally, even
+though startup keys go through `InputRouter` directly to `nativeKey` and do not
+need Android keyboard focus. The RG DS also launches a companion keyboard
+activity. This is a plausible cancellation path, not a confirmed diagnosis of
+the failed launches recorded above. It cannot explain a genuine hash timeout.
+
+The timeout case needs the sampled hash and sampling progress captured during
+failure and compared with the catalog's expected hashes; a visible prompt alone
+does not establish what the matcher sampled. Neither startup issue is claimed
+fixed by these core performance corrections.

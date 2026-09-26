@@ -65,3 +65,14 @@ source list. The pinned `mem/memvga.c` needs one local include of `pegc.h` to
 compile its PEGC path on Android. These are project-local build and include
 changes to the existing rev104 source; no new source archive was imported.
 The Windows-only integrations and excluded fmgen code are not enabled.
+
+## Local idle-loop correction
+
+On 2026-09-26, the project-owned idle detector in
+`third_party/np21w/i386c/ia32/kairo98_idle.c` was corrected to skip only complete
+loop periods and execute the residual slice normally. This preserves guest
+state and instruction-cycle overshoot at event boundaries. Its header comment
+was updated with the same rule. These are local changes to the existing
+Android idle optimization; no new upstream snapshot or licensed component was
+imported, and the existing source notices are retained. Correctness checks and
+device measurements are recorded in [performance-fix-validation.md](performance-fix-validation.md).
