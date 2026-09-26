@@ -6,3 +6,4 @@
 - Exclude fmgen from distributable builds. Do not bundle proprietary BIOS, ROM, operating system, or game files.
 - The free GitHub and paid Google Play versions must have the same features and behavior. Build them from the same revision.
 - Do not claim a binary is release-ready until it boots a game on an Android device and the license audit is complete.
+- Write GitHub Release notes from the changes between that tag and the previous tag. Include only release changes and install impacts; keep audit status, device test status, roadmaps, generic build commentary, and unverified claims out of release notes. Verify the published notes against the tagged commits.
