@@ -2765,6 +2765,10 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
     }
 
     override fun dispatchKeyEvent(event: KeyEvent): Boolean {
+        // A key press means a controller or keyboard is in use. Leave touch mode now, so the
+        // next screen's focus lands where it is requested and no press is spent leaving it.
+        if (event.action == KeyEvent.ACTION_DOWN && ::root.isInitialized && root.isInTouchMode)
+            (currentFocus ?: screen).requestFocusFromTouch()
         if (::firstRunSetup.isInitialized && firstRunSetup.isOpen)
             return firstRunSetup.handleKey(event)
         if (::onScreenControls.isInitialized && onScreenControls.isOpen) {
