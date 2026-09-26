@@ -7,6 +7,7 @@
 #include <array>
 #include "android_host/gpudraw.h"
 #include "gl_presenter.h"
+#include "gpu_frame_merge.h"
 #include <aaudio/AAudio.h>
 #include <algorithm>
 #include <atomic>
@@ -172,6 +173,8 @@ void present_loop() {
                 // Past due. If the following frame is due as well, skip this one.
                 if (present_queue.size() >= 2 &&
                     present_queue[1]->due <= std::chrono::steady_clock::now()) {
+                    kairo98_merge_gpu_frames(present_queue[1]->data,
+                                             present_queue.front()->data);
                     present_pool.push_back(std::move(present_queue.front()));
                     present_queue.pop_front();
                     ++present_dropped;
@@ -225,6 +228,7 @@ void queue_present(std::chrono::steady_clock::time_point due) {
         } else if (present_queue.size() >= 3) {
             frame = std::move(present_queue.front());
             present_queue.pop_front();
+            kairo98_merge_gpu_frames(present_queue.front()->data, frame->data);
             ++present_dropped;
         }
     }

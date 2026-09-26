@@ -30,6 +30,9 @@ extern "C" {
 #define KAIRO98_GPU_ROWS 400
 #define KAIRO98_GPU_PALETTE_ENTRIES 512
 #define KAIRO98_GPU_PALETTE_SLOTS 256
+#define KAIRO98_GPU_ROW_TEXT 1
+#define KAIRO98_GPU_ROW_GRPH 2
+#define KAIRO98_GPU_ROW_DRAWN 4
 
 typedef struct {
     unsigned char slot;
@@ -44,6 +47,8 @@ typedef struct {
     int base;
     /* 1 when every row and the whole palette were refreshed. */
     int full;
+    /* Plane bits name valid updates, including updates carried from a dropped
+     * packet. DRAWN also records palette-only/background redraws. */
     unsigned char row_dirty[KAIRO98_GPU_ROWS];
     unsigned char line_palette[KAIRO98_GPU_ROWS];
     int palette_updates;

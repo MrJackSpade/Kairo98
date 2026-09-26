@@ -114,6 +114,7 @@ void kairo98_gpudraw_take(kairo98_gpu_frame_t *frame) {
     memcpy(frame->line_palette, line_palette, sizeof(line_palette));
     for (y = 0; y < KAIRO98_GPU_ROWS; y++) {
         if (!row_dirty[y]) continue;
+        frame->row_dirty[y] = (unsigned char)(KAIRO98_GPU_ROW_DRAWN | gpu_mode);
         if (gpu_mode & 1) {
             memcpy(frame->text[y], np2_tram + y * SURFACE_WIDTH, KAIRO98_GPU_COLS);
         }

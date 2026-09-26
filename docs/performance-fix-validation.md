@@ -33,6 +33,8 @@ Raw logs, APKs, isolated correctness harnesses, and screenshots are local under
 | Audio wait 1 | 8.733 | 19.367 | 60.001 | 0 |
 | Audio wait 2 | 8.678 | 19.367 | 59.993 | 1 |
 | Shared audio buffer | 8.744 | 19.333 | 60.004 | 0 |
+| Shared audio buffer, later repeat | 8.656 | 19.278 | 60.018 | 0 |
+| Preserve dropped GPU packets | 8.656 | 19.022 | 59.994 | 0 |
 
 ## Audio wait ordering
 
@@ -72,3 +74,31 @@ Accepted: core plus mixing increased by 0.039 ms relative to the accepted
 audio-wait build's two-run mean, smaller than that build's 0.055 ms run span.
 Heavy core time decreased slightly, frame rate remained 60 fps, and the combat
 interval had no underruns.
+
+## GPU packets dropped before presentation
+
+Both queue-drop paths now carry an older packet's updates into its successor
+before recycling it. Newer row and palette data win. Packet dirty flags identify
+the text and graphics planes independently so changes to a temporarily hidden
+plane remain valid across mode changes. The newest complete palette map and
+display mode are retained. Complete CPU frames and the full refresh when entering
+GPU mode do not require previous deltas.
+
+`tools/gpu_frame_merge_test.cpp` checks preservation of older-only rows, newer
+row precedence, palette retention and replacement, independent plane updates
+across mode changes, all 256 palette slots, and CPU/GPU transitions. It reports
+zero failures. This exercises dropped updates directly; the ordinary Night
+Slave timing run does not force a presenter backlog.
+
+Two candidate launches stalled at the music-driver menu before the input runner
+started; neither is included in timing results. The user reports intermittent
+startup failures on existing builds across multiple games. Reinstalling the
+previous accepted APK completed startup and the full comparison again, with
+8.656 ms core plus mixing versus its earlier 8.744 ms. The cause of the startup
+stalls has not been established; the GPU merge does not run for the CPU-rendered
+frames used while matching startup screen hashes.
+
+The unchanged candidate completed startup on its third launch. Accepted: core
+plus mixing matched the immediately preceding comparison at 8.656 ms; heavy
+core time decreased, frame rate remained approximately 60 fps, and there were
+no combat underruns. Thermal status remained zero.

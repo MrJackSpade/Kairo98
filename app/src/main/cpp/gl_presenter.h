@@ -77,8 +77,10 @@ public:
         std::memcpy(mirror_linepal_.data(), frame.line_palette, sizeof(frame.line_palette));
         for (int y = 0; y < KAIRO98_GPU_ROWS; ++y) {
             if (!frame.row_dirty[y]) continue;
-            if (frame.mode & 1) std::memcpy(mirror_text_[y].data(), frame.text[y], KAIRO98_GPU_COLS);
-            if (frame.mode & 2) std::memcpy(mirror_grph_[y].data(), frame.grph[y], KAIRO98_GPU_COLS);
+            if (frame.row_dirty[y] & KAIRO98_GPU_ROW_TEXT)
+                std::memcpy(mirror_text_[y].data(), frame.text[y], KAIRO98_GPU_COLS);
+            if (frame.row_dirty[y] & KAIRO98_GPU_ROW_GRPH)
+                std::memcpy(mirror_grph_[y].data(), frame.grph[y], KAIRO98_GPU_COLS);
         }
         if (!ready()) return;
         if (frame.full || mode_changed) {
