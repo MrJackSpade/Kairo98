@@ -35,6 +35,7 @@ class GameCatalog(private val context: Context) {
         val controllerProfile: String?,
         val controllerBindings: String?,
         val inputMode: String?,
+        val inputTouch: String?,
         val requiredBootFloppyId: String?,
         val initialFloppyBId: String?,
         val launchCommand: String?,
@@ -156,6 +157,7 @@ class GameCatalog(private val context: Context) {
             controller?.optString("profile")?.takeIf { it.length in 1..64 },
             controller?.optJSONArray("bindings")?.toString(),
             input?.optString("mode")?.takeIf { it in INPUT_MODES },
+            input?.optString("touch")?.takeIf { it in INPUT_TOUCH },
             media?.let { items ->
                 (0 until items.length()).mapNotNull { items.optJSONObject(it) }
                     .firstOrNull { it.optString("role") == "bootFloppy" }
@@ -286,7 +288,8 @@ class GameCatalog(private val context: Context) {
         "controller" -> value is JSONObject && (!value.has("profile") ||
             (value.opt("profile") is String && value.optString("profile").length in 1..64)) &&
             (!value.has("bindings") || value.optJSONArray("bindings")?.let(ControllerBindings::valid) == true)
-        "input" -> value is JSONObject && value.optString("mode") in INPUT_MODES
+        "input" -> value is JSONObject && value.optString("mode") in INPUT_MODES &&
+            (!value.has("touch") || value.optString("touch") in INPUT_TOUCH)
         "media" -> value is org.json.JSONArray && value.length() <= 16 &&
             (0 until value.length()).all { index ->
                 value.optJSONObject(index)?.let { item ->
@@ -451,6 +454,7 @@ class GameCatalog(private val context: Context) {
         private const val MAX_LOCAL_JSON = 8L * 1024 * 1024
         private val FIELDS = setOf("title", "description", "aliases", "artwork", "machine", "controller", "input", "media", "launch", "startupChoices", "diskSwaps")
         private val INPUT_MODES = setOf("auto", "keyboard", "mouse")
+        private val INPUT_TOUCH = setOf("touchpad", "direct")
         private val ART_PATH_FIELDS = setOf("boxArt", "preview")
         private val ART_URL_FIELDS = setOf("boxArtUrl", "previewUrl")
         private val ART_FIELDS = ART_PATH_FIELDS + ART_URL_FIELDS

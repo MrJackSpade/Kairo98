@@ -42,6 +42,9 @@ class SecondaryKeyboardActivity : Activity() {
         if (::content.isInitialized) content.setAppearance(showKeyboard, color, swapped)
     }
 
+    internal val activeGameSurface: android.view.SurfaceView?
+        get() = if (::content.isInitialized) content.activeGameSurface else null
+
     override fun onDestroy() {
         Log.i("Kairo98", "Keyboard activity closing")
         if (::content.isInitialized) content.close()

@@ -6,6 +6,7 @@ import android.content.res.Configuration
 import android.graphics.Color
 import android.graphics.drawable.GradientDrawable
 import android.view.Gravity
+import android.view.HapticFeedbackConstants
 import android.view.InputDevice
 import android.view.KeyEvent
 import android.view.MotionEvent
@@ -15,6 +16,8 @@ import android.widget.LinearLayout
 import android.widget.ScrollView
 import android.widget.TextView
 import org.json.JSONObject
+import kotlin.math.atan2
+import kotlin.math.hypot
 import kotlin.math.roundToInt
 
 /** Touch buttons use the same virtual controls and per-game bindings as a physical controller. */
@@ -74,6 +77,8 @@ class OnScreenControls(
     private val states: LinkedHashMap<String, State> get() = layouts.getValue(orientation)
     private val buttons = LinkedHashMap<String, TextView>()
     private val heldPointers = HashMap<String, MutableSet<Int>>()
+    /** Directions each D-pad pointer holds. A finger that lands on any arrow steers the whole pad. */
+    private val dpadPointers = HashMap<Int, Set<String>>()
     private val overlay = FrameLayout(activity).apply {
         visibility = View.GONE
         isClickable = false
@@ -114,6 +119,7 @@ class OnScreenControls(
         if (!show) {
             mapper.releaseOnScreen()
             heldPointers.values.forEach(MutableSet<Int>::clear)
+            dpadPointers.clear()
             buttons.values.forEach { it.isPressed = false; it.alpha = .72f }
         }
         overlay.visibility = if (show) View.VISIBLE else View.GONE
@@ -332,12 +338,17 @@ class OnScreenControls(
                     }
                     true
                 }
+            } else if (spec.id in DPAD) setOnTouchListener { view, event ->
+                dpadTouch(view, event)
+                true
             } else setOnTouchListener { view, event ->
                 when (event.actionMasked) {
                     MotionEvent.ACTION_DOWN, MotionEvent.ACTION_POINTER_DOWN -> {
                         val pointer = event.getPointerId(event.actionIndex)
-                        if (held.add(pointer)) mapper.pressVirtual(spec.id,
-                            "onscreen:${spec.id}:$pointer")
+                        if (held.add(pointer)) {
+                            mapper.pressVirtual(spec.id, "onscreen:${spec.id}:$pointer")
+                            view.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)
+                        }
                         view.isPressed = true
                         view.alpha = 1f
                     }
@@ -361,6 +372,52 @@ class OnScreenControls(
         }
     }
 
+    private fun dpadTouch(view: View, event: MotionEvent) {
+        fun directionsAt(index: Int): Set<String> {
+            val centers = DPAD.mapNotNull { id -> buttons[id]?.takeIf { it.visibility == View.VISIBLE } }
+            if (centers.isEmpty()) return emptySet()
+            val cx = centers.map { it.left + it.width / 2f }.average().toFloat()
+            val cy = centers.map { it.top + it.height / 2f }.average().toFloat()
+            val dx = view.left + event.getX(index) - cx
+            val dy = view.top + event.getY(index) - cy
+            if (hypot(dx, dy) < dp(10)) return emptySet()
+            val sector = ((Math.toDegrees(atan2(dy, dx).toDouble()) + 360 + 22.5) % 360 / 45).toInt()
+            return when (sector) {
+                0 -> setOf("right")
+                1 -> setOf("down", "right")
+                2 -> setOf("down")
+                3 -> setOf("down", "left")
+                4 -> setOf("left")
+                5 -> setOf("up", "left")
+                6 -> setOf("up")
+                else -> setOf("up", "right")
+            }
+        }
+        fun update(pointer: Int, next: Set<String>) {
+            val prior = dpadPointers[pointer] ?: emptySet()
+            (prior - next).forEach { mapper.releaseVirtual("onscreen:dpad:$it:$pointer") }
+            (next - prior).forEach { mapper.pressVirtual(it, "onscreen:dpad:$it:$pointer") }
+            if (next.isEmpty()) dpadPointers.remove(pointer) else dpadPointers[pointer] = next
+            if ((next - prior).isNotEmpty()) view.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)
+        }
+        when (event.actionMasked) {
+            MotionEvent.ACTION_DOWN, MotionEvent.ACTION_POINTER_DOWN ->
+                update(event.getPointerId(event.actionIndex), directionsAt(event.actionIndex))
+            MotionEvent.ACTION_MOVE -> for (index in 0 until event.pointerCount)
+                update(event.getPointerId(index), directionsAt(index))
+            MotionEvent.ACTION_UP, MotionEvent.ACTION_POINTER_UP ->
+                update(event.getPointerId(event.actionIndex), emptySet())
+            MotionEvent.ACTION_CANCEL -> dpadPointers.keys.toList().forEach { update(it, emptySet()) }
+        }
+        val held = dpadPointers.values.flatten().toSet()
+        DPAD.forEach { id ->
+            buttons[id]?.let {
+                it.isPressed = id in held
+                it.alpha = if (id in held) 1f else .72f
+            }
+        }
+    }
+
     private fun positionAll() {
         if (root.width <= 0 || root.height <= 0) return
         val next = if (root.height > root.width) LayoutOrientation.PORTRAIT
@@ -369,6 +426,7 @@ class OnScreenControls(
             orientation = next
             mapper.releaseOnScreen()
             heldPointers.values.forEach(MutableSet<Int>::clear)
+            dpadPointers.clear()
             buttons.values.forEach { it.isPressed = false; it.alpha = .72f }
             settingsTitle?.text = "Controls · ${orientation.label}"
             if (isOpen) renderSettings()
@@ -499,4 +557,8 @@ class OnScreenControls(
     }
 
     private fun dp(value: Int) = (value * activity.resources.displayMetrics.density).roundToInt()
+
+    private companion object {
+        val DPAD = listOf("up", "down", "left", "right")
+    }
 }

@@ -5,6 +5,7 @@ import android.app.ActivityOptions
 import android.app.AlertDialog
 import android.content.Intent
 import android.content.res.Configuration
+import android.graphics.Bitmap
 import android.graphics.Color
 import android.graphics.BitmapFactory
 import android.graphics.drawable.ColorDrawable
@@ -36,6 +37,8 @@ import android.widget.EditText
 import android.widget.ImageView
 import android.widget.SeekBar
 import android.widget.LinearLayout
+import android.widget.RadioButton
+import android.widget.RadioGroup
 import android.widget.ScrollView
 import android.widget.TextView
 import android.widget.Toast
@@ -68,6 +71,8 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
     private external fun nativeMouseButton(button: Int, down: Boolean)
     private external fun nativeMouseWarp(x: Int, y: Int)
     private external fun nativeMouseWarpDone(): Boolean
+    private external fun nativeSaveState(dir: String): Int
+    private external fun nativeLoadState(dir: String): Int
     private external fun nativeJoystick(control: Int, down: Boolean)
     private external fun nativeInputTelemetry(): LongArray
     private external fun nativeStatus(): String
@@ -140,8 +145,8 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
     private lateinit var drawer: ScrollView
     private lateinit var menuStatus: TextView
     private lateinit var mediaLabel: TextView
-    private lateinit var pauseTitle: TextView
     private val menuItems = ArrayList<View>()
+    private val menuValues = ArrayList<Pair<TextView, () -> String>>()
     private var selectedMenuIndex = 0
     private var menuOpen = false
     private var userPaused = false
@@ -165,7 +170,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
     private val inputModeDecider = InputModeDecider()
     private var globalInputMode = InputModeDecider.Mode.AUTO
     private var mouseTouchActive = false
-    private var directTapMouse = false
+    private var globalTouchDirect = false
     private var pendingMouseWarp: Runnable? = null
     private var mouseDragging = false
     private var mouseMoved = false
@@ -178,6 +183,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
     private var pendingMouseHold: Runnable? = null
     private var pendingMouseRelease: Runnable? = null
     @Volatile private var preparingFont = false
+    @Volatile private var stateBusy = false
     @Volatile private var startGeneration = 0
 
     private val updateStatus = object : Runnable {
@@ -233,7 +239,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
         muted = preferences.getBoolean("muted", false)
         clock = preferences.getInt("base_clock", 25).let { if (it == 20) 20 else 25 }
         globalInputMode = InputModeDecider.parse(preferences.getString("input_mode", "auto"))
-        directTapMouse = preferences.getString("touch_mouse", "touchpad") == "direct"
+        globalTouchDirect = preferences.getString("touch_mouse", "touchpad") == "direct"
         nativeSetMuted(muted)
         if (traceScreenHashes) {
             File(filesDir, "startup-hash-trace.txt").writeText("")
@@ -290,9 +296,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
             ::chooseRomFolder, { refreshLibrary(false) }, { refreshLibrary(true) },
             if (resources.getBoolean(R.bool.catalog_art_download_enabled))
                 ::downloadMissingImages else null, ::cancelArtworkDownload,
-            { libraryScreen.closeActions(); showMachine() },
-            { libraryScreen.closeActions(); showControllerScope() },
-            { libraryScreen.closeActions(); showAbout() },
+            settingsEntries(), { preferences.getString("last_played_entry", null) },
             ::launchEntry, ::showDetailPreview, ::showGameDetails)
         root.addView(libraryScreen, FrameLayout.LayoutParams(-1, -1))
         swapStatus = TextView(this).apply {
@@ -427,30 +431,28 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
         }
         content.addView(menuStatus)
         val sessionActions = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL }
-        content.addView(sessionActions, LinearLayout.LayoutParams(-1, dp(58)).apply {
+        content.addView(sessionActions, LinearLayout.LayoutParams(-1, dp(66)).apply {
             bottomMargin = dp(8)
         })
-        sessionIcon(sessionActions, "▶", "Continue") {
+        sessionIcon(sessionActions, "▶", "Resume") {
             userPaused = false
             closeMenu()
         }
-        sessionIcon(sessionActions, "↻", "Restart") { restartMachine() }
-        pauseTitle = sessionIcon(sessionActions, "❚❚", "Pause") {
+        sessionIcon(sessionActions, "↓", "Save") { showStateSlots(saving = true) }
+        sessionIcon(sessionActions, "↑", "Load") { showStateSlots(saving = false) }
+        sessionIcon(sessionActions, "↻", "Restart") { confirmRestart() }
+        sessionIcon(sessionActions, "▦", "Library") { showLibrary() }
+        section(content, "SESSION")
+        menuItem(content, "Pause", { if (userPaused) "On · tap to let the game run again"
+            else "Close the menu with the game stopped" }) {
             userPaused = !userPaused
             closeMenu()
         }
-        sessionIcon(sessionActions, "■", "Game library") { showLibrary() }
-        section(content, "SESSION")
-        menuItem(content, "Mount", "Hard disk and floppy images") { showMountMenu() }
-        menuItem(content, "Exit", "Stop and close Kairo98") { exitApp() }
+        menuItem(content, "Mount", { "Hard disk and floppy images" }) { showMountMenu() }
+        menuItem(content, "Exit", { "Stop the machine and close Kairo98" }) { confirmExit() }
 
         section(content, "SETTINGS")
-        menuItem(content, "Graphics", "Scaling and display") { showGraphics() }
-        menuItem(content, "Input mode", "Auto, keyboard, or mouse touchpad") { showInputMode() }
-        menuItem(content, "Touch mouse", "Touchpad or direct tap") { showTouchMouse() }
-        menuItem(content, "Machine", "Clock and firmware") { showMachine() }
-        menuItem(content, "Controller", "Gamepad and on-screen controls") { showControllerScope() }
-        menuItem(content, "Audio", "Sound output") { showAudio() }
+        settingsEntries().forEach { entry -> menuItem(content, entry.title, entry.value, entry.action) }
 
         setContentView(root)
         screen.requestFocus()
@@ -467,72 +469,97 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
     }
 
     private fun sessionIcon(row: LinearLayout, icon: String, label: String,
-                            action: () -> Unit): TextView {
-        val button = TextView(this).apply {
-            text = icon
-            textSize = 27f
+                            action: () -> Unit): View {
+        val button = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
             gravity = Gravity.CENTER
-            setTextColor(Color.WHITE)
             contentDescription = label
             isFocusable = true
             isClickable = true
-            background = StateListDrawable().apply {
-                val highlight = GradientDrawable().apply {
-                    setColor(0xff30475b.toInt())
-                    cornerRadius = dp(8).toFloat()
-                }
-                addState(intArrayOf(android.R.attr.state_focused), highlight)
-                addState(intArrayOf(android.R.attr.state_selected), highlight)
-                addState(intArrayOf(android.R.attr.state_pressed), highlight)
-                addState(intArrayOf(), ColorDrawable(Color.TRANSPARENT))
-            }
+            background = menuHighlight()
             setOnClickListener { clicked ->
                 focusMenuItem(menuItems.indexOf(clicked))
                 action()
             }
         }
+        button.addView(TextView(this).apply {
+            text = icon
+            textSize = 22f
+            gravity = Gravity.CENTER
+            setTextColor(Color.WHITE)
+        })
+        button.addView(TextView(this).apply {
+            text = label
+            textSize = 11f
+            gravity = Gravity.CENTER
+            setTextColor(0xff9aa8b6.toInt())
+        })
         row.addView(button, LinearLayout.LayoutParams(0, -1, 1f))
         menuItems.add(button)
         return button
     }
 
-    private fun menuItem(content: LinearLayout, title: String, detail: String,
-                         action: () -> Unit): Pair<View, TextView> {
+    private fun menuHighlight() = StateListDrawable().apply {
+        val highlight = GradientDrawable().apply {
+            setColor(0xff30475b.toInt())
+            cornerRadius = dp(8).toFloat()
+        }
+        addState(intArrayOf(android.R.attr.state_focused), highlight)
+        addState(intArrayOf(android.R.attr.state_selected), highlight)
+        addState(intArrayOf(android.R.attr.state_pressed), highlight)
+        addState(intArrayOf(), ColorDrawable(Color.TRANSPARENT))
+    }
+
+    private fun menuItem(content: LinearLayout, title: String, detail: () -> String,
+                         action: () -> Unit) {
         val item = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
             minimumHeight = dp(57)
             setPadding(dp(12), dp(8), dp(12), dp(8))
             isFocusable = true
             isClickable = true
-            background = StateListDrawable().apply {
-                val highlight = GradientDrawable().apply {
-                    setColor(0xff30475b.toInt())
-                    cornerRadius = dp(8).toFloat()
-                }
-                addState(intArrayOf(android.R.attr.state_focused), highlight)
-                addState(intArrayOf(android.R.attr.state_selected), highlight)
-                addState(intArrayOf(android.R.attr.state_pressed), highlight)
-                addState(intArrayOf(), ColorDrawable(Color.TRANSPARENT))
-            }
+            background = menuHighlight()
             setOnClickListener { clicked ->
                 focusMenuItem(menuItems.indexOf(clicked))
                 action()
             }
         }
-        val heading = TextView(this).apply {
+        item.addView(TextView(this).apply {
             text = title
             textSize = 16f
             setTextColor(Color.WHITE)
-        }
-        item.addView(heading)
-        item.addView(TextView(this).apply {
-            text = detail
+        })
+        val value = TextView(this).apply {
+            text = detail()
             textSize = 12f
             setTextColor(0xff9aa8b6.toInt())
-        })
+        }
+        item.addView(value)
         content.addView(item, LinearLayout.LayoutParams(-1, -2))
         menuItems.add(item)
-        return item to heading
+        menuValues.add(value to detail)
+    }
+
+
+    /** One settings list, shown the same way in the game menu and the library menu. */
+    private fun settingsEntries() = listOf(
+        SettingsEntry("Graphics", { scalingLabel() + if (isPortrait()) " · notch ${portraitNotchPadding} dp" else "" }) { showGraphics() },
+        SettingsEntry("Touch input", ::touchInputLabel) { showInputMode() },
+        SettingsEntry("Machine", { "${if (clock == 25) "2.5" else "2"} MHz · BIOS ${if (biosFile().isFile) "imported" else "none"}" }) { showMachine() },
+        SettingsEntry("Controller", { "Gamepad and on-screen controls" }) { showControllerScope() },
+        SettingsEntry("Sound", { if (muted) "Muted · tap to turn on" else "On · tap to mute" }) { toggleMute() },
+        SettingsEntry("About", { "Version, shortcuts, and licenses" }) { showAbout() })
+
+    private fun refreshSettingValues() {
+        menuValues.forEach { (view, value) -> view.text = value() }
+        if (::libraryScreen.isInitialized) libraryScreen.refreshSettingValues()
+    }
+
+    private fun toggleMute() {
+        muted = !muted
+        preferences.edit().putBoolean("muted", muted).apply()
+        nativeSetMuted(muted)
+        refreshSettingValues()
     }
 
     private fun focusMenuItem(index: Int) {
@@ -583,8 +610,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
         applyPauseState()
         drawer.scrollTo(0, 0)
         focusMenuItem(0)
-        pauseTitle.text = if (userPaused) "▶" else "❚❚"
-        pauseTitle.contentDescription = if (userPaused) "Resume" else "Pause"
+        refreshSettingValues()
         mediaLabel.text = currentTitle ?: "No disk selected"
         menuStatus.text = if (preparingFont) "Preparing PC-98 font" else nativeStatus()
         backdrop.visibility = View.VISIBLE
@@ -906,6 +932,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
                     preparingFont = false
                     if (result != null) {
                         currentEntry = entry
+                        preferences.edit().putString("last_played_entry", entry.id).apply()
                         currentDisk = result.disk
                         currentIsFloppy = result.bootFloppy == null && entry.isFloppy
                         mountedFloppies[0] = result.bootFloppy?.displayName
@@ -1037,7 +1064,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
                     mouseFractionY = 0f
                     // The view is exactly the scaled 640x400 frame, so view coordinates
                     // already account for scaling and for any crop by the parent.
-                    if (directTapMouse && width > 0 && height > 0) nativeMouseWarp(
+                    if (directTapActive() && width > 0 && height > 0) nativeMouseWarp(
                         (event.x * 640f / width).toInt().coerceIn(0, 639),
                         (event.y * 400f / height).toInt().coerceIn(0, 399))
                     val hold = Runnable {
@@ -1297,49 +1324,97 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
         val id = entry.contentId
         val game = romLibrary.catalog.resolve(id ?: "", entry.displayName)
         val catalog = romLibrary.catalog
-        val fields = arrayOf("Title", "Machine clock", "Guest command", "Preview art", "Box art",
-            "View screenshot", "Reset all custom settings", "File information", "Controller mapping",
-            "Input mode", "GDC clock")
-        val values = arrayOf(
-            "${game.title} · ${id?.let { catalog.sourceOf(it, "title") } ?: "Filename"}",
-            "${game.baseClockTenthsMHz?.let { "${it / 10.0} MHz" } ?: "App default"} · ${id?.let { catalog.sourceOf(it, "machine") } ?: "App default"}",
-            "${game.launchCommand ?: "None"} · ${id?.let { catalog.sourceOf(it, "launch") } ?: "App default"}",
-            "${if (game.preview == null) "None" else "Available"} · ${id?.let { catalog.sourceOf(it, "artwork", "preview") } ?: "App default"}",
-            "${if (game.boxArt == null) "None" else "Available"} · ${id?.let { catalog.sourceOf(it, "artwork", "boxArt") } ?: "App default"}",
-            if (game.preview == null) "No screenshot available" else "Open preview",
-            "Restore catalog values", "Path, ZIP entry, and content ID",
-            "${effectiveControllerBindings(game).size} bindings · ${if (game.controllerBindings == null || (game.controllerBindings == "[]" && !game.overriddenFields.contains("controller"))) "Global" else id?.let { catalog.sourceOf(it, "controller") } ?: "Global"}",
-            "${InputModeDecider.parse(game.inputMode ?: InputModeDecider.storageValue(globalInputMode))} · ${id?.let { catalog.sourceOf(it, "input") } ?: "App default"}",
-            "${game.gdcClockTenthsMHz?.let { "${it / 10.0} MHz" } ?: "5.0 MHz (app default)"} · ${id?.let { catalog.sourceOf(it, "machine") } ?: "App default"}"
-        )
-        AlertDialog.Builder(this).setTitle(game.title)
-            .setItems(fields.indices.map { "${fields[it]}\n${values[it]}" }.toTypedArray()) { _, which ->
-                if (id == null && which !in 5..7) {
-                    toast("This file needs a successful hash before settings can be saved")
-                    return@setItems
-                }
-                when (which) {
-                    0 -> editGameText(entry, "title", game.title)
-                    1 -> editGameClock(entry)
-                    2 -> editGameText(entry, "launch", game.launchCommand ?: "")
-                    3 -> editGameArt(entry, "preview", game.preview ?: "")
-                    4 -> editGameArt(entry, "boxArt", game.boxArt ?: "")
-                    5 -> showGamePreview(entry)
-                    6 -> AlertDialog.Builder(this).setTitle("Reset all settings?")
+        fun source(field: String, subfield: String? = null, fallback: String = "App default") =
+            id?.let { catalog.sourceOf(it, field, subfield) } ?: fallback
+        data class Row(val title: String, val value: String, val needsHash: Boolean,
+                       val destructive: Boolean = false, val action: () -> Unit)
+        val controllerSource = if (game.controllerBindings == null ||
+            (game.controllerBindings == "[]" && !game.overriddenFields.contains("controller"))) "Global"
+            else source("controller", fallback = "Global")
+        val inputMode = InputModeDecider.parse(game.inputMode ?: InputModeDecider.storageValue(globalInputMode))
+        val touch = game.inputTouch ?: touchStorage(globalTouchDirect)
+        val sections = listOf(
+            "CONTROLS" to listOf(
+                Row("Touch input", "${inputMode.name.lowercase().replaceFirstChar(Char::uppercase)} · " +
+                    "${if (touch == "direct") "direct tap" else "touchpad"} · ${source("input")}", true) {
+                    showInputModeChoices(entry) },
+                Row("Controller mapping", "${effectiveControllerBindings(game).size} bindings · $controllerSource", true) {
+                    showControllerBindings(entry) }),
+            "MACHINE" to listOf(
+                Row("Machine clock", "${game.baseClockTenthsMHz?.let { "${it / 10.0} MHz" } ?: "App default"} · ${source("machine")}", true) {
+                    editGameClock(entry) },
+                Row("GDC clock", "${game.gdcClockTenthsMHz?.let { "${it / 10.0} MHz" } ?: "5.0 MHz (app default)"} · ${source("machine")}", true) {
+                    editGameGdcClock(entry) },
+                Row("Startup command", "${game.launchCommand ?: "None"} · ${source("launch")}", true) {
+                    editGameText(entry, "launch", game.launchCommand ?: "") }),
+            "LIBRARY" to listOf(
+                Row("Title", "${game.title} · ${source("title", fallback = "Filename")}", true) {
+                    editGameText(entry, "title", game.title) },
+                Row("Box art", "${if (game.boxArt == null) "None" else "Available"} · ${source("artwork", "boxArt")}", true) {
+                    editGameArt(entry, "boxArt", game.boxArt ?: "") },
+                Row("Screenshot", "${if (game.preview == null) "None" else "Available"} · ${source("artwork", "preview")}", true) {
+                    editGameArt(entry, "preview", game.preview ?: "") },
+                Row("View screenshot", if (game.preview == null) "No screenshot available" else "Open full size", false) {
+                    showGamePreview(entry) },
+                Row("File information", "Path, ZIP entry, and content ID", false) {
+                    AlertDialog.Builder(this).setTitle("File information")
+                        .setMessage("${entry.path}${entry.zipEntry?.let { "\n$it" } ?: ""}\n\n" +
+                            (id ?: entry.error ?: "Not hashed"))
+                        .setPositiveButton("Close", null).showStyled() }),
+            "" to listOf(
+                Row("Reset all custom settings", "Restore this game's catalog values", true, destructive = true) {
+                    AlertDialog.Builder(this).setTitle("Reset all settings?")
                         .setMessage("Restore this game's current catalog defaults.")
                         .setPositiveButton("Reset") { _, _ -> saveGameSetting(entry) {
                             catalog.resetOverride(id!!)
-                        } }.setNegativeButton("Cancel", null).showStyled()
-                    7 -> AlertDialog.Builder(this).setTitle("File information")
-                        .setMessage("${entry.path}${entry.zipEntry?.let { "\n$it" } ?: ""}\n\n" +
-                            (id ?: entry.error ?: "Not hashed"))
-                        .setPositiveButton("Close", null).showStyled()
-                    8 -> showControllerBindings(entry)
-                    9 -> showInputModeChoices(entry)
-                    10 -> editGameGdcClock(entry)
+                        } }.setNegativeButton("Cancel", null).showStyled() }))
+        val list = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(dp(12), 0, dp(12), dp(4))
+        }
+        val builder = AlertDialog.Builder(this).setTitle(game.title)
+            .setView(ScrollView(this).apply { addView(list) })
+            .setNegativeButton("Close", null)
+        if (entry.playable) builder.setPositiveButton("Play") { _, _ -> launchEntry(entry) }
+        val dialog = builder.showStyled()
+        sections.forEach { (heading, rows) ->
+            list.addView(TextView(this).apply {
+                text = heading
+                textSize = 11f
+                letterSpacing = 0.14f
+                setTextColor(0xff66d6df.toInt())
+                setPadding(dp(12), dp(if (heading.isEmpty()) 6 else 14), dp(12), dp(4))
+            })
+            rows.forEach { row ->
+                val item = LinearLayout(this).apply {
+                    orientation = LinearLayout.VERTICAL
+                    setPadding(dp(12), dp(9), dp(12), dp(9))
+                    isFocusable = true
+                    isClickable = true
+                    background = menuHighlight()
+                    setOnClickListener {
+                        if (id == null && row.needsHash) {
+                            toast("This file needs a successful hash before settings can be saved")
+                            return@setOnClickListener
+                        }
+                        dialog.dismiss()
+                        row.action()
+                    }
                 }
-            }.setPositiveButton("Play") { _, _ -> launchEntry(entry) }
-            .setNegativeButton("Close", null).showStyled()
+                item.addView(TextView(this).apply {
+                    text = row.title
+                    textSize = 16f
+                    setTextColor(if (row.destructive) 0xffffb4a8.toInt() else Color.WHITE)
+                })
+                item.addView(TextView(this).apply {
+                    text = row.value
+                    textSize = 12f
+                    setTextColor(0xff9aa8b6.toInt())
+                })
+                list.addView(item, LinearLayout.LayoutParams(-1, -2))
+            }
+        }
+        (0 until list.childCount).map(list::getChildAt).firstOrNull { it.isFocusable }?.requestFocus()
     }
 
     private fun showGamePreview(entry: LibraryEntry) = showGameArt(entry, "preview", true)
@@ -1634,13 +1709,15 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
         }, HDI_REQUEST)
     }
 
+    private fun scalingLabel() = when {
+        !integerScaling -> "Fit display"
+        integerCrop -> "Integer crop"
+        else -> "Integer full image"
+    }
+
     private fun showGraphics() {
         val orientation = if (isPortrait()) "portrait" else "landscape"
-        val scaling = when {
-            !integerScaling -> "Fit display"
-            integerCrop -> "Integer crop"
-            else -> "Integer full image"
-        }
+        val scaling = scalingLabel()
         val items = if (orientation == "portrait")
             arrayOf("Scaling  ·  $scaling", "Notch padding  ·  $portraitNotchPadding dp")
         else arrayOf("Scaling  ·  $scaling")
@@ -1797,66 +1874,99 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
         }, RHYTHM_REQUEST)
     }
 
-    private fun showAudio() {
-        val options = arrayOf("Sound on", "Muted")
-        AlertDialog.Builder(this).setTitle("Audio")
-            .setSingleChoiceItems(options, if (muted) 1 else 0) { dialog, which ->
-                muted = which == 1
-                preferences.edit().putBoolean("muted", muted).apply()
-                nativeSetMuted(muted)
-                dialog.dismiss()
-            }.setNegativeButton("Cancel", null).showStyled()
-    }
-
-    private fun showTouchMouse() {
-        var selected = if (directTapMouse) 1 else 0
-        AlertDialog.Builder(this)
-            .setTitle("Touch mouse")
-            .setSingleChoiceItems(arrayOf("Touchpad (drag to move, tap to click)",
-                "Direct tap (click where you touch)"), selected) { _, which -> selected = which }
-            .setPositiveButton("Save") { _, _ ->
-                directTapMouse = selected == 1
-                preferences.edit().putString("touch_mouse", if (directTapMouse) "direct" else "touchpad").apply()
-                toast("Touch mouse saved")
-            }
-            .setNegativeButton("Cancel", null).showStyled()
-    }
-
     private fun showInputMode() {
-        val entry = currentEntry?.takeIf { it.contentId != null }
+        val entry = currentEntry?.takeIf { it.contentId != null && !libraryVisible }
         showInputModeChoices(entry)
+    }
+
+    private fun touchStorage(direct: Boolean) = if (direct) "direct" else "touchpad"
+
+    private fun directTapActive(): Boolean =
+        (currentGame?.inputTouch ?: touchStorage(globalTouchDirect)) == "direct"
+
+    private fun touchInputLabel(): String {
+        val game = currentGame.takeIf { !libraryVisible }
+        val mode = game?.inputMode?.let(InputModeDecider::parse) ?: globalInputMode
+        val direct = (game?.inputTouch ?: touchStorage(globalTouchDirect)) == "direct"
+        val modeLabel = when (mode) {
+            InputModeDecider.Mode.AUTO -> "Auto"
+            InputModeDecider.Mode.KEYBOARD -> "Keyboard"
+            InputModeDecider.Mode.MOUSE -> "Mouse"
+        }
+        return "$modeLabel · ${if (direct) "direct tap" else "touchpad"}" +
+            if (game != null && game.overriddenFields.contains("input")) " · this game" else ""
     }
 
     private fun showInputModeChoices(entry: LibraryEntry?) {
         val game = entry?.contentId?.let { romLibrary.catalog.resolve(it, entry.displayName) }
-        val choices = InputModeDecider.Mode.entries
-        var selected = choices.indexOf(if (entry == null) globalInputMode
-            else InputModeDecider.parse(game?.inputMode ?: InputModeDecider.storageValue(globalInputMode)))
-        val builder = AlertDialog.Builder(this)
-            .setTitle(if (entry == null) "Global input mode" else "Input mode for ${game?.title}")
-            .setSingleChoiceItems(arrayOf("Auto (keyboard fallback)", "Keyboard",
-                "Mouse (drag to move, tap to click)"), selected) { _, which ->
-                selected = which
+        val modes = InputModeDecider.Mode.entries
+        val mode = if (entry == null) globalInputMode
+            else InputModeDecider.parse(game?.inputMode ?: InputModeDecider.storageValue(globalInputMode))
+        val direct = if (entry == null) globalTouchDirect
+            else (game?.inputTouch ?: touchStorage(globalTouchDirect)) == "direct"
+        val body = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(dp(22), dp(8), dp(22), 0)
+        }
+        fun heading(text: String) = TextView(this).apply {
+            this.text = text
+            textSize = 11f
+            letterSpacing = 0.14f
+            setTextColor(0xff66d6df.toInt())
+            setPadding(0, dp(12), 0, dp(4))
+        }
+        fun group(labels: List<String>, selected: Int) = RadioGroup(this).apply {
+            labels.forEachIndexed { index, label ->
+                addView(RadioButton(this@MainActivity).apply {
+                    id = View.generateViewId()
+                    text = label
+                    textSize = 15f
+                    isChecked = index == selected
+                })
             }
+        }
+        body.addView(heading("SCREEN TAP"))
+        val modeGroup = group(listOf("Auto (follows what the game reads)",
+            "Keyboard (tap opens the PC-98 keyboard)", "Mouse"), modes.indexOf(mode))
+        body.addView(modeGroup)
+        body.addView(heading("MOUSE TOUCH"))
+        val touchGroup = group(listOf("Touchpad (drag to move, tap to click)",
+            "Direct tap (click where you touch)"), if (direct) 1 else 0)
+        body.addView(touchGroup)
+        body.addView(TextView(this).apply {
+            text = "Direct tap lands on the touched point in games that move the cursor one pixel " +
+                "per mouse count and stop it at the screen's top-left edge."
+            textSize = 12f
+            setTextColor(0xff9aa8b6.toInt())
+            setPadding(0, dp(6), 0, dp(8))
+        })
+        fun checkedIndex(group: RadioGroup) =
+            (0 until group.childCount).indexOfFirst { (group.getChildAt(it) as RadioButton).isChecked }
+        val builder = AlertDialog.Builder(this)
+            .setTitle(if (entry == null) "Touch input" else "Touch input for ${game?.title}")
+            .setView(ScrollView(this).apply { addView(body) })
             .setPositiveButton("Save") { _, _ ->
-                val mode = choices[selected]
+                val chosenMode = modes[checkedIndex(modeGroup).coerceAtLeast(0)]
+                val chosenDirect = checkedIndex(touchGroup) == 1
                 if (entry == null) {
-                    globalInputMode = mode
-                    preferences.edit().putString("input_mode", InputModeDecider.storageValue(mode)).apply()
+                    globalInputMode = chosenMode
+                    globalTouchDirect = chosenDirect
+                    preferences.edit()
+                        .putString("input_mode", InputModeDecider.storageValue(chosenMode))
+                        .putString("touch_mouse", touchStorage(chosenDirect)).apply()
                 } else {
-                    romLibrary.catalog.setOverride(entry.contentId!!, "input",
-                        JSONObject().put("mode", InputModeDecider.storageValue(mode)))
+                    romLibrary.catalog.setOverride(entry.contentId!!, "input", JSONObject()
+                        .put("mode", InputModeDecider.storageValue(chosenMode))
+                        .put("touch", touchStorage(chosenDirect)))
                     if (currentEntry?.contentId == entry.contentId)
                         currentGame = romLibrary.catalog.resolve(entry.contentId, entry.displayName)
                 }
-                toast("Input mode saved")
             }
             .setNegativeButton("Cancel", null)
-        if (entry != null) builder.setNeutralButton("Reset game") { _, _ ->
+        if (entry != null) builder.setNeutralButton("Use app default") { _, _ ->
             romLibrary.catalog.resetOverride(entry.contentId!!, "input")
             if (currentEntry?.contentId == entry.contentId)
                 currentGame = romLibrary.catalog.resolve(entry.contentId, entry.displayName)
-            toast("Input mode restored")
         }
         builder.showStyled()
     }
@@ -1948,8 +2058,8 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
                 applyPauseState()
                 toast(if (userPaused) "Paused" else "Resumed")
             }
-            "restart" -> restartMachine()
-            "exit" -> exitApp()
+            "restart" -> confirmRestart()
+            "exit" -> confirmExit()
         }
     }
 
@@ -1999,12 +2109,193 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
 
     private fun AlertDialog.Builder.showStyled(): AlertDialog {
         val dialog = create()
+        dialog.setOnDismissListener { refreshSettingValues() }
         dialog.show()
         dialog.window?.setBackgroundDrawable(GradientDrawable().apply {
             setColor(0xff202a36.toInt())
             cornerRadius = dp(14).toFloat()
         })
         return dialog
+    }
+
+    private fun confirmRestart() {
+        val title = currentTitle ?: "the machine"
+        AlertDialog.Builder(this).setTitle("Restart $title?")
+            .setMessage("Progress since your last save state or in-game save is lost.")
+            .setPositiveButton("Restart") { _, _ -> restartMachine() }
+            .setNegativeButton("Cancel", null).showStyled()
+    }
+
+    private fun confirmExit() {
+        AlertDialog.Builder(this).setTitle("Exit Kairo98?")
+            .setMessage("The machine stops. Progress since your last save state or in-game save is lost.")
+            .setPositiveButton("Exit") { _, _ -> exitApp() }
+            .setNegativeButton("Cancel", null).showStyled()
+    }
+
+    private fun stateSlots(): StateSlots? = currentEntry?.contentId?.takeIf { !libraryVisible }
+        ?.let { StateSlots(File(filesDir, "states"), it) }
+
+    private fun showStateSlots(saving: Boolean) {
+        val slots = stateSlots()
+        if (slots == null) {
+            AlertDialog.Builder(this).setTitle(if (saving) "Save state" else "Load state")
+                .setMessage("Save states are available for games started from the library.")
+                .setPositiveButton("Close", null).showStyled()
+            return
+        }
+        val list = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(dp(12), dp(4), dp(12), dp(4))
+        }
+        val dialog = AlertDialog.Builder(this)
+            .setTitle((if (saving) "Save state" else "Load state") + (currentTitle?.let { " · $it" } ?: ""))
+            .setView(ScrollView(this).apply { addView(list) })
+            .setNegativeButton("Cancel", null).showStyled()
+        val format = java.text.DateFormat.getDateTimeInstance(java.text.DateFormat.MEDIUM,
+            java.text.DateFormat.SHORT)
+        slots.slots().forEach { slot ->
+            val available = saving || !slot.empty
+            val row = LinearLayout(this).apply {
+                orientation = LinearLayout.HORIZONTAL
+                gravity = Gravity.CENTER_VERTICAL
+                setPadding(dp(8), dp(8), dp(8), dp(8))
+                isFocusable = available
+                isClickable = available
+                background = menuHighlight()
+                alpha = if (available) 1f else 0.45f
+            }
+            row.addView(ImageView(this).apply {
+                scaleType = ImageView.ScaleType.FIT_CENTER
+                setBackgroundColor(0xff10151d.toInt())
+                slots.thumbnail(slot)?.let(::setImageBitmap)
+            }, LinearLayout.LayoutParams(dp(112), dp(70)))
+            val text = LinearLayout(this).apply {
+                orientation = LinearLayout.VERTICAL
+                setPadding(dp(14), 0, 0, 0)
+            }
+            text.addView(TextView(this).apply {
+                this.text = "Slot ${slot.index}"
+                textSize = 16f
+                setTextColor(Color.WHITE)
+            })
+            text.addView(TextView(this).apply {
+                this.text = slot.savedAt?.let { format.format(java.util.Date(it)) } ?: "Empty"
+                textSize = 13f
+                setTextColor(0xff9aa8b6.toInt())
+            })
+            row.addView(text, LinearLayout.LayoutParams(0, -2, 1f))
+            if (available) row.setOnClickListener {
+                dialog.dismiss()
+                val savedAt = slot.savedAt
+                when {
+                    saving && savedAt == null -> saveState(slots, slot.index)
+                    saving -> AlertDialog.Builder(this).setTitle("Overwrite slot ${slot.index}?")
+                        .setMessage("The save from ${format.format(java.util.Date(savedAt!!))} is replaced.")
+                        .setPositiveButton("Overwrite") { _, _ -> saveState(slots, slot.index) }
+                        .setNegativeButton("Cancel", null).showStyled()
+                    else -> AlertDialog.Builder(this).setTitle("Load slot ${slot.index}?")
+                        .setMessage("Progress since that save is lost.")
+                        .setPositiveButton("Load") { _, _ -> loadState(slots, slot.index) }
+                        .setNegativeButton("Cancel", null).showStyled()
+                }
+            }
+            list.addView(row, LinearLayout.LayoutParams(-1, -2).apply { bottomMargin = dp(4) })
+        }
+        (0 until list.childCount).map(list::getChildAt).firstOrNull { it.isFocusable }?.requestFocus()
+    }
+
+    /** Captures the displayed guest frame for a slot thumbnail; null when it cannot be read. */
+    private fun captureThumbnail(done: (Bitmap?) -> Unit) {
+        val surface = (if (::secondaryKeyboard.isInitialized) secondaryKeyboard.activeGameSurface else null)
+            ?: screen
+        if (surface.width <= 0 || surface.height <= 0 || !surface.holder.surface.isValid) {
+            done(null)
+            return
+        }
+        val bitmap = Bitmap.createBitmap(320, 200, Bitmap.Config.ARGB_8888)
+        try {
+            android.view.PixelCopy.request(surface, bitmap, { result ->
+                done(if (result == android.view.PixelCopy.SUCCESS) bitmap else null)
+            }, handler)
+        } catch (_: IllegalArgumentException) {
+            done(null)
+        }
+    }
+
+    private fun saveState(slots: StateSlots, index: Int) {
+        if (stateBusy) return
+        stateBusy = true
+        menuStatus.text = "Saving slot $index…"
+        captureThumbnail { thumbnail ->
+            Thread {
+                val scratch = try { slots.beginSave(index) } catch (_: Exception) { null }
+                val result = scratch?.let { nativeSaveState(it.absolutePath) } ?: 3
+                val message = if (result == 0 && scratch != null) {
+                    try {
+                        slots.commitSave(index, scratch, thumbnail)
+                        "Saved to slot $index"
+                    } catch (error: Exception) {
+                        slots.abandonSave(scratch)
+                        "Save failed: ${error.message}"
+                    }
+                } else {
+                    scratch?.let(slots::abandonSave)
+                    "Save failed (${stateError(result)})"
+                }
+                runOnUiThread {
+                    stateBusy = false
+                    menuStatus.text = message
+                    toast(message)
+                }
+            }.start()
+        }
+    }
+
+    private fun loadState(slots: StateSlots, index: Int) {
+        if (stateBusy) return
+        stateBusy = true
+        menuStatus.text = "Loading slot $index…"
+        val directory = slots.slot(index).directory
+        Thread {
+            val result = nativeLoadState(directory.absolutePath)
+            runOnUiThread {
+                stateBusy = false
+                when (result) {
+                    0 -> {
+                        releaseInputs()
+                        inputModeDecider.reset()
+                        userPaused = false
+                        closeMenu()
+                        toast("Loaded slot $index")
+                    }
+                    // Nothing was changed yet, so the running game continues untouched.
+                    1, 2, 3 -> {
+                        menuStatus.text = "Load failed (${stateError(result)})"
+                        toast("Load failed (${stateError(result)})")
+                    }
+                    else -> {
+                        // The machine was partly replaced; start the game again from its disks.
+                        toast("Load failed (${stateError(result)}). Restarting the game.")
+                        currentEntry?.let { entry ->
+                            userPaused = false
+                            closeMenu()
+                            launchEntry(entry)
+                        }
+                    }
+                }
+            }
+        }.start()
+    }
+
+    private fun stateError(code: Int) = when (code) {
+        1 -> "machine not running"
+        2 -> "state is missing or from another version"
+        3 -> "storage unavailable"
+        4 -> "disk image copy failed"
+        5 -> "state file unreadable"
+        6 -> "machine did not respond"
+        else -> "code $code"
     }
 
     private fun exitApp() {

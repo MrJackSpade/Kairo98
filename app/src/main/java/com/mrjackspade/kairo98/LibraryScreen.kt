@@ -19,6 +19,19 @@ import android.widget.TextView
 import android.widget.Toast
 import java.util.concurrent.Executors
 
+/** One settings row, shown the same way in the game menu and the library menu. */
+data class SettingsEntry(val title: String, val value: () -> String, val action: () -> Unit)
+
+/**
+ * The part of a file name that tells revisions of one game apart: its bracketed and
+ * parenthesized tags, such as a translation or bug-fix credit.
+ */
+internal fun variantLabel(name: String): String? {
+    val tags = Regex("""[\[(]([^\])]+)[\])]""").findAll(name.substringAfterLast('/'))
+        .map { it.groupValues[1].trim() }.filter { it.isNotEmpty() }.distinct().toList()
+    return tags.takeIf { it.isNotEmpty() }?.joinToString("  ·  ")
+}
+
 /** Library landing page. A short tap or A opens the selected game's page. */
 class LibraryScreen(
     context: Context,
@@ -28,9 +41,8 @@ class LibraryScreen(
     private val rehash: () -> Unit,
     private val downloadMissingImages: (() -> Unit)?,
     private val cancelArtworkDownload: () -> Unit,
-    private val machineSettings: () -> Unit,
-    private val controllerSettings: () -> Unit,
-    private val about: () -> Unit,
+    private val settings: List<SettingsEntry>,
+    private val lastPlayedId: () -> String?,
     private val play: (LibraryEntry) -> Unit,
     private val preview: (LibraryEntry) -> Unit,
     private val details: (LibraryEntry) -> Unit
@@ -46,7 +58,11 @@ class LibraryScreen(
     private val actionsScroll = ScrollView(context)
     private val actionsDrawer = LinearLayout(context)
     private val actionItems = ArrayList<View>()
-    private val detailPage = GameDetailPage(context, catalog, play, preview) { closeDetail() }
+    private val detailPage = GameDetailPage(context, catalog, play, preview, details) { closeDetail() }
+    private val settingValues = ArrayList<Pair<TextView, () -> String>>()
+    private val search = android.widget.EditText(context)
+    private var allEntries = emptyList<LibraryEntry>()
+    private var pinnedId: String? = null
     private var detailEntryId: String? = null
     private var selectedAction = 0
     var actionsOpen = false
@@ -116,10 +132,13 @@ class LibraryScreen(
             val entry = entries[position]
             val game = catalog.resolve(entry.contentId ?: "", entry.displayName)
             holder.title.text = game.title
+            val source = entry.zipEntry ?: entry.path
+            val variant = variantLabel(entry.path) ?: variantLabel(source)
+                ?: source.substringAfterLast('/').substringBeforeLast('.')
             holder.detail.text = when {
-                entry.error != null -> "${entry.path}  ·  ${entry.error}. Fix the source, then Refresh."
-                entry.zipEntry != null -> "${entry.path}  ·  ${entry.zipEntry}"
-                else -> entry.path
+                entry.error != null -> "${entry.error}. Fix the source, then Refresh."
+                entry.id == pinnedId -> "Last played  ·  $variant"
+                else -> variant
             }
             val artwork = game.boxArt ?: game.preview
             val bitmap = artwork?.let(::loadArt)
@@ -145,6 +164,8 @@ class LibraryScreen(
             orientation = LinearLayout.HORIZONTAL
             gravity = Gravity.CENTER_VERTICAL
         }
+        header.addView(headerButton("☰", "Library menu") { openActions() },
+            LinearLayout.LayoutParams(dp(48), dp(48)).apply { marginEnd = dp(8) })
         header.addView(TextView(context).apply {
             text = "KAIRO98"
             textSize = 28f
@@ -156,18 +177,26 @@ class LibraryScreen(
         header.addView(scanProgress, LinearLayout.LayoutParams(dp(28), dp(28)).apply {
             marginEnd = dp(12)
         })
-        header.addView(TextView(context).apply {
-            text = "☰"
-            textSize = 29f
-            gravity = Gravity.CENTER
-            setTextColor(Color.WHITE)
-            setBackgroundColor(Color.BLACK)
-            contentDescription = "Library actions"
-            isFocusable = true
-            isClickable = true
-            setOnClickListener { openActions() }
-        }, LinearLayout.LayoutParams(dp(48), dp(48)))
+        header.addView(headerButton("⌕", "Search games") { toggleSearch() },
+            LinearLayout.LayoutParams(dp(48), dp(48)))
         body.addView(header)
+        search.apply {
+            visibility = View.GONE
+            hint = "Search by title"
+            textSize = 16f
+            isSingleLine = true
+            setTextColor(Color.WHITE)
+            setHintTextColor(0xff8794a3.toInt())
+            setBackgroundColor(0xff171d27.toInt())
+            setPadding(dp(14), dp(10), dp(14), dp(10))
+            imeOptions = android.view.inputmethod.EditorInfo.IME_ACTION_SEARCH
+            addTextChangedListener(object : android.text.TextWatcher {
+                override fun beforeTextChanged(text: CharSequence?, start: Int, count: Int, after: Int) {}
+                override fun onTextChanged(text: CharSequence?, start: Int, before: Int, count: Int) {}
+                override fun afterTextChanged(text: android.text.Editable?) { applyFilter() }
+            })
+        }
+        body.addView(search, LinearLayout.LayoutParams(-1, -2).apply { bottomMargin = dp(8) })
         artworkBanner.apply {
             orientation = LinearLayout.HORIZONTAL
             gravity = Gravity.CENTER_VERTICAL
@@ -241,7 +270,7 @@ class LibraryScreen(
             addView(actionsDrawer, FrameLayout.LayoutParams(-1, -2))
         }
         val drawerWidth = minOf(dp(320), resources.displayMetrics.widthPixels - dp(40))
-        addView(actionsScroll, FrameLayout.LayoutParams(drawerWidth, -1, Gravity.END))
+        addView(actionsScroll, FrameLayout.LayoutParams(drawerWidth, -1, Gravity.START))
         actionsDrawer.addView(TextView(context).apply {
             text = "LIBRARY"
             textSize = 24f
@@ -282,9 +311,9 @@ class LibraryScreen(
             setTextColor(0xff66d6df.toInt())
             setPadding(dp(12), dp(18), dp(12), dp(5))
         })
-        drawerAction("Machine", "Base clock and BIOS ROM", machineSettings)
-        drawerAction("Controller", "Gamepad and on-screen controls", controllerSettings)
-        drawerAction("About", "Version and shortcuts", about)
+        settings.forEach { entry ->
+            settingValues.add(drawerAction(entry.title, entry.value(), entry.action) to entry.value)
+        }
         addView(detailPage, FrameLayout.LayoutParams(-1, -1))
     }
 
@@ -319,11 +348,10 @@ class LibraryScreen(
         }
     }
     fun showEntries(items: List<LibraryEntry>) {
-        entries = items
-        emptyState.visibility = if (items.isEmpty()) View.VISIBLE else View.GONE
-        selectedIndex = selectedIndex.coerceIn(0, (items.size - 1).coerceAtLeast(0))
-        this@LibraryScreen.adapter.notifyDataSetChanged()
-        if (items.isNotEmpty()) list.setSelection(selectedIndex)
+        allEntries = items
+        pinnedId = lastPlayedId()?.takeIf { id -> items.any { it.id == id } }
+        applyFilter()
+        if (entries.isNotEmpty()) list.setSelection(selectedIndex)
         if (detailOpen) {
             val refreshed = items.firstOrNull { it.id == detailEntryId }
             if (refreshed == null) closeDetail() else detailPage.show(refreshed)
@@ -333,6 +361,7 @@ class LibraryScreen(
     fun selectGame(query: String): Boolean {
         val needle = query.trim()
         if (needle.isEmpty()) return false
+        if (search.text.isNotEmpty()) search.setText("")
         val index = entries.indexOfFirst { it.displayName.equals(needle, ignoreCase = true) }
             .takeIf { it >= 0 }
             ?: entries.indexOfFirst {
@@ -353,7 +382,7 @@ class LibraryScreen(
     fun findGameForDebugLaunch(query: String): LibraryEntry? {
         val needle = query.trim()
         if (needle.isEmpty()) return null
-        val playable = entries.filter { it.playable }
+        val playable = allEntries.filter { it.playable }
         fun unique(matches: List<LibraryEntry>): LibraryEntry? =
             matches.firstOrNull()?.takeIf {
                 matches.all { other -> other.contentId == it.contentId }
@@ -420,7 +449,8 @@ class LibraryScreen(
         scrim.visibility = View.VISIBLE
         scrim.alpha = 0f
         actionsScroll.visibility = View.VISIBLE
-        actionsScroll.translationX = actionsScroll.layoutParams.width.toFloat()
+        actionsScroll.translationX = -actionsScroll.layoutParams.width.toFloat()
+        refreshSettingValues()
         focusAction(0)
         scrim.animate().alpha(1f).setDuration(180).start()
         actionsScroll.animate().translationX(0f).setDuration(180).start()
@@ -434,7 +464,7 @@ class LibraryScreen(
         scrim.animate().alpha(0f).setDuration(160).withEndAction {
             if (!actionsOpen) scrim.visibility = View.GONE
         }.start()
-        actionsScroll.animate().translationX(actionsScroll.layoutParams.width.toFloat())
+        actionsScroll.animate().translationX(-actionsScroll.layoutParams.width.toFloat())
             .setDuration(160).withEndAction {
                 if (!actionsOpen) actionsScroll.visibility = View.GONE
             }.start()
@@ -456,7 +486,7 @@ class LibraryScreen(
         actionItems.getOrNull(index)?.requestFocus()
     }
 
-    private fun drawerAction(title: String, description: String, action: () -> Unit) {
+    private fun drawerAction(title: String, description: String, action: () -> Unit): TextView {
         val item = LinearLayout(context).apply {
             orientation = LinearLayout.VERTICAL
             setPadding(dp(12), dp(12), dp(12), dp(12))
@@ -473,13 +503,61 @@ class LibraryScreen(
             textSize = 17f
             setTextColor(Color.WHITE)
         })
-        item.addView(TextView(context).apply {
+        val detail = TextView(context).apply {
             text = description
             textSize = 12f
             setTextColor(0xff9ba9b8.toInt())
-        })
-        actionsDrawer.addView(item, LinearLayout.LayoutParams(-1, dp(66)))
+        }
+        item.addView(detail)
+        actionsDrawer.addView(item, LinearLayout.LayoutParams(-1, -2))
+        item.minimumHeight = dp(66)
         actionItems.add(item)
+        return detail
+    }
+
+    fun refreshSettingValues() {
+        settingValues.forEach { (view, value) -> view.text = value() }
+    }
+
+    private fun headerButton(label: String, description: String, action: () -> Unit) =
+        TextView(context).apply {
+            text = label
+            textSize = 27f
+            gravity = Gravity.CENTER
+            setTextColor(Color.WHITE)
+            contentDescription = description
+            isFocusable = true
+            isClickable = true
+            setOnClickListener { action() }
+        }
+
+    private fun toggleSearch() {
+        val imm = context.getSystemService(Context.INPUT_METHOD_SERVICE)
+            as android.view.inputmethod.InputMethodManager
+        if (search.visibility == View.VISIBLE) {
+            search.setText("")
+            search.visibility = View.GONE
+            imm.hideSoftInputFromWindow(search.windowToken, 0)
+        } else {
+            search.visibility = View.VISIBLE
+            search.requestFocus()
+            imm.showSoftInput(search, 0)
+        }
+    }
+
+    private fun applyFilter() {
+        val query = search.text.toString().trim()
+        val ordered = pinnedId?.let { id ->
+            allEntries.firstOrNull { it.id == id }?.let { pinned -> listOf(pinned) + (allEntries - pinned) }
+        } ?: allEntries
+        entries = if (query.isEmpty()) ordered else ordered.filter { entry ->
+            catalog.resolve(entry.contentId ?: "", entry.displayName).title.contains(query, ignoreCase = true) ||
+                entry.displayName.contains(query, ignoreCase = true)
+        }
+        emptyState.visibility = if (entries.isEmpty()) View.VISIBLE else View.GONE
+        if (entries.isEmpty() && allEntries.isNotEmpty()) emptyState.text = "No games match \"$query\""
+        selectedIndex = selectedIndex.coerceIn(0, (entries.size - 1).coerceAtLeast(0))
+        adapter.notifyDataSetChanged()
     }
 
     private fun loadArt(path: String): Bitmap? {
