@@ -49,7 +49,7 @@ internal class Pc98KeyboardPanel(
     init {
         orientation = VERTICAL
         if (onSwap != null) gravity = Gravity.TOP or Gravity.CENTER_HORIZONTAL
-        setBackgroundColor(0xff171d27.toInt())
+        setBackgroundColor(Ui.SURFACE)
         elevation = dp(14).toFloat()
         visibility = View.GONE
 
@@ -58,19 +58,14 @@ internal class Pc98KeyboardPanel(
                 gravity = Gravity.CENTER_VERTICAL
                 setPadding(dp(14), dp(4), dp(8), dp(4))
             }
-            brand.addView(TextView(context).apply {
-                text = "Kairo98"
-                textSize = 17f
-                setTextColor(Color.WHITE)
-                typeface = android.graphics.Typeface.DEFAULT_BOLD
-            }, LayoutParams(0, -2, 1f))
+            brand.addView(PixelTextView(context).apply { text = "KAIRO98" }, LayoutParams(0, -2, 1f))
             brand.addView(TextView(context).apply {
                 text = "\u2191\u2193"
                 contentDescription = "Swap game and keyboard screens"
                 gravity = Gravity.CENTER
                 textSize = 22f
-                setTextColor(Color.WHITE)
-                background = keyBackground()
+                setTextColor(keyText())
+                background = keyBackground(action = true)
                 setOnClickListener { onSwap.invoke() }
             }, LayoutParams(dp(54), dp(40)))
             addView(brand, LayoutParams(-1, dp(48)))
@@ -85,11 +80,11 @@ internal class Pc98KeyboardPanel(
             val tab = TextView(context).apply {
                 text = label
                 gravity = Gravity.CENTER
-                textSize = 14f
-                setTextColor(Color.WHITE)
+                textSize = Ui.SECONDARY
+                setTextColor(keyText())
                 setOnClickListener { showPage(target) }
             }
-            tab.background = keyBackground()
+            tab.background = keyBackground(action = true)
             pageViews[target] = tab
             header.addView(tab, LayoutParams(0, dp(34), 1f).apply {
                 setMargins(dp(2), 0, dp(2), 0)
@@ -100,7 +95,7 @@ internal class Pc98KeyboardPanel(
                 text = "Close ×"
                 gravity = Gravity.CENTER
                 textSize = 14f
-                setTextColor(0xffa6e3ec.toInt())
+                setTextColor(Ui.ACCENT_SOFT)
                 setOnClickListener { onClose() }
             }, LayoutParams(dp(76), dp(34)))
         }
@@ -223,9 +218,11 @@ internal class Pc98KeyboardPanel(
         val line = LinearLayout(context).apply { orientation = HORIZONTAL }
         for (key in keys) {
             val modifier = key.scan in MODIFIERS
+            // Letters, digits, and symbols sit on the lighter key; named keys are darker.
+            val action = modifier || key.label.length > 1
             val view = TextView(context).apply {
                 gravity = Gravity.CENTER
-                setTextColor(Color.WHITE)
+                setTextColor(keyText())
                 setAutoSizeTextTypeUniformWithConfiguration(9, 16, 1, TypedValue.COMPLEX_UNIT_SP)
                 isClickable = true
                 setOnTouchListener { _, event ->
@@ -250,7 +247,7 @@ internal class Pc98KeyboardPanel(
                     }
                 }
             }
-            view.background = keyBackground()
+            view.background = keyBackground(action)
             keyViews.add(key to view)
             line.addView(view, LayoutParams(0, -1, key.width).apply {
                 setMargins(dp(2), dp(2), dp(2), dp(2))
@@ -314,18 +311,23 @@ internal class Pc98KeyboardPanel(
         }
     }
 
-    private fun keyBackground(): RippleDrawable {
+    /** Latched modifiers and the current page fill with the accent; everything else stays quiet. */
+    private fun keyBackground(action: Boolean = false): RippleDrawable {
         val states = StateListDrawable().apply {
-            addState(intArrayOf(android.R.attr.state_pressed), keyShape(0xff4c7892.toInt()))
-            addState(intArrayOf(android.R.attr.state_activated), keyShape(0xff304e63.toInt()))
-            addState(intArrayOf(), keyShape(0xff2a3543.toInt()))
+            addState(intArrayOf(android.R.attr.state_activated), keyShape(Ui.ACCENT))
+            addState(intArrayOf(android.R.attr.state_pressed), keyShape(Ui.SELECTED))
+            addState(intArrayOf(), if (action) keyShape(Ui.SURFACE, Ui.LINE) else keyShape(Ui.RAISED))
         }
-        return RippleDrawable(ColorStateList.valueOf(0x80a6e3ec.toInt()), states, null)
+        return RippleDrawable(ColorStateList.valueOf(0x80a8eef1.toInt()), states, null)
     }
 
-    private fun keyShape(color: Int) = GradientDrawable().apply {
+    private fun keyText() = ColorStateList(
+        arrayOf(intArrayOf(android.R.attr.state_activated), intArrayOf()), intArrayOf(Ui.ON_ACCENT, Ui.TEXT))
+
+    private fun keyShape(color: Int, stroke: Int? = null) = GradientDrawable().apply {
         setColor(color)
         cornerRadius = dp(5).toFloat()
+        stroke?.let { setStroke(dp(1), it) }
     }
 
     private fun dp(value: Int) = (value * resources.displayMetrics.density).toInt()

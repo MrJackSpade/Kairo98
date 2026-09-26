@@ -42,6 +42,7 @@ class OnScreenControls(
         Spec("down", "↓", "D-PAD", .16f, .83f, true),
         Spec("left", "←", "D-PAD", .09f, .75f, true),
         Spec("right", "→", "D-PAD", .23f, .75f, true),
+        Spec(PAD8, "", "D-PAD", .16f, .75f, false),
         Spec("a", "A", "FACE BUTTONS", .88f, .82f, true),
         Spec("b", "B", "FACE BUTTONS", .94f, .74f, true),
         Spec("x", "X", "FACE BUTTONS", .82f, .74f, true),
@@ -60,7 +61,7 @@ class OnScreenControls(
     )
     private val portraitPositions = mapOf(
         "up" to (.18f to .62f), "down" to (.18f to .78f),
-        "left" to (.09f to .70f), "right" to (.27f to .70f),
+        "left" to (.09f to .70f), "right" to (.27f to .70f), PAD8 to (.18f to .70f),
         "a" to (.84f to .77f), "b" to (.92f to .69f),
         "x" to (.76f to .69f), "y" to (.84f to .61f),
         "l1" to (.12f to .44f), "r1" to (.88f to .44f),
@@ -75,10 +76,12 @@ class OnScreenControls(
         Configuration.ORIENTATION_PORTRAIT) LayoutOrientation.PORTRAIT
         else LayoutOrientation.LANDSCAPE
     private val states: LinkedHashMap<String, State> get() = layouts.getValue(orientation)
-    private val buttons = LinkedHashMap<String, TextView>()
+    private val buttons = LinkedHashMap<String, View>()
     private val heldPointers = HashMap<String, MutableSet<Int>>()
-    /** Directions each D-pad pointer holds. A finger that lands on any arrow steers the whole pad. */
+    /** Directions each D-pad pointer holds, for the four arrows and for the 8-way pad. A finger
+     * that lands on any arrow steers all four. */
     private val dpadPointers = HashMap<Int, Set<String>>()
+    private val padPointers = HashMap<Int, Set<String>>()
     private val overlay = FrameLayout(activity).apply {
         visibility = View.GONE
         isClickable = false
@@ -101,6 +104,20 @@ class OnScreenControls(
 
     val isOpen: Boolean get() = page != null
 
+    /** Whether the round 8-way pad replaces the four arrows, in both orientations. */
+    var eightWayDpad: Boolean
+        get() = states.getValue(PAD8).shown
+        set(value) {
+            for (layout in LayoutOrientation.entries) {
+                val controls = layouts.getValue(layout)
+                controls.getValue(PAD8).shown = value
+                DPAD.forEach { controls.getValue(it).shown = !value }
+                saveLayout(layout)
+            }
+            positionAll()
+            if (isOpen) renderSettings()
+        }
+
     init {
         loadLayouts()
         root.addView(overlay, FrameLayout.LayoutParams(-1, -1))
@@ -120,6 +137,8 @@ class OnScreenControls(
             mapper.releaseOnScreen()
             heldPointers.values.forEach(MutableSet<Int>::clear)
             dpadPointers.clear()
+            padPointers.clear()
+            (buttons[PAD8] as? DpadView)?.held = emptySet()
             buttons.values.forEach { it.isPressed = false; it.alpha = .72f }
         }
         overlay.visibility = if (show) View.VISIBLE else View.GONE
@@ -139,7 +158,7 @@ class OnScreenControls(
         positionAll()
         val settings = LinearLayout(activity).apply {
             orientation = LinearLayout.VERTICAL
-            setBackgroundColor(0xff10151d.toInt())
+            setBackgroundColor(Ui.BG)
             isFocusableInTouchMode = true
             elevation = dp(20).toFloat()
         }
@@ -147,20 +166,15 @@ class OnScreenControls(
         root.addView(settings, FrameLayout.LayoutParams(-1, -1))
         val bar = LinearLayout(activity).apply {
             gravity = Gravity.CENTER_VERTICAL
-            setBackgroundColor(Color.BLACK)
+            setBackgroundColor(Ui.BG)
             setPadding(dp(12), dp(7), dp(12), dp(7))
         }
-        bar.addView(TextView(activity).apply {
-            text = "‹  Back"
-            textSize = 18f
-            setTextColor(Color.WHITE)
-            gravity = Gravity.CENTER
-            setOnClickListener { back() }
-        }, LinearLayout.LayoutParams(dp(100), dp(48)))
+        bar.addView(Ui.iconButton(activity, R.drawable.ic_back, "Back") { back() },
+            LinearLayout.LayoutParams(dp(48), dp(48)).apply { marginEnd = dp(8) })
         settingsTitle = TextView(activity).apply {
             text = "Controls · ${orientation.label}"
-            textSize = 23f
-            setTextColor(Color.WHITE)
+            textSize = Ui.TITLE
+            setTextColor(Ui.TEXT)
             gravity = Gravity.CENTER_VERTICAL
         }
         bar.addView(settingsTitle, LinearLayout.LayoutParams(0, dp(48), 1f))
@@ -224,6 +238,11 @@ class OnScreenControls(
         row(body, "Arrange controls", "Drag buttons into place") { showArrangement() }
         for (group in specs.map { it.group }.distinct()) {
             section(body, group)
+            if (group == "D-PAD") {
+                row(body, "D-pad style", if (eightWayDpad) "8-way pad" else "4 buttons") {
+                    eightWayDpad = !eightWayDpad
+                }
+            }
             specs.filter { it.group == group }.forEach { spec ->
                 val state = states.getValue(spec.id)
                 row(body, controlName(spec.id), if (state.shown) "On" else "Off") {
@@ -272,13 +291,13 @@ class OnScreenControls(
         }
         bar.addView(TextView(activity).apply {
             text = "Drag controls to reposition"
-            textSize = 17f
-            setTextColor(Color.WHITE)
+            textSize = Ui.BODY
+            setTextColor(Ui.TEXT)
         }, LinearLayout.LayoutParams(0, -2, 1f))
         bar.addView(TextView(activity).apply {
             text = "Done"
-            textSize = 18f
-            setTextColor(0xff91dfe8.toInt())
+            textSize = Ui.TITLE
+            setTextColor(Ui.ACCENT)
             gravity = Gravity.CENTER
             setOnClickListener { back() }
         }, LinearLayout.LayoutParams(dp(76), -1))
@@ -286,15 +305,17 @@ class OnScreenControls(
         layer.post(::positionAll)
     }
 
-    private fun controlView(spec: Spec, editing: Boolean): TextView {
+    private fun controlView(spec: Spec, editing: Boolean): View {
         val held = if (editing) HashSet<Int>() else heldPointers.getOrPut(spec.id) { HashSet() }
-        return TextView(activity).apply {
-            tag = spec.id
+        val view: View = if (spec.id == PAD8) DpadView(activity) else TextView(activity).apply {
             text = spec.label
             textSize = if (spec.label.length > 2) 11f else 20f
-            setTextColor(Color.WHITE)
+            setTextColor(Ui.TEXT)
             gravity = Gravity.CENTER
             background = buttonBackground(editing)
+        }
+        return view.apply {
+            tag = spec.id
             contentDescription = controlName(spec.id)
             isClickable = true
             if (editing) {
@@ -311,7 +332,7 @@ class OnScreenControls(
                             view.alpha = 1f
                         }
                         MotionEvent.ACTION_MOVE, MotionEvent.ACTION_UP -> {
-                            val size = dp(54)
+                            val size = if (spec.id == PAD8) dp(148) else dp(54)
                             val x = (startX + event.rawX - rawX)
                                 .coerceIn(size / 2f, (root.width - size / 2f).coerceAtLeast(size / 2f))
                             val y = (startY + event.rawY - rawY)
@@ -338,8 +359,8 @@ class OnScreenControls(
                     }
                     true
                 }
-            } else if (spec.id in DPAD) setOnTouchListener { view, event ->
-                dpadTouch(view, event)
+            } else if (spec.id in DPAD || spec.id == PAD8) setOnTouchListener { view, event ->
+                dpadTouch(view, event, eightWay = spec.id == PAD8)
                 true
             } else setOnTouchListener { view, event ->
                 when (event.actionMasked) {
@@ -372,32 +393,38 @@ class OnScreenControls(
         }
     }
 
-    private fun dpadTouch(view: View, event: MotionEvent) {
+    /**
+     * The four arrows steer together in four directions from the center of the visible arrows.
+     * The optional round pad reads eight directions from its own center, so diagonals press two.
+     */
+    private fun dpadTouch(view: View, event: MotionEvent, eightWay: Boolean) {
+        val pointers = if (eightWay) padPointers else dpadPointers
+        val owner = if (eightWay) "onscreen:pad8" else "onscreen:dpad"
         fun directionsAt(index: Int): Set<String> {
-            val centers = DPAD.mapNotNull { id -> buttons[id]?.takeIf { it.visibility == View.VISIBLE } }
-            if (centers.isEmpty()) return emptySet()
-            val cx = centers.map { it.left + it.width / 2f }.average().toFloat()
-            val cy = centers.map { it.top + it.height / 2f }.average().toFloat()
-            val dx = view.left + event.getX(index) - cx
-            val dy = view.top + event.getY(index) - cy
-            if (hypot(dx, dy) < dp(10)) return emptySet()
-            val sector = ((Math.toDegrees(atan2(dy, dx).toDouble()) + 360 + 22.5) % 360 / 45).toInt()
-            return when (sector) {
-                0 -> setOf("right")
-                1 -> setOf("down", "right")
-                2 -> setOf("down")
-                3 -> setOf("down", "left")
-                4 -> setOf("left")
-                5 -> setOf("up", "left")
-                6 -> setOf("up")
-                else -> setOf("up", "right")
+            val cx: Float
+            val cy: Float
+            if (eightWay) {
+                cx = view.width / 2f
+                cy = view.height / 2f
+            } else {
+                val arrows = DPAD.mapNotNull { id -> buttons[id]?.takeIf { it.visibility == View.VISIBLE } }
+                if (arrows.isEmpty()) return emptySet()
+                cx = arrows.map { it.left + it.width / 2f }.average().toFloat() - view.left
+                cy = arrows.map { it.top + it.height / 2f }.average().toFloat() - view.top
             }
+            val dx = event.getX(index) - cx
+            val dy = event.getY(index) - cy
+            val deadZone = if (eightWay) view.width * 0.12f else dp(10).toFloat()
+            if (hypot(dx, dy) < deadZone) return emptySet()
+            val degrees = Math.toDegrees(atan2(dy, dx).toDouble()) + 360
+            return if (eightWay) DpadView.SECTORS[((degrees + 22.5) % 360 / 45).toInt()]
+                else listOf(setOf("right"), setOf("down"), setOf("left"), setOf("up"))[((degrees + 45) % 360 / 90).toInt()]
         }
         fun update(pointer: Int, next: Set<String>) {
-            val prior = dpadPointers[pointer] ?: emptySet()
-            (prior - next).forEach { mapper.releaseVirtual("onscreen:dpad:$it:$pointer") }
-            (next - prior).forEach { mapper.pressVirtual(it, "onscreen:dpad:$it:$pointer") }
-            if (next.isEmpty()) dpadPointers.remove(pointer) else dpadPointers[pointer] = next
+            val prior = pointers[pointer] ?: emptySet()
+            (prior - next).forEach { mapper.releaseVirtual("$owner:$it:$pointer") }
+            (next - prior).forEach { mapper.pressVirtual(it, "$owner:$it:$pointer") }
+            if (next.isEmpty()) pointers.remove(pointer) else pointers[pointer] = next
             if ((next - prior).isNotEmpty()) view.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)
         }
         when (event.actionMasked) {
@@ -407,10 +434,13 @@ class OnScreenControls(
                 update(event.getPointerId(index), directionsAt(index))
             MotionEvent.ACTION_UP, MotionEvent.ACTION_POINTER_UP ->
                 update(event.getPointerId(event.actionIndex), emptySet())
-            MotionEvent.ACTION_CANCEL -> dpadPointers.keys.toList().forEach { update(it, emptySet()) }
+            MotionEvent.ACTION_CANCEL -> pointers.keys.toList().forEach { update(it, emptySet()) }
         }
-        val held = dpadPointers.values.flatten().toSet()
-        DPAD.forEach { id ->
+        val held = pointers.values.flatten().toSet()
+        if (eightWay) {
+            (view as? DpadView)?.held = held
+            view.alpha = if (held.isEmpty()) .72f else 1f
+        } else DPAD.forEach { id ->
             buttons[id]?.let {
                 it.isPressed = id in held
                 it.alpha = if (id in held) 1f else .72f
@@ -427,6 +457,8 @@ class OnScreenControls(
             mapper.releaseOnScreen()
             heldPointers.values.forEach(MutableSet<Int>::clear)
             dpadPointers.clear()
+            padPointers.clear()
+            (buttons[PAD8] as? DpadView)?.held = emptySet()
             buttons.values.forEach { it.isPressed = false; it.alpha = .72f }
             settingsTitle?.text = "Controls · ${orientation.label}"
             if (isOpen) renderSettings()
@@ -439,7 +471,7 @@ class OnScreenControls(
         }
         arrangement?.let { layer ->
             for (index in 0 until layer.childCount) {
-                val view = layer.getChildAt(index) as? TextView ?: continue
+                val view = layer.getChildAt(index)
                 val id = view.tag as? String ?: continue
                 position(view, states.getValue(id), root.width, root.height)
             }
@@ -457,7 +489,7 @@ class OnScreenControls(
     }
 
     private fun position(view: View, state: State, width: Int, height: Int) {
-        val size = dp(54)
+        val size = if (view.tag == PAD8) dp(148) else dp(54)
         val left = (state.x * width - size / 2f).roundToInt().coerceIn(0, (width - size).coerceAtLeast(0))
         val top = (state.y * height - size / 2f).roundToInt().coerceIn(0, (height - size).coerceAtLeast(0))
         val params = view.layoutParams as? FrameLayout.LayoutParams ?: FrameLayout.LayoutParams(size, size)
@@ -492,14 +524,14 @@ class OnScreenControls(
         if (layout == LayoutOrientation.PORTRAIT) portraitPositions.getValue(spec.id)
         else spec.x to spec.y
 
-    private fun saveLayout() {
+    private fun saveLayout(layout: LayoutOrientation = orientation) {
         val controls = JSONObject()
         specs.forEach { spec ->
-            val state = states.getValue(spec.id)
+            val state = layouts.getValue(layout).getValue(spec.id)
             controls.put(spec.id, JSONObject().put("shown", state.shown)
                 .put("x", state.x.toDouble()).put("y", state.y.toDouble()))
         }
-        preferences.edit().putString(orientation.preference,
+        preferences.edit().putString(layout.preference,
             JSONObject().put("version", 2).put("controls", controls).toString()).apply()
     }
 
@@ -508,26 +540,24 @@ class OnScreenControls(
         "left" -> "D-pad left"; "right" -> "D-pad right"
         "rsup" -> "Right stick up"; "rsdown" -> "Right stick down"
         "rsleft" -> "Right stick left"; "rsright" -> "Right stick right"
+        PAD8 -> "8-way D-pad"
         else -> id.uppercase()
     }
 
     private fun buttonBackground(editing: Boolean) = GradientDrawable().apply {
         setColor(if (editing) 0xdd304e63.toInt() else 0xb5253344.toInt())
-        cornerRadius = dp(15).toFloat()
+        // Round, so the face-button diamond never overlaps at its standard spacing.
+        cornerRadius = dp(27).toFloat()
         setStroke(dp(1), 0xccffffff.toInt())
     }
 
     private fun section(parent: LinearLayout, title: String) {
-        parent.addView(TextView(activity).apply {
-            text = title; textSize = 13f; setTextColor(0xff91c6d8.toInt())
-            setPadding(dp(10), dp(18), dp(10), dp(8))
-        })
+        parent.addView(Ui.sectionLabel(activity, title))
     }
 
     private fun note(parent: LinearLayout, message: String) {
-        parent.addView(TextView(activity).apply {
-            text = message; textSize = 15f; setTextColor(0xffb7c2cf.toInt())
-            setPadding(dp(10), dp(8), dp(10), dp(16))
+        parent.addView(Ui.text(activity, message, Ui.SECONDARY, Ui.TEXT_MUTED).apply {
+            setPadding(dp(12), dp(8), dp(12), dp(8))
         })
     }
 
@@ -536,23 +566,17 @@ class OnScreenControls(
             orientation = LinearLayout.HORIZONTAL
             gravity = Gravity.CENTER_VERTICAL
             setPadding(dp(14), dp(4), dp(14), dp(4))
-            background = GradientDrawable().apply {
-                setColor(0xff202a36.toInt()); cornerRadius = dp(6).toFloat()
-            }
+            background = Ui.rowBackground(activity, Ui.SURFACE)
             isClickable = true
             isFocusable = true
             setOnClickListener { action() }
             contentDescription = "$title. $value"
         }
-        line.addView(TextView(activity).apply {
-            text = title; textSize = 17f; setTextColor(Color.WHITE)
-        }, LinearLayout.LayoutParams(0, -2, 1f))
-        line.addView(TextView(activity).apply {
-            text = value; textSize = 15f; setTextColor(0xffa6e3ec.toInt())
-            gravity = Gravity.END
-        }, LinearLayout.LayoutParams(-2, -2))
-        parent.addView(line, LinearLayout.LayoutParams(-1, dp(58)).apply {
-            bottomMargin = dp(3)
+        line.addView(Ui.text(activity, title, Ui.BODY), LinearLayout.LayoutParams(0, -2, 1f))
+        line.addView(Ui.text(activity, value, Ui.SECONDARY, Ui.ACCENT_SOFT).apply { gravity = Gravity.END },
+            LinearLayout.LayoutParams(-2, -2))
+        parent.addView(line, LinearLayout.LayoutParams(-1, dp(52)).apply {
+            bottomMargin = dp(4)
         })
     }
 
@@ -560,5 +584,6 @@ class OnScreenControls(
 
     private companion object {
         val DPAD = listOf("up", "down", "left", "right")
+        const val PAD8 = "pad8"
     }
 }

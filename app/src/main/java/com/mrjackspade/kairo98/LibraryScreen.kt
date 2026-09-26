@@ -4,6 +4,7 @@ import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.Color
+import android.graphics.drawable.ColorDrawable
 import android.util.LruCache
 import android.view.Gravity
 import android.view.View
@@ -45,8 +46,10 @@ class LibraryScreen(
     private val lastPlayedId: () -> String?,
     private val play: (LibraryEntry) -> Unit,
     private val preview: (LibraryEntry) -> Unit,
-    private val details: (LibraryEntry) -> Unit
+    private val details: (LibraryEntry) -> Unit,
+    private val selectionChanged: (LibraryEntry?) -> Unit
 ) : FrameLayout(context) {
+    private var reportedSelection: String? = "none"
     private val status = TextView(context)
     private val folder = TextView(context)
     private val list = ListView(context)
@@ -77,84 +80,121 @@ class LibraryScreen(
     private var entries = emptyList<LibraryEntry>()
     private var selectedIndex = 0
 
+    private sealed interface ListItem
+    private data class Header(val label: String, val pinned: Boolean) : ListItem
+    private data class Game(val index: Int) : ListItem
+    private var items = emptyList<ListItem>()
+
     private data class Row(val art: ImageView, val mark: TextView,
                            val title: TextView, val detail: TextView)
 
+    private fun positionOf(index: Int) = items.indexOfFirst { it is Game && it.index == index }
+    private fun indexAt(position: Int) = (items.getOrNull(position) as? Game)?.index
+
     private val adapter = object : BaseAdapter() {
-        override fun getCount() = entries.size
-        override fun getItem(position: Int) = entries[position]
-        override fun getItemId(position: Int) = entries[position].id.hashCode().toLong()
-        override fun getView(position: Int, convertView: View?, parent: ViewGroup): View {
-            val view: LinearLayout
-            val holder: Row
-            if (convertView is LinearLayout && convertView.tag is Row) {
-                view = convertView
-                holder = view.tag as Row
-            } else {
-                view = LinearLayout(context).apply {
-                    orientation = LinearLayout.HORIZONTAL
-                    gravity = Gravity.CENTER_VERTICAL
-                    setPadding(dp(12), dp(9), dp(12), dp(9))
-                    minimumHeight = dp(75)
-                }
-                val art = ImageView(context).apply { scaleType = ImageView.ScaleType.CENTER_CROP }
-                val mark = TextView(context).apply {
-                    gravity = Gravity.CENTER
-                    setTextColor(0xffb8e9ec.toInt())
-                    textSize = 24f
-                    setBackgroundColor(0xff263748.toInt())
-                }
-                val coverSize = dp(58)
-                view.addView(art, LinearLayout.LayoutParams(coverSize, coverSize))
-                view.addView(mark, LinearLayout.LayoutParams(coverSize, coverSize))
-                val text = LinearLayout(context).apply {
-                    orientation = LinearLayout.VERTICAL
-                    setPadding(dp(12), 0, 0, 0)
-                }
-                val title = TextView(context).apply {
-                    setTextColor(Color.WHITE)
-                    textSize = 17f
-                    maxLines = 1
-                    ellipsize = android.text.TextUtils.TruncateAt.END
-                }
-                val detail = TextView(context).apply {
-                    setTextColor(0xff9ba9b8.toInt())
-                    textSize = 12f
-                    maxLines = 2
-                    ellipsize = android.text.TextUtils.TruncateAt.MIDDLE
-                }
-                text.addView(title)
-                text.addView(detail)
-                view.addView(text, LinearLayout.LayoutParams(0, -2, 1f))
-                holder = Row(art, mark, title, detail)
-                view.tag = holder
-            }
-            val entry = entries[position]
-            val game = catalog.resolve(entry.contentId ?: "", entry.displayName)
-            holder.title.text = game.title
-            val source = entry.zipEntry ?: entry.path
-            val variant = variantLabel(entry.path) ?: variantLabel(source)
-                ?: source.substringAfterLast('/').substringBeforeLast('.')
-            holder.detail.text = when {
-                entry.error != null -> "${entry.error}. Fix the source, then Refresh."
-                entry.id == pinnedId -> "Last played  ·  $variant"
-                else -> variant
-            }
-            val artwork = game.boxArt ?: game.preview
-            val bitmap = artwork?.let(::loadArt)
-            holder.art.visibility = if (bitmap == null) View.GONE else View.VISIBLE
-            holder.mark.visibility = if (bitmap == null) View.VISIBLE else View.GONE
-            holder.art.setImageBitmap(bitmap)
-            holder.mark.text = game.title.firstOrNull()?.uppercase() ?: "?"
-            view.setBackgroundColor(if (position == selectedIndex) 0xff30475b.toInt()
-                else if (position % 2 == 0) 0xff171d27.toInt() else 0xff1b2430.toInt())
-            view.alpha = if (entry.playable) 1f else 0.68f
-            return view
+        override fun getCount() = items.size
+        override fun getItem(position: Int) = items[position]
+        override fun getItemId(position: Int) = when (val item = items[position]) {
+            is Game -> entries[item.index].id.hashCode().toLong()
+            is Header -> item.label.hashCode().toLong()
         }
+        override fun getViewTypeCount() = 2
+        override fun getItemViewType(position: Int) = if (items[position] is Header) 1 else 0
+        override fun areAllItemsEnabled() = false
+        override fun isEnabled(position: Int) = items[position] is Game
+        override fun getView(position: Int, convertView: View?, parent: ViewGroup): View =
+            when (val item = items[position]) {
+                is Header -> headerView(item, convertView)
+                is Game -> gameView(item.index, convertView)
+            }
+    }
+
+    private fun headerView(item: Header, convertView: View?): View {
+        val view = convertView as? LinearLayout ?: LinearLayout(context).apply {
+            orientation = LinearLayout.HORIZONTAL
+            gravity = Gravity.CENTER_VERTICAL
+            setPadding(dp(4), dp(10), dp(4), dp(2))
+            addView(Ui.icon(context, R.drawable.ic_pin, Ui.PIN, 16).apply {
+                (layoutParams as LinearLayout.LayoutParams).marginEnd = dp(6)
+            })
+            addView(PixelTextView(context))
+        }
+        view.getChildAt(0).visibility = if (item.pinned) View.VISIBLE else View.GONE
+        (view.getChildAt(1) as PixelTextView).apply {
+            text = item.label
+            color = if (item.pinned) Ui.PIN else Ui.ACCENT
+        }
+        return view
+    }
+
+    private fun gameView(index: Int, convertView: View?): View {
+        val view: LinearLayout
+        val holder: Row
+        if (convertView is LinearLayout && convertView.tag is Row) {
+            view = convertView
+            holder = view.tag as Row
+        } else {
+            view = LinearLayout(context).apply {
+                orientation = LinearLayout.HORIZONTAL
+                gravity = Gravity.CENTER_VERTICAL
+                setPadding(dp(12), dp(8), dp(12), dp(8))
+                minimumHeight = dp(80)
+            }
+            val cover = FrameLayout(context).apply {
+                background = Ui.rounded(context, Ui.RAISED, 4)
+                clipToOutline = true
+            }
+            val art = ImageView(context).apply { scaleType = ImageView.ScaleType.CENTER_CROP }
+            val mark = TextView(context).apply {
+                gravity = Gravity.CENTER
+                setTextColor(Ui.ACCENT_SOFT)
+                textSize = Ui.TITLE
+            }
+            cover.addView(art, FrameLayout.LayoutParams(-1, -1))
+            cover.addView(mark, FrameLayout.LayoutParams(-1, -1))
+            view.addView(cover, LinearLayout.LayoutParams(dp(48), dp(64)))
+            val text = LinearLayout(context).apply {
+                orientation = LinearLayout.VERTICAL
+                setPadding(dp(14), 0, 0, 0)
+            }
+            val title = Ui.text(context, "", Ui.BODY).apply {
+                maxLines = 1
+                ellipsize = android.text.TextUtils.TruncateAt.END
+            }
+            val detail = Ui.text(context, "", Ui.SECONDARY, Ui.TEXT_MUTED).apply {
+                maxLines = 1
+                ellipsize = android.text.TextUtils.TruncateAt.END
+            }
+            text.addView(title)
+            text.addView(detail)
+            view.addView(text, LinearLayout.LayoutParams(0, -2, 1f))
+            holder = Row(art, mark, title, detail)
+            view.tag = holder
+        }
+        val entry = entries[index]
+        val pinned = entry.id == pinnedId && items.firstOrNull() is Header
+        val game = catalog.resolve(entry.contentId ?: "", entry.displayName)
+        holder.title.text = game.title
+        val source = entry.zipEntry ?: entry.path
+        holder.detail.text = entry.error?.let { "$it. Fix the source, then Refresh." }
+            ?: variantLabel(entry.path) ?: variantLabel(source)
+            ?: source.substringAfterLast('/').substringBeforeLast('.')
+        holder.detail.setTextColor(if (entry.error != null) Ui.DANGER else Ui.TEXT_MUTED)
+        val artwork = game.boxArt ?: game.preview
+        val bitmap = artwork?.let(::loadArt)
+        holder.art.visibility = if (bitmap == null) View.GONE else View.VISIBLE
+        holder.mark.visibility = if (bitmap == null) View.VISIBLE else View.GONE
+        holder.art.setImageBitmap(bitmap)
+        holder.mark.text = game.title.firstOrNull()?.uppercase() ?: "?"
+        view.background = if (pinned) Ui.rowBackground(context, Ui.PIN_SURFACE, Ui.PIN, Ui.PIN_SELECTED)
+            else Ui.rowBackground(context)
+        view.isActivated = index == selectedIndex
+        view.alpha = if (entry.playable) 1f else 0.6f
+        return view
     }
 
     init {
-        setBackgroundColor(Color.BLACK)
+        setBackgroundColor(Ui.BG)
         val body = LinearLayout(context).apply {
             orientation = LinearLayout.VERTICAL
             setPadding(dp(18), dp(18), dp(18), dp(12))
@@ -164,30 +204,27 @@ class LibraryScreen(
             orientation = LinearLayout.HORIZONTAL
             gravity = Gravity.CENTER_VERTICAL
         }
-        header.addView(headerButton("☰", "Library menu") { openActions() },
-            LinearLayout.LayoutParams(dp(48), dp(48)).apply { marginEnd = dp(8) })
-        header.addView(TextView(context).apply {
+        header.addView(Ui.iconButton(context, R.drawable.ic_menu, "Library menu") { openActions() },
+            LinearLayout.LayoutParams(dp(48), dp(48)).apply { marginEnd = dp(10) })
+        header.addView(PixelTextView(context).apply {
             text = "KAIRO98"
-            textSize = 28f
-            letterSpacing = 0.08f
-            setTextColor(Color.WHITE)
-            typeface = android.graphics.Typeface.DEFAULT_BOLD
+            scale = 2
         }, LinearLayout.LayoutParams(0, -2, 1f))
         scanProgress.apply { visibility = View.GONE }
         header.addView(scanProgress, LinearLayout.LayoutParams(dp(28), dp(28)).apply {
             marginEnd = dp(12)
         })
-        header.addView(headerButton("⌕", "Search games") { toggleSearch() },
+        header.addView(Ui.iconButton(context, R.drawable.ic_search, "Search games") { toggleSearch() },
             LinearLayout.LayoutParams(dp(48), dp(48)))
         body.addView(header)
         search.apply {
             visibility = View.GONE
             hint = "Search by title"
-            textSize = 16f
+            textSize = Ui.BODY
             isSingleLine = true
-            setTextColor(Color.WHITE)
-            setHintTextColor(0xff8794a3.toInt())
-            setBackgroundColor(0xff171d27.toInt())
+            setTextColor(Ui.TEXT)
+            setHintTextColor(Ui.TEXT_FAINT)
+            background = Ui.rounded(context, Ui.SURFACE, Ui.RADIUS_SMALL, Ui.LINE)
             setPadding(dp(14), dp(10), dp(14), dp(10))
             imeOptions = android.view.inputmethod.EditorInfo.IME_ACTION_SEARCH
             addTextChangedListener(object : android.text.TextWatcher {
@@ -196,23 +233,26 @@ class LibraryScreen(
                 override fun afterTextChanged(text: android.text.Editable?) { applyFilter() }
             })
         }
-        body.addView(search, LinearLayout.LayoutParams(-1, -2).apply { bottomMargin = dp(8) })
+        body.addView(search, LinearLayout.LayoutParams(-1, -2).apply {
+            topMargin = dp(8)
+            bottomMargin = dp(4)
+        })
         artworkBanner.apply {
             orientation = LinearLayout.HORIZONTAL
             gravity = Gravity.CENTER_VERTICAL
             visibility = View.GONE
-            setBackgroundColor(0xff263748.toInt())
+            setBackgroundColor(Ui.RAISED)
             setPadding(dp(12), dp(7), dp(8), dp(7))
         }
         artworkStatus.apply {
-            textSize = 13f
-            setTextColor(Color.WHITE)
+            textSize = Ui.SECONDARY
+            setTextColor(Ui.TEXT)
         }
         artworkBanner.addView(artworkStatus, LinearLayout.LayoutParams(0, -2, 1f))
         artworkBanner.addView(TextView(context).apply {
             text = "Cancel"
-            textSize = 14f
-            setTextColor(0xff66d6df.toInt())
+            textSize = Ui.SECONDARY
+            setTextColor(Ui.ACCENT)
             setPadding(dp(12), dp(6), dp(6), dp(6))
             isClickable = true
             isFocusable = true
@@ -224,26 +264,33 @@ class LibraryScreen(
         body.addView(artworkBanner, LinearLayout.LayoutParams(-1, -2))
         val gameArea = FrameLayout(context)
         list.apply {
-            divider = null
+            divider = ColorDrawable(Color.TRANSPARENT)
+            dividerHeight = dp(4)
+            selector = ColorDrawable(Color.TRANSPARENT)
+            setPadding(0, dp(4), 0, dp(12))
+            clipToPadding = false
             overScrollMode = View.OVER_SCROLL_NEVER
             adapter = this@LibraryScreen.adapter
             setOnItemClickListener { _, _, position, _ ->
-                selectedIndex = position
+                val index = indexAt(position) ?: return@setOnItemClickListener
+                selectedIndex = index
                 this@LibraryScreen.adapter.notifyDataSetChanged()
-                openDetail(entries[position])
+                notifySelection()
+                openDetail(entries[index])
             }
             setOnItemLongClickListener { _, _, position, _ ->
-                selectedIndex = position
+                val index = indexAt(position) ?: return@setOnItemLongClickListener false
+                selectedIndex = index
                 this@LibraryScreen.adapter.notifyDataSetChanged()
-                details(entries[position])
+                details(entries[index])
                 true
             }
         }
         gameArea.addView(list, FrameLayout.LayoutParams(-1, -1))
         emptyState.apply {
-            textSize = 17f
+            textSize = Ui.BODY
             gravity = Gravity.CENTER
-            setTextColor(0xff9ba9b8.toInt())
+            setTextColor(Ui.TEXT_MUTED)
             setPadding(dp(20), dp(20), dp(20), dp(20))
         }
         gameArea.addView(emptyState, FrameLayout.LayoutParams(-1, -1))
@@ -252,65 +299,50 @@ class LibraryScreen(
         scrim.apply {
             visibility = View.GONE
             alpha = 0f
-            setBackgroundColor(0xb8000000.toInt())
+            setBackgroundColor(Ui.SCRIM)
             setOnClickListener { closeActions() }
         }
         addView(scrim, FrameLayout.LayoutParams(-1, -1))
         actionsDrawer.apply {
             orientation = LinearLayout.VERTICAL
-            setBackgroundColor(0xff171d27.toInt())
-            setPadding(dp(16), dp(22), dp(16), dp(16))
+            setBackgroundColor(Ui.SURFACE)
+            setPadding(dp(12), dp(20), dp(12), dp(16))
         }
         actionsScroll.apply {
             visibility = View.GONE
             elevation = dp(16).toFloat()
             isFillViewport = true
             overScrollMode = View.OVER_SCROLL_NEVER
-            setBackgroundColor(0xff171d27.toInt())
+            setBackgroundColor(Ui.SURFACE)
             addView(actionsDrawer, FrameLayout.LayoutParams(-1, -2))
         }
         val drawerWidth = minOf(dp(320), resources.displayMetrics.widthPixels - dp(40))
         addView(actionsScroll, FrameLayout.LayoutParams(drawerWidth, -1, Gravity.START))
-        actionsDrawer.addView(TextView(context).apply {
-            text = "LIBRARY"
-            textSize = 24f
-            letterSpacing = 0.08f
-            typeface = android.graphics.Typeface.DEFAULT_BOLD
-            setTextColor(Color.WHITE)
+        actionsDrawer.addView(PixelTextView(context).apply {
+            text = "KAIRO98"
+            scale = 2
             setPadding(dp(12), 0, dp(12), dp(4))
         })
-        actionsDrawer.addView(TextView(context).apply {
-            text = "MANAGE GAMES"
-            textSize = 11f
-            letterSpacing = 0.16f
-            setTextColor(0xff66d6df.toInt())
-            setPadding(dp(12), 0, dp(12), dp(12))
-        })
         folder.apply {
-            textSize = 13f
-            setTextColor(0xffc8d0da.toInt())
+            textSize = Ui.SECONDARY
+            setTextColor(Ui.TEXT_BODY)
             setPadding(dp(12), 0, dp(12), dp(4))
         }
         actionsDrawer.addView(folder)
         status.apply {
-            textSize = 12f
-            setTextColor(0xff9ba9b8.toInt())
+            textSize = Ui.LABEL
+            setTextColor(Ui.TEXT_MUTED)
             setPadding(dp(12), 0, dp(12), dp(18))
             maxLines = 2
         }
         actionsDrawer.addView(status)
+        actionsDrawer.addView(Ui.sectionLabel(context, "LIBRARY"))
         drawerAction("Select ROM folder", "Choose where disk images and ZIP games are stored", chooseFolder)
         drawerAction("Refresh", "Scan for added, changed, or removed games", refresh)
         drawerAction("Rehash", "Recheck every game image", rehash)
         if (downloadMissingImages != null) drawerAction("Download missing images",
             "Fetch artwork for games in this library", downloadMissingImages)
-        actionsDrawer.addView(TextView(context).apply {
-            text = "SETTINGS"
-            textSize = 11f
-            letterSpacing = 0.16f
-            setTextColor(0xff66d6df.toInt())
-            setPadding(dp(12), dp(18), dp(12), dp(5))
-        })
+        actionsDrawer.addView(Ui.sectionLabel(context, "SETTINGS"))
         settings.forEach { entry ->
             settingValues.add(drawerAction(entry.title, entry.value(), entry.action) to entry.value)
         }
@@ -327,7 +359,7 @@ class LibraryScreen(
     fun finishArtworkDownload(message: String) {
         artworkBanner.visibility = View.GONE
         showStatus(message)
-        Toast.makeText(context, message, Toast.LENGTH_LONG).show()
+        (context as? android.app.Activity)?.let { Ui.message(it, message, long = true) }
     }
     fun refreshArtwork() {
         missingArt.clear()
@@ -344,14 +376,15 @@ class LibraryScreen(
         if (entries.isEmpty()) emptyState.text = message
         if (entries.isNotEmpty() && (message.startsWith("Scan failed") ||
             message.startsWith("Launch failed") || message.startsWith("Cannot keep folder access"))) {
-            Toast.makeText(context, message, Toast.LENGTH_LONG).show()
+            (context as? android.app.Activity)?.let { Ui.message(it, message, long = true) }
         }
     }
     fun showEntries(items: List<LibraryEntry>) {
         allEntries = items
         pinnedId = lastPlayedId()?.takeIf { id -> items.any { it.id == id } }
+        reportedSelection = "none"
         applyFilter()
-        if (entries.isNotEmpty()) list.setSelection(selectedIndex)
+        if (entries.isNotEmpty()) list.setSelection(if (selectedIndex == 0) 0 else positionOf(selectedIndex))
         if (detailOpen) {
             val refreshed = items.firstOrNull { it.id == detailEntryId }
             if (refreshed == null) closeDetail() else detailPage.show(refreshed)
@@ -371,7 +404,7 @@ class LibraryScreen(
                 .singleOrNull() ?: -1
         if (index < 0) return false
         selectedIndex = index
-        list.setSelection(index)
+        list.setSelection(positionOf(index))
         adapter.notifyDataSetChanged()
         openDetail(entries[index])
         return true
@@ -399,25 +432,28 @@ class LibraryScreen(
         selectedIndex = (selectedIndex + delta).coerceIn(0, entries.lastIndex)
         this@LibraryScreen.adapter.notifyDataSetChanged()
         keepSelectionVisible()
+        notifySelection()
     }
 
     private fun keepSelectionVisible() {
         if (list.height == 0) return
+        // Keep the section label above the first game in view.
+        val selectedPosition = if (selectedIndex == 0) 0 else positionOf(selectedIndex)
         val first = list.firstVisiblePosition
         val last = list.lastVisiblePosition
         val viewportBottom = list.height - list.paddingBottom
-        val child = list.getChildAt(selectedIndex - first)
+        val child = list.getChildAt(selectedPosition - first)
         when {
-            selectedIndex < first -> list.setSelectionFromTop(selectedIndex, list.paddingTop)
-            selectedIndex > last -> {
+            selectedPosition < first -> list.setSelectionFromTop(selectedPosition, list.paddingTop)
+            selectedPosition > last -> {
                 val rowHeight = list.getChildAt(last - first)?.height ?: dp(75)
-                list.setSelectionFromTop(selectedIndex,
+                list.setSelectionFromTop(selectedPosition,
                     (viewportBottom - rowHeight).coerceAtLeast(list.paddingTop))
             }
             child != null && child.top < list.paddingTop ->
-                list.setSelectionFromTop(selectedIndex, list.paddingTop)
+                list.setSelectionFromTop(selectedPosition, list.paddingTop)
             child != null && child.bottom > viewportBottom ->
-                list.setSelectionFromTop(selectedIndex,
+                list.setSelectionFromTop(selectedPosition,
                     (viewportBottom - child.height).coerceAtLeast(list.paddingTop))
         }
     }
@@ -479,35 +515,25 @@ class LibraryScreen(
 
     private fun focusAction(index: Int) {
         selectedAction = index
-        actionItems.forEachIndexed { position, item ->
-            item.setBackgroundColor(if (position == index) 0xff30475b.toInt()
-                else Color.TRANSPARENT)
-        }
+        actionItems.forEachIndexed { position, item -> item.isSelected = position == index }
         actionItems.getOrNull(index)?.requestFocus()
     }
 
     private fun drawerAction(title: String, description: String, action: () -> Unit): TextView {
         val item = LinearLayout(context).apply {
             orientation = LinearLayout.VERTICAL
-            setPadding(dp(12), dp(12), dp(12), dp(12))
+            setPadding(dp(14), dp(10), dp(12), dp(10))
             isFocusable = true
             isClickable = true
+            background = Ui.rowBackground(context)
             contentDescription = "$title. $description"
             setOnClickListener {
                 closeActions()
                 action()
             }
         }
-        item.addView(TextView(context).apply {
-            text = title
-            textSize = 17f
-            setTextColor(Color.WHITE)
-        })
-        val detail = TextView(context).apply {
-            text = description
-            textSize = 12f
-            setTextColor(0xff9ba9b8.toInt())
-        }
+        item.addView(Ui.text(context, title, Ui.BODY))
+        val detail = Ui.text(context, description, Ui.SECONDARY, Ui.TEXT_MUTED)
         item.addView(detail)
         actionsDrawer.addView(item, LinearLayout.LayoutParams(-1, -2))
         item.minimumHeight = dp(66)
@@ -518,18 +544,6 @@ class LibraryScreen(
     fun refreshSettingValues() {
         settingValues.forEach { (view, value) -> view.text = value() }
     }
-
-    private fun headerButton(label: String, description: String, action: () -> Unit) =
-        TextView(context).apply {
-            text = label
-            textSize = 27f
-            gravity = Gravity.CENTER
-            setTextColor(Color.WHITE)
-            contentDescription = description
-            isFocusable = true
-            isClickable = true
-            setOnClickListener { action() }
-        }
 
     private fun toggleSearch() {
         val imm = context.getSystemService(Context.INPUT_METHOD_SERVICE)
@@ -547,9 +561,8 @@ class LibraryScreen(
 
     private fun applyFilter() {
         val query = search.text.toString().trim()
-        val ordered = pinnedId?.let { id ->
-            allEntries.firstOrNull { it.id == id }?.let { pinned -> listOf(pinned) + (allEntries - pinned) }
-        } ?: allEntries
+        val pinned = pinnedId?.takeIf { query.isEmpty() }?.let { id -> allEntries.firstOrNull { it.id == id } }
+        val ordered = pinned?.let { listOf(it) + (allEntries - it) } ?: allEntries
         entries = if (query.isEmpty()) ordered else ordered.filter { entry ->
             catalog.resolve(entry.contentId ?: "", entry.displayName).title.contains(query, ignoreCase = true) ||
                 entry.displayName.contains(query, ignoreCase = true)
@@ -557,7 +570,20 @@ class LibraryScreen(
         emptyState.visibility = if (entries.isEmpty()) View.VISIBLE else View.GONE
         if (entries.isEmpty() && allEntries.isNotEmpty()) emptyState.text = "No games match \"$query\""
         selectedIndex = selectedIndex.coerceIn(0, (entries.size - 1).coerceAtLeast(0))
+        items = if (pinned != null && entries.isNotEmpty()) listOf(Header("CONTINUE", true), Game(0)) +
+            (if (entries.size > 1) listOf(Header("ALL GAMES", false)) else emptyList()) +
+            (1 until entries.size).map(::Game)
+            else entries.indices.map(::Game)
         adapter.notifyDataSetChanged()
+        notifySelection()
+    }
+
+    /** Tells the host which game is selected, once per change. */
+    private fun notifySelection() {
+        val entry = entries.getOrNull(selectedIndex)
+        if (entry?.id == reportedSelection) return
+        reportedSelection = entry?.id
+        selectionChanged(entry)
     }
 
     private fun loadArt(path: String): Bitmap? {

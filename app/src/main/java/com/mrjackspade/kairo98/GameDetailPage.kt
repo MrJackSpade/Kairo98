@@ -4,16 +4,12 @@ import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.Color
-import android.graphics.Typeface
-import android.graphics.drawable.GradientDrawable
-import android.graphics.drawable.StateListDrawable
 import android.view.Gravity
 import android.view.View
 import android.widget.FrameLayout
 import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.ScrollView
-import android.widget.TextView
 import java.util.concurrent.Executors
 
 /** Full library detail page. Artwork loads from approved app assets. */
@@ -27,15 +23,17 @@ class GameDetailPage(
 ) : FrameLayout(context) {
     private val imagePanel = FrameLayout(context)
     private val image = ImageView(context)
-    private val imageFallback = TextView(context)
-    private val backButton = TextView(context)
+    private val imageFallback = Ui.text(context, "No screenshot available", Ui.SECONDARY, Ui.TEXT_MUTED)
+    private val backButton = LinearLayout(context)
     private val cover = ImageView(context)
-    private val title = TextView(context)
-    private val variant = TextView(context)
-    private val description = TextView(context)
-    private val playButton = TextView(context)
-    private val settingsButton = TextView(context)
-    private val unavailable = TextView(context)
+    private val title = Ui.text(context, "", Ui.TITLE, bold = true)
+    private val tags = LinearLayout(context)
+    private val description = Ui.text(context, "", Ui.BODY, Ui.TEXT_BODY)
+    private val playButton = Ui.primaryButton(context, "Play", R.drawable.ic_play) { playSelected() }
+    private val settingsButton = Ui.secondaryButton(context, "Game settings", R.drawable.ic_tune) {
+        currentEntry?.let(settings)
+    }
+    private val unavailable = Ui.text(context, "", Ui.SECONDARY, Ui.DANGER)
     private val scroll = ScrollView(context)
     private val hero = LinearLayout(context)
     private val right = LinearLayout(context)
@@ -48,41 +46,36 @@ class GameDetailPage(
 
     init {
         visibility = View.GONE
-        setBackgroundColor(Color.BLACK)
+        setBackgroundColor(Ui.BG)
         isClickable = true
 
         scroll.isFillViewport = true
         addView(scroll, LayoutParams(-1, -1))
         val body = LinearLayout(context).apply {
             orientation = LinearLayout.VERTICAL
-            setPadding(dp(20), dp(16), dp(20), dp(28))
+            setPadding(dp(20), dp(12), dp(20), dp(28))
         }
         scroll.addView(body)
 
         backButton.apply {
-            text = "‹  LIBRARY"
-            textSize = 16f
-            setTextColor(0xffb8e9ec.toInt())
+            orientation = LinearLayout.HORIZONTAL
             gravity = Gravity.CENTER_VERTICAL
             isClickable = true
             isFocusable = true
             contentDescription = "Back to game library"
-            setPadding(dp(8), 0, dp(16), 0)
-            background = focusBackground(Color.TRANSPARENT)
+            setPadding(dp(4), 0, dp(14), 0)
+            background = Ui.focusable(context, Color.TRANSPARENT, null)
             setOnClickListener { back() }
+            addView(Ui.icon(context, R.drawable.ic_back, Ui.ACCENT_SOFT, 20))
+            addView(Ui.text(context, "Library", Ui.BODY, Ui.ACCENT_SOFT).apply { setPadding(dp(4), 0, 0, 0) })
         }
-        body.addView(backButton, LinearLayout.LayoutParams(-2, dp(48)))
+        body.addView(backButton, LinearLayout.LayoutParams(-2, dp(44)))
 
-        hero.apply {
-            orientation = LinearLayout.HORIZONTAL
-            gravity = Gravity.TOP
-        }
-        body.addView(hero, LinearLayout.LayoutParams(-1, dp(240)).apply {
-            topMargin = dp(16)
-        })
+        hero.orientation = LinearLayout.HORIZONTAL
+        body.addView(hero, LinearLayout.LayoutParams(-1, dp(240)).apply { topMargin = dp(12) })
 
         imagePanel.apply {
-            background = focusBackground(0xff171d27.toInt())
+            background = Ui.focusable(context, Ui.SURFACE, null)
             setPadding(dp(3), dp(3), dp(3), dp(3))
             contentDescription = "View screenshot"
             setOnClickListener { currentEntry?.let(viewScreenshot) }
@@ -94,13 +87,7 @@ class GameDetailPage(
             contentDescription = "Game screenshot"
         }
         imagePanel.addView(image, LayoutParams(-1, -1))
-        imageFallback.apply {
-            text = "No screenshot available"
-            textSize = 14f
-            setTextColor(0xff9ba9b8.toInt())
-            gravity = Gravity.CENTER
-            setPadding(dp(12), dp(12), dp(12), dp(12))
-        }
+        imageFallback.gravity = Gravity.CENTER
         imagePanel.addView(imageFallback, LayoutParams(-1, -1))
 
         right.apply {
@@ -108,90 +95,40 @@ class GameDetailPage(
             setPadding(dp(18), 0, 0, 0)
         }
         hero.addView(right, LinearLayout.LayoutParams(0, -1, 0.85f))
-        heading.apply {
-            orientation = LinearLayout.HORIZONTAL
-            gravity = Gravity.TOP
-        }
+        heading.orientation = LinearLayout.HORIZONTAL
         cover.apply {
             scaleType = ImageView.ScaleType.CENTER_CROP
             visibility = View.GONE
             contentDescription = "Box art"
+            background = Ui.rounded(context, Ui.RAISED, 4)
+            clipToOutline = true
         }
-        heading.addView(cover, LinearLayout.LayoutParams(dp(64), dp(64)).apply { marginEnd = dp(12) })
+        heading.addView(cover, LinearLayout.LayoutParams(dp(60), dp(80)).apply { marginEnd = dp(12) })
         val titles = LinearLayout(context).apply { orientation = LinearLayout.VERTICAL }
-        title.apply {
-            textSize = 23f
-            typeface = Typeface.DEFAULT_BOLD
-            setTextColor(Color.WHITE)
-        }
+        title.maxLines = 3
+        title.ellipsize = android.text.TextUtils.TruncateAt.END
         titles.addView(title)
-        variant.apply {
-            textSize = 13f
-            setTextColor(0xff9ba9b8.toInt())
-            maxLines = 2
-            ellipsize = android.text.TextUtils.TruncateAt.END
-        }
-        titles.addView(variant)
+        tags.orientation = LinearLayout.VERTICAL
+        titles.addView(tags, LinearLayout.LayoutParams(-2, -2).apply { topMargin = dp(6) })
         heading.addView(titles, LinearLayout.LayoutParams(0, -2, 1f))
         right.addView(heading, LinearLayout.LayoutParams(-1, 0, 1f))
-        playButton.apply {
-            text = "PLAY"
-            textSize = 18f
-            typeface = Typeface.DEFAULT_BOLD
-            gravity = Gravity.CENTER
-            setTextColor(Color.BLACK)
-            background = focusBackground(0xff66d6df.toInt())
-            isClickable = true
-            isFocusable = true
-            contentDescription = "Play game"
-            setOnClickListener { playSelected() }
-        }
-        right.addView(playButton, LinearLayout.LayoutParams(-1, dp(56)))
-        settingsButton.apply {
-            text = "GAME SETTINGS"
-            textSize = 14f
-            typeface = Typeface.DEFAULT_BOLD
-            gravity = Gravity.CENTER
-            setTextColor(0xffb8e9ec.toInt())
-            background = focusBackground(0xff1b2430.toInt())
-            isClickable = true
-            isFocusable = true
-            contentDescription = "Game settings"
-            setOnClickListener { currentEntry?.let(settings) }
-        }
-        right.addView(settingsButton, LinearLayout.LayoutParams(-1, dp(44)).apply {
-            topMargin = dp(8)
-        })
-        unavailable.apply {
-            textSize = 13f
-            setTextColor(0xffffb4a8.toInt())
-            visibility = View.GONE
-            setPadding(0, dp(8), 0, 0)
-        }
+        right.addView(playButton, LinearLayout.LayoutParams(-1, dp(52)))
+        right.addView(settingsButton, LinearLayout.LayoutParams(-1, dp(44)).apply { topMargin = dp(8) })
+        unavailable.visibility = View.GONE
+        unavailable.setPadding(0, dp(8), 0, 0)
         right.addView(unavailable)
 
-        description.apply {
-            textSize = 16f
-            setTextColor(0xffd1d8e0.toInt())
-            setLineSpacing(dp(4).toFloat(), 1f)
-        }
-        body.addView(description, LinearLayout.LayoutParams(-1, -2).apply {
-            topMargin = dp(28)
-        })
+        description.setLineSpacing(dp(4).toFloat(), 1f)
+        body.addView(description, LinearLayout.LayoutParams(-1, -2).apply { topMargin = dp(24) })
         updateHeroLayout(resources.configuration.orientation ==
             android.content.res.Configuration.ORIENTATION_PORTRAIT)
     }
 
-    /** Fill color with a clear outline when a controller or keyboard focuses the view. */
-    private fun focusBackground(fill: Int) = StateListDrawable().apply {
-        fun shape(stroke: Boolean) = GradientDrawable().apply {
-            setColor(fill)
-            cornerRadius = dp(8).toFloat()
-            if (stroke) setStroke(dp(3), Color.WHITE)
-        }
-        addState(intArrayOf(android.R.attr.state_focused), shape(true))
-        addState(intArrayOf(android.R.attr.state_pressed), shape(true))
-        addState(intArrayOf(), shape(false))
+    private fun tag(label: String) = Ui.text(context, label, Ui.LABEL, Ui.TEXT_MUTED).apply {
+        background = Ui.rounded(context, Color.TRANSPARENT, 4, Ui.LINE)
+        setPadding(dp(6), dp(2), dp(6), dp(2))
+        maxLines = 1
+        ellipsize = android.text.TextUtils.TruncateAt.END
     }
 
     private fun updateHeroLayout(portrait: Boolean) {
@@ -206,7 +143,7 @@ class GameDetailPage(
             else LinearLayout.LayoutParams(0, -1, 0.85f)
         heading.layoutParams = LinearLayout.LayoutParams(-1, if (portrait) -2 else 0,
             if (portrait) 0f else 1f)
-        playButton.layoutParams = LinearLayout.LayoutParams(-1, dp(56)).apply {
+        playButton.layoutParams = LinearLayout.LayoutParams(-1, dp(52)).apply {
             if (portrait) topMargin = dp(18)
         }
     }
@@ -221,9 +158,13 @@ class GameDetailPage(
         currentEntry = entry
         val game = catalog.resolve(entry.contentId ?: "", entry.displayName)
         title.text = game.title
-        val label = variantLabel(entry.path) ?: entry.zipEntry?.let(::variantLabel)
-        variant.text = label ?: ""
-        variant.visibility = if (label == null) View.GONE else View.VISIBLE
+        tags.removeAllViews()
+        val media = entry.zipEntry ?: entry.path
+        tags.addView(tag(if (DiskFormat.isFloppy(media)) "Floppy disk" else "Hard disk"),
+            LinearLayout.LayoutParams(-2, -2))
+        (variantLabel(entry.path) ?: entry.zipEntry?.let(::variantLabel))?.split("  ·  ")?.forEach {
+            tags.addView(tag(it), LinearLayout.LayoutParams(-2, -2).apply { topMargin = dp(4) })
+        }
         description.text = game.description ?: "No description available yet."
         playButton.isEnabled = entry.playable
         playButton.alpha = if (entry.playable) 1f else 0.4f

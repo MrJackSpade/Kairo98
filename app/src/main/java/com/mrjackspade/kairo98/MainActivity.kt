@@ -188,7 +188,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
 
     private val updateStatus = object : Runnable {
         override fun run() {
-            if (menuOpen && !preparingFont && !floppyBusy) menuStatus.text = nativeStatus()
+            if (menuOpen && !preparingFont && !floppyBusy && !stateBusy) menuStatus.text = menuStatusText()
             if (!libraryVisible && !preparingFont) {
                 InputModeDecider.GuestInput.fromNative(nativeInputTelemetry())?.let {
                     inputModeDecider.observe(it, android.os.SystemClock.elapsedRealtime())
@@ -291,20 +291,21 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
             { gamepadMapper.deadZone }, { value ->
                 gamepadMapper.deadZone = value
                 preferences.edit().putFloat("controller_dead_zone", value).apply()
-            }, ::applyPauseState, ::showOnScreenControls)
+            }, ::applyPauseState, ::showOnScreenControls,
+            { onScreenControls.eightWayDpad }, { onScreenControls.eightWayDpad = it })
         libraryScreen = LibraryScreen(this, romLibrary.catalog,
             ::chooseRomFolder, { refreshLibrary(false) }, { refreshLibrary(true) },
             if (resources.getBoolean(R.bool.catalog_art_download_enabled))
                 ::downloadMissingImages else null, ::cancelArtworkDownload,
             settingsEntries(), { preferences.getString("last_played_entry", null) },
-            ::launchEntry, ::showDetailPreview, ::showGameDetails)
+            ::launchEntry, ::showDetailPreview, ::showGameDetails, ::showLibrarySelection)
         root.addView(libraryScreen, FrameLayout.LayoutParams(-1, -1))
         swapStatus = TextView(this).apply {
             visibility = View.GONE
-            setTextColor(Color.WHITE)
+            setTextColor(Ui.TEXT)
             setBackgroundColor(0xe0202a36.toInt())
             setPadding(dp(16), dp(10), dp(16), dp(10))
-            textSize = 16f
+            textSize = Ui.BODY
         }
         root.addView(swapStatus, FrameLayout.LayoutParams(-2, -2,
             Gravity.TOP or Gravity.CENTER_HORIZONTAL).apply { topMargin = dp(20) })
@@ -379,7 +380,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
         root.addView(swappedKeyboardPanel, FrameLayout.LayoutParams(-1, -1))
 
         backdrop = View(this).apply {
-            setBackgroundColor(0xb8000000.toInt())
+            setBackgroundColor(Ui.SCRIM)
             visibility = View.GONE
             alpha = 0f
             setOnClickListener { closeMenu() }
@@ -391,7 +392,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
             elevation = dp(16).toFloat()
             isFillViewport = true
             overScrollMode = View.OVER_SCROLL_NEVER
-            setBackgroundColor(0xff171d27.toInt())
+            setBackgroundColor(Ui.SURFACE)
         }
         val drawerWidth = minOf(dp(320), resources.displayMetrics.widthPixels - dp(40))
         root.addView(drawer, FrameLayout.LayoutParams(drawerWidth, -1, Gravity.START))
@@ -401,47 +402,39 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
         }
         drawer.addView(content)
 
-        content.addView(TextView(this).apply {
+        content.addView(PixelTextView(this).apply {
             text = "KAIRO98"
-            textSize = 25f
-            setTextColor(Color.WHITE)
-            typeface = android.graphics.Typeface.DEFAULT_BOLD
-            letterSpacing = 0.08f
-            setPadding(dp(12), 0, dp(12), 0)
+            scale = 2
+            setPadding(dp(12), 0, dp(12), dp(14))
         })
-        content.addView(TextView(this).apply {
-            text = "PC-98 EMULATOR"
-            textSize = 11f
-            letterSpacing = 0.18f
-            setTextColor(0xff66d6df.toInt())
-            setPadding(dp(12), dp(2), dp(12), dp(12))
-        })
-        mediaLabel = TextView(this).apply {
-            textSize = 13f
-            setTextColor(0xffc8d0da.toInt())
+        mediaLabel = Ui.text(this, "", Ui.TITLE, bold = true).apply {
             maxLines = 2
-            setPadding(dp(12), 0, dp(12), dp(4))
+            ellipsize = android.text.TextUtils.TruncateAt.END
+            setPadding(dp(12), 0, dp(12), dp(2))
         }
         content.addView(mediaLabel)
-        menuStatus = TextView(this).apply {
-            textSize = 11f
-            setTextColor(0xff8794a3.toInt())
-            maxLines = 3
-            setPadding(dp(12), 0, dp(12), dp(12))
+        menuStatus = Ui.text(this, "", Ui.SECONDARY, Ui.TEXT_MUTED).apply {
+            maxLines = 4
+            setPadding(dp(12), 0, dp(12), dp(14))
+            contentDescription = "Machine status. Tap for details."
+            setOnClickListener {
+                showMachineDetails = !showMachineDetails
+                text = menuStatusText()
+            }
         }
         content.addView(menuStatus)
         val sessionActions = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL }
         content.addView(sessionActions, LinearLayout.LayoutParams(-1, dp(66)).apply {
             bottomMargin = dp(8)
         })
-        sessionIcon(sessionActions, "▶", "Resume") {
+        sessionIcon(sessionActions, R.drawable.ic_play, "Resume") {
             userPaused = false
             closeMenu()
         }
-        sessionIcon(sessionActions, "↓", "Save") { showStateSlots(saving = true) }
-        sessionIcon(sessionActions, "↑", "Load") { showStateSlots(saving = false) }
-        sessionIcon(sessionActions, "↻", "Restart") { confirmRestart() }
-        sessionIcon(sessionActions, "▦", "Library") { showLibrary() }
+        sessionIcon(sessionActions, R.drawable.ic_save, "Save") { showStateSlots(saving = true) }
+        sessionIcon(sessionActions, R.drawable.ic_load, "Load") { showStateSlots(saving = false) }
+        sessionIcon(sessionActions, R.drawable.ic_restart, "Restart") { confirmRestart() }
+        sessionIcon(sessionActions, R.drawable.ic_library, "Library") { showLibrary() }
         section(content, "SESSION")
         menuItem(content, "Pause", { if (userPaused) "On · tap to let the game run again"
             else "Close the menu with the game stopped" }) {
@@ -459,16 +452,10 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
     }
 
     private fun section(content: LinearLayout, title: String) {
-        content.addView(TextView(this).apply {
-            text = title
-            textSize = 11f
-            letterSpacing = 0.14f
-            setTextColor(0xff66d6df.toInt())
-            setPadding(dp(12), dp(15), dp(12), dp(5))
-        })
+        content.addView(Ui.sectionLabel(this, title))
     }
 
-    private fun sessionIcon(row: LinearLayout, icon: String, label: String,
+    private fun sessionIcon(row: LinearLayout, icon: Int, label: String,
                             action: () -> Unit): View {
         val button = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
@@ -482,40 +469,24 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
                 action()
             }
         }
-        button.addView(TextView(this).apply {
-            text = icon
-            textSize = 22f
+        button.addView(Ui.icon(this, icon, if (icon == R.drawable.ic_play) Ui.ACCENT else Ui.TEXT))
+        button.addView(Ui.text(this, label, Ui.LABEL, Ui.TEXT_MUTED).apply {
             gravity = Gravity.CENTER
-            setTextColor(Color.WHITE)
-        })
-        button.addView(TextView(this).apply {
-            text = label
-            textSize = 11f
-            gravity = Gravity.CENTER
-            setTextColor(0xff9aa8b6.toInt())
+            setPadding(0, dp(4), 0, 0)
         })
         row.addView(button, LinearLayout.LayoutParams(0, -1, 1f))
         menuItems.add(button)
         return button
     }
 
-    private fun menuHighlight() = StateListDrawable().apply {
-        val highlight = GradientDrawable().apply {
-            setColor(0xff30475b.toInt())
-            cornerRadius = dp(8).toFloat()
-        }
-        addState(intArrayOf(android.R.attr.state_focused), highlight)
-        addState(intArrayOf(android.R.attr.state_selected), highlight)
-        addState(intArrayOf(android.R.attr.state_pressed), highlight)
-        addState(intArrayOf(), ColorDrawable(Color.TRANSPARENT))
-    }
+    private fun menuHighlight() = Ui.rowBackground(this)
 
     private fun menuItem(content: LinearLayout, title: String, detail: () -> String,
                          action: () -> Unit) {
         val item = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
-            minimumHeight = dp(57)
-            setPadding(dp(12), dp(8), dp(12), dp(8))
+            minimumHeight = dp(56)
+            setPadding(dp(14), dp(9), dp(12), dp(9))
             isFocusable = true
             isClickable = true
             background = menuHighlight()
@@ -526,14 +497,10 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
         }
         item.addView(TextView(this).apply {
             text = title
-            textSize = 16f
-            setTextColor(Color.WHITE)
+            textSize = Ui.BODY
+            setTextColor(Ui.TEXT)
         })
-        val value = TextView(this).apply {
-            text = detail()
-            textSize = 12f
-            setTextColor(0xff9aa8b6.toInt())
-        }
+        val value = Ui.text(this, detail(), Ui.SECONDARY, Ui.TEXT_MUTED)
         item.addView(value)
         content.addView(item, LinearLayout.LayoutParams(-1, -2))
         menuItems.add(item)
@@ -549,6 +516,21 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
         SettingsEntry("Controller", { "Gamepad and on-screen controls" }) { showControllerScope() },
         SettingsEntry("Sound", { if (muted) "Muted · tap to turn on" else "On · tap to mute" }) { toggleMute() },
         SettingsEntry("About", { "Version, shortcuts, and licenses" }) { showAbout() })
+
+    private var showMachineDetails = false
+
+    /** Plain session status for the menu; tapping it shows the machine's raw telemetry. */
+    private fun menuStatusText(): String {
+        val raw = nativeStatus()
+        if (showMachineDetails) return raw
+        val state = raw.substringBefore('|').trim().ifEmpty { "Stopped" }
+        val media = when {
+            currentDisk == null -> null
+            currentIsFloppy -> "Floppy disk"
+            else -> "Hard disk"
+        }
+        return listOfNotNull(state, media, if (muted) "Muted" else null).joinToString("  ·  ")
+    }
 
     private fun refreshSettingValues() {
         menuValues.forEach { (view, value) -> view.text = value() }
@@ -612,7 +594,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
         focusMenuItem(0)
         refreshSettingValues()
         mediaLabel.text = currentTitle ?: "No disk selected"
-        menuStatus.text = if (preparingFont) "Preparing PC-98 font" else nativeStatus()
+        menuStatus.text = if (preparingFont) "Preparing PC-98 font" else menuStatusText()
         backdrop.visibility = View.VISIBLE
         backdrop.alpha = 0f
         drawer.visibility = View.VISIBLE
@@ -643,7 +625,43 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
             }.start()
     }
 
+    private val libraryArtExecutor = java.util.concurrent.Executors.newSingleThreadExecutor()
+    private var librarySelectionGeneration = 0
+
+    /** Shows the selected library game on the second screen, if there is one. */
+    private fun showLibrarySelection(entry: LibraryEntry?) {
+        if (!::secondaryKeyboard.isInitialized) return
+        val generation = ++librarySelectionGeneration
+        if (entry == null) {
+            secondaryKeyboard.setLibraryInfo(null)
+            return
+        }
+        val game = romLibrary.catalog.resolve(entry.contentId ?: "", entry.displayName)
+        val media = entry.zipEntry ?: entry.path
+        val tags = listOf(if (DiskFormat.isFloppy(media)) "Floppy disk" else "Hard disk") +
+            ((variantLabel(entry.path) ?: entry.zipEntry?.let(::variantLabel))?.split("  ·  ") ?: emptyList())
+        val info = SecondaryKeyboardDisplay.LibraryInfo(game.title, tags,
+            game.description ?: "No description available yet.", null)
+        secondaryKeyboard.setLibraryInfo(info)
+        val art = game.boxArt ?: game.preview ?: return
+        libraryArtExecutor.execute {
+            val bitmap = try {
+                romLibrary.catalog.openArtwork(art).use {
+                    BitmapFactory.decodeStream(it, null, BitmapFactory.Options().apply { inSampleSize = 2 })
+                }
+            } catch (_: Exception) { null } ?: return@execute
+            runOnUiThread {
+                if (generation == librarySelectionGeneration && libraryVisible)
+                    secondaryKeyboard.setLibraryInfo(info.copy(art = bitmap))
+            }
+        }
+    }
+
     private fun applyPauseState() {
+        if (!libraryVisible && ::secondaryKeyboard.isInitialized) {
+            librarySelectionGeneration++
+            secondaryKeyboard.setLibraryInfo(null)
+        }
         val editingControls = ::onScreenControls.isInitialized && onScreenControls.isOpen
         val showingGuest = activityVisible && !libraryVisible && !menuOpen &&
             !editingControls && !preparingFont &&
@@ -656,7 +674,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
         }
         if (::secondaryKeyboard.isInitialized) secondaryKeyboard.setAppearance(
             showingGuest,
-            if (::firstRunSetup.isInitialized && firstRunSetup.isOpen) 0xff10151d.toInt()
+            if (::firstRunSetup.isInitialized && firstRunSetup.isOpen) Ui.BG
                 else Color.BLACK)
         nativePause(userPaused || menuOpen || libraryVisible || !activityVisible || preparingFont ||
             (::controllerEditor.isInitialized && controllerEditor.isOpen) || editingControls)
@@ -976,6 +994,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
         libraryVisible = true
         closeMenu()
         libraryScreen.visibility = View.VISIBLE
+        libraryScreen.showEntries(libraryEntries)
         libraryScreen.showFolder(romTree?.let(::folderLabel))
         libraryScreen.showStatus("${libraryEntries.count { it.playable }} games ready")
         applyPauseState()
@@ -1380,9 +1399,9 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
         sections.forEach { (heading, rows) ->
             list.addView(TextView(this).apply {
                 text = heading
-                textSize = 11f
+                textSize = Ui.LABEL
                 letterSpacing = 0.14f
-                setTextColor(0xff66d6df.toInt())
+                setTextColor(Ui.ACCENT)
                 setPadding(dp(12), dp(if (heading.isEmpty()) 6 else 14), dp(12), dp(4))
             })
             rows.forEach { row ->
@@ -1403,13 +1422,13 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
                 }
                 item.addView(TextView(this).apply {
                     text = row.title
-                    textSize = 16f
-                    setTextColor(if (row.destructive) 0xffffb4a8.toInt() else Color.WHITE)
+                    textSize = Ui.BODY
+                    setTextColor(if (row.destructive) Ui.DANGER else Color.WHITE)
                 })
                 item.addView(TextView(this).apply {
                     text = row.value
-                    textSize = 12f
-                    setTextColor(0xff9aa8b6.toInt())
+                    textSize = Ui.LABEL
+                    setTextColor(Ui.TEXT_MUTED)
                 })
                 list.addView(item, LinearLayout.LayoutParams(-1, -2))
             }
@@ -1908,19 +1927,13 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
             orientation = LinearLayout.VERTICAL
             setPadding(dp(22), dp(8), dp(22), 0)
         }
-        fun heading(text: String) = TextView(this).apply {
-            this.text = text
-            textSize = 11f
-            letterSpacing = 0.14f
-            setTextColor(0xff66d6df.toInt())
-            setPadding(0, dp(12), 0, dp(4))
-        }
+        fun heading(text: String) = Ui.sectionLabel(this, text).apply { setPadding(0, dp(14), 0, dp(4)) }
         fun group(labels: List<String>, selected: Int) = RadioGroup(this).apply {
             labels.forEachIndexed { index, label ->
                 addView(RadioButton(this@MainActivity).apply {
                     id = View.generateViewId()
                     text = label
-                    textSize = 15f
+                    textSize = Ui.SECONDARY
                     isChecked = index == selected
                 })
             }
@@ -1936,8 +1949,8 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
         body.addView(TextView(this).apply {
             text = "Direct tap lands on the touched point in games that move the cursor one pixel " +
                 "per mouse count and stop it at the screen's top-left edge."
-            textSize = 12f
-            setTextColor(0xff9aa8b6.toInt())
+            textSize = Ui.LABEL
+            setTextColor(Ui.TEXT_MUTED)
             setPadding(0, dp(6), 0, dp(8))
         })
         fun checkedIndex(group: RadioGroup) =
@@ -1985,8 +1998,8 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
         val padding = (20 * resources.displayMetrics.density).toInt()
         val content = TextView(this).apply {
             text = policy
-            textSize = 14f
-            setTextColor(Color.WHITE)
+            textSize = Ui.SECONDARY
+            setTextColor(Ui.TEXT)
             setPadding(padding, padding, padding, padding)
         }
         val scroll = ScrollView(this).apply { addView(content) }
@@ -1999,8 +2012,8 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
         val padding = (20 * resources.displayMetrics.density).toInt()
         val content = TextView(this).apply {
             text = notice
-            textSize = 12f
-            setTextColor(Color.WHITE)
+            textSize = Ui.LABEL
+            setTextColor(Ui.TEXT)
             setPadding(padding, padding, padding, padding)
         }
         val scroll = ScrollView(this).apply { addView(content) }
@@ -2111,10 +2124,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
         val dialog = create()
         dialog.setOnDismissListener { refreshSettingValues() }
         dialog.show()
-        dialog.window?.setBackgroundDrawable(GradientDrawable().apply {
-            setColor(0xff202a36.toInt())
-            cornerRadius = dp(14).toFloat()
-        })
+        Ui.styleDialog(dialog)
         return dialog
     }
 
@@ -2165,24 +2175,35 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
                 background = menuHighlight()
                 alpha = if (available) 1f else 0.45f
             }
-            row.addView(ImageView(this).apply {
+            val thumbnail = slots.thumbnail(slot)
+            row.addView(if (thumbnail != null) ImageView(this).apply {
                 scaleType = ImageView.ScaleType.FIT_CENTER
-                setBackgroundColor(0xff10151d.toInt())
-                slots.thumbnail(slot)?.let(::setImageBitmap)
-            }, LinearLayout.LayoutParams(dp(112), dp(70)))
+                background = Ui.rounded(this@MainActivity, Ui.BG, 4)
+                clipToOutline = true
+                setImageBitmap(thumbnail)
+            } else FrameLayout(this).apply {
+                // An empty slot reads as a place to put something, not a missing image.
+                background = GradientDrawable().apply {
+                    cornerRadius = dp(4).toFloat()
+                    setStroke(dp(1), Ui.LINE, dp(4).toFloat(), dp(3).toFloat())
+                }
+                if (saving) addView(Ui.icon(this@MainActivity, R.drawable.ic_save, Ui.TEXT_FAINT, 20),
+                    FrameLayout.LayoutParams(dp(20), dp(20), Gravity.CENTER))
+            }, LinearLayout.LayoutParams(dp(128), dp(80)))
             val text = LinearLayout(this).apply {
                 orientation = LinearLayout.VERTICAL
                 setPadding(dp(14), 0, 0, 0)
             }
             text.addView(TextView(this).apply {
                 this.text = "Slot ${slot.index}"
-                textSize = 16f
-                setTextColor(Color.WHITE)
+                textSize = Ui.BODY
+                setTextColor(Ui.TEXT)
             })
             text.addView(TextView(this).apply {
-                this.text = slot.savedAt?.let { format.format(java.util.Date(it)) } ?: "Empty"
-                textSize = 13f
-                setTextColor(0xff9aa8b6.toInt())
+                this.text = slot.savedAt?.let { format.format(java.util.Date(it)) }
+                    ?: if (saving) "Empty · tap to save here" else "Empty"
+                textSize = Ui.SECONDARY
+                setTextColor(Ui.TEXT_MUTED)
             })
             row.addView(text, LinearLayout.LayoutParams(0, -2, 1f))
             if (available) row.setOnClickListener {
@@ -2312,7 +2333,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
     }
 
     private fun toast(message: String) =
-        Toast.makeText(this, message, Toast.LENGTH_SHORT).show()
+        Ui.message(this, message)
 
     private fun onSecondarySwapChanged(swapped: Boolean) {
         keyboardPanel.close()

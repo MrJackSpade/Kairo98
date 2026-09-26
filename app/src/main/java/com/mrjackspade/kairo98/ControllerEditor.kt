@@ -30,7 +30,9 @@ class ControllerEditor(
     private val getDeadZone: () -> Float,
     private val setDeadZone: (Float) -> Unit,
     private val onVisibilityChanged: () -> Unit,
-    private val onScreenSettings: () -> Unit
+    private val onScreenSettings: () -> Unit,
+    private val eightWayDpad: () -> Boolean,
+    private val setEightWayDpad: (Boolean) -> Unit
 ) {
     private enum class Stage { LIST, SOURCES, CAPTURE, MANUAL, TARGET, VIRTUAL, KEYS, JOYSTICK, MOUSE, ACTIONS, DEAD_ZONE, RESET }
     private data class Source(val group: String, val name: String, val input: String)
@@ -60,7 +62,7 @@ class ControllerEditor(
         selectedControl = null
         page = LinearLayout(activity).apply {
             orientation = LinearLayout.VERTICAL
-            setBackgroundColor(0xff10151d.toInt())
+            setBackgroundColor(Ui.BG)
             isFocusableInTouchMode = true
             elevation = dp(20).toFloat()
         }
@@ -68,19 +70,13 @@ class ControllerEditor(
         val bar = LinearLayout(activity).apply {
             gravity = Gravity.CENTER_VERTICAL
             setPadding(dp(12), dp(8), dp(12), dp(8))
-            setBackgroundColor(Color.BLACK)
+            setBackgroundColor(Ui.BG)
         }
-        bar.addView(TextView(activity).apply {
-            text = "‹  Back"
-            textSize = 18f
-            setTextColor(Color.WHITE)
-            gravity = Gravity.CENTER
-            isFocusable = true
-            setOnClickListener { back() }
-        }, LinearLayout.LayoutParams(dp(100), dp(48)))
+        bar.addView(Ui.iconButton(activity, R.drawable.ic_back, "Back") { back() },
+            LinearLayout.LayoutParams(dp(48), dp(48)).apply { marginEnd = dp(8) })
         heading = TextView(activity).apply {
-            textSize = 23f
-            setTextColor(Color.WHITE)
+            textSize = Ui.TITLE
+            setTextColor(Ui.TEXT)
             gravity = Gravity.CENTER_VERTICAL
         }
         bar.addView(heading, LinearLayout.LayoutParams(0, dp(48), 1f))
@@ -272,6 +268,19 @@ class ControllerEditor(
             physicalScope = false; scope = game; render()
         }, LinearLayout.LayoutParams(0, dp(48), 1f))
         body.addView(tabs)
+        section("OPTIONS")
+        row("On-screen controls", "Show, hide, and arrange", true) {
+            close()
+            onScreenSettings()
+        }
+        row("On-screen D-pad", if (eightWayDpad()) "8-way pad" else "4 buttons", true) {
+            setEightWayDpad(!eightWayDpad())
+            render()
+        }
+        if (physicalScope) row("Stick dead zone", (getDeadZone() * 100).toInt().toString() + "%", true) {
+            stage = Stage.DEAD_ZONE
+            render()
+        }
         if (physicalScope) {
             section("PHYSICAL CONTROLLER → VIRTUAL CONTROLLER")
             val controllers = InputDevice.getDeviceIds().toList().mapNotNull(InputDevice::getDevice)
@@ -319,15 +328,7 @@ class ControllerEditor(
                 }
             }
         }
-        section("OPTIONS")
-        row("On-screen controls", "Show, hide, and arrange touch buttons", true) {
-            close()
-            onScreenSettings()
-        }
-        if (physicalScope) row("Stick dead zone", (getDeadZone() * 100).toInt().toString() + "%", true) {
-            stage = Stage.DEAD_ZONE
-            render()
-        }
+        section("RESET")
         row("Reset profile", "Restore " + when {
             physicalScope -> "standard controller layout"
             scope == null -> "built-in defaults"
@@ -390,8 +391,8 @@ class ControllerEditor(
         val edit = EditText(activity).apply {
             setSingleLine(true)
             hint = "button:96"
-            setTextColor(Color.WHITE)
-            setHintTextColor(0xff9eacbd.toInt())
+            setTextColor(Ui.TEXT)
+            setHintTextColor(Ui.TEXT_MUTED)
         }
         body.addView(edit)
         footerAction(if (selectedControl == null) "Choose target" else "Assign input") {
@@ -560,19 +561,14 @@ class ControllerEditor(
     }
 
     private fun section(label: String) {
-        body.addView(TextView(activity).apply {
-            text = label
-            textSize = 13f
-            setTextColor(0xff91c6d8.toInt())
-            setPadding(dp(10), dp(18), dp(10), dp(8))
-        })
+        body.addView(Ui.sectionLabel(activity, label))
     }
 
     private fun note(text: String) {
         body.addView(TextView(activity).apply {
             this.text = text
-            textSize = 15f
-            setTextColor(0xffb7c2cf.toInt())
+            textSize = Ui.SECONDARY
+            setTextColor(Ui.TEXT_MUTED)
             setPadding(dp(10), dp(8), dp(10), dp(16))
         })
     }
@@ -582,39 +578,38 @@ class ControllerEditor(
             orientation = LinearLayout.HORIZONTAL
             gravity = Gravity.CENTER_VERTICAL
             setPadding(dp(14), dp(4), dp(14), dp(4))
-            background = box(false)
+            background = Ui.rowBackground(activity, Ui.SURFACE)
             isFocusable = enabled
             isClickable = enabled
-            setOnFocusChangeListener { view, focused -> view.background = box(focused) }
             setOnClickListener { action() }
             contentDescription = label + ". " + value
         }
         line.addView(TextView(activity).apply {
             text = label
-            textSize = 17f
-            setTextColor(Color.WHITE)
+            textSize = Ui.BODY
+            setTextColor(Ui.TEXT)
             gravity = Gravity.CENTER_VERTICAL
         }, LinearLayout.LayoutParams(0, -1, 1f))
         val right = TextView(activity).apply {
             text = value
-            textSize = 15f
-            setTextColor(0xffa6e3ec.toInt())
+            textSize = Ui.SECONDARY
+            setTextColor(Ui.ACCENT_SOFT)
             gravity = Gravity.CENTER_VERTICAL or Gravity.END
             maxLines = 2
         }
         line.addView(right, LinearLayout.LayoutParams(0, -1, 1f))
-        body.addView(line, LinearLayout.LayoutParams(-1, dp(58)).apply {
-            setMargins(0, 0, 0, dp(3))
+        body.addView(line, LinearLayout.LayoutParams(-1, dp(52)).apply {
+            setMargins(0, 0, 0, dp(4))
         })
         return right
     }
 
     private fun tab(label: String, selected: Boolean, action: () -> Unit) = TextView(activity).apply {
         text = label
-        textSize = 16f
+        textSize = Ui.BODY
         gravity = Gravity.CENTER
-        setTextColor(Color.WHITE)
-        background = box(selected)
+        setTextColor(if (selected) Ui.ON_ACCENT else Ui.TEXT_MUTED)
+        background = Ui.focusable(activity, if (selected) Ui.ACCENT else Ui.SURFACE, if (selected) null else Ui.LINE)
         isFocusable = true
         setOnClickListener { action() }
     }
@@ -626,7 +621,7 @@ class ControllerEditor(
     }
 
     private fun box(selected: Boolean) = GradientDrawable().apply {
-        setColor(if (selected) 0xff304e63.toInt() else 0xff202a36.toInt())
+        setColor(if (selected) Ui.SELECTED else Ui.RAISED)
         cornerRadius = dp(6).toFloat()
     }
 
@@ -711,7 +706,7 @@ class ControllerEditor(
         return buttons + dpad + analog
     }
 
-    private fun toast(message: String) = Toast.makeText(activity, message, Toast.LENGTH_SHORT).show()
+    private fun toast(message: String) = Ui.message(activity, message)
     private fun dp(value: Int) = (value * activity.resources.displayMetrics.density).toInt()
 
     companion object {
