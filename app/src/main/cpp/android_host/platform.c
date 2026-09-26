@@ -5,6 +5,7 @@
 #include "sysmng.h"
 #include "mousemng.h"
 #include "scrnmng.h"
+#include "ymfm_bridge.h"
 #include "statsave.h"
 #include "sound/sound.h"
 
@@ -117,6 +118,9 @@ int kairo98_fill_audio(SINT16 *destination, UINT frames) {
     const SINT32 *source;
     UINT i;
     if (frames != audio_buffer_frames || frames == 0) return 0;
+    /* The FM synthesizer adds into the stream buffer from its own thread;
+     * wait for everything issued so far before reading the buffer. */
+    kairo_ymfm_drain_all();
     source = sound_pcmlock();
     if (!source) {
         ZeroMemory(destination, frames * 2 * sizeof(*destination));

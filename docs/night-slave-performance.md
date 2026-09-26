@@ -54,6 +54,8 @@ Measured with the same `tools/adb_advance_game.ps1` run on the RG DS (four Corte
 | Final: all of the above with a regenerated PGO profile | 9.4 to 9.6 ms | 21.9 ms | 9 to 13 | 1 to 5 |
 | Plus GPU screen path (verification build, CPU draw still on) | 9.8 ms | 22.3 ms | 35 | 23 |
 | Plus GPU screen path (production) | 8.7 to 8.9 ms | 19.9 to 20.3 ms | 10 to 18 | 2 to 10 |
+| Plus fixed-grid frame pacing | 8.5 to 9.0 ms | 20.0 ms | n/a (counts every overrun) | 0 to 1 |
+| Plus FM synthesis on a worker thread | 7.4 to 7.5 ms | 18.5 to 18.7 ms | n/a | 0 |
 
 ### What the guest is doing
 
@@ -93,7 +95,17 @@ Stage timers around `CPU_EXEC`, `nevent_progress`, `scrndraw_draw`, and the FM s
 
 A `-Pkairo98GpuVerify=true` build draws on the CPU as well and recomputes the shader's composition on the CPU for every redrawn row, counting differing pixels on logcat. A full 240-second run, boot screens through battle, compared 6,300 redrawn frames with zero differing pixels.
 
+### Audio path audit
+
+The core generates exactly 735 stereo samples per emulated frame from guest clocks and the host pulls exactly 735 per frame as 512-frame AAudio writes, so production and consumption are balanced by construction; np2 fills in or holds back samples only if the two drift, and the sampling rate is 44,100 Hz end to end (core, FM synthesizer, AAudio stream). The AAudio write blocks when the device buffer is full, which is the intended back-pressure.
+
+The one defect was in frame pacing, not audio: a frame that overran its 16.7 ms slot re-anchored the schedule to the present, so its excess time was lost for good, the emulator ran slightly below 60 Hz during battle, and the device buffer drained until it underran. The worker now keeps the fixed 60 Hz grid and lets the following short frames catch up, re-anchoring only after a backlog of more than three frames. This never runs ahead of the schedule, so it adds no latency. Battle-window underruns went from 4 to 12 per 600 frames to 0 to 1, and the `late` field now counts every overrun (about 200 per 600 frames, one per game-logic frame) rather than only unrecovered ones.
+
+Requesting AAudio's low-latency performance mode and a 50 ms buffer changed nothing on the RG DS: the device keeps a 1,772-frame burst and a 3,544-frame buffer, about 80 ms of output latency. The request stays in place for devices that honour it.
+
+FM synthesis (ymfm) costs about 1.5 ms per frame and the core never reads the synthesizer: OPNA status and timer flags come from np2's own timer emulation. `android_host/ymfm_bridge.cpp` therefore runs ymfm on a worker thread. Register writes, volume changes, and guest writes to the ADPCM RAM are logged with the stream position they apply at; each stream region the core asks the synthesizer to fill is queued as a segment; the worker generates in order, applying the log at exact positions, and adds into the region. The emulation thread waits only before the host reads the stream, and before the stream is reset or destroyed (`kairo_ymfm_drain_all`). A `-Pkairo98SynthVerify=true` build drives a second engine synchronously on the emulation thread and compares every output sample; a full 240-second run reported zero differing samples across all 24 windows.
+
 ### Options not taken
 
-Running emulation one frame ahead of a fixed presentation schedule would hide the heavy frame completely, since the two idle frames around it average 4 ms, but it adds 16.7 ms of display and audio latency. It was implemented, measured, and removed; the presenter thread keeps the frame-drop logic so the option is a small change if it is ever wanted as a setting. Moving FM synthesis to an audio thread would remove a fixed 1.5 ms from every frame but requires a timestamped register-write queue; the guest never reads the synthesizer's own timers, so the change is feasible. Converting the screen on the presenter thread from a VRAM snapshot would remove up to another 1.5 ms from heavy frames but has to reproduce every `scrndraw` mode including per-raster palette events.
+Running emulation one frame ahead of a fixed presentation schedule would hide the heavy frame completely, since the two idle frames around it average 4 ms, but it adds 16.7 ms of display and audio latency. It was implemented, measured, and removed; the presenter thread keeps the frame-drop logic so the option is a small change if it is ever wanted as a setting. Converting the screen on the presenter thread from a VRAM snapshot would remove up to another 1.5 ms from heavy frames but has to reproduce every `scrndraw` mode including per-raster palette events.
 

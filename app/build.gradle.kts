@@ -32,6 +32,9 @@ android {
                 if (providers.gradleProperty("kairo98GpuVerify").orNull == "true") {
                     arguments += "-DKAIRO98_GPU_VERIFY=ON"
                 }
+                if (providers.gradleProperty("kairo98SynthVerify").orNull == "true") {
+                    arguments += "-DKAIRO98_SYNTH_VERIFY=ON"
+                }
             }
         }
     }

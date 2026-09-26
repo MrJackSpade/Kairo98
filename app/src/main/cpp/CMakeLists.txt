@@ -92,6 +92,12 @@ if(KAIRO98_GPU_VERIFY)
     target_compile_definitions(np21w_core PRIVATE KAIRO98_GPU_VERIFY)
     target_compile_definitions(kairo98 PRIVATE KAIRO98_GPU_VERIFY)
 endif()
+# Diagnostic build: run a second FM synthesizer synchronously on the emulation
+# thread and compare the worker thread's output with it sample by sample.
+option(KAIRO98_SYNTH_VERIFY "Cross-check the threaded FM synthesizer against a synchronous one" OFF)
+if(KAIRO98_SYNTH_VERIFY)
+    target_compile_definitions(kairo98 PRIVATE KAIRO98_SYNTH_VERIFY)
+endif()
 if(KAIRO98_PGO_FLAGS)
     target_compile_options(np21w_core PRIVATE ${KAIRO98_PGO_FLAGS})
     target_compile_options(kairo98 PRIVATE ${KAIRO98_PGO_FLAGS})
