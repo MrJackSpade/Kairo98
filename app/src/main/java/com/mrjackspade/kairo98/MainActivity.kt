@@ -1600,7 +1600,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
 
     private fun editGameCpuSpeed(entry: LibraryEntry) {
         val current = romLibrary.catalog.resolve(entry.contentId!!, entry.displayName)
-        val multiples = listOf(2, 4, 6, 8, 10, 12, 16, DEFAULT_CPU_MULTIPLE)
+        val multiples = listOf(1, 2, 3, 4, 6, 8, 10, 12, 16, DEFAULT_CPU_MULTIPLE)
         val labels = listOf("App default (%.1f MHz)".format(cpuMhz(current, DEFAULT_CPU_MULTIPLE))) +
             multiples.map { "%.1f MHz (x%d)".format(cpuMhz(current, it), it) }
         val selected = current.cpuMultiple?.let { multiples.indexOf(it) + 1 } ?: 0
