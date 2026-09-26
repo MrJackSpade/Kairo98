@@ -12,7 +12,7 @@ The release package ID for both channels is `com.loxifi.kairo98`. Kotlin and JNI
 
 ## Tagged build artifacts
 
-Pushing a version tag such as `v0.3.1` runs `.github/workflows/tag-builds.yml`. It builds only the `withoutImagesRelease` APK and AAB, verifies signing and distribution contents, and uploads both as GitHub Actions artifacts for 30 days. The GitHub release APK and Play AAB are built from the same tagged revision. The tag supplies `versionName`; the workflow run number supplies `versionCode` to both artifacts. A GitHub Release is published separately after the device and license audit passes.
+Pushing a version tag such as `v0.4.0` runs `.github/workflows/tag-builds.yml`. It builds only the `withoutImagesRelease` APK and AAB, verifies signing and distribution contents, uploads both as GitHub Actions artifacts for 30 days, and publishes the signed APK in a GitHub Release. The GitHub release APK and Play AAB are built from the same tagged revision. The tag supplies `versionName` and a numeric `versionCode` derived from the version; manual test builds use the workflow run number instead. An automated release does not establish that its exact binary has booted a game on an Android device or that the full license audit is complete.
 
 The `withoutImages` build shows **Download missing images** in the library's right menu. It fetches artwork only for games in the selected ROM library, keeps 360-pixel thumbnails in private app storage, and resumes by skipping files already saved. Artwork is not included in the distributable APK or AAB.
 
