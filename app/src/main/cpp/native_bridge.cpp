@@ -28,8 +28,8 @@ extern "C" int kairo98_hdi_probe(const char *path, unsigned int *cylinders,
                                  unsigned int *sector_size, unsigned int *first_word);
 extern "C" int kairo98_machine_start(const char *image, const char *font_path,
                                       const char *bios_dir, int font_bitmap, int mhz_times_ten,
-                                      int gdc_mhz_times_ten, int floppy, const char *boot_floppy,
-                                      const char *second_floppy);
+                                      int gdc_mhz_times_ten, int cpu_multiple, int floppy,
+                                      const char *boot_floppy, const char *second_floppy);
 extern "C" int kairo98_machine_dos_prompt(void);
 extern "C" void kairo98_machine_exec(void);
 extern "C" void kairo98_machine_counters(unsigned long long *slices, unsigned long long *insts,
@@ -242,8 +242,8 @@ void report_state(const char *state, const char *error = "") {
 }
 
 void run_machine(std::string image, std::string font_path, std::string bios_dir,
-                 bool font_bitmap, int mhz_times_ten, int gdc_mhz_times_ten, bool floppy,
-                 std::string boot_floppy, std::string second_floppy) {
+                 bool font_bitmap, int mhz_times_ten, int gdc_mhz_times_ten, int cpu_multiple,
+                 bool floppy, std::string boot_floppy, std::string second_floppy) {
     dos_prompt_ready.store(false);
     clear_screen_hash();
     kairo98_input_telemetry_reset();
@@ -251,7 +251,7 @@ void run_machine(std::string image, std::string font_path, std::string bios_dir,
     unsigned int prompt_frames = 0;
     int start_result = kairo98_machine_start(image.c_str(), font_path.c_str(), bios_dir.c_str(),
                                              font_bitmap ? 1 : 0, mhz_times_ten,
-                                             gdc_mhz_times_ten, floppy ? 1 : 0,
+                                             gdc_mhz_times_ten, cpu_multiple, floppy ? 1 : 0,
                                              boot_floppy.c_str(), second_floppy.c_str());
     if (start_result != 0) {
         report_state("Error", start_result == 2 ? "HDI did not mount" :
@@ -670,6 +670,7 @@ Java_com_mrjackspade_kairo98_MainActivity_nativeStart(JNIEnv *env, jobject, jstr
                               jstring font_path, jstring bios_dir, jboolean font_bitmap,
                                                       jint mhz_times_ten,
                                                       jint gdc_mhz_times_ten,
+                                                      jint cpu_multiple,
                                                       jboolean floppy, jstring boot_floppy_path,
                                                       jstring second_floppy_path) {
     std::lock_guard<std::mutex> lifecycle(lifecycle_mutex);
@@ -704,7 +705,7 @@ Java_com_mrjackspade_kairo98_MainActivity_nativeStart(JNIEnv *env, jobject, jstr
         active = true;
     }
     worker = std::thread(run_machine, std::move(path), std::move(font), std::move(bios),
-                         font_bitmap == JNI_TRUE, mhz_times_ten, gdc_mhz_times_ten,
+                         font_bitmap == JNI_TRUE, mhz_times_ten, gdc_mhz_times_ten, cpu_multiple,
                          floppy == JNI_TRUE, std::move(boot_floppy), std::move(second_floppy));
     return JNI_TRUE;
 }

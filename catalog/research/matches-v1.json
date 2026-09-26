@@ -23127,6 +23127,21 @@
         "sha256-hdi-v1:9b2f527f117baf530bd5b35f2b68b2cad03c036456329c96d22d24af417a53dc"
       ],
       "description": "",
+      "machine": {"cpuMultiple": 4},
+      "controller": {"profile": "dragoon-armor-v1", "bindings": [
+        {"input": "virtual:a", "keys": [98]},
+        {"input": "virtual:b", "keys": [78]},
+        {"input": "virtual:x", "keys": [99]},
+        {"input": "virtual:y", "keys": [100]},
+        {"input": "virtual:l1", "keys": [57]},
+        {"input": "virtual:r1", "keys": [56]},
+        {"input": "virtual:start", "keys": [28]},
+        {"input": "virtual:select", "keys": [0]},
+        {"input": "virtual:up", "keys": [67]},
+        {"input": "virtual:down", "keys": [75]},
+        {"input": "virtual:left", "keys": [70]},
+        {"input": "virtual:right", "keys": [72]}
+      ]},
       "pageUrl": "https://gamesdb.launchbox-app.com/games/details/137132-dragoon-armor-for-adult",
       "boxArtUrl": "https://images.launchbox-app.com/af1a6ad0-60e6-4de0-8d82-00d93ef985a6.jpg",
       "screenshotUrl": "https://images.launchbox-app.com/0ec8ffce-9656-45ed-8506-11c362529e32.png"

@@ -126,7 +126,12 @@ class CatalogBuildTests(unittest.TestCase):
 
     def test_typed_machine_and_media(self):
         record = self.source["datasets"][0]["games"][0]
-        for machine in ({"baseClockTenthsMHz": 25.0}, {"baseClockTenthsMHz": True}):
+        for multiple in (1, 4, 20):
+            self.assertEqual(validate_record({**record, "machine": {"cpuMultiple": multiple}})
+                             ["machine"]["cpuMultiple"], multiple)
+        for machine in ({"baseClockTenthsMHz": 25.0}, {"baseClockTenthsMHz": True},
+                        {"cpuMultiple": 0}, {"cpuMultiple": 21}, {"cpuMultiple": 4.0},
+                        {"cpuMultiple": True}):
             with self.subTest(machine=machine), self.assertRaisesRegex(ValueError, "invalid machine"):
                 validate_record({**record, "machine": machine})
         for media in ([{"role": "boot", "contentId": 7}], [{"contentId": record["contentIds"][0]}]):
