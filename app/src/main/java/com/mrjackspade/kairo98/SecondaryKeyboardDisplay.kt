@@ -19,6 +19,8 @@ import android.view.SurfaceView
 import android.view.View
 import android.view.WindowManager
 import android.widget.FrameLayout
+import android.widget.ImageView
+import android.widget.LinearLayout
 import kotlin.math.roundToInt
 
 /** Places the guest keyboard on another Android display when one is available. */
@@ -68,17 +70,29 @@ internal class SecondaryKeyboardDisplay(
     fun toggleSwap() {
         if (!isShowing) return
         swapped = !swapped
-        presentation?.content?.setAppearance(keyboardVisible, backgroundColor, swapped)
-        companion?.setAppearance(keyboardVisible, backgroundColor, swapped)
+        presentation?.content?.setAppearance(keyboardVisible, backgroundColor, swapped, libraryInfo)
+        companion?.setAppearance(keyboardVisible, backgroundColor, swapped, libraryInfo)
         onSwapChanged(swapped)
+    }
+
+    /** What the second screen shows about the selected game while the library is open. */
+    data class LibraryInfo(val title: String, val tags: List<String>, val description: String,
+                           val art: android.graphics.Bitmap?)
+
+    private var libraryInfo: LibraryInfo? = null
+
+    fun setLibraryInfo(info: LibraryInfo?) {
+        libraryInfo = info
+        presentation?.content?.setAppearance(keyboardVisible, backgroundColor, swapped, libraryInfo)
+        companion?.setAppearance(keyboardVisible, backgroundColor, swapped, libraryInfo)
     }
 
     fun setAppearance(showKeyboard: Boolean, color: Int) {
         keyboardVisible = showKeyboard
         backgroundColor = color
         refresh()
-        presentation?.content?.setAppearance(keyboardVisible, backgroundColor, swapped)
-        companion?.setAppearance(keyboardVisible, backgroundColor, swapped)
+        presentation?.content?.setAppearance(keyboardVisible, backgroundColor, swapped, libraryInfo)
+        companion?.setAppearance(keyboardVisible, backgroundColor, swapped, libraryInfo)
     }
 
     override fun onDisplayAdded(displayId: Int) = refresh()
@@ -116,7 +130,7 @@ internal class SecondaryKeyboardDisplay(
         try {
             next.show()
             presentation = next
-            next.content.setAppearance(keyboardVisible, backgroundColor, swapped)
+            next.content.setAppearance(keyboardVisible, backgroundColor, swapped, libraryInfo)
             next.setOnDismissListener {
                 if (presentation === next) {
                     presentation = null
@@ -157,7 +171,7 @@ internal class SecondaryKeyboardDisplay(
     }
 
     internal fun updateCompanion(value: SecondaryKeyboardActivity) {
-        if (companion === value) value.setAppearance(keyboardVisible, backgroundColor, swapped)
+        if (companion === value) value.setAppearance(keyboardVisible, backgroundColor, swapped, libraryInfo)
     }
 
     internal fun detachCompanion(value: SecondaryKeyboardActivity) {
@@ -258,8 +272,51 @@ internal class SecondaryKeyboardContent(
         }
     }
 
-    fun setAppearance(showKeyboard: Boolean, color: Int, swapped: Boolean) {
-        setBackgroundColor(color)
+    private val libraryPanel = LinearLayout(context).apply {
+        orientation = LinearLayout.HORIZONTAL
+        visibility = View.GONE
+        setPadding(dp(24), dp(24), dp(24), dp(24))
+    }
+    private val libraryArt = ImageView(context).apply {
+        scaleType = ImageView.ScaleType.FIT_START
+        adjustViewBounds = true
+    }
+    private val libraryTitle = Ui.text(context, "", Ui.TITLE, bold = true).apply { maxLines = 3 }
+    private val libraryTags = Ui.text(context, "", Ui.SECONDARY, Ui.TEXT_MUTED).apply { maxLines = 3 }
+    private val libraryDescription = Ui.text(context, "", Ui.BODY, Ui.TEXT_BODY).apply {
+        setLineSpacing(dp(3).toFloat(), 1f)
+        ellipsize = android.text.TextUtils.TruncateAt.END
+    }
+
+    init {
+        libraryPanel.addView(libraryArt, LinearLayout.LayoutParams(dp(180), -2))
+        val text = LinearLayout(context).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(dp(20), 0, 0, 0)
+        }
+        text.addView(Ui.sectionLabel(context, "SELECTED").apply { setPadding(0, 0, 0, dp(8)) })
+        text.addView(libraryTitle)
+        text.addView(libraryTags, LinearLayout.LayoutParams(-1, -2).apply { topMargin = dp(4) })
+        text.addView(libraryDescription, LinearLayout.LayoutParams(-1, 0, 1f).apply { topMargin = dp(14) })
+        text.addView(Ui.text(context, "Press A or tap the game above to open it", Ui.LABEL, Ui.TEXT_FAINT))
+        libraryPanel.addView(text, LinearLayout.LayoutParams(0, -1, 1f))
+        addView(libraryPanel, LayoutParams(-1, -1))
+    }
+
+    private fun dp(value: Int) = (value * resources.displayMetrics.density).roundToInt()
+
+    fun setAppearance(showKeyboard: Boolean, color: Int, swapped: Boolean,
+                      info: SecondaryKeyboardDisplay.LibraryInfo?) {
+        setBackgroundColor(if (!showKeyboard && info != null) Ui.BG else color)
+        libraryPanel.visibility = if (!showKeyboard && info != null) View.VISIBLE else View.GONE
+        if (info != null) {
+            libraryTitle.text = info.title
+            libraryTags.text = info.tags.joinToString("\n")
+            libraryDescription.text = info.description
+            libraryArt.setImageBitmap(info.art)
+            libraryArt.visibility = if (info.art == null) View.GONE else View.VISIBLE
+            libraryDescription.maxLines = if (info.art == null) 12 else 9
+        }
         gameActive = showKeyboard && swapped
         gameSurface.visibility = if (gameActive) View.VISIBLE else View.GONE
         if (showKeyboard && !swapped) keyboard.visibility = View.VISIBLE

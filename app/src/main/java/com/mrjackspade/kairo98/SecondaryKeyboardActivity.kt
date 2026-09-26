@@ -38,8 +38,9 @@ class SecondaryKeyboardActivity : Activity() {
         } else Log.i("Kairo98", "Keyboard activity ready on display 0")
     }
 
-    internal fun setAppearance(showKeyboard: Boolean, color: Int, swapped: Boolean) {
-        if (::content.isInitialized) content.setAppearance(showKeyboard, color, swapped)
+    internal fun setAppearance(showKeyboard: Boolean, color: Int, swapped: Boolean,
+                               info: SecondaryKeyboardDisplay.LibraryInfo?) {
+        if (::content.isInitialized) content.setAppearance(showKeyboard, color, swapped, info)
     }
 
     internal val activeGameSurface: android.view.SurfaceView?

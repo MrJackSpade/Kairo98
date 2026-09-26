@@ -35,7 +35,7 @@ internal class FirstRunSetup(
 
     init {
         visibility = View.GONE
-        setBackgroundColor(0xff10151d.toInt())
+        setBackgroundColor(Ui.BG)
         elevation = dp(24).toFloat()
         isFocusableInTouchMode = true
         val scroll = ScrollView(activity).apply { isFillViewport = true }
@@ -105,26 +105,26 @@ internal class FirstRunSetup(
 
     private fun render() {
         card.removeAllViews()
-        text("KAIRO98", 18f, Color.WHITE, bold = true, bottom = 26)
+        text("KAIRO98", Ui.TITLE, Ui.TEXT, bold = true, bottom = 26)
         text(if (step == Step.ROM_FOLDER) "SETUP  ·  1 OF 2" else "SETUP  ·  2 OF 2",
-            13f, 0xff80d4df.toInt(), bottom = 10)
+            13f, Ui.ACCENT, bottom = 10)
         if (step == Step.ROM_FOLDER) {
-            text("Choose a ROM folder", 30f, Color.WHITE, bold = true, bottom = 14)
+            text("Choose a ROM folder", Ui.DISPLAY, Ui.TEXT, bold = true, bottom = 14)
             text("Select the folder containing your PC-98 games. Kairo98 will scan its disk images and ZIP files.",
-                17f, 0xffbdc8d5.toInt(), bottom = 28)
+                17f, Ui.TEXT_MUTED, bottom = 28)
             button("Select ROM folder", "Find games on this device", true, selectRomFolder)
             button("Skip for now", "You can choose one from the library later", false, skipRomFolder)
         } else {
-            text("Optional firmware and font", 30f, Color.WHITE, bold = true, bottom = 14)
+            text("Optional firmware and font", Ui.DISPLAY, Ui.TEXT, bold = true, bottom = 14)
             text("Import them now, or add them later from Library → Machine.",
-                17f, 0xffbdc8d5.toInt(), bottom = 28)
+                17f, Ui.TEXT_MUTED, bottom = 28)
             button("Import BIOS ROM", if (hasBios()) "Imported" else "Not set",
                 false, selectBios, busy == null)
             button("Import Font BMP", if (hasFont()) "Imported" else "Using generated font",
                 false, selectFont, busy == null)
             button("Import YM2608 rhythm ROM", if (hasRhythm()) "Imported" else "Not set",
                 false, selectRhythm, busy == null)
-            busy?.let { text(it, 15f, 0xff80d4df.toInt(), bottom = 10) }
+            busy?.let { text(it, Ui.SECONDARY, Ui.ACCENT, bottom = 10) }
             button(if (hasBios() || hasFont() || hasRhythm()) "Continue to library" else "Skip for now",
                 "Open the game library", true, finish, busy == null)
         }
@@ -161,7 +161,7 @@ internal class FirstRunSetup(
             gravity = Gravity.CENTER_VERTICAL
             setPadding(dp(18), dp(10), dp(18), dp(10))
             background = GradientDrawable().apply {
-                setColor(if (primary) 0xff304e63.toInt() else 0xff202a36.toInt())
+                setColor(if (primary) Ui.SELECTED else Ui.RAISED)
                 cornerRadius = dp(9).toFloat()
             }
             isEnabled = enabled
@@ -173,13 +173,13 @@ internal class FirstRunSetup(
         }
         row.addView(TextView(activity).apply {
             text = title
-            textSize = 18f
-            setTextColor(Color.WHITE)
+            textSize = Ui.TITLE
+            setTextColor(Ui.TEXT)
         })
         row.addView(TextView(activity).apply {
             text = subtitle
-            textSize = 14f
-            setTextColor(0xffb8c7d5.toInt())
+            textSize = Ui.SECONDARY
+            setTextColor(Ui.TEXT_MUTED)
         })
         card.addView(row, LinearLayout.LayoutParams(-1, dp(76)).apply {
             bottomMargin = dp(10)
