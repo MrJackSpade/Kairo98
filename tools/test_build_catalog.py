@@ -116,7 +116,11 @@ class CatalogBuildTests(unittest.TestCase):
         record = {"contentIds": ["sha256-hdi-v1:" + "0" * 64], "title": "Test"}
         for mode in ("auto", "keyboard", "mouse"):
             self.assertEqual(validate_record({**record, "input": {"mode": mode}})["input"]["mode"], mode)
-        for bad in ({"mode": "pointer"}, {}, {"mode": 1}):
+        for touch in ("touchpad", "direct"):
+            self.assertEqual(validate_record(
+                {**record, "input": {"mode": "mouse", "touch": touch}})["input"]["touch"], touch)
+        for bad in ({"mode": "pointer"}, {}, {"mode": 1}, {"mode": "mouse", "touch": "pen"},
+                    {"touch": "direct"}):
             with self.assertRaisesRegex(ValueError, "invalid input mode"):
                 validate_record({**record, "input": bad})
 

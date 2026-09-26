@@ -44,6 +44,8 @@ internal class SecondaryKeyboardDisplay(
         companion?.isFinishing == false
     val isKeyboardVisible: Boolean get() = isShowing && keyboardVisible
     val isCompanionActive: Boolean get() = companionStarting || companion != null
+    val activeGameSurface: SurfaceView?
+        get() = presentation?.content?.activeGameSurface ?: companion?.activeGameSurface
 
     fun start(handler: Handler) {
         if (started) return
@@ -266,6 +268,9 @@ internal class SecondaryKeyboardContent(
     }
 
     fun close() = keyboard.close()
+
+    /** The surface showing the guest while the screens are swapped, else null. */
+    val activeGameSurface: SurfaceView? get() = gameSurface.takeIf { gameActive }
 
     override fun surfaceCreated(holder: SurfaceHolder) {
         if (gameActive) onGameSurface(holder.surface, gameSurface.width, gameSurface.height)
