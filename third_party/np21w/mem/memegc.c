@@ -17,6 +17,17 @@ enum {
 static	EGCQUAD		egc_src;
 static	EGCQUAD		egc_data;
 
+/* Diagnostic counters for the Android debug status line. */
+unsigned long long kairo98_egc_writes;
+unsigned long long kairo98_egc_reads;
+unsigned long long kairo98_egc_fast_reads;
+unsigned long long kairo98_egc_mismatch;
+unsigned long long kairo98_egc_dec_reads;
+unsigned long long kairo98_egc_cpu_reads;
+unsigned int kairo98_egc_snap[10];
+int kairo98_egc_snap_pending;
+
+
 static const UINT planead[4] = {VRAM_B, VRAM_R, VRAM_G, VRAM_E};
 
 
@@ -1167,7 +1178,130 @@ const EGCQUAD	*data;
 	}
 }
 
+/* Original ascending-direction shifter input for one word of egc.lastvram. */
+static void MEMCALL kairo98_egc_read_inc_slow(void) {
+	egc.inptr[ 0] = egc.lastvram._b[0][EGCADDR_L];
+	egc.inptr[ 1] = egc.lastvram._b[0][EGCADDR_H];
+	egc.inptr[ 4] = egc.lastvram._b[1][EGCADDR_L];
+	egc.inptr[ 5] = egc.lastvram._b[1][EGCADDR_H];
+	egc.inptr[ 8] = egc.lastvram._b[2][EGCADDR_L];
+	egc.inptr[ 9] = egc.lastvram._b[2][EGCADDR_H];
+	egc.inptr[12] = egc.lastvram._b[3][EGCADDR_L];
+	egc.inptr[13] = egc.lastvram._b[3][EGCADDR_H];
+	shiftinput_incw();
+}
+
+#if defined(KAIRO98_ANDROID_FETCH_FAST)
+/*
+ * Direct equivalents of kairo98_egc_read_inc_slow for two shifter states
+ * that games reach on every word of a blit. Each case performs exactly the
+ * stores and register updates that shiftinput_incw and the egcsftw handler
+ * would, so the shifter state afterwards is identical; anything else falls
+ * back to the original code. KAIRO98_EGC_VERIFY runs both and counts any
+ * divergence in kairo98_egc_mismatch.
+ */
+static int MEMCALL kairo98_egc_read_inc_fast_apply(void) {
+	UINT8 *in = egc.inptr;
+
+	if (egc.stack != 0 || egc.srcbit != 0 || in != egc.outptr) {
+		return 0;
+	}
+	if (egc.func == 0 && egc.dstbit == 0 && egc.remain >= 16) {
+		/*
+		 * No shift, whole word: shiftinput_incw advances inptr by two and
+		 * raises stack to 16; egcsftw_upn0 consumes all 16 bits, copies
+		 * the eight bytes at outptr into egc_src (advancing outptr by two),
+		 * takes 16 off remain, and resets the shifter when remain hits 0.
+		 */
+		in[ 0] = egc.lastvram._b[0][EGCADDR_L];
+		in[ 1] = egc.lastvram._b[0][EGCADDR_H];
+		in[ 4] = egc.lastvram._b[1][EGCADDR_L];
+		in[ 5] = egc.lastvram._b[1][EGCADDR_H];
+		in[ 8] = egc.lastvram._b[2][EGCADDR_L];
+		in[ 9] = egc.lastvram._b[2][EGCADDR_H];
+		in[12] = egc.lastvram._b[3][EGCADDR_L];
+		in[13] = egc.lastvram._b[3][EGCADDR_H];
+		egc.inptr = in + 2;
+		egc.outptr = in + 2;
+		egc.srcmask.w = 0xffff;
+		egc_src.d[0] = egc.lastvram.d[0];
+		egc_src.d[1] = egc.lastvram.d[1];
+		egc.remain -= 16;
+		if (!egc.remain) {
+			egcshift();
+		}
+		return 1;
+	}
+	if (egc.func == 2 && egc.dstbit >= 8 && (egc.dstbit & 7) != 0 &&
+	    egc.sft8bitr == (egc.dstbit & 7) && egc.remain > (UINT)(8 - (egc.dstbit & 7))) {
+		/*
+		 * Destination offset of 8 or more with no source offset, fresh
+		 * word: shiftinput_incw advances inptr by two and sets stack to 16;
+		 * egcsftw_upr0 lowers stack by 16 - dstbit, the low-byte step only
+		 * drops dstbit by 8 and clears the low source mask, and the
+		 * high-byte step writes each plane's low input byte shifted right
+		 * by the remaining offset into the high source byte, masks it,
+		 * takes 8 - offset off remain, and zeroes dstbit. outptr is not
+		 * advanced and no reset occurs because remain stays above zero.
+		 */
+		UINT sub = egc.dstbit & 7;
+
+		in[ 0] = egc.lastvram._b[0][EGCADDR_L];
+		in[ 1] = egc.lastvram._b[0][EGCADDR_H];
+		in[ 4] = egc.lastvram._b[1][EGCADDR_L];
+		in[ 5] = egc.lastvram._b[1][EGCADDR_H];
+		in[ 8] = egc.lastvram._b[2][EGCADDR_L];
+		in[ 9] = egc.lastvram._b[2][EGCADDR_H];
+		in[12] = egc.lastvram._b[3][EGCADDR_L];
+		in[13] = egc.lastvram._b[3][EGCADDR_H];
+		egc.inptr = in + 2;
+		egc.stack = egc.dstbit;
+		egc.srcmask._b[EGCADDR_L] = 0;
+		egc.srcmask._b[EGCADDR_H] = bytemask_u0[sub + (7*8)];
+		egc.remain -= (8 - sub);
+		egc.dstbit = 0;
+		egc_src._b[0][EGCADDR_H] = (UINT8)(egc.lastvram._b[0][EGCADDR_L] >> sub);
+		egc_src._b[1][EGCADDR_H] = (UINT8)(egc.lastvram._b[1][EGCADDR_L] >> sub);
+		egc_src._b[2][EGCADDR_H] = (UINT8)(egc.lastvram._b[2][EGCADDR_L] >> sub);
+		egc_src._b[3][EGCADDR_H] = (UINT8)(egc.lastvram._b[3][EGCADDR_L] >> sub);
+		return 1;
+	}
+	return 0;
+}
+
+static int MEMCALL kairo98_egc_read_inc_fast(void) {
+#if defined(KAIRO98_EGC_VERIFY)
+	_EGC saved_egc = egc;
+	EGCQUAD saved_src = egc_src;
+	_EGC fast_egc;
+	EGCQUAD fast_src;
+
+	if (!kairo98_egc_read_inc_fast_apply()) {
+		return 0;
+	}
+	fast_egc = egc;
+	fast_src = egc_src;
+	egc = saved_egc;
+	egc_src = saved_src;
+	kairo98_egc_read_inc_slow();
+	if (memcmp(&fast_egc, &egc, sizeof(egc)) != 0 ||
+	    memcmp(&fast_src, &egc_src, sizeof(egc_src)) != 0) {
+		kairo98_egc_mismatch++;
+	}
+	kairo98_egc_fast_reads++;
+	return 1;
+#else
+	if (kairo98_egc_read_inc_fast_apply()) {
+		kairo98_egc_fast_reads++;
+		return 1;
+	}
+	return 0;
+#endif
+}
+#endif
+
 REG16 MEMCALL egc_readword(UINT32 addr) {
+	kairo98_egc_reads++;
 /*	
 	UINT32	ad;
 	int pl;
@@ -1276,18 +1410,38 @@ REG16 MEMCALL egc_readword(UINT32 addr) {
 	egc.lastvram.w[2] = *(UINT16 *)(&mem[ad + VRAM_G]);
 	egc.lastvram.w[3] = *(UINT16 *)(&mem[ad + VRAM_E]);
 
+	if (kairo98_egc_snap_pending && !(egc.ope & 0x400) && !(egc.sft & 0x1000) &&
+	    (egc.stack != 0 || egc.srcbit != 0 || egc.inptr != egc.outptr ||
+	     !((egc.func == 0 && egc.dstbit == 0 && egc.remain >= 16) ||
+	       (egc.func == 2 && egc.dstbit >= 8)))) {
+		kairo98_egc_snap_pending = 0;
+		kairo98_egc_snap[0] = egc.sft;
+		kairo98_egc_snap[1] = egc.leng;
+		kairo98_egc_snap[2] = egc.ope;
+		kairo98_egc_snap[3] = (unsigned int)egc.func;
+		kairo98_egc_snap[4] = egc.stack;
+		kairo98_egc_snap[5] = egc.srcbit;
+		kairo98_egc_snap[6] = egc.dstbit;
+		kairo98_egc_snap[7] = egc.remain;
+		kairo98_egc_snap[8] = (unsigned int)(egc.inptr - egc.outptr);
+		kairo98_egc_snap[9] = egc.fgbg;
+	}
+	if (egc.ope & 0x400) {
+		kairo98_egc_cpu_reads++;
+	}
+	else if (egc.sft & 0x1000) {
+		kairo98_egc_dec_reads++;
+	}
 	// shift input
 	if (!(egc.ope & 0x400)) {
 		if (!(egc.sft & 0x1000)) {
-			egc.inptr[ 0] = egc.lastvram._b[0][EGCADDR_L];
-			egc.inptr[ 1] = egc.lastvram._b[0][EGCADDR_H];
-			egc.inptr[ 4] = egc.lastvram._b[1][EGCADDR_L];
-			egc.inptr[ 5] = egc.lastvram._b[1][EGCADDR_H];
-			egc.inptr[ 8] = egc.lastvram._b[2][EGCADDR_L];
-			egc.inptr[ 9] = egc.lastvram._b[2][EGCADDR_H];
-			egc.inptr[12] = egc.lastvram._b[3][EGCADDR_L];
-			egc.inptr[13] = egc.lastvram._b[3][EGCADDR_H];
-			shiftinput_incw();
+#if defined(KAIRO98_ANDROID_FETCH_FAST)
+			if (!kairo98_egc_read_inc_fast()) {
+				kairo98_egc_read_inc_slow();
+			}
+#else
+			kairo98_egc_read_inc_slow();
+#endif
 		}
 		else {
 			egc.inptr[-1] = egc.lastvram._b[0][EGCADDR_L];
@@ -1324,6 +1478,7 @@ void MEMCALL egc_writeword(UINT32 addr, REG16 value) {
 const EGCQUAD	*data;
 
 	__ASSERT(!(addr & 1));
+	kairo98_egc_writes++;
 	addr = LOW15(addr);
 	if (!gdcs.access) {
 		gdcs.grphdisp |= 1;

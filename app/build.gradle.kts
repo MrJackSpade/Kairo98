@@ -20,6 +20,15 @@ android {
         externalNativeBuild {
             cmake {
                 arguments += "-DANDROID_STL=c++_static"
+                providers.gradleProperty("kairo98PgoMode").orNull?.let {
+                    arguments += "-DKAIRO98_PGO_MODE=$it"
+                }
+                providers.gradleProperty("kairo98PgoProfile").orNull?.let {
+                    arguments += "-DKAIRO98_PGO_PROFILE=$it"
+                }
+                if (providers.gradleProperty("kairo98EgcVerify").orNull == "true") {
+                    arguments += "-DKAIRO98_EGC_VERIFY=ON"
+                }
             }
         }
     }

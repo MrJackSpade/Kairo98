@@ -96,6 +96,7 @@ set(NP21W_CORE_SOURCES
     ${NP21W_ROOT}/i386c/ia32/interface.c
     ${NP21W_ROOT}/i386c/ia32/ia32.c
     ${NP21W_ROOT}/i386c/ia32/cpu.c
+    ${NP21W_ROOT}/i386c/ia32/kairo98_idle.c
     ${NP21W_ROOT}/i386c/ia32/cpu_io.c
     ${NP21W_ROOT}/i386c/ia32/cpu_mem.c
     ${NP21W_ROOT}/i386c/ia32/ctrlxfer.c

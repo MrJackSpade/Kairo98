@@ -146,8 +146,64 @@ static int flush_disk(void) {
     return 0;
 }
 
+unsigned long long kairo98_counter_slices;
+unsigned long long kairo98_counter_insts;
+unsigned long long kairo98_counter_sti;
+unsigned long long kairo98_counter_draws;
+unsigned long long kairo98_time_cpu_ns;
+unsigned long long kairo98_time_event_ns;
+unsigned long long kairo98_time_draw_ns;
+unsigned long long kairo98_time_fm_ns;
+
+unsigned long long kairo98_machine_draw_count(void) {
+    return kairo98_counter_draws;
+}
+
+extern unsigned long long kairo98_egc_writes;
+extern unsigned long long kairo98_egc_reads;
+extern unsigned long long kairo98_egc_fast_reads;
+extern unsigned long long kairo98_egc_mismatch;
+
+extern unsigned long long kairo98_egc_dec_reads;
+extern unsigned long long kairo98_egc_cpu_reads;
+extern unsigned int kairo98_egc_snap[10];
+extern int kairo98_egc_snap_pending;
+
+void kairo98_machine_egc_stats(unsigned long long *writes, unsigned long long *reads,
+                               unsigned long long *fast_reads, unsigned long long *mismatch) {
+    *writes = kairo98_egc_writes;
+    *reads = kairo98_egc_reads;
+    *fast_reads = kairo98_egc_fast_reads;
+    *mismatch = kairo98_egc_mismatch;
+}
+
+void kairo98_machine_egc_snapshot(unsigned int *snap, unsigned long long *dec_reads,
+                                  unsigned long long *cpu_reads) {
+    int i;
+    for (i = 0; i < 10; i++) snap[i] = kairo98_egc_snap[i];
+    *dec_reads = kairo98_egc_dec_reads;
+    *cpu_reads = kairo98_egc_cpu_reads;
+    kairo98_egc_snap_pending = 1;
+}
+
+void kairo98_machine_stage_times(unsigned long long *cpu_ns, unsigned long long *event_ns,
+                                 unsigned long long *draw_ns, unsigned long long *fm_ns) {
+    *cpu_ns = kairo98_time_cpu_ns;
+    *event_ns = kairo98_time_event_ns;
+    *draw_ns = kairo98_time_draw_ns;
+    *fm_ns = kairo98_time_fm_ns;
+}
+
 void kairo98_machine_exec(void) {
     pccore_exec(TRUE);
+}
+
+void kairo98_machine_counters(unsigned long long *slices, unsigned long long *insts,
+                              unsigned long long *sti, unsigned long long *skips) {
+    *slices = kairo98_counter_slices;
+    *insts = kairo98_counter_insts;
+    *sti = kairo98_counter_sti;
+    *skips = kairo98_counter_skips;
 }
 
 int kairo98_machine_reset(void) {

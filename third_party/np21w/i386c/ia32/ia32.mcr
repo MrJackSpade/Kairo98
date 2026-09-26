@@ -931,6 +931,9 @@ do { \
 		EXCEPTION(GP_EXCEPTION, 0); \
 	} \
 	CPU_EIP = __new_ip; \
+	if ((SINT32)__dest < 0) { \
+		kairo98_idle_check(); \
+	} \
 } while (/*CONSTCOND*/ 0)
 
 #define	JMPNEAR(clock) \
@@ -944,6 +947,9 @@ do { \
 		EXCEPTION(GP_EXCEPTION, 0); \
 	} \
 	CPU_EIP = __new_ip; \
+	if (__dest < 0) { \
+		kairo98_idle_check(); \
+	} \
 } while (/*CONSTCOND*/ 0)
 
 #define	JMPNEAR32(clock) \
@@ -957,6 +963,9 @@ do { \
 		EXCEPTION(GP_EXCEPTION, 0); \
 	} \
 	CPU_EIP = __new_ip; \
+	if ((SINT32)__dest < 0) { \
+		kairo98_idle_check(); \
+	} \
 } while (/*CONSTCOND*/ 0)
 
 #define	JMPNOP(clock, d) \
