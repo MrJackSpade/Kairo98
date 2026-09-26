@@ -70,7 +70,7 @@ android {
     productFlavors {
         create("withImages") {
             dimension = "artwork"
-            resValue("bool", "catalog_art_download_enabled", "false")
+            resValue("bool", "catalog_art_download_enabled", "true")
         }
         create("withoutImages") {
             dimension = "artwork"

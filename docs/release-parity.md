@@ -12,9 +12,9 @@ The release package ID for both channels is `com.loxifi.kairo98`. Kotlin and JNI
 
 ## Tagged build artifacts
 
-Pushing a version tag such as `v0.4.0` runs `.github/workflows/tag-builds.yml`. It builds only the `withoutImagesRelease` APK and AAB, verifies signing and distribution contents, uploads both as GitHub Actions artifacts for 30 days, and publishes the signed APK in a GitHub Release. The GitHub release APK and Play AAB are built from the same tagged revision. The tag supplies `versionName` and a numeric `versionCode` derived from the version; manual test builds use the workflow run number instead. An automated release does not establish that its exact binary has booted a game on an Android device or that the full license audit is complete.
+Pushing a version tag such as `v0.4.2` runs `.github/workflows/tag-builds.yml`. It builds signed `withImagesRelease` and `withoutImagesRelease` APKs plus a `withoutImagesRelease` Play AAB from the same tagged revision. It verifies signing, required notices, the artwork split, and matching shared assets, uploads the build artifacts for 30 days, and attaches both APKs to a GitHub Release. The tag supplies `versionName` and a numeric `versionCode` derived from the version; manual test builds use the workflow run number instead. An automated release does not establish that its exact binaries have booted a game on an Android device or that the full license audit, including artwork rights, is complete.
 
-The `withoutImages` build shows **Download missing images** in the library's right menu. It fetches artwork only for games in the selected ROM library, keeps 360-pixel thumbnails in private app storage, and resumes by skipping files already saved. Artwork is not included in the distributable APK or AAB.
+Both APK variants show **Download missing images** in the library's right menu. It fetches artwork only for games in the selected ROM library, keeps 360-pixel thumbnails in private app storage, and resumes by skipping files already saved. The `withImages` APK also includes embedded catalog artwork. Artwork is not included in the `withoutImages` APK or Play AAB.
 
 The public `v0.1.0-beta.1`, `v0.2.0`, and `v0.3.0` releases predate the Loxifi package. `v0.3.1` uses a release build and excludes bundled game artwork. Both channels use the same source revision and feature set.
 

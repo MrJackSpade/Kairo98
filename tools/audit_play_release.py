@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Audit the non-artwork APK and AAB that will be distributed."""
+"""Audit release APK variants and the Play AAB that will be distributed."""
 
 import hashlib
 import pathlib
@@ -24,14 +24,15 @@ def digest(data: bytes) -> str:
     return hashlib.sha256(data).hexdigest()
 
 
-def inspect(path: pathlib.Path, bundle: bool) -> dict[str, str]:
+def inspect(path: pathlib.Path, bundle: bool, allow_art: bool = False) -> dict[str, str]:
     prefix = "base/" if bundle else ""
     with zipfile.ZipFile(path) as archive:
         files = {entry.filename for entry in archive.infolist() if not entry.is_dir()}
         assert not any(BLOCKED.search(name) for name in files), f"Forbidden file in {path}"
-        assert not any(name.startswith(prefix + "assets/art/") for name in files), (
-            f"Bundled game artwork in {path}"
-        )
+        if not allow_art:
+            assert not any(name.startswith(prefix + "assets/art/") for name in files), (
+                f"Bundled game artwork in {path}"
+            )
         native = {name for name in files if name.startswith(prefix + "lib/")}
         assert native == {prefix + "lib/arm64-v8a/libkairo98.so"}, (
             f"Unexpected native libraries in {path}: {native}"
@@ -58,13 +59,24 @@ def inspect(path: pathlib.Path, bundle: bool) -> dict[str, str]:
 
 
 def main() -> None:
-    if len(sys.argv) != 3:
-        raise SystemExit("Usage: audit_play_release.py APK AAB")
-    apk, bundle = (pathlib.Path(argument) for argument in sys.argv[1:])
+    if len(sys.argv) not in (3, 4):
+        raise SystemExit("Usage: audit_play_release.py WITHOUT_IMAGES_APK AAB [WITH_IMAGES_APK]")
+    apk, bundle = (pathlib.Path(argument) for argument in sys.argv[1:3])
     apk_assets = inspect(apk, False)
     bundle_assets = inspect(bundle, True)
     assert apk_assets == bundle_assets, "APK and AAB assets differ"
     print("Non-artwork APK and AAB have matching assets and required notices")
+    if len(sys.argv) == 4:
+        with_images = pathlib.Path(sys.argv[3])
+        with_assets = inspect(with_images, False, allow_art=True)
+        artwork = {name for name in with_assets if name.startswith("assets/art/")}
+        assert any(name.endswith(".webp") for name in artwork), "Artwork APK has no images"
+        assert "assets/art/catalog-provenance-v1.json" in artwork, (
+            "Artwork APK has no provenance manifest"
+        )
+        shared_assets = {name: value for name, value in with_assets.items() if name not in artwork}
+        assert shared_assets == apk_assets, "Shared APK assets differ"
+        print(f"Artwork APK has {len(artwork)} artwork assets and matching shared assets")
 
 
 if __name__ == "__main__":
