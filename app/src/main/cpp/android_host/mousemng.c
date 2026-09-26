@@ -8,8 +8,11 @@
  * warp_completed, which the UI thread polls.
  *
  * The bus mouse reports relative counts and the guest keeps its own cursor, so a
- * warp first pushes the cursor past the top-left edge, where guest software clamps
- * it, and then moves it by the target in counts. The latch saturates at one signed
+ * warp first pushes the cursor a full screen past the corner nearest the previous
+ * warp, where guest software clamps it, and then moves it from that corner to the
+ * target in counts. When the cursor is still near the last tap it only travels to
+ * the nearest corner; a push the full screen size lands in that corner wherever the
+ * cursor really was. The latch saturates at one signed
  * byte and drops the rest, so delivery is paced by what the guest has not latched yet.
  */
 #define HOME_X 768
@@ -23,6 +26,9 @@ static int home_y;
 static int homing_x;
 static int homing_y;
 static int stalled_syncs;
+/* The previous warp target; the first warp homes to the top-left corner. */
+static int last_x;
+static int last_y;
 static unsigned warp_generation;
 static unsigned warp_completed;
 static UINT8 buttons = 0xa0;
@@ -33,6 +39,7 @@ void mousemng_reset(void) {
     home_x = home_y = 0;
     homing_x = homing_y = 0;
     stalled_syncs = 0;
+    last_x = last_y = 0;
     buttons = 0xa0;
     __atomic_store_n(&warp_completed, warp_generation, __ATOMIC_RELEASE);
 }
@@ -46,11 +53,17 @@ void kairo98_mouse_move(int dx, int dy) {
 }
 
 void kairo98_mouse_warp(int x, int y, unsigned generation) {
-    home_x = -HOME_X;
-    home_y = -HOME_Y;
+    int right = last_x >= 320;
+    int bottom = last_y >= 200;
+    x = max(0, min(639, x));
+    y = max(0, min(399, y));
+    home_x = right ? HOME_X : -HOME_X;
+    home_y = bottom ? HOME_Y : -HOME_Y;
     homing_x = homing_y = 1;
-    pending_x = max(0, min(639, x));
-    pending_y = max(0, min(399, y));
+    pending_x = right ? x - 639 : x;
+    pending_y = bottom ? y - 399 : y;
+    last_x = x;
+    last_y = y;
     stalled_syncs = 0;
     warp_generation = generation;
 }
