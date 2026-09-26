@@ -26,6 +26,7 @@ static int stalled_syncs;
 static unsigned warp_generation;
 static unsigned warp_completed;
 static UINT8 buttons = 0xa0;
+MOUSEMNGSTAT mousemngstat;
 
 void mousemng_reset(void) {
     pending_x = pending_y = 0;
@@ -34,6 +35,9 @@ void mousemng_reset(void) {
     stalled_syncs = 0;
     buttons = 0xa0;
     __atomic_store_n(&warp_completed, warp_generation, __ATOMIC_RELEASE);
+}
+
+void mousemng_updateautohidecursor(void) {
 }
 
 void kairo98_mouse_move(int dx, int dy) {
