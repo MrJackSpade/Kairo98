@@ -55,6 +55,15 @@ jobs:
           fi
           echo "KAIRO98_VERSION_CODE=$version_code" >> "$GITHUB_ENV"
           echo "KAIRO98_ARTIFACT_REF=${GITHUB_REF_NAME//\//-}" >> "$GITHUB_ENV"
+      - name: Validate release notes
+        if: github.event_name == 'push'
+        shell: bash
+        run: |
+          notes="docs/releases/${GITHUB_REF_NAME}.md"
+          if [[ ! -s "$notes" ]]; then
+            echo "Missing release notes: $notes" >&2
+            exit 1
+          fi
       - name: Prepare persistent beta signing key
         env:
           KEYSTORE_B64: ${{ secrets.KAIRO98_BETA_KEYSTORE_B64 }}
@@ -141,5 +150,5 @@ jobs:
             fi
             gh release create "$tag" "$with_images" "$without_images" \
               --verify-tag "${release_flags[@]}" --title "Kairo98 $KAIRO98_VERSION_NAME" \
-              --generate-notes
+              --notes-file "docs/releases/$tag.md"
           fi
