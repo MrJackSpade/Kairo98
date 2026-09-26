@@ -155,6 +155,8 @@ class GameDetailPage(
     }
 
     fun show(entry: LibraryEntry) {
+        // A library rescan or artwork refresh re-shows the open game; keep the user's place.
+        val refresh = isOpen && currentEntry?.id == entry.id
         currentEntry = entry
         val game = catalog.resolve(entry.contentId ?: "", entry.displayName)
         title.text = game.title
@@ -180,9 +182,11 @@ class GameDetailPage(
         imagePanel.isEnabled = game.preview != null
         imagePanel.isFocusable = game.preview != null
         visibility = View.VISIBLE
-        scroll.scrollTo(0, 0)
-        if (entry.playable) playButton.requestFocus()
-        else settingsButton.requestFocus()
+        if (!refresh) {
+            scroll.scrollTo(0, 0)
+            if (entry.playable) playButton.requestFocus()
+            else settingsButton.requestFocus()
+        } else if (!playButton.isEnabled && playButton.hasFocus()) settingsButton.requestFocus()
 
         val generation = ++imageGeneration
         loadImage(game.boxArt, generation, 2) { bitmap ->
