@@ -59,7 +59,7 @@ import kotlin.math.roundToInt
 
 class MainActivity : Activity(), SurfaceHolder.Callback {
     private external fun nativeStart(path: String?, fontPath: String, biosDir: String,
-                                     fontBitmap: Boolean, mhzTimesTen: Int, gdcMhzTimesTen: Int,
+                                     mhzTimesTen: Int, gdcMhzTimesTen: Int,
                                      cpuMultiple: Int, floppy: Boolean, bootFloppyPath: String?,
                                      secondFloppyPath: String?): Boolean
     private external fun nativeFloppy(drive: Int, path: String?): Boolean
@@ -929,8 +929,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
                 else {
                     nativeStop()
                     if (generation != startGeneration) null
-                    else if (nativeStart(disk.absolutePath, font.path, firmwareDir().absolutePath,
-                            font.bitmap,
+                    else if (nativeStart(disk.absolutePath, font, firmwareDir().absolutePath,
                             game.baseClockTenthsMHz ?: clock,
                             game.gdcClockTenthsMHz ?: 50, game.cpuMultiple ?: DEFAULT_CPU_MULTIPLE,
                             primary.isFloppy,
@@ -1838,7 +1837,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
         AlertDialog.Builder(this).setTitle("Machine")
             .setItems(arrayOf("Base clock  ·  ${if (clock == 25) "2.5" else "2"} MHz",
                 "BIOS ROM  ·  ${if (bios.isFile) "Imported" else "None"}",
-                "Font BMP  ·  ${if (font.isFile) "Imported" else "Generated"}",
+                "Font BMP  ·  ${if (font.isFile) "Imported" else "Built-in"}",
                 "YM2608 rhythm ROM  ·  ${if (rhythm.isFile) "Imported" else "None"}")) { _, which ->
                 when (which) {
                     0 -> showMachineClock()
@@ -2548,8 +2547,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
                 Files.move(partial.toPath(), disk.toPath(), StandardCopyOption.REPLACE_EXISTING)
                 val font = prepareFont()
                 if (generation != startGeneration) "Start cancelled"
-                else if (nativeStart(disk.absolutePath, font.path, firmwareDir().absolutePath,
-                        font.bitmap, clock,
+                else if (nativeStart(disk.absolutePath, font, firmwareDir().absolutePath, clock,
                         50, DEFAULT_CPU_MULTIPLE, DiskFormat.isFloppy(name), null, null))
                     awaitMachineReady()?.let { "Disk start failed: $it" } ?: "Starting $name"
                 else "Unable to start machine"
@@ -2764,8 +2762,8 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
                 val font = prepareFont()
                 nativeStop()
                 if (generation != startGeneration) "Start cancelled"
-                else if (nativeStart(disk.absolutePath, font.path, firmwareDir().absolutePath,
-                        font.bitmap, clock, 50, DEFAULT_CPU_MULTIPLE, floppy, null, null))
+                else if (nativeStart(disk.absolutePath, font, firmwareDir().absolutePath,
+                        clock, 50, DEFAULT_CPU_MULTIPLE, floppy, null, null))
                     awaitMachineReady()?.let { "Disk start failed: $it" } ?: message
                 else "Unable to start machine"
             } catch (error: Exception) {
@@ -3102,13 +3100,23 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
         }
     }
 
-    private data class FontSelection(val path: String, val bitmap: Boolean)
-
-    private fun prepareFont(): FontSelection {
+    /** The imported FONT.BMP, or the bundled Kairo98 font when none is imported. */
+    private fun prepareFont(): String {
         val bitmap = fontBitmapFile()
-        if (bitmap.isFile) return FontSelection(bitmap.absolutePath, true)
-        Pc98FontCache.ensure(filesDir)
-        return FontSelection(File(filesDir, "android-font.bin").absolutePath, false)
+        if (bitmap.isFile) return bitmap.absolutePath
+        val bundled = File(filesDir, BUNDLED_FONT)
+        val data = assets.open("font/$BUNDLED_FONT").use { it.readBytes() }
+        if (!bundled.isFile || bundled.length() != data.size.toLong() || !bundled.readBytes().contentEquals(data)) {
+            val partial = File(filesDir, "$BUNDLED_FONT.part")
+            try {
+                partial.writeBytes(data)
+                Files.move(partial.toPath(), bundled.toPath(), StandardCopyOption.REPLACE_EXISTING)
+            } finally {
+                partial.delete()
+            }
+        }
+        File(filesDir, "android-font.bin").delete()
+        return bundled.absolutePath
     }
 
     private fun firmwareDir() = File(filesDir, "firmware")
@@ -3121,6 +3129,8 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
     companion object {
         /** The core's standard CPU clock multiple, about 49 MHz on the 2.5 MHz base clock. */
         const val DEFAULT_CPU_MULTIPLE = 20
+        /** Bundled FONT.BMP built by tools/generate_font_bmp.py from redistributable fonts. */
+        private const val BUNDLED_FONT = "kairo98-font.bmp"
         private const val HDI_REQUEST = 98
         private const val ROM_FOLDER_REQUEST = 99
         private const val FLOPPY_A_REQUEST = 100
