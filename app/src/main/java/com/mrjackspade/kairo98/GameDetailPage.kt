@@ -34,6 +34,7 @@ class GameDetailPage(
         currentEntry?.let(settings)
     }
     private val unavailable = Ui.text(context, "", Ui.SECONDARY, Ui.DANGER)
+    private val file = Ui.text(context, "", Ui.LABEL, Ui.TEXT_FAINT)
     private val scroll = ScrollView(context)
     private val hero = LinearLayout(context)
     private val right = LinearLayout(context)
@@ -120,6 +121,7 @@ class GameDetailPage(
 
         description.setLineSpacing(dp(4).toFloat(), 1f)
         body.addView(description, LinearLayout.LayoutParams(-1, -2).apply { topMargin = dp(24) })
+        body.addView(file, LinearLayout.LayoutParams(-1, -2).apply { topMargin = dp(16) })
         updateHeroLayout(resources.configuration.orientation ==
             android.content.res.Configuration.ORIENTATION_PORTRAIT)
     }
@@ -168,6 +170,7 @@ class GameDetailPage(
             tags.addView(tag(it), LinearLayout.LayoutParams(-2, -2).apply { topMargin = dp(4) })
         }
         description.text = game.description ?: "No description available yet."
+        file.text = "File: " + fileLabel(entry)
         playButton.isEnabled = entry.playable
         playButton.alpha = if (entry.playable) 1f else 0.4f
         unavailable.text = if (entry.playable) "" else

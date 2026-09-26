@@ -33,6 +33,17 @@ internal fun variantLabel(name: String): String? {
     return tags.takeIf { it.isNotEmpty() }?.joinToString("  ·  ")
 }
 
+/**
+ * Where a library entry lives: its folder and file name without the extension, plus the image
+ * inside a ZIP when that name differs. It is what tells revisions and releases apart.
+ */
+internal fun fileLabel(entry: LibraryEntry): String {
+    fun stem(name: String) = name.substringBeforeLast('.').takeIf { name.contains('.') } ?: name
+    val file = stem(entry.path)
+    val inner = entry.zipEntry?.substringAfterLast('/')?.let(::stem)
+    return if (inner == null || inner == file.substringAfterLast('/')) file else "$file  ›  $inner"
+}
+
 /** Library landing page. A short tap or A opens the selected game's page. */
 class LibraryScreen(
     context: Context,
@@ -162,7 +173,7 @@ class LibraryScreen(
                 ellipsize = android.text.TextUtils.TruncateAt.END
             }
             val detail = Ui.text(context, "", Ui.SECONDARY, Ui.TEXT_MUTED).apply {
-                maxLines = 1
+                maxLines = 2
                 ellipsize = android.text.TextUtils.TruncateAt.END
             }
             text.addView(title)
@@ -175,10 +186,8 @@ class LibraryScreen(
         val pinned = entry.id == pinnedId && items.firstOrNull() is Header
         val game = catalog.resolve(entry.contentId ?: "", entry.displayName)
         holder.title.text = game.title
-        val source = entry.zipEntry ?: entry.path
-        holder.detail.text = entry.error?.let { "$it. Fix the source, then Refresh." }
-            ?: variantLabel(entry.path) ?: variantLabel(source)
-            ?: source.substringAfterLast('/').substringBeforeLast('.')
+        holder.detail.text = entry.error?.let { "${fileLabel(entry)}  ·  $it. Fix the source, then Refresh." }
+            ?: fileLabel(entry)
         holder.detail.setTextColor(if (entry.error != null) Ui.DANGER else Ui.TEXT_MUTED)
         val artwork = game.boxArt ?: game.preview
         val bitmap = artwork?.let(::loadArt)

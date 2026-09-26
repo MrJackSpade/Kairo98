@@ -313,7 +313,7 @@ internal class SecondaryKeyboardContent(
         adjustViewBounds = true
     }
     private val libraryTitle = Ui.text(context, "", Ui.TITLE, bold = true).apply { maxLines = 3 }
-    private val libraryTags = Ui.text(context, "", Ui.SECONDARY, Ui.TEXT_MUTED).apply { maxLines = 3 }
+    private val libraryTags = Ui.text(context, "", Ui.SECONDARY, Ui.TEXT_MUTED).apply { maxLines = 5 }
     private val libraryDescription = Ui.text(context, "", Ui.BODY, Ui.TEXT_BODY).apply {
         setLineSpacing(dp(3).toFloat(), 1f)
         ellipsize = android.text.TextUtils.TruncateAt.END
