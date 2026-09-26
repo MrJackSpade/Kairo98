@@ -29,6 +29,7 @@ import android.view.Surface
 import android.view.SurfaceHolder
 import android.view.SurfaceView
 import android.view.View
+import android.view.ViewGroup
 import android.view.WindowInsets
 import android.view.WindowManager
 import android.window.OnBackInvokedDispatcher
@@ -2115,6 +2116,14 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
             setColor(0xff202a36.toInt())
             cornerRadius = dp(14).toFloat()
         })
+        // A new window can open in touch mode even while a controller is in use, and then the
+        // first D-pad press only leaves touch mode. Match the main window instead.
+        if (::root.isInitialized && !root.isInTouchMode) dialog.window?.decorView?.post {
+            val decor = dialog.window?.decorView as? ViewGroup ?: return@post
+            val target = decor.findFocus()
+                ?: android.view.FocusFinder.getInstance().findNextFocus(decor, null, View.FOCUS_DOWN)
+            target?.requestFocusFromTouch()
+        }
         return dialog
     }
 
@@ -2725,6 +2734,8 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
         return when (event.keyCode) {
             KeyEvent.KEYCODE_DPAD_UP -> "up"
             KeyEvent.KEYCODE_DPAD_DOWN -> "down"
+            KeyEvent.KEYCODE_DPAD_LEFT -> "left"
+            KeyEvent.KEYCODE_DPAD_RIGHT -> "right"
             KeyEvent.KEYCODE_ENTER -> "a"
             KeyEvent.KEYCODE_ESCAPE, KeyEvent.KEYCODE_BACK -> "b"
             KeyEvent.KEYCODE_MENU -> "menu"
@@ -2795,10 +2806,11 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
         }
         if (menuOpen) {
             val control = uiControl(event)
-            if (control == "down" || control == "up") {
+            // The session row reads left to right, the list top to bottom; both walk the same order.
+            if (control == "down" || control == "up" || control == "left" || control == "right") {
                 if (event.action == KeyEvent.ACTION_DOWN) {
                     focusMenuItem(selectedMenuIndex +
-                        if (control == "down") 1 else -1)
+                        if (control == "down" || control == "right") 1 else -1)
                 }
                 return true
             }
@@ -2956,8 +2968,20 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
         else openMenu()
     }
 
+    /** App screens that take controller input instead of the guest. */
+    private fun appScreenOpen() = menuOpen || libraryVisible ||
+        (::controllerEditor.isInitialized && controllerEditor.isOpen) ||
+        (::onScreenControls.isInitialized && onScreenControls.isOpen) ||
+        (::firstRunSetup.isInitialized && firstRunSetup.isOpen)
+
+    private fun isNavigationKey(keyCode: Int) = keyCode == KeyEvent.KEYCODE_DPAD_UP ||
+        keyCode == KeyEvent.KEYCODE_DPAD_DOWN || keyCode == KeyEvent.KEYCODE_DPAD_LEFT ||
+        keyCode == KeyEvent.KEYCODE_DPAD_RIGHT || keyCode == KeyEvent.KEYCODE_TAB
+
     override fun onKeyDown(keyCode: Int, event: KeyEvent): Boolean {
-        if (menuOpen || libraryVisible) return true
+        // On app screens, leave directions unhandled so Android moves focus between controls;
+        // other keys stop here so they never reach the guest or close the activity.
+        if (appScreenOpen()) return !isNavigationKey(keyCode)
         if (KeyEvent.isGamepadButton(keyCode) || event.isFromSource(InputDevice.SOURCE_GAMEPAD) ||
             event.isFromSource(InputDevice.SOURCE_JOYSTICK)) return true
         val scanCode = pc98ScanCode(keyCode) ?: return super.onKeyDown(keyCode, event)
@@ -2966,7 +2990,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
     }
 
     override fun onKeyUp(keyCode: Int, event: KeyEvent): Boolean {
-        if (menuOpen || libraryVisible) return true
+        if (appScreenOpen()) return !isNavigationKey(keyCode)
         if (KeyEvent.isGamepadButton(keyCode) || event.isFromSource(InputDevice.SOURCE_GAMEPAD) ||
             event.isFromSource(InputDevice.SOURCE_JOYSTICK)) return true
         val scanCode = pc98ScanCode(keyCode) ?: return super.onKeyUp(keyCode, event)
