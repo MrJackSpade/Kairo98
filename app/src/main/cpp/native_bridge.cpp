@@ -49,6 +49,8 @@ extern "C" int kairo98_machine_set_clock(int mhz_times_ten);
 extern "C" void kairo98_machine_key(unsigned char code, int down);
 extern "C" void kairo98_mouse_move(int dx, int dy);
 extern "C" void kairo98_mouse_button(int button, int down);
+extern "C" void kairo98_mouse_warp(int x, int y, unsigned generation);
+extern "C" unsigned kairo98_mouse_warp_completed(void);
 extern "C" void kairo98_joy_set(int control, int down);
 extern "C" void kairo98_joy_release_all(void);
 extern "C" void kairo98_input_telemetry_reset(void);
@@ -68,7 +70,7 @@ extern "C" int __llvm_profile_write_file(void);
 #endif
 
 namespace {
-enum class CommandType { Pause, Resume, Reset, Stop, Key, Disk, Floppy, Clock, MouseMove, MouseButton, Joystick };
+enum class CommandType { Pause, Resume, Reset, Stop, Key, Disk, Floppy, Clock, MouseMove, MouseWarp, MouseButton, Joystick };
 struct Command {
     CommandType type;
     int key = 0;
@@ -76,6 +78,7 @@ struct Command {
     std::string path;
     int y = 0;
     std::shared_ptr<std::promise<int>> completion;
+    unsigned generation = 0;
 };
 std::mutex command_mutex;
 std::condition_variable command_ready;
@@ -95,6 +98,7 @@ std::string audio_config;
 std::string audio_profile;
 std::atomic<bool> audio_muted{false};
 std::atomic<bool> dos_prompt_ready{false};
+std::atomic<unsigned> mouse_warp_requested{0};
 // A passive host-side observation of the complete 640x400 RGB565 guest image.
 // The emulator core neither knows about nor depends on startup automation.
 std::atomic<bool> screen_hash_sampling{false};
@@ -418,6 +422,9 @@ void run_machine(std::string image, std::string font_path, std::string bios_dir,
                 case CommandType::MouseMove:
                     kairo98_mouse_move(command.key, command.y);
                     break;
+                case CommandType::MouseWarp:
+                    kairo98_mouse_warp(command.key, command.y, command.generation);
+                    break;
                 case CommandType::MouseButton:
                     kairo98_mouse_button(command.key, command.down);
                     break;
@@ -716,6 +723,19 @@ extern "C" JNIEXPORT void JNICALL
 Java_com_mrjackspade_kairo98_MainActivity_nativeMouseMove(JNIEnv *, jobject, jint dx, jint dy) {
     if (dx >= -640 && dx <= 640 && dy >= -400 && dy <= 400)
         enqueue({CommandType::MouseMove, dx, false, "", dy});
+}
+
+extern "C" JNIEXPORT void JNICALL
+Java_com_mrjackspade_kairo98_MainActivity_nativeMouseWarp(JNIEnv *, jobject, jint x, jint y) {
+    if (x < 0 || x >= 640 || y < 0 || y >= 400) return;
+    Command command{CommandType::MouseWarp, x, false, "", y};
+    command.generation = mouse_warp_requested.fetch_add(1) + 1;
+    enqueue(std::move(command));
+}
+
+extern "C" JNIEXPORT jboolean JNICALL
+Java_com_mrjackspade_kairo98_MainActivity_nativeMouseWarpDone(JNIEnv *, jobject) {
+    return kairo98_mouse_warp_completed() == mouse_warp_requested.load() ? JNI_TRUE : JNI_FALSE;
 }
 
 extern "C" JNIEXPORT void JNICALL

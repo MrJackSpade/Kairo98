@@ -66,6 +66,8 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
     private external fun nativeKey(scanCode: Int, down: Boolean)
     private external fun nativeMouseMove(dx: Int, dy: Int)
     private external fun nativeMouseButton(button: Int, down: Boolean)
+    private external fun nativeMouseWarp(x: Int, y: Int)
+    private external fun nativeMouseWarpDone(): Boolean
     private external fun nativeJoystick(control: Int, down: Boolean)
     private external fun nativeInputTelemetry(): LongArray
     private external fun nativeStatus(): String
@@ -163,6 +165,8 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
     private val inputModeDecider = InputModeDecider()
     private var globalInputMode = InputModeDecider.Mode.AUTO
     private var mouseTouchActive = false
+    private var directTapMouse = false
+    private var pendingMouseWarp: Runnable? = null
     private var mouseDragging = false
     private var mouseMoved = false
     private var mouseTouchStartX = 0f
@@ -229,6 +233,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
         muted = preferences.getBoolean("muted", false)
         clock = preferences.getInt("base_clock", 25).let { if (it == 20) 20 else 25 }
         globalInputMode = InputModeDecider.parse(preferences.getString("input_mode", "auto"))
+        directTapMouse = preferences.getString("touch_mouse", "touchpad") == "direct"
         nativeSetMuted(muted)
         if (traceScreenHashes) {
             File(filesDir, "startup-hash-trace.txt").writeText("")
@@ -442,6 +447,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
         section(content, "SETTINGS")
         menuItem(content, "Graphics", "Scaling and display") { showGraphics() }
         menuItem(content, "Input mode", "Auto, keyboard, or mouse touchpad") { showInputMode() }
+        menuItem(content, "Touch mouse", "Touchpad or direct tap") { showTouchMouse() }
         menuItem(content, "Machine", "Clock and firmware") { showMachine() }
         menuItem(content, "Controller", "Gamepad and on-screen controls") { showControllerScope() }
         menuItem(content, "Audio", "Sound output") { showAudio() }
@@ -986,6 +992,28 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
         if (dx != 0 || dy != 0) nativeMouseMove(dx, dy)
     }
 
+    /** Runs a click once a direct-tap warp has reached the guest; touchpad clicks run now. */
+    private fun afterMouseWarp(action: () -> Unit) {
+        pendingMouseWarp?.let(handler::removeCallbacks)
+        pendingMouseWarp = null
+        if (nativeMouseWarpDone()) {
+            action()
+            return
+        }
+        val deadline = android.os.SystemClock.uptimeMillis() + 2000
+        val poll = object : Runnable {
+            override fun run() {
+                if (nativeMouseWarpDone()) {
+                    pendingMouseWarp = null
+                    action()
+                } else if (android.os.SystemClock.uptimeMillis() < deadline) handler.postDelayed(this, 8)
+                else pendingMouseWarp = null
+            }
+        }
+        pendingMouseWarp = poll
+        handler.postDelayed(poll, 8)
+    }
+
     private fun handleScreenTouch(event: MotionEvent, width: Int, height: Int): Boolean {
         if (libraryVisible || menuOpen) return false
         when (event.actionMasked) {
@@ -996,6 +1024,8 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
                 if (mouseTouchActive) {
                     pendingMouseRelease?.let(handler::removeCallbacks)
                     pendingMouseRelease = null
+                    pendingMouseWarp?.let(handler::removeCallbacks)
+                    pendingMouseWarp = null
                     mouseRouter.release("touch")
                     mouseDragging = false
                     mouseMoved = false
@@ -1005,10 +1035,15 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
                     mouseTouchLastY = event.y
                     mouseFractionX = 0f
                     mouseFractionY = 0f
+                    // The view is exactly the scaled 640x400 frame, so view coordinates
+                    // already account for scaling and for any crop by the parent.
+                    if (directTapMouse && width > 0 && height > 0) nativeMouseWarp(
+                        (event.x * 640f / width).toInt().coerceIn(0, 639),
+                        (event.y * 400f / height).toInt().coerceIn(0, 399))
                     val hold = Runnable {
                         if (mouseTouchActive && !mouseMoved) {
                             mouseDragging = true
-                            mouseRouter.hold("touch", "leftButton")
+                            afterMouseWarp { mouseRouter.hold("touch", "leftButton") }
                         }
                         pendingMouseHold = null
                     }
@@ -1031,7 +1066,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
                     pendingMouseHold = null
                     moveGuestMouse(event, width, height)
                     if (mouseDragging) mouseRouter.release("touch")
-                    else if (!mouseMoved) {
+                    else if (!mouseMoved) afterMouseWarp {
                         mouseRouter.hold("touch", "leftButton")
                         val release = Runnable {
                             mouseRouter.release("touch")
@@ -1049,6 +1084,8 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
             MotionEvent.ACTION_CANCEL -> {
                 pendingMouseHold?.let(handler::removeCallbacks)
                 pendingMouseHold = null
+                pendingMouseWarp?.let(handler::removeCallbacks)
+                pendingMouseWarp = null
                 if (mouseTouchActive) mouseRouter.release("touch")
                 mouseTouchActive = false
                 mouseDragging = false
@@ -1771,6 +1808,20 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
             }.setNegativeButton("Cancel", null).showStyled()
     }
 
+    private fun showTouchMouse() {
+        var selected = if (directTapMouse) 1 else 0
+        AlertDialog.Builder(this)
+            .setTitle("Touch mouse")
+            .setSingleChoiceItems(arrayOf("Touchpad (drag to move, tap to click)",
+                "Direct tap (click where you touch)"), selected) { _, which -> selected = which }
+            .setPositiveButton("Save") { _, _ ->
+                directTapMouse = selected == 1
+                preferences.edit().putString("touch_mouse", if (directTapMouse) "direct" else "touchpad").apply()
+                toast("Touch mouse saved")
+            }
+            .setNegativeButton("Cancel", null).showStyled()
+    }
+
     private fun showInputMode() {
         val entry = currentEntry?.takeIf { it.contentId != null }
         showInputModeChoices(entry)
@@ -1881,6 +1932,8 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
         pendingMouseHold = null
         pendingMouseRelease?.let(handler::removeCallbacks)
         pendingMouseRelease = null
+        pendingMouseWarp?.let(handler::removeCallbacks)
+        pendingMouseWarp = null
         mouseRouter.release("touch")
         mouseTouchActive = false
         mouseDragging = false
