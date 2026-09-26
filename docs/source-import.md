@@ -16,7 +16,7 @@ A pinned [ymfm](https://github.com/aaronsgiles/ymfm) source snapshot is in `thir
 
 ## Spleen bitmap font
 
-The ASCII ANK glyphs use [Spleen 8x16](https://github.com/fcambus/spleen), pinned to commit `57f9219328c9f5873085320fe8bc8f7dd34b8791`. The source BDF and BSD-2-Clause license are preserved in `third_party/spleen/`. `generate_ascii.py` produces the 95 printable ASCII glyphs in `spleen_ascii_8x16.h`, which the bundled font and the app UI's pixel-font asset are built from.
+The ASCII ANK glyphs use [Spleen 8x16](https://github.com/fcambus/spleen), pinned to commit `57f9219328c9f5873085320fe8bc8f7dd34b8791`. The source BDF and BSD-2-Clause license are preserved in `third_party/spleen/`. `generate_ascii.py` produces the 95 printable ASCII glyphs in `spleen_ascii_8x16.h`, which the app UI's pixel-font asset is built from.
 
 ## Shinonome bitmap font
 
@@ -24,7 +24,7 @@ Japanese glyphs use the public-domain [Shinonome](http://openlab.ring.gr.jp/efon
 
 ## Bundled FONT.BMP
 
-`tools/generate_font_bmp.py` writes `app/src/main/assets/font/kairo98-font.bmp`, a 2048x2048 monochrome bitmap in the layout 21/W's FONT.BMP loader reads. It follows 21/W's `font/fontmake.c`: ANK 0x20-0x7E from Spleen, half-width katakana 0xA1-0xDF and JIS X 0208 kanji and symbols from Shinonome, and 21/W's built-in `font/fontdata.res` glyphs for the ANK graphic characters, half-width rows 0x29-0x2B, and NEC row 0x2C. The kanji use fontmake.c's JIS 78 code swaps and PC-98 unassigned-code filter. The app uses this bitmap when no FONT.BMP is imported. It has no NEC row 0x2D special characters or IBM extension kanji in rows 0x78-0x7C, because Shinonome covers only JIS X 0208.
+`tools/generate_font_bmp.py` writes `app/src/main/assets/font/kairo98-font.bmp`, a 2048x2048 monochrome bitmap in the layout 21/W's FONT.BMP loader reads. It follows 21/W's `font/fontmake.c`: ANK 0x20-0x7E and 0xA1-0xDF and JIS X 0208 kanji and symbols come from Shinonome, and 21/W's built-in `font/fontdata.res` glyphs supply the ANK graphic characters, half-width row 0x2B, and NEC row 0x2C. Half-width rows 0x29-0x2A and the other derived glyphs are converted from those with fontmake.c's `copyglyph` rules. The kanji use fontmake.c's JIS 78 code swaps and PC-98 unassigned-code filter. The app uses this bitmap when no FONT.BMP is imported. It has no NEC row 0x2D special characters or IBM extension kanji in rows 0x78-0x7C, because Shinonome covers only JIS X 0208.
 
 ## Kairo98 launcher artwork
 
