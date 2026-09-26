@@ -38,7 +38,7 @@ The next execution change needs a named hot path, an explanation of which guest 
 
 ## RG DS combat, second pass, 2026-09-25
 
-Measured with the same `tools/adb_advance_game.ps1` run on the RG DS (four Cortex-A55 cores at 2 GHz, Android 14, 60 Hz panels) and the same Night Slave HDI. All numbers are averages over 600-frame windows during the sampled battle presses, except the heavy-frame column, which averages every frame whose core time exceeded 20 ms in the battle segment.
+Measured with the same `tools/adb_advance_game.ps1` run on the RG DS (four Cortex-A55 cores at 2 GHz, Android 14, 60 Hz panels) and the same Night Slave HDI. All numbers are averages over 600-frame windows during the sampled battle presses. For rows up to the regenerated-profile build, the heavy-frame column averages every battle frame whose core time exceeded 20 ms, taken from the slow-frame log; the GPU rows use the `hv` status field, which averages every frame over 12 ms, so that heavy frames that dropped below 20 ms stay counted.
 
 | Build | Core per frame | Heavy frame | Late frames / 600 | AAudio underruns / 600 |
 | --- | ---: | ---: | ---: | ---: |
@@ -52,6 +52,8 @@ Measured with the same `tools/adb_advance_game.ps1` run on the RG DS (four Corte
 | Plus direct VRAM word path, skip unchanged-frame copy | 9.6 to 10.2 ms | 22.6 ms | 7 to 21 | 1 to 10 |
 | Plus EGC shifter fast path (no PGO) | 9.6 to 9.8 ms | 22.4 ms | 4 to 20 | 1 to 5 |
 | Final: all of the above with a regenerated PGO profile | 9.4 to 9.6 ms | 21.9 ms | 9 to 13 | 1 to 5 |
+| Plus GPU screen path (verification build, CPU draw still on) | 9.8 ms | 22.3 ms | 35 | 23 |
+| Plus GPU screen path (production) | 8.7 to 8.9 ms | 19.9 to 20.3 ms | 10 to 18 | 2 to 10 |
 
 ### What the guest is doing
 
@@ -84,6 +86,12 @@ Counting EGC accesses puts the battle frame at about 7,480 EGC word writes and 4
 ### Where the heavy frame goes
 
 Stage timers around `CPU_EXEC`, `nevent_progress`, `scrndraw_draw`, and the FM synthesizer put the average battle frame at 8.7 ms of guest execution, 1.1 ms of event progression, 0.7 ms of screen conversion, and 1.5 ms of FM synthesis. The remaining 22.6 ms heavy frame is therefore almost entirely guest instruction execution, with the EGC blitter path (`egc_writeword`, `egc_readword`, and the memory access chain above them) the largest identifiable block in the flat profile. Bringing that frame under 16.7 ms needs roughly 25% off interpreted execution of a blit-heavy instruction mix; the generic interpreter changes above each measured in single digits.
+
+### GPU screen path
+
+`android_host/gpudraw.c` and `gl_presenter.h` move the screen conversion off the emulation thread. When the display is in one of the four plain 400-line variants, `scrndraw_draw` no longer converts pixels; it records which lines it would have drawn and which palette slot each would have used (per-scanline palette state is honored: `rasterdraw` draws line ranges under successive palettes, and a line keeps the palette it was last drawn with until redrawn). The worker packs the dirty rows of the 8-bit text and graphics index planes, the per-line palette map, and any changed RGB565 palette slots, and the presenter thread composes the picture in a GLES 3 fragment shader on the surface itself, with the same integer nearest-neighbour mapping the CPU presenter used. Interleave, skip-line, 15 kHz, and 256-colour modes, and frames drawn while the startup screen hash is sampled, fall back to the CPU conversion, which the same presenter shows from an RGB565 texture. Entering or leaving the GPU path forces a full redraw so neither copy of the picture goes stale.
+
+A `-Pkairo98GpuVerify=true` build draws on the CPU as well and recomputes the shader's composition on the CPU for every redrawn row, counting differing pixels on logcat. A full 240-second run, boot screens through battle, compared 6,300 redrawn frames with zero differing pixels.
 
 ### Options not taken
 

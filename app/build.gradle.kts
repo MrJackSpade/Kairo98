@@ -29,6 +29,9 @@ android {
                 if (providers.gradleProperty("kairo98EgcVerify").orNull == "true") {
                     arguments += "-DKAIRO98_EGC_VERIFY=ON"
                 }
+                if (providers.gradleProperty("kairo98GpuVerify").orNull == "true") {
+                    arguments += "-DKAIRO98_GPU_VERIFY=ON"
+                }
             }
         }
     }

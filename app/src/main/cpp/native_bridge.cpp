@@ -4,6 +4,9 @@
 #include <android/native_window.h>
 #include <sys/resource.h>
 #include <android/native_window_jni.h>
+#include <array>
+#include "android_host/gpudraw.h"
+#include "gl_presenter.h"
 #include <aaudio/AAudio.h>
 #include <algorithm>
 #include <atomic>
@@ -112,21 +115,24 @@ uint64_t hash_guest_frame() {
     return hash;
 }
 
+// The UI thread hands the current ANativeWindow to the presenter through
+// `window`; the presenter takes its own reference when it attaches, so the UI
+// thread may release its reference at any time. `surface_generation` tells
+// both threads that the window changed.
 std::mutex window_mutex;
 ANativeWindow *window = nullptr;
-// Bumped whenever the surface changes so an unchanged picture is re-presented
-// onto the new window.
 std::atomic<unsigned int> surface_generation{0};
 
-// Presentation runs on its own thread.
+// Presentation runs on its own thread with a GPU renderer (gl_presenter.h).
 //
-// ANativeWindow_lock blocks until the compositor frees a buffer, so locking
-// on the emulation thread makes guest time wait on the display. The worker
-// hands each finished guest frame to the presenter and continues. Frames are
-// shown as soon as they are ready; when the presenter falls behind, it shows
-// the newest frame and drops the ones it could not show in time.
+// ANativeWindow_lock and eglSwapBuffers both wait on the compositor, so doing
+// them on the emulation thread makes guest time wait on the display. The
+// worker hands each redrawn guest frame to the presenter as a packet from
+// android_host/gpudraw.c and continues. Frames are shown as soon as they are
+// ready; when the presenter falls behind, it shows the newest frame and drops
+// the ones it could not show in time.
 struct PresentFrame {
-    std::vector<unsigned short> pixels;
+    kairo98_gpu_frame_t data;
     std::chrono::steady_clock::time_point due;
 };
 std::mutex present_mutex;
@@ -136,51 +142,20 @@ std::vector<std::unique_ptr<PresentFrame>> present_pool;
 bool present_stop = false;
 unsigned int present_dropped = 0;
 
-void render_frame(const unsigned short *source) {
-    std::lock_guard<std::mutex> guard(window_mutex);
-    if (!window) return;
-    ANativeWindow_Buffer buffer;
-    if (ANativeWindow_lock(window, &buffer, nullptr) != 0) return;
-    if (buffer.format == WINDOW_FORMAT_RGB_565 && buffer.width > 0 && buffer.height > 0) {
-        static int mapped_width = 0;
-        static std::vector<int> source_x;
-        if (mapped_width != buffer.width) {
-            source_x.resize(buffer.width);
-            for (int x = 0; x < buffer.width; ++x) {
-                source_x[x] = static_cast<long long>(x) * 640 / buffer.width;
-            }
-            mapped_width = buffer.width;
-        }
-        int previous_source_y = -1;
-        for (int y = 0; y < buffer.height; ++y) {
-            auto *target = static_cast<unsigned short *>(buffer.bits) + y * buffer.stride;
-            const int source_y = static_cast<long long>(y) * 400 / buffer.height;
-            if (source_y == previous_source_y) {
-                std::memcpy(target, target - buffer.stride, buffer.width * sizeof(*target));
-                continue;
-            }
-            const auto *row = source + source_y * 640;
-            if (buffer.width == 640) {
-                std::memcpy(target, row, 640 * sizeof(*target));
-            } else {
-                for (int x = 0; x < buffer.width; ++x) {
-                    target[x] = row[source_x[x]];
-                }
-            }
-            previous_source_y = source_y;
-        }
-    }
-    ANativeWindow_unlockAndPost(window);
-}
-
 void present_loop() {
+    GlPresenter renderer;
+    unsigned int attached_generation = ~0u;
     for (;;) {
         std::unique_ptr<PresentFrame> frame;
         {
             std::unique_lock<std::mutex> guard(present_mutex);
             for (;;) {
-                present_ready.wait(guard, [] { return !present_queue.empty() || present_stop; });
+                present_ready.wait(guard, [&] {
+                    return !present_queue.empty() || present_stop ||
+                           surface_generation.load(std::memory_order_relaxed) != attached_generation;
+                });
                 if (present_stop) return;
+                if (surface_generation.load(std::memory_order_relaxed) != attached_generation) break;
                 const auto due = present_queue.front()->due;
                 if (present_ready.wait_until(guard, due, [] { return present_stop; })) return;
                 // Past due. If the following frame is due as well, skip this one.
@@ -193,12 +168,39 @@ void present_loop() {
                 }
                 break;
             }
-            frame = std::move(present_queue.front());
-            present_queue.pop_front();
+            if (!present_queue.empty() &&
+                surface_generation.load(std::memory_order_relaxed) == attached_generation) {
+                frame = std::move(present_queue.front());
+                present_queue.pop_front();
+            }
         }
-        render_frame(frame->pixels.data());
-        std::lock_guard<std::mutex> guard(present_mutex);
-        present_pool.push_back(std::move(frame));
+        const unsigned int generation = surface_generation.load(std::memory_order_relaxed);
+        if (generation != attached_generation) {
+            ANativeWindow *target = nullptr;
+            {
+                std::lock_guard<std::mutex> guard(window_mutex);
+                target = window;
+            }
+            attached_generation = generation;
+            renderer.attach(target);
+            if (renderer.ready()) renderer.draw();
+        }
+        if (frame) {
+            renderer.apply(frame->data);
+#if defined(KAIRO98_GPU_VERIFY)
+            {
+                static unsigned long long verified_frames = 0, bad_pixels = 0;
+                bad_pixels += renderer.verify(frame->data);
+                if (++verified_frames % 300 == 0) {
+                    __android_log_print(ANDROID_LOG_INFO, "Kairo98Perf",
+                        "gpu verify frames=%llu badpixels=%llu", verified_frames, bad_pixels);
+                }
+            }
+#endif
+            renderer.draw();
+            std::lock_guard<std::mutex> guard(present_mutex);
+            present_pool.push_back(std::move(frame));
+        }
     }
 }
 
@@ -215,12 +217,8 @@ void queue_present(std::chrono::steady_clock::time_point due) {
             ++present_dropped;
         }
     }
-    if (!frame) {
-        frame = std::make_unique<PresentFrame>();
-        frame->pixels.resize(640 * 400);
-    }
-    std::memcpy(frame->pixels.data(), kairo98_frame_pixels(),
-                frame->pixels.size() * sizeof(frame->pixels[0]));
+    if (!frame) frame = std::make_unique<PresentFrame>();
+    kairo98_gpudraw_take(&frame->data);
     frame->due = due;
     {
         std::lock_guard<std::mutex> guard(present_mutex);
@@ -277,6 +275,7 @@ void run_machine(std::string image, std::string font_path, std::string bios_dir,
         present_stop = false;
         present_dropped = 0;
     }
+    kairo98_gpudraw_set_enabled(screen_hash_sampling.load(std::memory_order_relaxed) ? 0 : 1);
     std::thread presenter(present_loop);
     AAudioStream *audio = nullptr;
     AAudioStreamBuilder *builder = nullptr;
@@ -326,6 +325,8 @@ void run_machine(std::string image, std::string font_path, std::string bios_dir,
     unsigned long long frame_previous_draws = ~0ull;
     unsigned int frame_previous_surface = ~0u;
     unsigned int profile_big_frames = 0;
+    unsigned int profile_heavy_frames = 0;
+    int64_t profile_heavy_us = 0;
     unsigned int profile_previous_dropped = 0;
     unsigned long long profile_previous_cpu_ns = 0, profile_previous_event_ns = 0;
     unsigned long long profile_previous_draw_ns = 0, profile_previous_fm_ns = 0;
@@ -423,6 +424,10 @@ void run_machine(std::string image, std::string font_path, std::string bios_dir,
         {
             unsigned long long slices = 0, insts = 0, sti = 0, skips = 0;
             kairo98_machine_counters(&slices, &insts, &sti, &skips);
+            if (core_us > 12000) {
+                ++profile_heavy_frames;
+                profile_heavy_us += core_us;
+            }
             if (core_us > 20000) {
                 ++profile_big_frames;
                 unsigned short cs = 0, ip = 0;
@@ -520,7 +525,7 @@ void run_machine(std::string image, std::string font_path, std::string bios_dir,
             std::snprintf(result, sizeof(result),
                 "c%.1f r%.1f m%.1f w%.1f x+%d p%d q%d maxC%.1f maxR%.1f late%d/%.1f "
                 "sl%.0f in%.0f sti%.0f sk%.0f big%u drop%u cpu%.1f ev%.1f dr%.1f fm%.1f "
-                "ew%.0f er%.0f ef%.0f egcbad%llu",
+                "ew%.0f er%.0f ef%.0f egcbad%llu hv%u/%.1f",
                 profile_core_us / 600000.0, profile_render_us / 600000.0,
                 profile_mix_us / 600000.0, profile_write_us / 600000.0,
                 audio_xruns - profile_previous_xruns, profile_partial_writes,
@@ -538,7 +543,11 @@ void run_machine(std::string image, std::string font_path, std::string bios_dir,
                 (fm_ns - profile_previous_fm_ns) / 600.0e6,
                 (egc_writes - profile_previous_egc_writes) / 600.0,
                 (egc_reads - profile_previous_egc_reads) / 600.0,
-                (egc_fast - profile_previous_egc_fast) / 600.0, egc_bad);
+                (egc_fast - profile_previous_egc_fast) / 600.0, egc_bad,
+                profile_heavy_frames,
+                profile_heavy_frames ? profile_heavy_us / (profile_heavy_frames * 1000.0) : 0.0);
+            profile_heavy_frames = 0;
+            profile_heavy_us = 0;
             profile_previous_egc_writes = egc_writes;
             profile_previous_egc_reads = egc_reads;
             profile_previous_egc_fast = egc_fast;
@@ -758,6 +767,7 @@ extern "C" JNIEXPORT void JNICALL
 Java_com_mrjackspade_kairo98_MainActivity_nativeSetScreenHashSampling(JNIEnv *, jobject,
                                                                         jboolean enabled) {
     screen_hash_sampling.store(enabled == JNI_TRUE, std::memory_order_relaxed);
+    kairo98_gpudraw_set_enabled(enabled == JNI_TRUE ? 0 : 1);
     clear_screen_hash();
 }
 
@@ -776,14 +786,18 @@ extern "C" JNIEXPORT void JNICALL
 Java_com_mrjackspade_kairo98_MainActivity_nativeSetSurface(JNIEnv *env, jobject, jobject surface,
                                                           jint width, jint height) {
     ANativeWindow *replacement = surface ? ANativeWindow_fromSurface(env, surface) : nullptr;
-    std::lock_guard<std::mutex> guard(window_mutex);
-    surface_generation.fetch_add(1, std::memory_order_relaxed);
-    if (replacement) {
-        ANativeWindow_setBuffersGeometry(replacement, width > 0 ? width : 640,
-                                         height > 0 ? height : 400, WINDOW_FORMAT_RGB_565);
+    (void)width;
+    (void)height;
+    ANativeWindow *previous = nullptr;
+    {
+        std::lock_guard<std::mutex> guard(window_mutex);
+        previous = window;
+        window = replacement;
+        surface_generation.fetch_add(1, std::memory_order_relaxed);
     }
-    if (window) ANativeWindow_release(window);
-    window = replacement;
+    present_ready.notify_one();
+    // The presenter holds its own reference while it renders to a window.
+    if (previous) ANativeWindow_release(previous);
 }
 
 extern "C" JNIEXPORT void JNICALL

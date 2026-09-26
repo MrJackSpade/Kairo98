@@ -6,6 +6,36 @@
 #include	"sdraw.h"
 #include	"dispsync.h"
 #include	"palettes.h"
+
+#if defined(KAIRO98_ANDROID_FETCH_FAST)
+/* Android GPU screen path, see android_host/gpudraw.h. */
+int kairo98_gpudraw_begin(const SCRNSURF *surf, int variant, SDRAW sdraw);
+void kairo98_gpudraw_range(SDRAW sdraw, int maxy);
+static int kairo98_gpu_frame = 0;
+#if defined(KAIRO98_GPU_VERIFY)
+/* Verification: record for the GPU and also draw on the CPU so the two can be compared. */
+#define	KAIRO98_SDRAW(fn, sd, maxy) \
+	do { \
+		if (kairo98_gpu_frame) { \
+			_SDRAW __copy = *(sd); \
+			kairo98_gpudraw_range(&__copy, (maxy)); \
+		} \
+		(*(fn))((sd), (maxy)); \
+	} while (0)
+#else
+#define	KAIRO98_SDRAW(fn, sd, maxy) \
+	do { \
+		if (kairo98_gpu_frame) { \
+			kairo98_gpudraw_range((sd), (maxy)); \
+		} \
+		else { \
+			(*(fn))((sd), (maxy)); \
+		} \
+	} while (0)
+#endif
+#else
+#define	KAIRO98_SDRAW(fn, sd, maxy)	(*(fn))((sd), (maxy))
+#endif
 #ifdef SUPPORT_WAB
 #include	"wab/wab.h"
 #endif
@@ -89,7 +119,7 @@ static UINT8 rasterdraw(SDRAWFN sdrawfn, SDRAW sdraw, int maxy) {
 				np2_pal16[0] = np2_pal16[NP2PAL_SKIP];
 #endif
 			}
-			(*sdrawfn)(sdraw, y);
+			KAIRO98_SDRAW(sdrawfn, sdraw, y);
 			nextupdate = y;
 			// Ç®ïŸìñÇêHÇ◊ÇÈ
 			while(clk < event->clock) {
@@ -115,7 +145,7 @@ static UINT8 rasterdraw(SDRAWFN sdrawfn, SDRAW sdraw, int maxy) {
 			np2_pal16[0] = np2_pal16[NP2PAL_SKIP];
 #endif
 		}
-		(*sdrawfn)(sdraw, maxy);
+		KAIRO98_SDRAW(sdrawfn, sdraw, maxy);
 	}
 	if (palevent.vsyncpal) {
 		return(2);
@@ -256,8 +286,20 @@ const SDRAWFN	*sdrawfn;
 	sdraw.y = 0;
 	sdraw.xalign = surf->xalign;
 	sdraw.yalign = surf->yalign;
+#if defined(KAIRO98_ANDROID_FETCH_FAST)
+	{
+		int variant = -1;
+#if defined(SUPPORT_PC9821)
+		if (!(gdc.analog & 2))
+#endif
+		{
+			variant = (int)(sdrawfn - sdraw_getproctbl(surf));
+		}
+		kairo98_gpu_frame = kairo98_gpudraw_begin(surf, variant, &sdraw);
+	}
+#endif
 	if (((gdc.analog & 3) != 1) || (palevent.events >= PALEVENTMAX)) {
-		(*(*sdrawfn))(&sdraw, height);
+		KAIRO98_SDRAW(*sdrawfn, &sdraw, height);
 	}
 	else {
 		ret = rasterdraw(*sdrawfn, &sdraw, height);
