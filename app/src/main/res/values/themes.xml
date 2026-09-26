@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Every Kairo98 control draws its own focus state, so Android's default
+         translucent focus highlight would only wash whole pages grey. -->
+    <style name="Theme.Kairo98" parent="@android:style/Theme.Material.NoActionBar">
+        <item name="android:defaultFocusHighlightEnabled">false</item>
+    </style>
+</resources>

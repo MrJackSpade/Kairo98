@@ -1,6 +1,7 @@
 package com.mrjackspade.kairo98
 
 import android.app.Activity
+import android.app.ActivityManager
 import android.app.ActivityOptions
 import android.app.Presentation
 import android.content.Context
@@ -12,6 +13,7 @@ import android.os.Handler
 import android.util.Log
 import android.view.Display
 import android.view.Gravity
+import android.view.KeyEvent
 import android.view.MotionEvent
 import android.view.Surface
 import android.view.SurfaceHolder
@@ -163,6 +165,26 @@ internal class SecondaryKeyboardDisplay(
         }
     }
 
+    /*
+     * Android sends keys and controller sticks to the display that last took focus, so a
+     * touch on the second screen or opening it can move input there. Anything that
+     * arrives on the second screen is handed to the game screen's activity, and the game
+     * screen is brought back to the front so its dialogs and focus navigation get input.
+     */
+    internal fun forwardKey(event: KeyEvent): Boolean = activity.dispatchKeyEvent(event)
+
+    internal fun forwardMotion(event: MotionEvent): Boolean = activity.dispatchGenericMotionEvent(event)
+
+    internal fun reclaimFocus() {
+        if (activity.isFinishing || activity.isDestroyed) return
+        try {
+            (activity.getSystemService(Context.ACTIVITY_SERVICE) as ActivityManager)
+                .moveTaskToFront(activity.taskId, 0)
+        } catch (error: SecurityException) {
+            Log.w("Kairo98", "Could not return input focus to the game screen", error)
+        }
+    }
+
     internal fun attachCompanion(value: SecondaryKeyboardActivity): Pc98KeyboardPanel {
         companionStarting = false
         companion = value
@@ -230,6 +252,15 @@ internal class SecondaryKeyboardDisplay(
         override fun onStop() {
             if (::content.isInitialized) content.close()
             super.onStop()
+        }
+
+        override fun dispatchKeyEvent(event: KeyEvent) = forwardKey(event)
+
+        override fun dispatchGenericMotionEvent(event: MotionEvent) = forwardMotion(event)
+
+        override fun onWindowFocusChanged(hasFocus: Boolean) {
+            super.onWindowFocusChanged(hasFocus)
+            if (hasFocus) reclaimFocus()
         }
     }
 
