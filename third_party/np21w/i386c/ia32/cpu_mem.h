@@ -81,9 +81,17 @@ void MEMCALL cpu_vmemorywrite_commit_d(UINT32 paddr[2], UINT remain, UINT32 data
 /*
  * code fetch
  */
+#if defined(KAIRO98_ANDROID_FETCH_FAST)
+/* Out-of-line fetch used when the inline code-page cache in
+ * kairo98_fetch.h misses. The inline wrappers keep the public names. */
+PF_UINT8 MEMCALL cpu_codefetch_slow(UINT32 offset);
+PF_UINT16 MEMCALL cpu_codefetch_w_slow(UINT32 offset);
+PF_UINT32 MEMCALL cpu_codefetch_d_slow(UINT32 offset);
+#else
 PF_UINT8 MEMCALL cpu_codefetch(UINT32 offset);
 PF_UINT16 MEMCALL cpu_codefetch_w(UINT32 offset);
 PF_UINT32 MEMCALL cpu_codefetch_d(UINT32 offset);
+#endif
 #if defined(USE_CPU_MODRMPREFETCH)
 PF_UINT8 MEMCALL cpu_opcodefetch(UINT32 offset);
 #endif

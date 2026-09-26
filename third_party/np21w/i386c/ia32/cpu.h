@@ -1308,7 +1308,6 @@ void CPUCALL set_cpl(int new_cpl);
 extern const UINT8 iflags[];
 #define	szpcflag	iflags
 extern UINT8 szpflag_w[0x10000];
-
 #if defined(USE_CPU_EIPMASK)
 extern UINT32 cpu_eipMask;
 #endif
@@ -1474,6 +1473,9 @@ char *cpu_disasm2str(UINT32 eip);
 #include "cpu_mem.h"
 #include "exception.h"
 #include "paging.h"
+#include "kairo98_tlb.h"
+#include "kairo98_fetch.h"
+#include "kairo98_idle.h"
 #include "resolve.h"
 #include "task.h"
 

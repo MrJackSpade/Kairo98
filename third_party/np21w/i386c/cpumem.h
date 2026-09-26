@@ -67,6 +67,8 @@ REG16 MEMCALL memp_read16(UINT32 address);
 UINT32 MEMCALL memp_read32(UINT32 address);
 REG8 MEMCALL memp_read8_fast(UINT32 address);
 REG16 MEMCALL memp_read16_fast(UINT32 address);
+REG16 MEMCALL memp_bank_read16(UINT32 address);
+void MEMCALL memp_bank_write16(UINT32 address, REG16 value);
 UINT32 MEMCALL memp_read32_fast(UINT32 address);
 void MEMCALL memp_write8(UINT32 address, REG8 value);
 void MEMCALL memp_write16(UINT32 address, REG16 value);

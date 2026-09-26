@@ -198,222 +198,34 @@ static const UINT8 page_access_bit[32] = {
  * |
  * +- CR3(•¨—ƒAƒhƒŒƒX)
  */
-/* TLB */
-struct tlb_entry {
-	UINT32	tag;	/* linear address */
-#define	TLB_ENTRY_TAG_VALID		(1 << 0)
-/*	pde & pte & CPU_PTE_WRITABLE	(1 << 1)	*/
-/*	pde & pte & CPU_PTE_USER_MODE	(1 << 2)	*/
-#define	TLB_ENTRY_TAG_DIRTY		CPU_PTE_DIRTY		/* (1 << 6) */
-#define	TLB_ENTRY_TAG_GLOBAL		CPU_PTE_GLOBAL_PAGE	/* (1 << 8) */
-#define	TLB_ENTRY_TAG_MAX_SHIFT		12
-	UINT32	paddr;	/* physical address */
+#include "kairo98_tlb.h"
+
+tlb_t kairo98_tlb[NTLB];
 #if IA32_MEMORY_FAST_PATH
-	UINT8	*host_page;	/* direct host pointer for ordinary RAM page */
-	UINT32	fast_flags;	/* predecoded access/direct flags */
-#endif
-};
-/*
- * TLB fast path
- */
-#define	TLB_TAG_SHIFT		TLB_ENTRY_TAG_MAX_SHIFT
-#define	TLB_TAG_MASK		(~((1 << TLB_TAG_SHIFT) - 1))
-#define	TLB_GET_TAG_ADDR(ep)	((ep)->tag & TLB_TAG_MASK)
-#define	TLB_SET_TAG_ADDR(ep, addr) \
-do { \
-	(ep)->tag &= ~TLB_TAG_MASK; \
-	(ep)->tag |= (addr) & TLB_TAG_MASK; \
-} while (/*CONSTCOND(*/ 0)
-
-#define	TLB_IS_VALID(ep)	((ep)->tag & TLB_ENTRY_TAG_VALID)
-#define	TLB_SET_VALID(ep)	((ep)->tag = TLB_ENTRY_TAG_VALID)
-#define	TLB_SET_INVALID(ep)	((ep)->tag = 0)
-
-#define	TLB_IS_WRITABLE(ep)	((ep)->tag & CPU_PTE_WRITABLE)
-#define	TLB_IS_USERMODE(ep)	((ep)->tag & CPU_PTE_USER_MODE)
-#define	TLB_IS_DIRTY(ep)	((ep)->tag & TLB_ENTRY_TAG_DIRTY)
-#if (CPU_FEATURES_ALL & CPU_FEATURE_PGE) == CPU_FEATURE_PGE
-#define	TLB_IS_GLOBAL(ep)	((ep)->tag & TLB_ENTRY_TAG_GLOBAL)
-#else
-#define	TLB_IS_GLOBAL(ep)	0
-#endif
-
-#define	TLB_SET_TAG_FLAGS(ep, entry, bit) \
-do { \
-	(ep)->tag |= (entry) & (CPU_PTE_GLOBAL_PAGE|CPU_PTE_DIRTY); \
-	(ep)->tag |= (bit) & (CPU_PTE_WRITABLE|CPU_PTE_USER_MODE); \
-} while (/*CONSTCOND*/ 0)
-
-#if IA32_MEMORY_FAST_PATH
-// ƒy[ƒW‚‘¬ƒAƒNƒZƒX‚ÌŠÈˆÕ”»’è‚Ì‚½‚ß‚Ìƒtƒ‰ƒO
-// ‚±‚Ìƒtƒ‰ƒO”»’è‚Å’e‚©‚ê‚½ê‡‚Í’Êí‚ÌpagingŠÖ”‚ÅÚ×”»’è‚·‚é
-#define	TLBF_SUPER_READ		0x00000001UL // ƒX[ƒp[ƒoƒCƒUƒ‚[ƒh“Ç‚İæ‚è‹–‰Â
-#define	TLBF_USER_READ		0x00000002UL // ƒ†[ƒU[ƒ‚[ƒh“Ç‚İæ‚è‹–‰Â
-#define	TLBF_SUPER_WRITE	0x00000004UL // CR0.WP==0‚Ìê‡‚ÌƒX[ƒp[ƒoƒCƒUƒ‚[ƒh‘‚«‚İ‹–‰Â
-#define	TLBF_SUPER_WRITE_WP	0x00000008UL // CR0.WP==1‚Ìê‡‚ÌƒX[ƒp[ƒoƒCƒUƒ‚[ƒh‘‚«‚İ‹–‰Â
-#define	TLBF_USER_WRITE		0x00000010UL // ƒ†[ƒU[ƒ‚[ƒh‘‚«‚İ‹–‰Â
-#define	TLBF_CODE_SUPER		0x00000020UL // ƒX[ƒp[ƒoƒCƒUƒ‚[ƒh–½—ßƒtƒFƒbƒ`‹–‰Â
-#define	TLBF_CODE_USER		0x00000040UL // ƒ†[ƒU[ƒ‚[ƒh–½—ßƒtƒFƒbƒ`‹–‰Â
-#define	TLBF_DIRECT_READ	0x00000100UL // host_pageƒ|ƒCƒ“ƒ^‚Ö’¼Ú“Ç‚İæ‚è‰Â”
-#define	TLBF_DIRECT_WRITE	0x00000200UL // host_pageƒ|ƒCƒ“ƒ^‚Ö’¼Ú‘‚«‚İ‰Â”
-#endif
-
-#define	NTLB		2	/* 0: DTLB, 1: ITLB */
-#define	NENTRY		(1 << 6)
-#define	TLB_ENTRY_SHIFT	12
-#define	TLB_ENTRY_MASK	(NENTRY - 1)
-
-typedef struct {
-	struct tlb_entry entry[NENTRY];
-} tlb_t;
-static tlb_t tlb[NTLB];
-
-#if IA32_MEMORY_FAST_PATH
-#if defined(__GNUC__)
-#define TLB_FAST_INLINE static __inline__ __attribute__((always_inline))
-#elif defined(_MSC_VER)
-#define TLB_FAST_INLINE static __inline
-#else
-#define TLB_FAST_INLINE static INLINE
-#endif
-
-#define	TLB_USER_INDEX(ucrw)	(((ucrw) & CPU_PAGE_USER_MODE) >> 3)
-
-static UINT32 tlb_data_read_fast_flags[2] = {
+UINT32 kairo98_tlb_data_read_fast_flags[2] = {
 	TLBF_SUPER_READ,
 	TLBF_USER_READ
 };
-static UINT32 tlb_data_write_fast_flags[2] = {
+UINT32 kairo98_tlb_data_write_fast_flags[2] = {
 	TLBF_SUPER_WRITE,
 	TLBF_USER_WRITE
 };
-static UINT32 tlb_code_read_fast_flags[2] = {
+UINT32 kairo98_tlb_code_read_fast_flags[2] = {
 	TLBF_CODE_SUPER,
 	TLBF_CODE_USER
 };
-
-TLB_FAST_INLINE struct tlb_entry *
-tlb_lookup_data_read_fast(UINT32 laddr, int ucrw)
-{
-	struct tlb_entry *ep;
-	UINT32 flag;
-	int idx;
-
-	idx = (laddr >> TLB_ENTRY_SHIFT) & TLB_ENTRY_MASK;
-	ep = &tlb[0].entry[idx];
-	flag = tlb_data_read_fast_flags[TLB_USER_INDEX(ucrw)];
-
-	if (TLB_IS_VALID(ep) &&
-	    ((laddr & TLB_TAG_MASK) == TLB_GET_TAG_ADDR(ep)) &&
-	    (ep->fast_flags & flag)) {
-		return ep;
-	}
-	return NULL;
-}
-
-TLB_FAST_INLINE struct tlb_entry *
-tlb_lookup_data_write_fast(UINT32 laddr, int ucrw)
-{
-	struct tlb_entry *ep;
-	UINT32 flag;
-	int idx;
-
-	idx = (laddr >> TLB_ENTRY_SHIFT) & TLB_ENTRY_MASK;
-	ep = &tlb[0].entry[idx];
-	flag = tlb_data_write_fast_flags[TLB_USER_INDEX(ucrw)];
-
-	if (TLB_IS_VALID(ep) &&
-	    ((laddr & TLB_TAG_MASK) == TLB_GET_TAG_ADDR(ep)) &&
-	    (ep->fast_flags & flag)) {
-		return ep;
-	}
-	return NULL;
-}
-
-TLB_FAST_INLINE struct tlb_entry *
-tlb_lookup_code_fast(UINT32 laddr, int ucrw)
-{
-	struct tlb_entry *ep;
-	UINT32 flag;
-	int idx;
-
-	idx = (laddr >> TLB_ENTRY_SHIFT) & TLB_ENTRY_MASK;
-	ep = &tlb[1].entry[idx];
-	flag = tlb_code_read_fast_flags[TLB_USER_INDEX(ucrw)];
-
-	if (TLB_IS_VALID(ep) &&
-	    ((laddr & TLB_TAG_MASK) == TLB_GET_TAG_ADDR(ep)) &&
-	    (ep->fast_flags & flag)) {
-		return ep;
-	}
-	return NULL;
-}
-
-TLB_FAST_INLINE struct tlb_entry *
-tlb_lookup_fast(UINT32 laddr, int ucrw)
-{
-	/* Preserve the original precedence for the unlikely WRITE|CODE case. */
-	if (ucrw & CPU_PAGE_WRITE) {
-		return tlb_lookup_data_write_fast(laddr, ucrw);
-	}
-	if (ucrw & CPU_PAGE_CODE) {
-		return tlb_lookup_code_fast(laddr, ucrw);
-	}
-	return tlb_lookup_data_read_fast(laddr, ucrw);
-}
-
-
-TLB_FAST_INLINE UINT32
-tlb_make_fast_flags(UINT entry, int bit, int n, int direct)
-{
-	UINT32 flags;
-	int writable;
-	int user;
-
-	flags = TLBF_SUPER_READ;
-	writable = (bit & CPU_PTE_WRITABLE) != 0;
-	user = (bit & CPU_PTE_USER_MODE) != 0;
-
-	if (user) {
-		flags |= TLBF_USER_READ;
-	}
-	if (n == 1) {
-		flags |= TLBF_CODE_SUPER;
-		if (user) {
-			flags |= TLBF_CODE_USER;
-		}
-	}
-
-	if (entry & CPU_PTE_DIRTY) {
-		flags |= TLBF_SUPER_WRITE;
-		if (writable) {
-			flags |= TLBF_SUPER_WRITE_WP;
-			if (user) {
-				flags |= TLBF_USER_WRITE;
-			}
-		}
-	}
-
-	if (direct) {
-		flags |= TLBF_DIRECT_READ;
-		if (flags & (TLBF_SUPER_WRITE|TLBF_SUPER_WRITE_WP|TLBF_USER_WRITE)) {
-			flags |= TLBF_DIRECT_WRITE;
-		}
-	}
-	return flags;
-}
-#endif	/* IA32_MEMORY_FAST_PATH */
+#endif
 
 void MEMCALL
 tlb_update_access_flags(void)
 {
 #if IA32_MEMORY_FAST_PATH
-	tlb_data_read_fast_flags[0] = TLBF_SUPER_READ;
-	tlb_data_read_fast_flags[1] = TLBF_USER_READ;
-	tlb_data_write_fast_flags[0] = CPU_STAT_WP ? TLBF_SUPER_WRITE_WP : TLBF_SUPER_WRITE;
-	tlb_data_write_fast_flags[1] = TLBF_USER_WRITE;
-	tlb_code_read_fast_flags[0] = TLBF_CODE_SUPER;
-	tlb_code_read_fast_flags[1] = TLBF_CODE_USER;
+	kairo98_tlb_data_read_fast_flags[0] = TLBF_SUPER_READ;
+	kairo98_tlb_data_read_fast_flags[1] = TLBF_USER_READ;
+	kairo98_tlb_data_write_fast_flags[0] = CPU_STAT_WP ? TLBF_SUPER_WRITE_WP : TLBF_SUPER_WRITE;
+	kairo98_tlb_data_write_fast_flags[1] = TLBF_USER_WRITE;
+	kairo98_tlb_code_read_fast_flags[0] = TLBF_CODE_SUPER;
+	kairo98_tlb_code_read_fast_flags[1] = TLBF_CODE_USER;
 #endif
 }
 
@@ -1104,6 +916,7 @@ cpu_linear_memory_write_b(UINT32 laddr, UINT8 value, int ucrw)
 	if (ep != NULL) {
 		offset = TLB_PAGE_OFFSET(laddr);
 		if (ep->fast_flags & TLBF_DIRECT_WRITE) {
+			KAIRO98_SIDE_EFFECT();
 			ep->host_page[offset] = value;
 			return;
 		}
@@ -1129,6 +942,7 @@ cpu_linear_memory_write_w(UINT32 laddr, UINT16 value, int ucrw)
 			offset = TLB_PAGE_OFFSET(laddr);
 			if ((laddr + 1) & CPU_PAGE_MASK) {
 				if (ep->fast_flags & TLBF_DIRECT_WRITE) {
+					KAIRO98_SIDE_EFFECT();
 					STOREINTELWORD(ep->host_page + offset, value);
 					return;
 				}
@@ -1174,6 +988,7 @@ cpu_linear_memory_write_d(UINT32 laddr, UINT32 value, int ucrw)
 			remain = CPU_PAGE_SIZE - offset;
 			if (remain >= sizeof(value)) {
 				if (ep->fast_flags & TLBF_DIRECT_WRITE) {
+					KAIRO98_SIDE_EFFECT();
 					STOREINTELDWORD(ep->host_page + offset, value);
 					return;
 				}
@@ -1243,7 +1058,9 @@ cpu_linear_memory_write_q(UINT32 laddr, UINT64 value, int ucrw)
 			if (remain >= sizeof(value)) {
 				if (ep->fast_flags & TLBF_DIRECT_WRITE) {
 					host = ep->host_page + offset;
+					KAIRO98_SIDE_EFFECT();
 					STOREINTELDWORD(host, (UINT32)value);
+					KAIRO98_SIDE_EFFECT();
 					STOREINTELDWORD(host + 4, (UINT32)(value >> 32));
 					return;
 				}
@@ -1344,8 +1161,11 @@ cpu_linear_memory_write_f(UINT32 laddr, const REG80 *value, int ucrw)
 			if (remain >= size) {
 				if (ep->fast_flags & TLBF_DIRECT_WRITE) {
 					host = ep->host_page + offset;
+					KAIRO98_SIDE_EFFECT();
 					STOREINTELDWORD(host, value->d.l[0]);
+					KAIRO98_SIDE_EFFECT();
 					STOREINTELDWORD(host + 4, value->d.l[1]);
+					KAIRO98_SIDE_EFFECT();
 					STOREINTELWORD(host + 8, value->d.h);
 					return;
 				}
@@ -1399,6 +1219,7 @@ cpu_linear_memory_writes(UINT32 laddr, void* dat, UINT leng, int ucrw)
 			if (ep != NULL) {
 				offset = TLB_PAGE_OFFSET(laddr);
 				if (ep->fast_flags & TLBF_DIRECT_WRITE) {
+					KAIRO98_SIDE_EFFECT();
 					CopyMemory(ep->host_page + offset, p, inPageSize);
 				} else {
 					memp_writes(ep->paddr + offset, p, inPageSize);
@@ -1582,7 +1403,7 @@ pf_exception:
 void
 tlb_init(void)
 {
-	memset(tlb, 0, sizeof(tlb));
+	memset(kairo98_tlb, 0, sizeof(kairo98_tlb));
 	tlb_update_access_flags();
 #if IA32_MEMORY_FAST_PATH && !defined(SUPPORT_IA32_HAXM)
 	codefetch_cache_invalidate();
@@ -1605,7 +1426,7 @@ tlb_flush()
 
 	for (n = 0; n < NTLB; n++) {
 		for (i = 0; i < NENTRY ; i++) {
-			ep = &tlb[n].entry[i];
+			ep = &kairo98_tlb[n].entry[i];
 			if (TLB_IS_VALID(ep) && !TLB_IS_GLOBAL(ep)) {
 				TLB_SET_INVALID(ep);
 			}
@@ -1633,7 +1454,7 @@ tlb_flush_page(UINT32 laddr)
 	idx = (laddr >> TLB_ENTRY_SHIFT) & TLB_ENTRY_MASK;
 
 	for (n = 0; n < NTLB; n++) {
-		ep = &tlb[n].entry[idx];
+		ep = &kairo98_tlb[n].entry[idx];
 		if (TLB_IS_VALID(ep)) {
 			if ((laddr & TLB_TAG_MASK) == TLB_GET_TAG_ADDR(ep)) {
 				TLB_SET_INVALID(ep);
@@ -1655,7 +1476,7 @@ tlb_lookup(UINT32 laddr, int ucrw)
 
 	n = (ucrw & CPU_PAGE_CODE) ? 1 : 0;
 	idx = (laddr >> TLB_ENTRY_SHIFT) & TLB_ENTRY_MASK;
-	ep = &tlb[n].entry[idx];
+	ep = &kairo98_tlb[n].entry[idx];
 
 	if (TLB_IS_VALID(ep)) {
 		if ((laddr & TLB_TAG_MASK) == TLB_GET_TAG_ADDR(ep)) {
@@ -1687,7 +1508,7 @@ tlb_update(UINT32 laddr, UINT entry, int bit)
 
 	n = bit & 1;
 	idx = (laddr >> TLB_ENTRY_SHIFT) & TLB_ENTRY_MASK;
-	ep = &tlb[n].entry[idx];
+	ep = &kairo98_tlb[n].entry[idx];
 
 #if IA32_MEMORY_FAST_PATH && !defined(SUPPORT_IA32_HAXM)
 	if (n == 1) {

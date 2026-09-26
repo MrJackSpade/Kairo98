@@ -1096,6 +1096,7 @@ RDMSR(void)
 {
 	int idx;
 
+	KAIRO98_SIDE_EFFECT();
 	if (CPU_STAT_PM && (CPU_STAT_VM86 || CPU_STAT_CPL != 0)) {
 		VERBOSE(("RDMSR: VM86(%s) or CPL(%d) != 0", CPU_STAT_VM86 ? "true" : "false", CPU_STAT_CPL));
 		EXCEPTION(GP_EXCEPTION, 0);
@@ -1167,6 +1168,7 @@ int gameport_tsccounter = 0;
 void
 RDTSC(void)
 {
+	KAIRO98_SIDE_EFFECT();
 #if defined(SUPPORT_IA32_HAXM)&&defined(_WIN32)
 	LARGE_INTEGER li = {0};
 	LARGE_INTEGER qpf;
@@ -1214,6 +1216,7 @@ RDPMC(void)
 {
 	int idx;
 
+	KAIRO98_SIDE_EFFECT();
 	if(!(CPU_CR4 & CPU_CR4_PCE)){
 		if (CPU_STAT_PM && (CPU_STAT_VM86 || CPU_STAT_CPL != 0)) {
 			VERBOSE(("RDPMC: VM86(%s) or CPL(%d) != 0", CPU_STAT_VM86 ? "true" : "false", CPU_STAT_CPL));

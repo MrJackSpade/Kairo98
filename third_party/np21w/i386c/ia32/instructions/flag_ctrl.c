@@ -302,6 +302,7 @@ STI(void)
 		}
 	}
 	CPU_FLAG |= I_FLAG;
+	kairo98_counter_sti++;
 	CPU_TRAP = (CPU_FLAG & (T_FLAG)) == (T_FLAG);
 	exec_1step();
 	if (CPU_TRAP) {
