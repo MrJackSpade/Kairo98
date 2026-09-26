@@ -990,8 +990,9 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
         if (libraryVisible || menuOpen) return false
         when (event.actionMasked) {
             MotionEvent.ACTION_DOWN -> {
-                mouseTouchActive = inputModeDecider.resolve(configuredInputMode()) ==
-                    InputModeDecider.Mode.MOUSE
+                // With the keyboard on the second screen, the main screen touch is always the mouse.
+                mouseTouchActive = (::secondaryKeyboard.isInitialized && secondaryKeyboard.isKeyboardVisible) ||
+                    inputModeDecider.resolve(configuredInputMode()) == InputModeDecider.Mode.MOUSE
                 if (mouseTouchActive) {
                     pendingMouseRelease?.let(handler::removeCallbacks)
                     pendingMouseRelease = null
