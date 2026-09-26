@@ -16,7 +16,15 @@ A pinned [ymfm](https://github.com/aaronsgiles/ymfm) source snapshot is in `thir
 
 ## Spleen bitmap font
 
-The ASCII ANK glyphs use [Spleen 8x16](https://github.com/fcambus/spleen), pinned to commit `57f9219328c9f5873085320fe8bc8f7dd34b8791`. The source BDF and BSD-2-Clause license are preserved in `third_party/spleen/`. `generate_ascii.py` produces the 95 printable ASCII glyphs in `spleen_ascii_8x16.h`; the Android build compiles that table. Japanese glyphs are generated at runtime from the device's installed fonts and are not included in the repository or APK.
+The ASCII ANK glyphs use [Spleen 8x16](https://github.com/fcambus/spleen), pinned to commit `57f9219328c9f5873085320fe8bc8f7dd34b8791`. The source BDF and BSD-2-Clause license are preserved in `third_party/spleen/`. `generate_ascii.py` produces the 95 printable ASCII glyphs in `spleen_ascii_8x16.h`, which the bundled font and the app UI's pixel-font asset are built from.
+
+## Shinonome bitmap font
+
+Japanese glyphs use the public-domain [Shinonome](http://openlab.ring.gr.jp/efont/shinonome/) 16-dot Gothic fonts from `shinonome-0.9.11p1.tar.bz2`. `third_party/shinonome/` preserves `shnmk16.bdf` (JIS X 0208), `shnm8x16r.bdf` (JIS X 0201), `LICENSE`, and `AUTHORS` byte for byte, in their original EUC-JP encoding.
+
+## Bundled FONT.BMP
+
+`tools/generate_font_bmp.py` writes `app/src/main/assets/font/kairo98-font.bmp`, a 2048x2048 monochrome bitmap in the layout 21/W's FONT.BMP loader reads. It follows 21/W's `font/fontmake.c`: ANK 0x20-0x7E from Spleen, half-width katakana 0xA1-0xDF and JIS X 0208 kanji and symbols from Shinonome, and 21/W's built-in `font/fontdata.res` glyphs for the ANK graphic characters, half-width rows 0x29-0x2B, and NEC row 0x2C. The kanji use fontmake.c's JIS 78 code swaps and PC-98 unassigned-code filter. The app uses this bitmap when no FONT.BMP is imported. It has no NEC row 0x2D special characters or IBM extension kanji in rows 0x78-0x7C, because Shinonome covers only JIS X 0208.
 
 ## Kairo98 launcher artwork
 
@@ -29,9 +37,10 @@ The Kairo98 launcher artwork was added on 25 September 2026. The original PNG is
 | 21/W BSD-only source | rev104 | Outer ZIP SHA-256 `0630a6f7bc794e9e8a96a090b1a80434f912b6f0c14f744e07e7932e26d0d3fb`; nested source ZIP SHA-256 `5ef56e04c8304b5af527072b3ca356ecd865e11fb293da5eea6a9962b2d491ab` | Current Android compile inputs and notices audited in [licensing.md](licensing.md) | Yes, 2026-09-22 |
 | ymfm | `81aec25ccbb98f4873a255f7551ac4dadac59b4a` | ZIP SHA-256 `5be43559f608e53008b6ab742bcb11acfa1f97fc0e24d42e6b36745e49f94f7a` | BSD-3-Clause license and compiled sources audited | Yes, 2026-09-22 |
 | Spleen 8x16 | `57f9219328c9f5873085320fe8bc8f7dd34b8791` | BDF SHA-256 `b38b32a66920068965a3101f98071d310c5c74659fe86e55d346140770f8f6e8` | BSD-2-Clause notice packaged and audited | Yes, 2026-09-23 |
+| Shinonome 16-dot fonts | 0.9.11p1 | Archive SHA-256 `95663c95c92ba5765f63ccbdf033eb93b707be01812a989c548db943479c838f`; `shnmk16.bdf` `9965accd5bdbe03bf9395b8dd26dfa4465f4ffa6e9f447c5cb8258644fa1f468`; `shnm8x16r.bdf` `26eae5a2a057c5756b26f6343f235c0967996e6c1316eff38b94ccc31396d078` | Public domain; notice packaged | Yes, 2026-09-26 |
 | Android NDK LLVM runtime notice | NDK `28.2.13676358` | Toolchain `NOTICE` SHA-256 `f96f763beb66a7ba7a667647fc64c0226ace875e590c831fdd9579ec1c1d91e1` | Includes the LLVM exception and libc++/libc++abi notices for the statically linked runtime | Yes, 2026-09-25 |
 
-21/W archive: <https://drive.google.com/file/d/14_byhfNHKf06-nmC60svoGRehaMniL4D/view?usp=drive_link>. ymfm archive: <https://github.com/aaronsgiles/ymfm/archive/81aec25ccbb98f4873a255f7551ac4dadac59b4a.zip>.
+21/W archive: <https://drive.google.com/file/d/14_byhfNHKf06-nmC60svoGRehaMniL4D/view?usp=drive_link>. ymfm archive: <https://github.com/aaronsgiles/ymfm/archive/81aec25ccbb98f4873a255f7551ac4dadac59b4a.zip>. Shinonome archive: <http://openlab.ring.gr.jp/efont/dist/shinonome/shinonome-0.9.11p1.tar.bz2>.
 
 Future upstream changes are not merged automatically. Changes needed for this project are reviewed and implemented in this repository with their provenance recorded.
 

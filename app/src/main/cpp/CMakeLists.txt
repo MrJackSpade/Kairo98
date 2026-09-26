@@ -2,7 +2,6 @@ cmake_minimum_required(VERSION 3.22.1)
 project(kairo98 LANGUAGES C CXX)
 
 get_filename_component(NP21W_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/../../../../third_party/np21w" ABSOLUTE)
-get_filename_component(SPLEEN_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/../../../../third_party/spleen" ABSOLUTE)
 get_filename_component(YMFM_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/../../../../third_party/ymfm" ABSOLUTE)
 include(np21w-sources.cmake)
 
@@ -18,7 +17,6 @@ add_library(np21w_core OBJECT
     android_host/np2sysp.c
     android_host/platform.c
     android_host/core_probe.c
-    android_host/font_overlay.c
     android_host/machine.c
     android_host/gpudraw.c
     android_host/input_telemetry.c
@@ -39,7 +37,6 @@ target_include_directories(np21w_core PRIVATE
     ${NP21W_ROOT}/network
     ${NP21W_ROOT}/sound
     ${NP21W_ROOT}/vram
-    ${SPLEEN_ROOT}
 )
 target_compile_definitions(np21w_core PRIVATE SUPPORT_LARGE_HDD SUPPORT_KAI_IMAGES NP2_SDL2 CPUCORE_IA32 USE_TSC SUPPORT_YMFM KAIRO98_ANDROID_IRQ_FAST KAIRO98_ANDROID_FETCH_FAST
     USE_CPU_EIPMASK USE_CPU_DIRECTREG)

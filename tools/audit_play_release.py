@@ -47,7 +47,7 @@ def inspect(path: pathlib.Path, bundle: bool, allow_art: bool = False) -> dict[s
             f"Catalog metadata missing from {path}"
         )
         notices = archive.read(prefix + REQUIRED[0]).decode("utf-8")
-        for required in ("Neko Project 21/W", "ymfm", "Spleen", "Android NDK"):
+        for required in ("Neko Project 21/W", "ymfm", "Spleen", "Shinonome", "Android NDK"):
             assert required in notices, f"Missing {required} notice in {path}"
         assets = {
             name[len(prefix):]: digest(archive.read(name))

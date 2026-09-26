@@ -8,6 +8,7 @@ $notices = @(
     @('Neko Project 21/W LIO', 'third_party/np21w/LICENSES/LICENSE-LIO.TXT', 932),
     @('ymfm', 'third_party/ymfm/LICENSE', 65001),
     @('Spleen 8x16 bitmap font', 'third_party/spleen/LICENSE', 65001),
+    @('Shinonome 16-dot bitmap fonts (public domain)', 'third_party/shinonome/LICENSE', 51932),
     @('Android NDK 28.2.13676358 LLVM toolchain and statically linked C++ runtime', 'third_party/android-ndk-llvm-28.2.13676358/NOTICE', 65001)
 )
 $content = [System.Text.StringBuilder]::new()
