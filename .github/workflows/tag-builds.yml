@@ -68,26 +68,32 @@ jobs:
           keystore="$RUNNER_TEMP/kairo98-beta.p12"
           printf '%s' "$KEYSTORE_B64" | base64 --decode > "$keystore"
           echo "KAIRO98_BETA_KEYSTORE=$keystore" >> "$GITHUB_ENV"
-      - name: Build the non-artwork release APK and Play bundle
+      - name: Build both release APKs and the Play bundle
         env:
           KAIRO98_BETA_PASSWORD: ${{ secrets.KAIRO98_BETA_PASSWORD }}
         run: >-
           ./gradlew --no-daemon
-          :app:assembleWithoutImagesRelease :app:bundleWithoutImagesRelease
+          :app:assembleWithImagesRelease :app:assembleWithoutImagesRelease
+          :app:bundleWithoutImagesRelease
           -Pkairo98VersionName="$KAIRO98_VERSION_NAME"
           -Pkairo98VersionCode="$KAIRO98_VERSION_CODE"
       - name: Verify release signer
         shell: bash
         run: |
           expected="c321ec6b35e2509741362fcc3fede816c81510aa8133d791ea55ce0e1594a51c"
-          apk=app/build/outputs/apk/withoutImages/release/app-withoutImages-release.apk
           bundle=app/build/outputs/bundle/withoutImagesRelease/app-withoutImages-release.aab
-          actual=$("$ANDROID_HOME/build-tools/36.0.0/apksigner" verify --print-certs "$apk" |
-            awk '/Signer #1 certificate SHA-256 digest:/ {print $NF}')
-          if [[ "$actual" != "$expected" ]]; then
-            echo "Unexpected release signing certificate: $actual" >&2
-            exit 1
-          fi
+          for apk in \
+            app/build/outputs/apk/withImages/release/app-withImages-release.apk \
+            app/build/outputs/apk/withoutImages/release/app-withoutImages-release.apk; do
+            actual=$("$ANDROID_HOME/build-tools/36.0.0/apksigner" verify --print-certs "$apk" |
+              awk '/Signer #1 certificate SHA-256 digest:/ {print $NF}')
+            if [[ "$actual" != "$expected" ]]; then
+              echo "Unexpected release signing certificate for $apk: $actual" >&2
+              exit 1
+            fi
+            "$ANDROID_HOME/build-tools/36.0.0/aapt" dump badging "$apk" |
+              grep -F "package: name='com.loxifi.kairo98'"
+          done
           jarsigner -verify "$bundle" | grep -F "jar verified"
           bundle_signer=$(keytool -printcert -jarfile "$bundle" |
             awk '/SHA256:/ {print $2}' | tr -d ':' | tr '[:upper:]' '[:lower:]')
@@ -95,19 +101,24 @@ jobs:
             echo "Unexpected Play bundle signing certificate: $bundle_signer" >&2
             exit 1
           fi
-          "$ANDROID_HOME/build-tools/36.0.0/aapt" dump badging "$apk" |
-            grep -F "package: name='com.loxifi.kairo98'"
       - name: Audit distribution contents
         run: >-
           python3 tools/audit_play_release.py
           app/build/outputs/apk/withoutImages/release/app-withoutImages-release.apk
           app/build/outputs/bundle/withoutImagesRelease/app-withoutImages-release.aab
+          app/build/outputs/apk/withImages/release/app-withImages-release.apk
       - uses: actions/upload-artifact@v4
         with:
           name: kairo98-${{ env.KAIRO98_ARTIFACT_REF }}-non-artwork
           path: |
             app/build/outputs/apk/withoutImages/release/app-withoutImages-release.apk
             app/build/outputs/bundle/withoutImagesRelease/app-withoutImages-release.aab
+          if-no-files-found: error
+          retention-days: 30
+      - uses: actions/upload-artifact@v4
+        with:
+          name: kairo98-${{ env.KAIRO98_ARTIFACT_REF }}-with-images
+          path: app/build/outputs/apk/withImages/release/app-withImages-release.apk
           if-no-files-found: error
           retention-days: 30
       - name: Publish GitHub Release
@@ -117,24 +128,26 @@ jobs:
         shell: bash
         run: |
           tag="$GITHUB_REF_NAME"
-          apk="$RUNNER_TEMP/Kairo98-$tag.apk"
-          cp app/build/outputs/apk/withoutImages/release/app-withoutImages-release.apk "$apk"
+          with_images="$RUNNER_TEMP/Kairo98-$tag-with-images.apk"
+          without_images="$RUNNER_TEMP/Kairo98-$tag-without-images.apk"
+          cp app/build/outputs/apk/withImages/release/app-withImages-release.apk "$with_images"
+          cp app/build/outputs/apk/withoutImages/release/app-withoutImages-release.apk "$without_images"
           notes="$RUNNER_TEMP/kairo98-release-notes.md"
           cat > "$notes" <<EOF
           Kairo98 $KAIRO98_VERSION_NAME, built from commit $GITHUB_SHA.
 
-          The attached signed APK is the free, non-artwork build. The Google Play bundle is built from the same revision with the same features and behavior. Supply your own legally obtained firmware and games; neither is included.
+          Both attached APKs are signed release builds with the same emulator features. The with-images APK includes embedded catalog artwork; the without-images APK downloads artwork on demand. The Google Play bundle is built from the same revision as the without-images APK. Supply your own legally obtained firmware and games; neither is included.
 
-          Automated build and package checks passed. Device boot testing and the full license audit must be completed before this binary is described as release-ready.
+          Automated build and package checks passed. Device boot testing and the full license audit, including artwork rights, must be completed before these binaries are described as release-ready.
           EOF
           if gh release view "$tag" >/dev/null 2>&1; then
-            gh release upload "$tag" "$apk" --clobber
+            gh release upload "$tag" "$with_images" "$without_images" --clobber
           else
             release_flags=()
             if [[ "$tag" == *-* ]]; then
               release_flags+=(--prerelease)
             fi
-            gh release create "$tag" "$apk" \
+            gh release create "$tag" "$with_images" "$without_images" \
               --verify-tag "${release_flags[@]}" --title "Kairo98 $KAIRO98_VERSION_NAME" \
               --notes-file "$notes"
           fi
