@@ -79,6 +79,7 @@ exec_1step(void)
 	int prefix;
 	UINT32 op;
 
+	kairo98_counter_insts++;
 	CPU_PREV_EIP = CPU_EIP;
 	CPU_STATSAVE.cpu_inst = CPU_STATSAVE.cpu_inst_default;
 
@@ -282,6 +283,7 @@ exec_allstep(void)
 	
 	do {
 
+		kairo98_counter_insts++;
 		CPU_PREV_EIP = CPU_EIP;
 		CPU_STATSAVE.cpu_inst = CPU_STATSAVE.cpu_inst_default;
 

@@ -11,6 +11,9 @@
 #include "sndcsec.h"
 #include "beep.h"
 #include "soundmng.h"
+#if defined(SUPPORT_YMFM)
+#include "ymfm_bridge.h"
+#endif
 #if defined(SUPPORT_WAVEREC)
 #include "common/wavefile.h"
 #endif	/* defined(SUPPORT_WAVEREC) */
@@ -263,6 +266,9 @@ scre_err1:
 
 void sound_destroy(void) {
 
+#if defined(SUPPORT_YMFM)
+	kairo_ymfm_drain_all();
+#endif
 	if (sndstream.buffer) {
 #if defined(SUPPORT_WAVEREC)
 		sound_recstop();
@@ -278,6 +284,9 @@ void sound_destroy(void) {
 
 void sound_reset(void) {
 
+#if defined(SUPPORT_YMFM)
+	kairo_ymfm_drain_all();
+#endif
 	if (sndstream.buffer) {
 		soundmng_reset();
 		streamreset();

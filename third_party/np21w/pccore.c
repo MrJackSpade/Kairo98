@@ -1068,7 +1068,10 @@ static void drawscreen(void) {
 		}
 	}
 	if (pcstat.screenupdate) {
+		unsigned long long __t2 = kairo98_now_ns();
 		pcstat.screenupdate = scrndraw_draw((UINT8)(pcstat.screenupdate & 2));
+		kairo98_time_draw_ns += kairo98_now_ns() - __t2;
+		kairo98_counter_draws++;
 		drawcount++;
 	}
 }
@@ -1348,6 +1351,7 @@ void pccore_exec(BOOL draw) {
 //	nevent_get1stevent();
 	
 	while(pcstat.screendispflag) {
+		kairo98_counter_slices++;
 		//lastclock = CPU_REMCLOCK;
 #if defined(TRACE)
 		resetcnt++;
@@ -1414,12 +1418,14 @@ void pccore_exec(BOOL draw) {
 		{
 #if !defined(SINGLESTEPONLY)
 			if (CPU_REMCLOCK > 0) {
+				unsigned long long __t0 = kairo98_now_ns();
 				if (!(CPU_TYPE & CPUTYPE_V30)) {
 					CPU_EXEC();
 				}
 				else {
 					CPU_EXECV30();
 				}
+				kairo98_time_cpu_ns += kairo98_now_ns() - __t0;
 			}
 #else
 			while(CPU_REMCLOCK > 0) {
@@ -1436,7 +1442,11 @@ void pccore_exec(BOOL draw) {
 #if defined(SUPPORT_IDEIO)
 		atapi_dataread_asyncwait(0);
 #endif
-		nevent_progress();
+		{
+			unsigned long long __t1 = kairo98_now_ns();
+			nevent_progress();
+			kairo98_time_event_ns += kairo98_now_ns() - __t1;
+		}
 #if defined(SUPPORT_ASYNC_CPU)
 		pccore_asynccpu();
 #endif

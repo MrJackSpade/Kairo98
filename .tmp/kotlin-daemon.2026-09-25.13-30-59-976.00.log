@@ -1,0 +1,239 @@
+2026-09-25 13:31:00.006 [daemon] INFO: Kotlin compiler daemon version 2.2.20-release-333
+2026-09-25 13:31:00.046 [daemon] INFO: daemon JVM args: -Djdk.net.unixdomain.tmpdir=C:\Users\SERVIC~1\NekoProjectAndroid\.tmp -Djava.awt.headless=true -Djava.rmi.server.hostname=127.0.0.1 -Xmx3g -XX:ReservedCodeCacheSize=320m -Dkotlin.environment.keepalive -ea -XX:+UseCodeCacheFlushing -XX:+UseParallelGC -Dkotlin.daemon.initiator.marker.file=C:\Users\SERVIC~1\NekoProjectAndroid\.tmp\kotlin-compiler-in-airo98-6248478718432872535.alive --add-exports=java.base/sun.nio.ch=ALL-UNNAMED
+2026-09-25 13:31:00.057 [daemon] INFO: daemon args: --daemon-runFilesPath C:\Users\Service Account\AppData\Local\kotlin\daemon --daemon-autoshutdownIdleSeconds=7200 --daemon-compilerClasspath C:\Users\Service Account\.gradle\caches\modules-2\files-2.1\org.jetbrains.kotlin\kotlin-compiler-embeddable\2.2.20\bb8331b7585e36ea311825b01a1c06860c055fd1\kotlin-compiler-embeddable-2.2.20.jar;C:\Users\Service Account\.gradle\caches\modules-2\files-2.1\org.jetbrains.kotlin\kotlin-stdlib\2.2.20\5380b19fa1924399b62ce3a1faffebb2b4f82272\kotlin-stdlib-2.2.20.jar;C:\Users\Service Account\.gradle\caches\modules-2\files-2.1\org.jetbrains.kotlin\kotlin-script-runtime\2.2.20\4c679cbeac0bb583b75c3a080013da8eaf240807\kotlin-script-runtime-2.2.20.jar;C:\Users\Service Account\.gradle\caches\modules-2\files-2.1\org.jetbrains.kotlin\kotlin-reflect\1.6.10\1cbe9c92c12a94eea200d23c2bbaedaf3daf5132\kotlin-reflect-1.6.10.jar;C:\Users\Service Account\.gradle\caches\modules-2\files-2.1\org.jetbrains.kotlin\kotlin-daemon-embeddable\2.2.20\feff12d48d7f1eb628742b0a721395e16f8755bf\kotlin-daemon-embeddable-2.2.20.jar;C:\Users\Service Account\.gradle\caches\modules-2\files-2.1\org.jetbrains.kotlinx\kotlinx-coroutines-core-jvm\1.8.0\ac1dc37a30a93150b704022f8d895ee1bd3a36b3\kotlinx-coroutines-core-jvm-1.8.0.jar;C:\Users\Service Account\.gradle\caches\modules-2\files-2.1\org.jetbrains\annotations\13.0\919f0dfe192fb4e063e7dacadee7f8bb9a2672a9\annotations-13.0.jar
+2026-09-25 13:31:00.086 [daemon] INFO: starting daemon
+2026-09-25 13:31:00.178 [compiler] INFO: Registered a client alive file: C:\Users\SERVIC~1\NekoProjectAndroid\.tmp\kotlin-compiler-in-airo98-6248478718432872535.alive
+2026-09-25 13:31:00.179 [compiler] INFO: Periodic liveness check activities configured
+2026-09-25 13:31:00.180 [daemon] INFO: daemon is listening on port: 17702
+2026-09-25 13:31:00.188 [compiler] INFO: initiate elections
+2026-09-25 13:31:00.246 [compiler] INFO: getDaemonJVMOptions: DaemonJVMOptions(maxMemory=3g, maxMetaspaceSize=, reservedCodeCacheSize=320m, jvmParams=[-Djdk.net.unixdomain.tmpdir=C:\Users\SERVIC~1\NekoProjectAndroid\.tmp, -Djava.awt.headless=true, -Djava.rmi.server.hostname=127.0.0.1, -Dkotlin.environment.keepalive, -ea, -XX:+UseCodeCacheFlushing, -XX:+UseParallelGC, -Dkotlin.daemon.initiator.marker.file=C:\Users\SERVIC~1\NekoProjectAndroid\.tmp\kotlin-compiler-in-airo98-6248478718432872535.alive, --add-exports=java.base/sun.nio.ch=ALL-UNNAMED, Dkotlin.environment.keepalive, ea])
+2026-09-25 13:31:00.256 [compiler] INFO: Registered a client alive file: C:\Users\SERVIC~1\NekoProjectAndroid\.tmp\kotlin-compiler-in-airo98-6248478718432872535.alive
+2026-09-25 13:31:00.258 [compiler] INFO: leased a new session 1, session alive file: C:\Users\Service Account\NekoProjectAndroid\.kotlin\sessions\kotlin-compiler-7652773848508601854.salive
+2026-09-25 13:31:00.321 [compiler] INFO: Starting compilation with args: -Xallow-no-source-files -classpath C:\Users\Service Account\NekoProjectAndroid\.downloads\android-sdk\platforms\android-36\android.jar;C:\Users\Service Account\NekoProjectAndroid\.downloads\android-sdk\build-tools\35.0.0\core-lambda-stubs.jar;C:\Users\Service Account\NekoProjectAndroid\app\build\intermediates\compile_and_runtime_not_namespaced_r_class_jar\withoutImagesDebug\processWithoutImagesDebugResources\R.jar;C:\Users\Service Account\.gradle\caches\modules-2\files-2.1\org.jetbrains.kotlin\kotlin-stdlib\2.2.20\5380b19fa1924399b62ce3a1faffebb2b4f82272\kotlin-stdlib-2.2.20.jar;C:\Users\Service Account\.gradle\caches\modules-2\files-2.1\org.jetbrains\annotations\13.0\919f0dfe192fb4e063e7dacadee7f8bb9a2672a9\annotations-13.0.jar -d C:\Users\Service Account\NekoProjectAndroid\app\build\tmp\kotlin-classes\withoutImagesDebug -jvm-target 17 -module-name app_withoutImagesDebug -no-jdk -no-reflect -no-stdlib -Xuse-inline-scopes-numbers C:\Users\Service Account\NekoProjectAndroid\app\src\main\java\com\mrjackspade\kairo98\CatalogArtworkStore.kt C:\Users\Service Account\NekoProjectAndroid\app\src\main\java\com\mrjackspade\kairo98\ControllerBindings.kt C:\Users\Service Account\NekoProjectAndroid\app\src\main\java\com\mrjackspade\kairo98\ControllerEditor.kt C:\Users\Service Account\NekoProjectAndroid\app\src\main\java\com\mrjackspade\kairo98\DiskSwapMatcher.kt C:\Users\Service Account\NekoProjectAndroid\app\src\main\java\com\mrjackspade\kairo98\FirstRunSetup.kt C:\Users\Service Account\NekoProjectAndroid\app\src\main\java\com\mrjackspade\kairo98\GameCatalog.kt C:\Users\Service Account\NekoProjectAndroid\app\src\main\java\com\mrjackspade\kairo98\GameDetailPage.kt C:\Users\Service Account\NekoProjectAndroid\app\src\main\java\com\mrjackspade\kairo98\GamepadMapper.kt C:\Users\Service Account\NekoProjectAndroid\app\src\main\java\com\mrjackspade\kairo98\InputModeDecider.kt C:\Users\Service Account\NekoProjectAndroid\app\src\main\java\com\mrjackspade\kairo98\InputRouter.kt C:\Users\Service Account\NekoProjectAndroid\app\src\main\java\com\mrjackspade\kairo98\JoystickInputRouter.kt C:\Users\Service Account\NekoProjectAndroid\app\src\main\java\com\mrjackspade\kairo98\LibraryScreen.kt C:\Users\Service Account\NekoProjectAndroid\app\src\main\java\com\mrjackspade\kairo98\MainActivity.kt C:\Users\Service Account\NekoProjectAndroid\app\src\main\java\com\mrjackspade\kairo98\MouseInputRouter.kt C:\Users\Service Account\NekoProjectAndroid\app\src\main\java\com\mrjackspade\kairo98\OnScreenControls.kt C:\Users\Service Account\NekoProjectAndroid\app\src\main\java\com\mrjackspade\kairo98\Pc98FontBitmap.kt C:\Users\Service Account\NekoProjectAndroid\app\src\main\java\com\mrjackspade\kairo98\Pc98FontCache.kt C:\Users\Service Account\NekoProjectAndroid\app\src\main\java\com\mrjackspade\kairo98\Pc98KeyboardPanel.kt C:\Users\Service Account\NekoProjectAndroid\app\src\main\java\com\mrjackspade\kairo98\Pc98KeyNames.kt C:\Users\Service Account\NekoProjectAndroid\app\src\main\java\com\mrjackspade\kairo98\PhysicalControllerBindings.kt C:\Users\Service Account\NekoProjectAndroid\app\src\main\java\com\mrjackspade\kairo98\RomLibrary.kt C:\Users\Service Account\NekoProjectAndroid\app\src\main\java\com\mrjackspade\kairo98\SecondaryKeyboardActivity.kt C:\Users\Service Account\NekoProjectAndroid\app\src\main\java\com\mrjackspade\kairo98\SecondaryKeyboardDisplay.kt C:\Users\Service Account\NekoProjectAndroid\app\src\main\java\com\mrjackspade\kairo98\StartupHashMatcher.kt C:\Users\Service Account\NekoProjectAndroid\app\src\debug\java\com\mrjackspade\kairo98\CatalogBenchmarkActivity.kt
+2026-09-25 13:31:11.659 [daemon] INFO: Message: logging: using Kotlin home directory <no_path>
+2026-09-25 13:31:11.660 [daemon] INFO: Message: logging: exception on loading scripting plugin: java.lang.ClassNotFoundException: org.jetbrains.kotlin.scripting.compiler.plugin.ScriptingCompilerConfigurationComponentRegistrar
+2026-09-25 13:31:11.660 [daemon] INFO: Message: logging: scripting plugin will not be loaded: not all required jars are present in the classpath (missing files: [.\kotlin-scripting-compiler.jar, .\kotlin-scripting-compiler-impl.jar, .\kotlin-scripting-common.jar, .\kotlin-scripting-jvm.jar])
+2026-09-25 13:31:11.660 [daemon] INFO: Message: logging: configuring the compilation environment
+2026-09-25 13:31:11.660 [daemon] INFO: Message: output: output:
+C:\Users\Service Account\NekoProjectAndroid\app\build\tmp\kotlin-classes\withoutImagesDebug\com\mrjackspade\kairo98\MainActivity.class
+Sources:
+C:\Users\Service Account\NekoProjectAndroid\app\src\main\java\com\mrjackspade\kairo98\MainActivity.kt
+2026-09-25 13:31:11.665 [daemon] INFO: Message: output: output:
+C:\Users\Service Account\NekoProjectAndroid\app\build\tmp\kotlin-classes\withoutImagesDebug\com\mrjackspade\kairo98\MainActivity$onCreate$6.class
+Sources:
+C:\Users\Service Account\NekoProjectAndroid\app\src\main\java\com\mrjackspade\kairo98\MainActivity.kt
+2026-09-25 13:31:11.666 [daemon] INFO: Message: output: output:
+C:\Users\Service Account\NekoProjectAndroid\app\build\tmp\kotlin-classes\withoutImagesDebug\com\mrjackspade\kairo98\MainActivity$onCreate$7.class
+Sources:
+C:\Users\Service Account\NekoProjectAndroid\app\src\main\java\com\mrjackspade\kairo98\MainActivity.kt
+2026-09-25 13:31:11.667 [daemon] INFO: Message: output: output:
+C:\Users\Service Account\NekoProjectAndroid\app\build\tmp\kotlin-classes\withoutImagesDebug\com\mrjackspade\kairo98\MainActivity$onCreate$8.class
+Sources:
+C:\Users\Service Account\NekoProjectAndroid\app\src\main\java\com\mrjackspade\kairo98\MainActivity.kt
+2026-09-25 13:31:11.668 [daemon] INFO: Message: output: output:
+C:\Users\Service Account\NekoProjectAndroid\app\build\tmp\kotlin-classes\withoutImagesDebug\com\mrjackspade\kairo98\MainActivity$onCreate$9.class
+Sources:
+C:\Users\Service Account\NekoProjectAndroid\app\src\main\java\com\mrjackspade\kairo98\MainActivity.kt
+2026-09-25 13:31:11.668 [daemon] INFO: Message: output: output:
+C:\Users\Service Account\NekoProjectAndroid\app\build\tmp\kotlin-classes\withoutImagesDebug\com\mrjackspade\kairo98\MainActivity$onCreate$10.class
+Sources:
+C:\Users\Service Account\NekoProjectAndroid\app\src\main\java\com\mrjackspade\kairo98\MainActivity.kt
+2026-09-25 13:31:11.669 [daemon] INFO: Message: output: output:
+C:\Users\Service Account\NekoProjectAndroid\app\build\tmp\kotlin-classes\withoutImagesDebug\com\mrjackspade\kairo98\MainActivity$onCreate$11.class
+Sources:
+C:\Users\Service Account\NekoProjectAndroid\app\src\main\java\com\mrjackspade\kairo98\MainActivity.kt
+2026-09-25 13:31:11.669 [daemon] INFO: Message: output: output:
+C:\Users\Service Account\NekoProjectAndroid\app\build\tmp\kotlin-classes\withoutImagesDebug\com\mrjackspade\kairo98\MainActivity$onCreate$14.class
+Sources:
+C:\Users\Service Account\NekoProjectAndroid\app\src\main\java\com\mrjackspade\kairo98\MainActivity.kt
+2026-09-25 13:31:11.670 [daemon] INFO: Message: output: output:
+C:\Users\Service Account\NekoProjectAndroid\app\build\tmp\kotlin-classes\withoutImagesDebug\com\mrjackspade\kairo98\MainActivity$onCreate$15.class
+Sources:
+C:\Users\Service Account\NekoProjectAndroid\app\src\main\java\com\mrjackspade\kairo98\MainActivity.kt
+2026-09-25 13:31:11.670 [daemon] INFO: Message: output: output:
+C:\Users\Service Account\NekoProjectAndroid\app\build\tmp\kotlin-classes\withoutImagesDebug\com\mrjackspade\kairo98\MainActivity$onCreate$16.class
+Sources:
+C:\Users\Service Account\NekoProjectAndroid\app\src\main\java\com\mrjackspade\kairo98\MainActivity.kt
+2026-09-25 13:31:11.671 [daemon] INFO: Message: output: output:
+C:\Users\Service Account\NekoProjectAndroid\app\build\tmp\kotlin-classes\withoutImagesDebug\com\mrjackspade\kairo98\MainActivity$onCreate$19.class
+Sources:
+C:\Users\Service Account\NekoProjectAndroid\app\src\main\java\com\mrjackspade\kairo98\MainActivity.kt
+2026-09-25 13:31:11.671 [daemon] INFO: Message: output: output:
+C:\Users\Service Account\NekoProjectAndroid\app\build\tmp\kotlin-classes\withoutImagesDebug\com\mrjackspade\kairo98\MainActivity$onCreate$20.class
+Sources:
+C:\Users\Service Account\NekoProjectAndroid\app\src\main\java\com\mrjackspade\kairo98\MainActivity.kt
+2026-09-25 13:31:11.671 [daemon] INFO: Message: output: output:
+C:\Users\Service Account\NekoProjectAndroid\app\build\tmp\kotlin-classes\withoutImagesDebug\com\mrjackspade\kairo98\MainActivity$onCreate$24.class
+Sources:
+C:\Users\Service Account\NekoProjectAndroid\app\src\main\java\com\mrjackspade\kairo98\MainActivity.kt
+2026-09-25 13:31:11.672 [daemon] INFO: Message: output: output:
+C:\Users\Service Account\NekoProjectAndroid\app\build\tmp\kotlin-classes\withoutImagesDebug\com\mrjackspade\kairo98\MainActivity$onCreate$25.class
+Sources:
+C:\Users\Service Account\NekoProjectAndroid\app\src\main\java\com\mrjackspade\kairo98\MainActivity.kt
+2026-09-25 13:31:11.672 [daemon] INFO: Message: output: output:
+C:\Users\Service Account\NekoProjectAndroid\app\build\tmp\kotlin-classes\withoutImagesDebug\com\mrjackspade\kairo98\MainActivity$onCreate$26.class
+Sources:
+C:\Users\Service Account\NekoProjectAndroid\app\src\main\java\com\mrjackspade\kairo98\MainActivity.kt
+2026-09-25 13:31:11.673 [daemon] INFO: Message: output: output:
+C:\Users\Service Account\NekoProjectAndroid\app\build\tmp\kotlin-classes\withoutImagesDebug\com\mrjackspade\kairo98\MainActivity$onCreate$29.class
+Sources:
+C:\Users\Service Account\NekoProjectAndroid\app\src\main\java\com\mrjackspade\kairo98\MainActivity.kt
+2026-09-25 13:31:11.673 [daemon] INFO: Message: output: output:
+C:\Users\Service Account\NekoProjectAndroid\app\build\tmp\kotlin-classes\withoutImagesDebug\com\mrjackspade\kairo98\MainActivity$onCreate$30.class
+Sources:
+C:\Users\Service Account\NekoProjectAndroid\app\src\main\java\com\mrjackspade\kairo98\MainActivity.kt
+2026-09-25 13:31:11.673 [daemon] INFO: Message: output: output:
+C:\Users\Service Account\NekoProjectAndroid\app\build\tmp\kotlin-classes\withoutImagesDebug\com\mrjackspade\kairo98\MainActivity$onCreate$31.class
+Sources:
+C:\Users\Service Account\NekoProjectAndroid\app\src\main\java\com\mrjackspade\kairo98\MainActivity.kt
+2026-09-25 13:31:11.674 [daemon] INFO: Message: output: output:
+C:\Users\Service Account\NekoProjectAndroid\app\build\tmp\kotlin-classes\withoutImagesDebug\com\mrjackspade\kairo98\MainActivity$onCreate$32.class
+Sources:
+C:\Users\Service Account\NekoProjectAndroid\app\src\main\java\com\mrjackspade\kairo98\MainActivity.kt
+2026-09-25 13:31:11.674 [daemon] INFO: Message: output: output:
+C:\Users\Service Account\NekoProjectAndroid\app\build\tmp\kotlin-classes\withoutImagesDebug\com\mrjackspade\kairo98\MainActivity$onCreate$33.class
+Sources:
+C:\Users\Service Account\NekoProjectAndroid\app\src\main\java\com\mrjackspade\kairo98\MainActivity.kt
+2026-09-25 13:31:11.674 [daemon] INFO: Message: output: output:
+C:\Users\Service Account\NekoProjectAndroid\app\build\tmp\kotlin-classes\withoutImagesDebug\com\mrjackspade\kairo98\MainActivity$onCreate$34.class
+Sources:
+C:\Users\Service Account\NekoProjectAndroid\app\src\main\java\com\mrjackspade\kairo98\MainActivity.kt
+2026-09-25 13:31:11.675 [daemon] INFO: Message: output: output:
+C:\Users\Service Account\NekoProjectAndroid\app\build\tmp\kotlin-classes\withoutImagesDebug\com\mrjackspade\kairo98\MainActivity$buildUi$4.class
+Sources:
+C:\Users\Service Account\NekoProjectAndroid\app\src\main\java\com\mrjackspade\kairo98\MainActivity.kt
+2026-09-25 13:31:11.675 [daemon] INFO: Message: output: output:
+C:\Users\Service Account\NekoProjectAndroid\app\build\tmp\kotlin-classes\withoutImagesDebug\com\mrjackspade\kairo98\MainActivity$buildUi$5.class
+Sources:
+C:\Users\Service Account\NekoProjectAndroid\app\src\main\java\com\mrjackspade\kairo98\MainActivity.kt
+2026-09-25 13:31:11.675 [daemon] INFO: Message: output: output:
+C:\Users\Service Account\NekoProjectAndroid\app\build\tmp\kotlin-classes\withoutImagesDebug\com\mrjackspade\kairo98\MainActivity$scheduleStartupSteps$1$1.class
+Sources:
+C:\Users\Service Account\NekoProjectAndroid\app\src\main\java\com\mrjackspade\kairo98\MainActivity.kt
+2026-09-25 13:31:11.676 [daemon] INFO: Message: output: output:
+C:\Users\Service Account\NekoProjectAndroid\app\build\tmp\kotlin-classes\withoutImagesDebug\com\mrjackspade\kairo98\MainActivity$scheduleStartupSteps$1$2.class
+Sources:
+C:\Users\Service Account\NekoProjectAndroid\app\src\main\java\com\mrjackspade\kairo98\MainActivity.kt
+2026-09-25 13:31:11.676 [daemon] INFO: Message: output: output:
+C:\Users\Service Account\NekoProjectAndroid\app\build\tmp\kotlin-classes\withoutImagesDebug\com\mrjackspade\kairo98\MainActivity$scheduleDiskSwaps$1$1.class
+Sources:
+C:\Users\Service Account\NekoProjectAndroid\app\src\main\java\com\mrjackspade\kairo98\MainActivity.kt
+2026-09-25 13:31:11.677 [daemon] INFO: Message: output: output:
+C:\Users\Service Account\NekoProjectAndroid\app\build\tmp\kotlin-classes\withoutImagesDebug\com\mrjackspade\kairo98\MainActivity$PreparedLaunch.class
+Sources:
+C:\Users\Service Account\NekoProjectAndroid\app\src\main\java\com\mrjackspade\kairo98\MainActivity.kt
+2026-09-25 13:31:11.677 [daemon] INFO: Message: output: output:
+C:\Users\Service Account\NekoProjectAndroid\app\build\tmp\kotlin-classes\withoutImagesDebug\com\mrjackspade\kairo98\MainActivity$FontSelection.class
+Sources:
+C:\Users\Service Account\NekoProjectAndroid\app\src\main\java\com\mrjackspade\kairo98\MainActivity.kt
+2026-09-25 13:31:11.678 [daemon] INFO: Message: output: output:
+C:\Users\Service Account\NekoProjectAndroid\app\build\tmp\kotlin-classes\withoutImagesDebug\com\mrjackspade\kairo98\MainActivity$Companion.class
+Sources:
+C:\Users\Service Account\NekoProjectAndroid\app\src\main\java\com\mrjackspade\kairo98\MainActivity.kt
+2026-09-25 13:31:11.678 [daemon] INFO: Message: output: output:
+C:\Users\Service Account\NekoProjectAndroid\app\build\tmp\kotlin-classes\withoutImagesDebug\com\mrjackspade\kairo98\MainActivity$inputRouter$1.class
+Sources:
+C:\Users\Service Account\NekoProjectAndroid\app\src\main\java\com\mrjackspade\kairo98\MainActivity.kt
+2026-09-25 13:31:11.678 [daemon] INFO: Message: output: output:
+C:\Users\Service Account\NekoProjectAndroid\app\build\tmp\kotlin-classes\withoutImagesDebug\com\mrjackspade\kairo98\MainActivity$joystickRouter$1.class
+Sources:
+C:\Users\Service Account\NekoProjectAndroid\app\src\main\java\com\mrjackspade\kairo98\MainActivity.kt
+2026-09-25 13:31:11.679 [daemon] INFO: Message: output: output:
+C:\Users\Service Account\NekoProjectAndroid\app\build\tmp\kotlin-classes\withoutImagesDebug\com\mrjackspade\kairo98\MainActivity$mouseRouter$1.class
+Sources:
+C:\Users\Service Account\NekoProjectAndroid\app\src\main\java\com\mrjackspade\kairo98\MainActivity.kt
+2026-09-25 13:31:11.679 [daemon] INFO: Message: output: output:
+C:\Users\Service Account\NekoProjectAndroid\app\build\tmp\kotlin-classes\withoutImagesDebug\com\mrjackspade\kairo98\MainActivity$mouseRouter$2.class
+Sources:
+C:\Users\Service Account\NekoProjectAndroid\app\src\main\java\com\mrjackspade\kairo98\MainActivity.kt
+2026-09-25 13:31:11.679 [daemon] INFO: Message: output: output:
+C:\Users\Service Account\NekoProjectAndroid\app\build\tmp\kotlin-classes\withoutImagesDebug\com\mrjackspade\kairo98\MainActivity$gamepadMapper$1.class
+Sources:
+C:\Users\Service Account\NekoProjectAndroid\app\src\main\java\com\mrjackspade\kairo98\MainActivity.kt
+2026-09-25 13:31:11.679 [daemon] INFO: Message: output: output:
+C:\Users\Service Account\NekoProjectAndroid\app\build\tmp\kotlin-classes\withoutImagesDebug\com\mrjackspade\kairo98\MainActivity$inputDeviceListener$1.class
+Sources:
+C:\Users\Service Account\NekoProjectAndroid\app\src\main\java\com\mrjackspade\kairo98\MainActivity.kt
+2026-09-25 13:31:11.680 [daemon] INFO: Message: output: output:
+C:\Users\Service Account\NekoProjectAndroid\app\build\tmp\kotlin-classes\withoutImagesDebug\com\mrjackspade\kairo98\MainActivity$updateStatus$1.class
+Sources:
+C:\Users\Service Account\NekoProjectAndroid\app\src\main\java\com\mrjackspade\kairo98\MainActivity.kt
+2026-09-25 13:31:11.680 [daemon] INFO: Message: output: output:
+C:\Users\Service Account\NekoProjectAndroid\app\build\tmp\kotlin-classes\withoutImagesDebug\com\mrjackspade\kairo98\MainActivity$traceHashes$1.class
+Sources:
+C:\Users\Service Account\NekoProjectAndroid\app\src\main\java\com\mrjackspade\kairo98\MainActivity.kt
+2026-09-25 13:31:11.681 [daemon] INFO: Message: output: output:
+C:\Users\Service Account\NekoProjectAndroid\app\build\tmp\kotlin-classes\withoutImagesDebug\com\mrjackspade\kairo98\Pc98KeyboardPanel.class
+Sources:
+C:\Users\Service Account\NekoProjectAndroid\app\src\main\java\com\mrjackspade\kairo98\Pc98KeyboardPanel.kt
+2026-09-25 13:31:11.681 [daemon] INFO: Message: output: output:
+C:\Users\Service Account\NekoProjectAndroid\app\build\tmp\kotlin-classes\withoutImagesDebug\com\mrjackspade\kairo98\Pc98KeyboardPanel$Key.class
+Sources:
+C:\Users\Service Account\NekoProjectAndroid\app\src\main\java\com\mrjackspade\kairo98\Pc98KeyboardPanel.kt
+2026-09-25 13:31:11.681 [daemon] INFO: Message: output: output:
+C:\Users\Service Account\NekoProjectAndroid\app\build\tmp\kotlin-classes\withoutImagesDebug\com\mrjackspade\kairo98\Pc98KeyboardPanel$Page.class
+Sources:
+C:\Users\Service Account\NekoProjectAndroid\app\src\main\java\com\mrjackspade\kairo98\Pc98KeyboardPanel.kt
+2026-09-25 13:31:11.682 [daemon] INFO: Message: output: output:
+C:\Users\Service Account\NekoProjectAndroid\app\build\tmp\kotlin-classes\withoutImagesDebug\com\mrjackspade\kairo98\Pc98KeyboardPanel$Companion.class
+Sources:
+C:\Users\Service Account\NekoProjectAndroid\app\src\main\java\com\mrjackspade\kairo98\Pc98KeyboardPanel.kt
+2026-09-25 13:31:11.682 [daemon] INFO: Message: output: output:
+C:\Users\Service Account\NekoProjectAndroid\app\build\tmp\kotlin-classes\withoutImagesDebug\com\mrjackspade\kairo98\Pc98KeyboardPanel$WhenMappings.class
+Sources:
+C:\Users\Service Account\NekoProjectAndroid\app\src\main\java\com\mrjackspade\kairo98\Pc98KeyboardPanel.kt
+2026-09-25 13:31:11.682 [daemon] INFO: Message: output: output:
+C:\Users\Service Account\NekoProjectAndroid\app\build\tmp\kotlin-classes\withoutImagesDebug\com\mrjackspade\kairo98\SecondaryKeyboardActivity.class
+Sources:
+C:\Users\Service Account\NekoProjectAndroid\app\src\main\java\com\mrjackspade\kairo98\SecondaryKeyboardActivity.kt
+2026-09-25 13:31:11.683 [daemon] INFO: Message: output: output:
+C:\Users\Service Account\NekoProjectAndroid\app\build\tmp\kotlin-classes\withoutImagesDebug\com\mrjackspade\kairo98\SecondaryKeyboardDisplay.class
+Sources:
+C:\Users\Service Account\NekoProjectAndroid\app\src\main\java\com\mrjackspade\kairo98\SecondaryKeyboardDisplay.kt
+2026-09-25 13:31:11.683 [daemon] INFO: Message: output: output:
+C:\Users\Service Account\NekoProjectAndroid\app\build\tmp\kotlin-classes\withoutImagesDebug\com\mrjackspade\kairo98\SecondaryKeyboardDisplay$Companion.class
+Sources:
+C:\Users\Service Account\NekoProjectAndroid\app\src\main\java\com\mrjackspade\kairo98\SecondaryKeyboardDisplay.kt
+2026-09-25 13:31:11.683 [daemon] INFO: Message: output: output:
+C:\Users\Service Account\NekoProjectAndroid\app\build\tmp\kotlin-classes\withoutImagesDebug\com\mrjackspade\kairo98\SecondaryKeyboardDisplay$KeyboardPresentation.class
+Sources:
+C:\Users\Service Account\NekoProjectAndroid\app\src\main\java\com\mrjackspade\kairo98\SecondaryKeyboardDisplay.kt
+2026-09-25 13:31:11.684 [daemon] INFO: Message: output: output:
+C:\Users\Service Account\NekoProjectAndroid\app\build\tmp\kotlin-classes\withoutImagesDebug\com\mrjackspade\kairo98\SecondaryKeyboardContent.class
+Sources:
+C:\Users\Service Account\NekoProjectAndroid\app\src\main\java\com\mrjackspade\kairo98\SecondaryKeyboardDisplay.kt
+2026-09-25 13:31:11.684 [daemon] INFO: Message: output: output:
+C:\Users\Service Account\NekoProjectAndroid\app\build\tmp\kotlin-classes\withoutImagesDebug\META-INF\app_withoutImagesDebug.kotlin_module
+Sources:
+C:\Users\Service Account\NekoProjectAndroid\app\src\main\java\com\mrjackspade\kairo98\Pc98KeyboardPanel.kt
+C:\Users\Service Account\NekoProjectAndroid\app\src\main\java\com\mrjackspade\kairo98\SecondaryKeyboardActivity.kt
+C:\Users\Service Account\NekoProjectAndroid\app\src\main\java\com\mrjackspade\kairo98\SecondaryKeyboardDisplay.kt
+C:\Users\Service Account\NekoProjectAndroid\app\src\main\java\com\mrjackspade\kairo98\MainActivity.kt
+2026-09-25 13:31:11.684 [daemon] INFO: Message: warning: 'static field FLAG_FULLSCREEN: Int' is deprecated. Deprecated in Java.
+        window.addFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN)
+                                                   ^^^^^^^^^^^^^^^
+2026-09-25 13:31:11.686 [daemon] INFO: Message: warning: 'var statusBarColor: Int' is deprecated. Deprecated in Java.
+        window.statusBarColor = Color.BLACK
+               ^^^^^^^^^^^^^^
+2026-09-25 13:31:11.687 [daemon] INFO: Message: warning: 'var navigationBarColor: Int' is deprecated. Deprecated in Java.
+        window.navigationBarColor = Color.BLACK
+               ^^^^^^^^^^^^^^^^^^
+2026-09-25 13:31:11.687 [daemon] INFO: Message: warning: 'var isStatusBarContrastEnforced: Boolean' is deprecated. Deprecated in Java.
+            window.isStatusBarContrastEnforced = false
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+2026-09-25 13:31:11.688 [daemon] INFO: Message: warning: 'fun onBackPressed(): Unit' is deprecated. Legacy Back path; API 33+ also uses OnBackInvokedDispatcher.
+                    "b" -> if (event.repeatCount == 0) onBackPressed()
+                                                       ^^^^^^^^^^^^^
+2026-09-25 13:31:11.688 [daemon] INFO: Message: warning: 'static field FLAG_FULLSCREEN: Int' is deprecated. Deprecated in Java.
+        window.addFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN or
+                                                   ^^^^^^^^^^^^^^^
+2026-09-25 13:31:11.689 [daemon] INFO: Message: warning: 'static field FLAG_FULLSCREEN: Int' is deprecated. Deprecated in Java.
+            window?.addFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN)
+                                                        ^^^^^^^^^^^^^^^
+2026-09-25 13:31:12.005 [compiler] INFO: Done with result 0
+2026-09-25 13:31:12.010 [compiler] INFO: cleaning after session 1
+2026-09-25 13:31:15.186 [compiler] INFO: No more clients left
+2026-09-25 13:31:15.186 [compiler] INFO: Delayed shutdown in 1000ms
+2026-09-25 13:31:16.188 [compiler] INFO: Shutdown started
+2026-09-25 13:31:16.188 [compiler] INFO: Memory stats: total: 1910mb, free: 1629mb, max: 2731mb
+2026-09-25 13:31:16.189 [compiler] INFO: Shutdown complete

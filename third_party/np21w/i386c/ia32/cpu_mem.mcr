@@ -47,8 +47,26 @@ cpu_vmemoryread_##width(int idx, UINT32 offset) \
 		cpu_memoryread_check(sdp, offset, (length), \
 		    CHOOSE_EXCEPTION(idx)); \
 	} else if (!(sdp->flag & CPU_DESC_FLAG_WHOLEADR)) { \
-		if (!check_limit_upstairs(sdp, offset, (length), SEG_IS_32BIT(sdp))) \
+		if (!KAIRO98_LIMIT_OK(sdp, offset, (length)) && \
+		    !check_limit_upstairs(sdp, offset, (length), SEG_IS_32BIT(sdp))) \
 			goto range_failure; \
+	} \
+	if (KAIRO98_HOST_FAST_##width && CPU_STAT_PAGING) { \
+		struct tlb_entry *__ep = tlb_lookup_data_read_fast(addr, \
+		    CPU_PAGE_READ_DATA | CPU_STAT_USER_MODE); \
+		if (__ep != NULL && \
+		    (addr & CPU_PAGE_MASK) <= CPU_PAGE_MASK - ((length) - 1)) { \
+			if (__ep->fast_flags & TLBF_DIRECT_READ) { \
+				return KAIRO98_HOST_LOAD_##width(__ep->host_page + (addr & CPU_PAGE_MASK)); \
+			} \
+			if (KAIRO98_VRAM_WORD_##width) { \
+				UINT32 __pa = __ep->paddr + (addr & CPU_PAGE_MASK); \
+				if (KAIRO98_IS_VRAM_WORD(__pa)) { \
+					KAIRO98_SIDE_EFFECT(); \
+					return KAIRO98_VRAM_LOAD_##width(__pa); \
+				} \
+			} \
+		} \
 	} \
 	return cpu_lmemoryread_##width(addr, CPU_PAGE_READ_DATA | CPU_STAT_USER_MODE); \
 \
@@ -85,8 +103,28 @@ cpu_vmemorywrite_##width(int idx, UINT32 offset, valtype value) \
 		cpu_memorywrite_check(sdp, offset, (length), \
 		    CHOOSE_EXCEPTION(idx)); \
 	} else if (!(sdp->flag & CPU_DESC_FLAG_WHOLEADR)) { \
-		if (!check_limit_upstairs(sdp, offset, (length), SEG_IS_32BIT(sdp))) \
+		if (!KAIRO98_LIMIT_OK(sdp, offset, (length)) && \
+		    !check_limit_upstairs(sdp, offset, (length), SEG_IS_32BIT(sdp))) \
 			goto range_failure; \
+	} \
+	if (KAIRO98_HOST_FAST_##width && CPU_STAT_PAGING) { \
+		struct tlb_entry *__ep = tlb_lookup_data_write_fast(addr, \
+		    CPU_PAGE_WRITE_DATA | CPU_STAT_USER_MODE); \
+		if (__ep != NULL && \
+		    (addr & CPU_PAGE_MASK) <= CPU_PAGE_MASK - ((length) - 1)) { \
+			if (__ep->fast_flags & TLBF_DIRECT_WRITE) { \
+				KAIRO98_HOST_STORE_##width(__ep->host_page + (addr & CPU_PAGE_MASK), value); \
+				return; \
+			} \
+			if (KAIRO98_VRAM_WORD_##width) { \
+				UINT32 __pa = __ep->paddr + (addr & CPU_PAGE_MASK); \
+				if (KAIRO98_IS_VRAM_WORD(__pa)) { \
+					KAIRO98_SIDE_EFFECT(); \
+					KAIRO98_VRAM_STORE_##width(__pa, value); \
+					return; \
+				} \
+			} \
+		} \
 	} \
 	cpu_lmemorywrite_##width(addr, value, CPU_PAGE_WRITE_DATA | CPU_STAT_USER_MODE); \
 	return; \
@@ -128,7 +166,8 @@ cpu_vmemory_RMW_##width(int idx, UINT32 offset, UINT32 (CPUCALL *func)(UINT32, v
 		cpu_memorywrite_check(sdp, offset, (length), \
 		    CHOOSE_EXCEPTION(idx)); \
 	} else if (!(sdp->flag & CPU_DESC_FLAG_WHOLEADR)) { \
-		if (!check_limit_upstairs(sdp, offset, (length), SEG_IS_32BIT(sdp))) \
+		if (!KAIRO98_LIMIT_OK(sdp, offset, (length)) && \
+		    !check_limit_upstairs(sdp, offset, (length), SEG_IS_32BIT(sdp))) \
 			goto range_failure; \
 	} \
 	return cpu_lmemory_RMW_##width(addr, func, arg); \

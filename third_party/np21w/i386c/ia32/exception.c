@@ -64,6 +64,7 @@ static const int dftable[4][4] = {
 void CPUCALL
 exception(int num, int error_code)
 {
+	KAIRO98_SIDE_EFFECT();
 #if defined(DEBUG)
 	extern int cpu_debug_rep_cont;
 	extern CPU_REGS cpu_debug_rep_regs;
@@ -224,6 +225,7 @@ static void CPUCALL interrupt_intr_or_trap(const descriptor_t *gsdp, int intrtyp
 void CPUCALL
 interrupt(int num, int intrtype, int errorp, int error_code)
 {
+	KAIRO98_SIDE_EFFECT();
 	descriptor_t gsd;
 	UINT idt_idx;
 	UINT32 new_ip;

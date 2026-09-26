@@ -383,8 +383,16 @@ exc:
 /*
  * code fetch
  */
+#if defined(KAIRO98_ANDROID_FETCH_FAST)
+/* The inline wrappers in kairo98_fetch.h handle the cached-page hit; these
+ * bodies run on a miss, refill the cache through the paging layer, and raise
+ * the segment-limit exception. */
+PF_UINT8 MEMCALL
+cpu_codefetch_slow(UINT32 offset)
+#else
 PF_UINT8 MEMCALL
 cpu_codefetch(UINT32 offset)
+#endif
 {
 	const int ucrw = CPU_PAGE_READ_CODE | CPU_STAT_USER_MODE;
 	descriptor_t *sdp;
@@ -402,8 +410,13 @@ cpu_codefetch(UINT32 offset)
 	return 0;	/* compiler happy */
 }
 
+#if defined(KAIRO98_ANDROID_FETCH_FAST)
+PF_UINT16 MEMCALL
+cpu_codefetch_w_slow(UINT32 offset)
+#else
 PF_UINT16 MEMCALL
 cpu_codefetch_w(UINT32 offset)
+#endif
 {
 	const int ucrw = CPU_PAGE_READ_CODE | CPU_STAT_USER_MODE;
 	descriptor_t *sdp;
@@ -421,8 +434,13 @@ cpu_codefetch_w(UINT32 offset)
 	return 0;	/* compiler happy */
 }
 
+#if defined(KAIRO98_ANDROID_FETCH_FAST)
+PF_UINT32 MEMCALL
+cpu_codefetch_d_slow(UINT32 offset)
+#else
 PF_UINT32 MEMCALL
 cpu_codefetch_d(UINT32 offset)
+#endif
 {
 	const int ucrw = CPU_PAGE_READ_CODE | CPU_STAT_USER_MODE;
 	descriptor_t *sdp;
@@ -532,6 +550,86 @@ cpu_memorywrite_f(UINT32 paddr, const REG80 *value)
  */
 #define	CHOOSE_EXCEPTION(sreg) \
 	(((sreg) == CPU_SS_INDEX) ? SS_EXCEPTION : GP_EXCEPTION)
+
+/*
+ * Android fast paths used by the templates in cpu_mem.mcr.
+ *
+ * KAIRO98_LIMIT_OK is the expand-up segment limit test from
+ * check_limit_upstairs written inline. It answers only the common case; any
+ * other case (expand-down data, failure) falls back to the full routine so
+ * exceptions are raised exactly as before.
+ *
+ * KAIRO98_HOST_* read or write ordinary RAM through the data TLB's host
+ * pointer when the entry already permits direct access and the operand does
+ * not cross a page. These mirror cpu_linear_memory_read_* and _write_* in
+ * paging.c, minus the calls.
+ */
+#if defined(KAIRO98_ANDROID_FETCH_FAST)
+#define	KAIRO98_LIMIT_OK(sdp, offset, len) \
+	(!(sdp)->u.seg.ec && (offset) <= (sdp)->u.seg.limit && \
+	 (UINT32)((len) - 1) <= (sdp)->u.seg.limit - (offset))
+#define	KAIRO98_HOST_FAST_b	1
+#define	KAIRO98_HOST_FAST_w	1
+#define	KAIRO98_HOST_FAST_d	1
+#define	KAIRO98_HOST_FAST_q	0
+#define	KAIRO98_HOST_LOAD_b(p)	(*(const UINT8 *)(p))
+#define	KAIRO98_HOST_LOAD_w(p)	LOADINTELWORD(p)
+#define	KAIRO98_HOST_LOAD_d(p)	LOADINTELDWORD(p)
+#define	KAIRO98_HOST_LOAD_q(p)	0
+#define	KAIRO98_HOST_STORE_b(p, v)	do { KAIRO98_SIDE_EFFECT(); *(UINT8 *)(p) = (UINT8)(v); } while (0)
+#define	KAIRO98_HOST_STORE_w(p, v)	do { KAIRO98_SIDE_EFFECT(); STOREINTELWORD((p), (v)); } while (0)
+#define	KAIRO98_HOST_STORE_d(p, v)	do { KAIRO98_SIDE_EFFECT(); STOREINTELDWORD((p), (v)); } while (0)
+#define	KAIRO98_HOST_STORE_q(p, v)	do { } while (0)
+/*
+ * Word access to the PC-98 graphics VRAM windows (A8000-BFFFF, E0000-E7FFF).
+ * memp_read16 and memp_write16 route every such word to the bank table after
+ * their range tests; the physical address is below 1 MB, so the A20 mask does
+ * not apply, and a word inside one 4 KB page never crosses a 32 KB bank.
+ * Calling the bank handler directly skips the generic dispatch above it.
+ */
+#define	KAIRO98_VRAM_WORD_b	0
+#define	KAIRO98_VRAM_WORD_w	1
+#define	KAIRO98_VRAM_WORD_d	0
+#define	KAIRO98_VRAM_WORD_q	0
+#define	KAIRO98_IS_VRAM_WORD(pa) \
+	((((pa) >= 0xa8000UL) && ((pa) < 0xc0000UL)) || \
+	 (((pa) >= 0xe0000UL) && ((pa) < 0xe8000UL)))
+#define	KAIRO98_VRAM_LOAD_w(pa)	memp_bank_read16(pa)
+#define	KAIRO98_VRAM_LOAD_b(pa)	0
+#define	KAIRO98_VRAM_LOAD_d(pa)	0
+#define	KAIRO98_VRAM_LOAD_q(pa)	0
+#define	KAIRO98_VRAM_STORE_w(pa, v)	memp_bank_write16((pa), (v))
+#define	KAIRO98_VRAM_STORE_b(pa, v)	do { } while (0)
+#define	KAIRO98_VRAM_STORE_d(pa, v)	do { } while (0)
+#define	KAIRO98_VRAM_STORE_q(pa, v)	do { } while (0)
+#else
+#define	KAIRO98_LIMIT_OK(sdp, offset, len)	0
+#define	KAIRO98_HOST_FAST_b	0
+#define	KAIRO98_HOST_FAST_w	0
+#define	KAIRO98_HOST_FAST_d	0
+#define	KAIRO98_HOST_FAST_q	0
+#define	KAIRO98_HOST_LOAD_b(p)	0
+#define	KAIRO98_HOST_LOAD_w(p)	0
+#define	KAIRO98_HOST_LOAD_d(p)	0
+#define	KAIRO98_HOST_LOAD_q(p)	0
+#define	KAIRO98_HOST_STORE_b(p, v)	do { } while (0)
+#define	KAIRO98_HOST_STORE_w(p, v)	do { } while (0)
+#define	KAIRO98_HOST_STORE_d(p, v)	do { } while (0)
+#define	KAIRO98_HOST_STORE_q(p, v)	do { } while (0)
+#define	KAIRO98_VRAM_WORD_b	0
+#define	KAIRO98_VRAM_WORD_w	0
+#define	KAIRO98_VRAM_WORD_d	0
+#define	KAIRO98_VRAM_WORD_q	0
+#define	KAIRO98_IS_VRAM_WORD(pa)	0
+#define	KAIRO98_VRAM_LOAD_b(pa)	0
+#define	KAIRO98_VRAM_LOAD_w(pa)	0
+#define	KAIRO98_VRAM_LOAD_d(pa)	0
+#define	KAIRO98_VRAM_LOAD_q(pa)	0
+#define	KAIRO98_VRAM_STORE_b(pa, v)	do { } while (0)
+#define	KAIRO98_VRAM_STORE_w(pa, v)	do { } while (0)
+#define	KAIRO98_VRAM_STORE_d(pa, v)	do { } while (0)
+#define	KAIRO98_VRAM_STORE_q(pa, v)	do { } while (0)
+#endif
 
 #include "cpu_mem.mcr"
 

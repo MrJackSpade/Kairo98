@@ -26,6 +26,8 @@
 #include "compiler.h"
 #include "ia32/cpu.h"
 #include "ia32/ia32.mcr"
+#include "pccore.h"
+#include "iocore.h"
 #include "ia32/ctrlxfer.h"
 
 #include "ctrl_trans.h"

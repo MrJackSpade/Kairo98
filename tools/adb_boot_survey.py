@@ -16,7 +16,7 @@ from pathlib import Path
 
 
 PACKAGE = "com.loxifi.kairo98"
-ACTIVITY = f"{PACKAGE}/.MainActivity"
+ACTIVITY = f"{PACKAGE}/com.mrjackspade.kairo98.MainActivity"
 
 
 def adb(executable, *args, binary=False):

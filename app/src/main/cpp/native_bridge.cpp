@@ -1,7 +1,12 @@
 #include <jni.h>
 #include <cstdio>
+#include <android/log.h>
 #include <android/native_window.h>
+#include <sys/resource.h>
 #include <android/native_window_jni.h>
+#include <array>
+#include "android_host/gpudraw.h"
+#include "gl_presenter.h"
 #include <aaudio/AAudio.h>
 #include <algorithm>
 #include <atomic>
@@ -27,6 +32,18 @@ extern "C" int kairo98_machine_start(const char *image, const char *font_path,
                                       const char *second_floppy);
 extern "C" int kairo98_machine_dos_prompt(void);
 extern "C" void kairo98_machine_exec(void);
+extern "C" void kairo98_machine_counters(unsigned long long *slices, unsigned long long *insts,
+                                         unsigned long long *sti, unsigned long long *skips);
+extern "C" unsigned long long kairo98_machine_draw_count(void);
+extern "C" void kairo_ymfm_stats(unsigned long long *segments, unsigned long long *drain_waits,
+                                 unsigned long long *verify_mismatches);
+extern "C" void kairo98_machine_egc_stats(unsigned long long *writes, unsigned long long *reads,
+                                          unsigned long long *fast_reads,
+                                          unsigned long long *mismatch);
+extern "C" void kairo98_machine_egc_snapshot(unsigned int *snap, unsigned long long *dec_reads,
+                                             unsigned long long *cpu_reads);
+extern "C" void kairo98_machine_stage_times(unsigned long long *cpu_ns, unsigned long long *event_ns,
+                                            unsigned long long *draw_ns, unsigned long long *fm_ns);
 extern "C" int kairo98_machine_reset(void);
 extern "C" int kairo98_machine_set_clock(int mhz_times_ten);
 extern "C" void kairo98_machine_key(unsigned char code, int down);
@@ -44,6 +61,11 @@ extern "C" void kairo98_machine_location(unsigned short *cs, unsigned short *ip)
 extern "C" const unsigned short *kairo98_frame_pixels(void);
 extern "C" unsigned int kairo98_audio_buffer_frames(void);
 extern "C" int kairo98_fill_audio(short *destination, unsigned int frames);
+
+#if defined(KAIRO98_PGO_GENERATE)
+extern "C" void __llvm_profile_set_filename(const char *name);
+extern "C" int __llvm_profile_write_file(void);
+#endif
 
 namespace {
 enum class CommandType { Pause, Resume, Reset, Stop, Key, Disk, Floppy, Clock, MouseMove, MouseButton, Joystick };
@@ -95,45 +117,116 @@ uint64_t hash_guest_frame() {
     return hash;
 }
 
+// The UI thread hands the current ANativeWindow to the presenter through
+// `window`; the presenter takes its own reference when it attaches, so the UI
+// thread may release its reference at any time. `surface_generation` tells
+// both threads that the window changed.
 std::mutex window_mutex;
 ANativeWindow *window = nullptr;
+std::atomic<unsigned int> surface_generation{0};
 
-void render_frame() {
-    std::lock_guard<std::mutex> guard(window_mutex);
-    if (!window) return;
-    ANativeWindow_Buffer buffer;
-    if (ANativeWindow_lock(window, &buffer, nullptr) != 0) return;
-    const auto *source = kairo98_frame_pixels();
-    if (buffer.format == WINDOW_FORMAT_RGB_565 && buffer.width > 0 && buffer.height > 0) {
-        static int mapped_width = 0;
-        static std::vector<int> source_x;
-        if (mapped_width != buffer.width) {
-            source_x.resize(buffer.width);
-            for (int x = 0; x < buffer.width; ++x) {
-                source_x[x] = static_cast<long long>(x) * 640 / buffer.width;
+// Presentation runs on its own thread with a GPU renderer (gl_presenter.h).
+//
+// ANativeWindow_lock and eglSwapBuffers both wait on the compositor, so doing
+// them on the emulation thread makes guest time wait on the display. The
+// worker hands each redrawn guest frame to the presenter as a packet from
+// android_host/gpudraw.c and continues. Frames are shown as soon as they are
+// ready; when the presenter falls behind, it shows the newest frame and drops
+// the ones it could not show in time.
+struct PresentFrame {
+    kairo98_gpu_frame_t data;
+    std::chrono::steady_clock::time_point due;
+};
+std::mutex present_mutex;
+std::condition_variable present_ready;
+std::deque<std::unique_ptr<PresentFrame>> present_queue;
+std::vector<std::unique_ptr<PresentFrame>> present_pool;
+bool present_stop = false;
+unsigned int present_dropped = 0;
+
+void present_loop() {
+    GlPresenter renderer;
+    unsigned int attached_generation = ~0u;
+    for (;;) {
+        std::unique_ptr<PresentFrame> frame;
+        {
+            std::unique_lock<std::mutex> guard(present_mutex);
+            for (;;) {
+                present_ready.wait(guard, [&] {
+                    return !present_queue.empty() || present_stop ||
+                           surface_generation.load(std::memory_order_relaxed) != attached_generation;
+                });
+                if (present_stop) return;
+                if (surface_generation.load(std::memory_order_relaxed) != attached_generation) break;
+                const auto due = present_queue.front()->due;
+                if (present_ready.wait_until(guard, due, [] { return present_stop; })) return;
+                // Past due. If the following frame is due as well, skip this one.
+                if (present_queue.size() >= 2 &&
+                    present_queue[1]->due <= std::chrono::steady_clock::now()) {
+                    present_pool.push_back(std::move(present_queue.front()));
+                    present_queue.pop_front();
+                    ++present_dropped;
+                    continue;
+                }
+                break;
             }
-            mapped_width = buffer.width;
+            if (!present_queue.empty() &&
+                surface_generation.load(std::memory_order_relaxed) == attached_generation) {
+                frame = std::move(present_queue.front());
+                present_queue.pop_front();
+            }
         }
-        int previous_source_y = -1;
-        for (int y = 0; y < buffer.height; ++y) {
-            auto *target = static_cast<unsigned short *>(buffer.bits) + y * buffer.stride;
-            const int source_y = static_cast<long long>(y) * 400 / buffer.height;
-            if (source_y == previous_source_y) {
-                std::memcpy(target, target - buffer.stride, buffer.width * sizeof(*target));
-                continue;
+        const unsigned int generation = surface_generation.load(std::memory_order_relaxed);
+        if (generation != attached_generation) {
+            ANativeWindow *target = nullptr;
+            {
+                std::lock_guard<std::mutex> guard(window_mutex);
+                target = window;
             }
-            const auto *row = source + source_y * 640;
-            if (buffer.width == 640) {
-                std::memcpy(target, row, 640 * sizeof(*target));
-            } else {
-                for (int x = 0; x < buffer.width; ++x) {
-                    target[x] = row[source_x[x]];
+            attached_generation = generation;
+            renderer.attach(target);
+            if (renderer.ready()) renderer.draw();
+        }
+        if (frame) {
+            renderer.apply(frame->data);
+#if defined(KAIRO98_GPU_VERIFY)
+            {
+                static unsigned long long verified_frames = 0, bad_pixels = 0;
+                bad_pixels += renderer.verify(frame->data);
+                if (++verified_frames % 300 == 0) {
+                    __android_log_print(ANDROID_LOG_INFO, "Kairo98Perf",
+                        "gpu verify frames=%llu badpixels=%llu", verified_frames, bad_pixels);
                 }
             }
-            previous_source_y = source_y;
+#endif
+            renderer.draw();
+            std::lock_guard<std::mutex> guard(present_mutex);
+            present_pool.push_back(std::move(frame));
         }
     }
-    ANativeWindow_unlockAndPost(window);
+}
+
+void queue_present(std::chrono::steady_clock::time_point due) {
+    std::unique_ptr<PresentFrame> frame;
+    {
+        std::lock_guard<std::mutex> guard(present_mutex);
+        if (!present_pool.empty()) {
+            frame = std::move(present_pool.back());
+            present_pool.pop_back();
+        } else if (present_queue.size() >= 3) {
+            frame = std::move(present_queue.front());
+            present_queue.pop_front();
+            ++present_dropped;
+        }
+    }
+    if (!frame) frame = std::make_unique<PresentFrame>();
+    kairo98_gpudraw_take(&frame->data);
+    frame->due = due;
+    {
+        std::lock_guard<std::mutex> guard(present_mutex);
+        present_queue.push_back(std::move(frame));
+    }
+    present_ready.notify_one();
 }
 
 void report_state(const char *state, const char *error = "") {
@@ -165,6 +258,27 @@ void run_machine(std::string image, std::string font_path, std::string bios_dir,
         return;
     }
     report_state("Running");
+#if defined(KAIRO98_PGO_GENERATE)
+    {
+        const std::string profile = bios_dir + "/kairo98-%m.profraw";
+        __llvm_profile_set_filename(profile.c_str());
+        __android_log_print(ANDROID_LOG_INFO, "Kairo98Perf", "PGO profile: %s", profile.c_str());
+    }
+#endif
+    // Emulation competes with the UI and compositor for four small cores;
+    // give it the same standing Android gives urgent display work.
+    if (setpriority(PRIO_PROCESS, 0, -16) != 0) {
+        __android_log_print(ANDROID_LOG_INFO, "Kairo98Perf", "worker priority unchanged");
+    }
+    {
+        std::lock_guard<std::mutex> guard(present_mutex);
+        present_queue.clear();
+        present_pool.clear();
+        present_stop = false;
+        present_dropped = 0;
+    }
+    kairo98_gpudraw_set_enabled(screen_hash_sampling.load(std::memory_order_relaxed) ? 0 : 1);
+    std::thread presenter(present_loop);
     AAudioStream *audio = nullptr;
     AAudioStreamBuilder *builder = nullptr;
     if (kairo98_audio_buffer_frames() == 512 && AAudio_createStreamBuilder(&builder) == AAUDIO_OK) {
@@ -172,10 +286,19 @@ void run_machine(std::string image, std::string font_path, std::string bios_dir,
         AAudioStreamBuilder_setSampleRate(builder, 44100);
         AAudioStreamBuilder_setChannelCount(builder, 2);
         AAudioStreamBuilder_setFormat(builder, AAUDIO_FORMAT_PCM_I16);
+        AAudioStreamBuilder_setPerformanceMode(builder, AAUDIO_PERFORMANCE_MODE_LOW_LATENCY);
         if (AAudioStreamBuilder_openStream(builder, &audio) != AAUDIO_OK ||
             AAudioStream_requestStart(audio) != AAUDIO_OK) {
             if (audio) AAudioStream_close(audio);
             audio = nullptr;
+        }
+        if (audio) {
+            // Keep about three emulated frames (50 ms) of audio queued: enough
+            // to ride out a game-logic frame that overruns its slot, without
+            // the default 80 ms of output latency.
+            const int32_t burst = AAudioStream_getFramesPerBurst(audio);
+            const int32_t wanted = std::max<int32_t>(3 * 735, 2 * std::max<int32_t>(burst, 1));
+            AAudioStream_setBufferSizeInFrames(audio, wanted);
         }
     }
     if (builder) AAudioStreamBuilder_delete(builder);
@@ -206,6 +329,21 @@ void run_machine(std::string image, std::string font_path, std::string bios_dir,
     int32_t profile_previous_xruns = 0;
     int32_t profile_partial_writes = 0;
     int32_t profile_buffered_frames = 0;
+    unsigned long long profile_previous_slices = 0, profile_previous_insts = 0;
+    unsigned long long profile_previous_sti = 0, profile_previous_skips = 0;
+    unsigned long long frame_previous_slices = 0, frame_previous_insts = 0;
+    unsigned long long frame_previous_skips = 0;
+    unsigned long long frame_previous_draws = ~0ull;
+    unsigned int frame_previous_surface = ~0u;
+    unsigned int profile_big_frames = 0;
+    unsigned int profile_heavy_frames = 0;
+    int64_t profile_heavy_us = 0;
+    unsigned int profile_previous_dropped = 0;
+    unsigned long long profile_previous_cpu_ns = 0, profile_previous_event_ns = 0;
+    unsigned long long profile_previous_draw_ns = 0, profile_previous_fm_ns = 0;
+    unsigned long long profile_previous_egc_writes = 0, profile_previous_egc_reads = 0;
+    unsigned long long profile_previous_egc_fast = 0;
+    unsigned long long profile_previous_synth_waits = 0;
     while (!stop) {
         std::deque<Command> pending;
         {
@@ -295,6 +433,26 @@ void run_machine(std::string image, std::string font_path, std::string bios_dir,
         const auto core_us = std::chrono::duration_cast<std::chrono::microseconds>(core_end - core_start).count();
         profile_core_us += core_us;
         profile_max_core_us = std::max(profile_max_core_us, static_cast<int64_t>(core_us));
+        {
+            unsigned long long slices = 0, insts = 0, sti = 0, skips = 0;
+            kairo98_machine_counters(&slices, &insts, &sti, &skips);
+            if (core_us > 12000) {
+                ++profile_heavy_frames;
+                profile_heavy_us += core_us;
+            }
+            if (core_us > 20000) {
+                ++profile_big_frames;
+                unsigned short cs = 0, ip = 0;
+                kairo98_machine_location(&cs, &ip);
+                __android_log_print(ANDROID_LOG_INFO, "Kairo98Perf",
+                    "slow frame core=%lldus slices=%llu insts=%llu skips=%llu cs:ip=%04x:%04x",
+                    static_cast<long long>(core_us), slices - frame_previous_slices,
+                    insts - frame_previous_insts, skips - frame_previous_skips, cs, ip);
+            }
+            frame_previous_slices = slices;
+            frame_previous_insts = insts;
+            frame_previous_skips = skips;
+        }
         prompt_frames = kairo98_machine_dos_prompt() ? prompt_frames + 1 : 0;
         dos_prompt_ready.store(prompt_frames >= 15);
         if (screen_hash_sampling.load(std::memory_order_relaxed) &&
@@ -303,7 +461,17 @@ void run_machine(std::string image, std::string font_path, std::string bios_dir,
             screen_hash_serial.fetch_add(1, std::memory_order_release);
             next_hash = std::chrono::steady_clock::now() + std::chrono::milliseconds(100);
         }
-        render_frame();
+        // Only hand a frame to the presenter when the core redrew something;
+        // an unchanged picture needs no 512 KB copy.
+        {
+            const unsigned long long draws = kairo98_machine_draw_count();
+            const unsigned int surface = surface_generation.load(std::memory_order_relaxed);
+            if (draws != frame_previous_draws || surface != frame_previous_surface) {
+                queue_present(core_end);
+                frame_previous_draws = draws;
+                frame_previous_surface = surface;
+            }
+        }
         const auto render_end = std::chrono::steady_clock::now();
         const auto render_us = std::chrono::duration_cast<std::chrono::microseconds>(render_end - core_end).count();
         profile_render_us += render_us;
@@ -345,15 +513,75 @@ void run_machine(std::string image, std::string font_path, std::string bios_dir,
             last_ip = ip;
         }
         if (++profile_frames == 600) {
-            char result[180];
+            unsigned long long slices = 0, insts = 0, sti = 0, skips = 0;
+            kairo98_machine_counters(&slices, &insts, &sti, &skips);
+            unsigned int dropped;
+            {
+                std::lock_guard<std::mutex> guard(present_mutex);
+                dropped = present_dropped;
+            }
+            unsigned long long cpu_ns = 0, event_ns = 0, draw_ns = 0, fm_ns = 0;
+            kairo98_machine_stage_times(&cpu_ns, &event_ns, &draw_ns, &fm_ns);
+            unsigned long long egc_writes = 0, egc_reads = 0, egc_fast = 0, egc_bad = 0;
+            kairo98_machine_egc_stats(&egc_writes, &egc_reads, &egc_fast, &egc_bad);
+            unsigned long long synth_segments = 0, synth_waits = 0, synth_bad = 0;
+            kairo_ymfm_stats(&synth_segments, &synth_waits, &synth_bad);
+            unsigned int egc_snap[10] = {0};
+            unsigned long long egc_dec = 0, egc_cpu = 0;
+            kairo98_machine_egc_snapshot(egc_snap, &egc_dec, &egc_cpu);
+            __android_log_print(ANDROID_LOG_INFO, "Kairo98Perf",
+                "egc snapshot sft=%04x leng=%04x ope=%04x func=%u stack=%u srcbit=%u dstbit=%u "
+                "remain=%u ptrdelta=%d fgbg=%04x decreads=%llu cpureads=%llu",
+                egc_snap[0], egc_snap[1], egc_snap[2], egc_snap[3], egc_snap[4], egc_snap[5],
+                egc_snap[6], egc_snap[7], static_cast<int>(egc_snap[8]), egc_snap[9],
+                egc_dec, egc_cpu);
+            char result[360];
             std::snprintf(result, sizeof(result),
-                "c%.1f r%.1f m%.1f w%.1f x+%d p%d q%d maxC%.1f maxR%.1f late%d/%.1f",
+                "c%.1f r%.1f m%.1f w%.1f x+%d p%d q%d maxC%.1f maxR%.1f late%d/%.1f "
+                "sl%.0f in%.0f sti%.0f sk%.0f big%u drop%u cpu%.1f ev%.1f dr%.1f fm%.1f "
+                "ew%.0f er%.0f ef%.0f egcbad%llu hv%u/%.1f sw%llu synbad%llu",
                 profile_core_us / 600000.0, profile_render_us / 600000.0,
                 profile_mix_us / 600000.0, profile_write_us / 600000.0,
                 audio_xruns - profile_previous_xruns, profile_partial_writes,
                 profile_buffered_frames, profile_max_core_us / 1000.0,
                 profile_max_render_us / 1000.0, profile_late_frames,
-                profile_max_late_us / 1000.0);
+                profile_max_late_us / 1000.0,
+                (slices - profile_previous_slices) / 600.0,
+                (insts - profile_previous_insts) / 600.0,
+                (sti - profile_previous_sti) / 600.0,
+                (skips - profile_previous_skips) / 600.0,
+                profile_big_frames, dropped - profile_previous_dropped,
+                (cpu_ns - profile_previous_cpu_ns) / 600.0e6,
+                (event_ns - profile_previous_event_ns) / 600.0e6,
+                (draw_ns - profile_previous_draw_ns) / 600.0e6,
+                (fm_ns - profile_previous_fm_ns) / 600.0e6,
+                (egc_writes - profile_previous_egc_writes) / 600.0,
+                (egc_reads - profile_previous_egc_reads) / 600.0,
+                (egc_fast - profile_previous_egc_fast) / 600.0, egc_bad,
+                profile_heavy_frames,
+                profile_heavy_frames ? profile_heavy_us / (profile_heavy_frames * 1000.0) : 0.0,
+                synth_waits - profile_previous_synth_waits, synth_bad);
+            profile_previous_synth_waits = synth_waits;
+            profile_heavy_frames = 0;
+            profile_heavy_us = 0;
+            profile_previous_egc_writes = egc_writes;
+            profile_previous_egc_reads = egc_reads;
+            profile_previous_egc_fast = egc_fast;
+            profile_previous_cpu_ns = cpu_ns;
+            profile_previous_event_ns = event_ns;
+            profile_previous_draw_ns = draw_ns;
+            profile_previous_fm_ns = fm_ns;
+            profile_previous_slices = slices;
+            profile_previous_insts = insts;
+            profile_previous_sti = sti;
+            profile_previous_skips = skips;
+            profile_previous_dropped = dropped;
+            profile_big_frames = 0;
+#if defined(KAIRO98_PGO_GENERATE)
+            // The profiling harness never stops the machine, so persist the
+            // counters at every status window; %m merges into one file.
+            __llvm_profile_write_file();
+#endif
             {
                 std::lock_guard<std::mutex> guard(command_mutex);
                 audio_profile = result;
@@ -365,13 +593,20 @@ void run_machine(std::string image, std::string font_path, std::string bios_dir,
             profile_late_frames = 0;
             profile_partial_writes = 0;
         }
+        // Frames are scheduled on a fixed 60 Hz grid. A frame that overruns
+        // its slot leaves next_frame in the past, so the following frames
+        // start immediately and the grid is recovered rather than shifted;
+        // otherwise every overrun would permanently lose its excess time,
+        // the emulator would run below 60 Hz, and the audio buffer would
+        // drain. Only when the backlog exceeds three frames (a stall, not an
+        // overrun) is the grid re-anchored to the present.
         next_frame += std::chrono::microseconds(16667);
         auto now = std::chrono::steady_clock::now();
         if (next_frame < now) {
             ++profile_late_frames;
             profile_max_late_us = std::max(profile_max_late_us, static_cast<int64_t>(
                 std::chrono::duration_cast<std::chrono::microseconds>(now - next_frame).count()));
-            next_frame = now;
+            if (now - next_frame > std::chrono::microseconds(50000)) next_frame = now;
         }
         std::unique_lock<std::mutex> guard(command_mutex);
         command_ready.wait_until(guard, next_frame, [] { return !commands.empty(); });
@@ -380,6 +615,12 @@ void run_machine(std::string image, std::string font_path, std::string bios_dir,
         AAudioStream_requestStop(audio);
         AAudioStream_close(audio);
     }
+    {
+        std::lock_guard<std::mutex> guard(present_mutex);
+        present_stop = true;
+    }
+    present_ready.notify_one();
+    presenter.join();
     int flush_result = kairo98_machine_stop();
     std::lock_guard<std::mutex> guard(command_mutex);
     active = false;
@@ -549,6 +790,7 @@ extern "C" JNIEXPORT void JNICALL
 Java_com_mrjackspade_kairo98_MainActivity_nativeSetScreenHashSampling(JNIEnv *, jobject,
                                                                         jboolean enabled) {
     screen_hash_sampling.store(enabled == JNI_TRUE, std::memory_order_relaxed);
+    kairo98_gpudraw_set_enabled(enabled == JNI_TRUE ? 0 : 1);
     clear_screen_hash();
 }
 
@@ -567,13 +809,18 @@ extern "C" JNIEXPORT void JNICALL
 Java_com_mrjackspade_kairo98_MainActivity_nativeSetSurface(JNIEnv *env, jobject, jobject surface,
                                                           jint width, jint height) {
     ANativeWindow *replacement = surface ? ANativeWindow_fromSurface(env, surface) : nullptr;
-    std::lock_guard<std::mutex> guard(window_mutex);
-    if (replacement) {
-        ANativeWindow_setBuffersGeometry(replacement, width > 0 ? width : 640,
-                                         height > 0 ? height : 400, WINDOW_FORMAT_RGB_565);
+    (void)width;
+    (void)height;
+    ANativeWindow *previous = nullptr;
+    {
+        std::lock_guard<std::mutex> guard(window_mutex);
+        previous = window;
+        window = replacement;
+        surface_generation.fetch_add(1, std::memory_order_relaxed);
     }
-    if (window) ANativeWindow_release(window);
-    window = replacement;
+    present_ready.notify_one();
+    // The presenter holds its own reference while it renders to a window.
+    if (previous) ANativeWindow_release(previous);
 }
 
 extern "C" JNIEXPORT void JNICALL
