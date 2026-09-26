@@ -176,11 +176,14 @@ def validate_record(record):
             all(valid_image_url(x) for key, x in artwork.items()
                 if key in {"boxArtUrl", "previewUrl"}), "invalid artwork")
     machine = record.get("machine", {})
-    require(isinstance(machine, dict) and set(machine) <= {"baseClockTenthsMHz", "gdcClockTenthsMHz"} and
+    require(isinstance(machine, dict) and
+            set(machine) <= {"baseClockTenthsMHz", "gdcClockTenthsMHz", "cpuMultiple"} and
             type(machine.get("baseClockTenthsMHz", 25)) is int and
             machine.get("baseClockTenthsMHz", 25) in (20, 25) and
             type(machine.get("gdcClockTenthsMHz", 50)) is int and
-            machine.get("gdcClockTenthsMHz", 50) in (25, 50), "invalid machine")
+            machine.get("gdcClockTenthsMHz", 50) in (25, 50) and
+            type(machine.get("cpuMultiple", 20)) is int and
+            1 <= machine.get("cpuMultiple", 20) <= 20, "invalid machine")
     controller = record.get("controller", {})
     require(isinstance(controller, dict) and set(controller) <= {"profile", "bindings"} and
             isinstance(controller.get("profile", ""), str) and

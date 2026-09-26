@@ -60,7 +60,7 @@ import kotlin.math.roundToInt
 class MainActivity : Activity(), SurfaceHolder.Callback {
     private external fun nativeStart(path: String?, fontPath: String, biosDir: String,
                                      fontBitmap: Boolean, mhzTimesTen: Int, gdcMhzTimesTen: Int,
-                                     floppy: Boolean, bootFloppyPath: String?,
+                                     cpuMultiple: Int, floppy: Boolean, bootFloppyPath: String?,
                                      secondFloppyPath: String?): Boolean
     private external fun nativeFloppy(drive: Int, path: String?): Boolean
     private external fun nativeStop()
@@ -932,7 +932,8 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
                     else if (nativeStart(disk.absolutePath, font.path, firmwareDir().absolutePath,
                             font.bitmap,
                             game.baseClockTenthsMHz ?: clock,
-                            game.gdcClockTenthsMHz ?: 50, primary.isFloppy,
+                            game.gdcClockTenthsMHz ?: 50, game.cpuMultiple ?: DEFAULT_CPU_MULTIPLE,
+                            primary.isFloppy,
                             bootFloppy?.absolutePath, secondFloppy?.absolutePath)) {
                         awaitMachineReady()?.let(::error)
                         PreparedLaunch(disk, media?.bootFloppy, floppyB, swapSources)
@@ -1365,6 +1366,8 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
                     editGameClock(entry) },
                 Row("GDC clock", "${game.gdcClockTenthsMHz?.let { "${it / 10.0} MHz" } ?: "5.0 MHz (app default)"} · ${source("machine")}", true) {
                     editGameGdcClock(entry) },
+                Row("CPU speed", "${cpuSpeedLabel(game)} · ${source("machine")}", true) {
+                    editGameCpuSpeed(entry) },
                 Row("Startup command", "${game.launchCommand ?: "None"} · ${source("launch")}", true) {
                     editGameText(entry, "launch", game.launchCommand ?: "") }),
             "LIBRARY" to listOf(
@@ -1573,9 +1576,44 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
                 saveGameSetting(entry) {
                     if (which == 0) romLibrary.catalog.resetOverride(entry.contentId!!, "machine")
                     else romLibrary.catalog.setOverride(entry.contentId!!, "machine",
-                        JSONObject().put("baseClockTenthsMHz", if (which == 1) 20 else 25).apply {
-                            current.gdcClockTenthsMHz?.let { put("gdcClockTenthsMHz", it) }
-                        })
+                        machineSettings(current).put("baseClockTenthsMHz", if (which == 1) 20 else 25))
+                }
+            }.setNegativeButton("Cancel") { _, _ -> showGameDetails(entry) }.showStyled()
+    }
+
+    /** The game's current machine settings, so editing one keeps the others. */
+    private fun machineSettings(game: GameCatalog.Game) = JSONObject().apply {
+        game.baseClockTenthsMHz?.let { put("baseClockTenthsMHz", it) }
+        game.gdcClockTenthsMHz?.let { put("gdcClockTenthsMHz", it) }
+        game.cpuMultiple?.let { put("cpuMultiple", it) }
+    }
+
+    /** CPU MHz for a clock multiple on the game's base clock (2.4576 or 1.9968 MHz). */
+    private fun cpuMhz(game: GameCatalog.Game, multiple: Int) =
+        (if ((game.baseClockTenthsMHz ?: clock) == 20) 1.9968 else 2.4576) * multiple
+
+    private fun cpuSpeedLabel(game: GameCatalog.Game): String {
+        val multiple = game.cpuMultiple ?: DEFAULT_CPU_MULTIPLE
+        return "%.1f MHz (x%d)".format(cpuMhz(game, multiple), multiple) +
+            if (game.cpuMultiple == null) " · app default" else ""
+    }
+
+    private fun editGameCpuSpeed(entry: LibraryEntry) {
+        val current = romLibrary.catalog.resolve(entry.contentId!!, entry.displayName)
+        val multiples = listOf(2, 4, 6, 8, 10, 12, 16, DEFAULT_CPU_MULTIPLE)
+        val labels = listOf("App default (%.1f MHz)".format(cpuMhz(current, DEFAULT_CPU_MULTIPLE))) +
+            multiples.map { "%.1f MHz (x%d)".format(cpuMhz(current, it), it) }
+        val selected = current.cpuMultiple?.let { multiples.indexOf(it) + 1 } ?: 0
+        AlertDialog.Builder(this).setTitle("CPU speed")
+            .setSingleChoiceItems(labels.toTypedArray(), selected) { dialog, which ->
+                dialog.dismiss()
+                saveGameSetting(entry) {
+                    val settings = machineSettings(current).apply {
+                        remove("cpuMultiple")
+                        if (which > 0) put("cpuMultiple", multiples[which - 1])
+                    }
+                    if (settings.length() == 0) romLibrary.catalog.resetOverride(entry.contentId!!, "machine")
+                    else romLibrary.catalog.setOverride(entry.contentId!!, "machine", settings)
                 }
             }.setNegativeButton("Cancel") { _, _ -> showGameDetails(entry) }.showStyled()
     }
@@ -1589,9 +1627,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
                 saveGameSetting(entry) {
                     if (which == 0) romLibrary.catalog.resetOverride(entry.contentId!!, "machine")
                     else romLibrary.catalog.setOverride(entry.contentId!!, "machine",
-                        JSONObject().put("gdcClockTenthsMHz", if (which == 1) 25 else 50).apply {
-                            current.baseClockTenthsMHz?.let { put("baseClockTenthsMHz", it) }
-                        })
+                        machineSettings(current).put("gdcClockTenthsMHz", if (which == 1) 25 else 50))
                 }
             }.setNegativeButton("Cancel") { _, _ -> showGameDetails(entry) }.showStyled()
     }
@@ -2514,7 +2550,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
                 if (generation != startGeneration) "Start cancelled"
                 else if (nativeStart(disk.absolutePath, font.path, firmwareDir().absolutePath,
                         font.bitmap, clock,
-                        50, DiskFormat.isFloppy(name), null, null))
+                        50, DEFAULT_CPU_MULTIPLE, DiskFormat.isFloppy(name), null, null))
                     awaitMachineReady()?.let { "Disk start failed: $it" } ?: "Starting $name"
                 else "Unable to start machine"
             } catch (error: Exception) {
@@ -2729,7 +2765,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
                 nativeStop()
                 if (generation != startGeneration) "Start cancelled"
                 else if (nativeStart(disk.absolutePath, font.path, firmwareDir().absolutePath,
-                        font.bitmap, clock, 50, floppy, null, null))
+                        font.bitmap, clock, 50, DEFAULT_CPU_MULTIPLE, floppy, null, null))
                     awaitMachineReady()?.let { "Disk start failed: $it" } ?: message
                 else "Unable to start machine"
             } catch (error: Exception) {
@@ -3083,6 +3119,8 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
     private fun dp(value: Int): Int = (value * resources.displayMetrics.density).roundToInt()
 
     companion object {
+        /** The core's standard CPU clock multiple, about 49 MHz on the 2.5 MHz base clock. */
+        const val DEFAULT_CPU_MULTIPLE = 20
         private const val HDI_REQUEST = 98
         private const val ROM_FOLDER_REQUEST = 99
         private const val FLOPPY_A_REQUEST = 100

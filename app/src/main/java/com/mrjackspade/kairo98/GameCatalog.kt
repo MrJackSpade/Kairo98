@@ -32,6 +32,7 @@ class GameCatalog(private val context: Context) {
         val previewCatalogPath: String?,
         val baseClockTenthsMHz: Int?,
         val gdcClockTenthsMHz: Int?,
+        val cpuMultiple: Int?,
         val controllerProfile: String?,
         val controllerBindings: String?,
         val inputMode: String?,
@@ -154,6 +155,7 @@ class GameCatalog(private val context: Context) {
             boxArtUrl, previewUrl, boxArtPath, previewPath,
             machine?.optInt("baseClockTenthsMHz")?.takeIf { it == 20 || it == 25 },
             machine?.optInt("gdcClockTenthsMHz")?.takeIf { it == 25 || it == 50 },
+            machine?.optInt("cpuMultiple")?.takeIf { it in CPU_MULTIPLES },
             controller?.optString("profile")?.takeIf { it.length in 1..64 },
             controller?.optJSONArray("bindings")?.toString(),
             input?.optString("mode")?.takeIf { it in INPUT_MODES },
@@ -284,7 +286,9 @@ class GameCatalog(private val context: Context) {
         "machine" -> value is JSONObject && (!value.has("baseClockTenthsMHz") ||
             (value.opt("baseClockTenthsMHz") is Int && value.optInt("baseClockTenthsMHz") in listOf(20, 25))) &&
             (!value.has("gdcClockTenthsMHz") ||
-                (value.opt("gdcClockTenthsMHz") is Int && value.optInt("gdcClockTenthsMHz") in listOf(25, 50)))
+                (value.opt("gdcClockTenthsMHz") is Int && value.optInt("gdcClockTenthsMHz") in listOf(25, 50))) &&
+            (!value.has("cpuMultiple") ||
+                (value.opt("cpuMultiple") is Int && value.optInt("cpuMultiple") in CPU_MULTIPLES))
         "controller" -> value is JSONObject && (!value.has("profile") ||
             (value.opt("profile") is String && value.optString("profile").length in 1..64)) &&
             (!value.has("bindings") || value.optJSONArray("bindings")?.let(ControllerBindings::valid) == true)
@@ -455,6 +459,8 @@ class GameCatalog(private val context: Context) {
         private val FIELDS = setOf("title", "description", "aliases", "artwork", "machine", "controller", "input", "media", "launch", "startupChoices", "diskSwaps")
         private val INPUT_MODES = setOf("auto", "keyboard", "mouse")
         private val INPUT_TOUCH = setOf("touchpad", "direct")
+        /** CPU clock multiples a game can ask for; the app default is 20. */
+        val CPU_MULTIPLES = 1..20
         private val ART_PATH_FIELDS = setOf("boxArt", "preview")
         private val ART_URL_FIELDS = setOf("boxArtUrl", "previewUrl")
         private val ART_FIELDS = ART_PATH_FIELDS + ART_URL_FIELDS

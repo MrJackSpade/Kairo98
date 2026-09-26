@@ -40,7 +40,8 @@ static void apply_gdc_clock(void) {
 }
 
 int kairo98_machine_start(const char *image, const char *font_path, const char *bios_dir,
-                          int font_bitmap, int mhz_times_ten, int gdc_mhz_times_ten, int floppy,
+                          int font_bitmap, int mhz_times_ten, int gdc_mhz_times_ten,
+                          int cpu_multiple, int floppy,
                           const char *boot_floppy, const char *second_floppy) {
     size_t length = image ? strlen(image) : 0;
     size_t boot_length = boot_floppy ? strlen(boot_floppy) : 0;
@@ -56,10 +57,14 @@ int kairo98_machine_start(const char *image, const char *font_path, const char *
         return 1;
     }
     if ((mhz_times_ten != 20 && mhz_times_ten != 25) ||
-        (gdc_mhz_times_ten != 25 && gdc_mhz_times_ten != 50)) return 3;
+        (gdc_mhz_times_ten != 25 && gdc_mhz_times_ten != 50) ||
+        cpu_multiple < 1 || cpu_multiple > 20) return 3;
     configured_gdc_clock = gdc_mhz_times_ten;
     apply_gdc_dipswitch();
     np2cfg.baseclock = mhz_times_ten == 25 ? PCBASECLOCK25 : PCBASECLOCK20;
+    /* CPU clock = base clock x multiple. Games timed by CPU speed need the rate of
+     * the model they were written for. */
+    np2cfg.multiple = (UINT32)cpu_multiple;
     np2cfg.sasihdd[0][0] = '\0';
     np2cfg.fddfile[0][0] = '\0';
     np2cfg.fddfile[1][0] = '\0';
