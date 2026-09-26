@@ -4,6 +4,8 @@ import android.app.Activity
 import android.os.Bundle
 import android.util.Log
 import android.view.Display
+import android.view.KeyEvent
+import android.view.MotionEvent
 import android.view.View
 import android.view.WindowManager
 
@@ -17,8 +19,9 @@ class SecondaryKeyboardActivity : Activity() {
         val session = SecondaryKeyboardDisplay.pendingCompanion
         if (session == null) { finish(); return }
         owner = session
-        window.addFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN or
-            WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE)
+        // Focusable, so input that lands on this display always has a window to reach;
+        // it is forwarded to the game screen below.
+        window.addFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN)
         @Suppress("DEPRECATION")
         window.decorView.systemUiVisibility = View.SYSTEM_UI_FLAG_FULLSCREEN or
             View.SYSTEM_UI_FLAG_HIDE_NAVIGATION or View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
@@ -40,6 +43,17 @@ class SecondaryKeyboardActivity : Activity() {
 
     internal fun setAppearance(showKeyboard: Boolean, color: Int, swapped: Boolean) {
         if (::content.isInitialized) content.setAppearance(showKeyboard, color, swapped)
+    }
+
+    override fun dispatchKeyEvent(event: KeyEvent): Boolean =
+        owner?.forwardKey(event) ?: super.dispatchKeyEvent(event)
+
+    override fun dispatchGenericMotionEvent(event: MotionEvent): Boolean =
+        owner?.forwardMotion(event) ?: super.dispatchGenericMotionEvent(event)
+
+    override fun onWindowFocusChanged(hasFocus: Boolean) {
+        super.onWindowFocusChanged(hasFocus)
+        if (hasFocus) owner?.reclaimFocus()
     }
 
     internal val activeGameSurface: android.view.SurfaceView?
