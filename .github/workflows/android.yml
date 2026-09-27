@@ -45,3 +45,10 @@ jobs:
           packages: 'platform-tools platforms;android-36 build-tools;36.0.0 ndk;28.2.13676358 cmake;3.22.1'
       - uses: gradle/actions/setup-gradle@v4
       - run: ./gradlew --no-daemon :kairo98:assembleWithoutImagesDebug
+      - name: Upload installable debug APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: kairo98-without-images-debug
+          path: kairo98/build/outputs/apk/withoutImages/debug/*.apk
+          if-no-files-found: error
+          retention-days: 7
