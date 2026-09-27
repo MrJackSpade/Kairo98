@@ -37,6 +37,7 @@ class GameCatalog(private val context: Context) {
         val controllerBindings: String?,
         val inputMode: String?,
         val inputTouch: String?,
+        val inputSecondary: String?,
         val requiredBootFloppyId: String?,
         val initialFloppyBId: String?,
         val launchCommand: String?,
@@ -160,6 +161,7 @@ class GameCatalog(private val context: Context) {
             controller?.optJSONArray("bindings")?.toString(),
             input?.optString("mode")?.takeIf { it in INPUT_MODES },
             input?.optString("touch")?.takeIf { it in INPUT_TOUCH },
+            input?.optString("secondary")?.takeIf { it in INPUT_SECONDARY },
             media?.let { items ->
                 (0 until items.length()).mapNotNull { items.optJSONObject(it) }
                     .firstOrNull { it.optString("role") == "bootFloppy" }
@@ -293,7 +295,8 @@ class GameCatalog(private val context: Context) {
             (value.opt("profile") is String && value.optString("profile").length in 1..64)) &&
             (!value.has("bindings") || value.optJSONArray("bindings")?.let(ControllerBindings::valid) == true)
         "input" -> value is JSONObject && value.optString("mode") in INPUT_MODES &&
-            (!value.has("touch") || value.optString("touch") in INPUT_TOUCH)
+            (!value.has("touch") || value.optString("touch") in INPUT_TOUCH) &&
+            (!value.has("secondary") || value.optString("secondary") in INPUT_SECONDARY)
         "media" -> value is org.json.JSONArray && value.length() <= 16 &&
             (0 until value.length()).all { index ->
                 value.optJSONObject(index)?.let { item ->
@@ -459,6 +462,7 @@ class GameCatalog(private val context: Context) {
         private val FIELDS = setOf("title", "description", "aliases", "artwork", "machine", "controller", "input", "media", "launch", "startupChoices", "diskSwaps")
         private val INPUT_MODES = setOf("auto", "keyboard", "mouse")
         private val INPUT_TOUCH = setOf("touchpad", "direct")
+        private val INPUT_SECONDARY = setOf("keyboard", "touchpad")
         /** CPU clock multiples a game can ask for; the app default is 20. */
         val CPU_MULTIPLES = 1..20
         private val ART_PATH_FIELDS = setOf("boxArt", "preview")

@@ -29,6 +29,7 @@ import kotlin.math.roundToInt
 internal class SecondaryKeyboardDisplay(
     private val activity: Activity,
     private val input: InputRouter,
+    private val mouse: MouseInputRouter,
     private val onAvailabilityChanged: (Boolean) -> Unit,
     private val onGameSurface: (Surface?, Int, Int) -> Unit,
     private val onGameTouch: (MotionEvent, Int, Int) -> Boolean,
@@ -38,6 +39,7 @@ internal class SecondaryKeyboardDisplay(
     private var started = false
     private var keyboardVisible = false
     private var backgroundColor = Color.BLACK
+    private var touchpadMode = false
     private var presentation: KeyboardPresentation? = null
     private var companion: SecondaryKeyboardActivity? = null
     private var companionStarting = false
@@ -97,6 +99,12 @@ internal class SecondaryKeyboardDisplay(
         companion?.setAppearance(keyboardVisible, backgroundColor, swapped, libraryInfo)
     }
 
+    fun setInitialMode(touchpad: Boolean) {
+        touchpadMode = touchpad
+        presentation?.content?.setInitialMode(touchpad)
+        companion?.setInitialMode(touchpad)
+    }
+
     override fun onDisplayAdded(displayId: Int) = refresh()
     override fun onDisplayRemoved(displayId: Int) = refresh()
     override fun onDisplayChanged(displayId: Int) = refresh()
@@ -133,6 +141,7 @@ internal class SecondaryKeyboardDisplay(
             next.show()
             presentation = next
             next.content.setAppearance(keyboardVisible, backgroundColor, swapped, libraryInfo)
+            next.content.setInitialMode(touchpadMode)
             next.setOnDismissListener {
                 if (presentation === next) {
                     presentation = null
@@ -189,7 +198,8 @@ internal class SecondaryKeyboardDisplay(
         companionStarting = false
         companion = value
         onAvailabilityChanged(true)
-        return Pc98KeyboardPanel(value, input, {}, showClose = false, onSwap = ::toggleSwap)
+        return Pc98KeyboardPanel(value, input, {}, showClose = false, onSwap = ::toggleSwap,
+            mouse = mouse).also { it.setInitialMode(touchpadMode) }
     }
 
     internal fun updateCompanion(value: SecondaryKeyboardActivity) {
@@ -245,7 +255,7 @@ internal class SecondaryKeyboardDisplay(
                 View.SYSTEM_UI_FLAG_HIDE_NAVIGATION or View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
             content = SecondaryKeyboardContent(context,
                 Pc98KeyboardPanel(context, input, {}, showClose = false,
-                    onSwap = ::toggleSwap), ::forwardGameSurface, onGameTouch)
+                    onSwap = ::toggleSwap, mouse = mouse), ::forwardGameSurface, onGameTouch)
             setContentView(content)
         }
 
@@ -278,6 +288,7 @@ internal class SecondaryKeyboardContent(
     private val onGameSurface: (Surface?, Int, Int) -> Unit,
     private val onGameTouch: (MotionEvent, Int, Int) -> Boolean
 ) : FrameLayout(context), SurfaceHolder.Callback {
+    fun setInitialMode(touchpad: Boolean) = keyboard.setInitialMode(touchpad)
     private val gameSurface = SurfaceView(context).apply {
         visibility = View.GONE
         holder.addCallback(this@SecondaryKeyboardContent)

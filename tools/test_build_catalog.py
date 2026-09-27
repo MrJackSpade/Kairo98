@@ -119,8 +119,11 @@ class CatalogBuildTests(unittest.TestCase):
         for touch in ("touchpad", "direct"):
             self.assertEqual(validate_record(
                 {**record, "input": {"mode": "mouse", "touch": touch}})["input"]["touch"], touch)
+        for secondary in ("keyboard", "touchpad"):
+            self.assertEqual(validate_record(
+                {**record, "input": {"mode": "mouse", "secondary": secondary}})["input"]["secondary"], secondary)
         for bad in ({"mode": "pointer"}, {}, {"mode": 1}, {"mode": "mouse", "touch": "pen"},
-                    {"touch": "direct"}):
+                    {"mode": "mouse", "secondary": "direct"}, {"touch": "direct"}):
             with self.assertRaisesRegex(ValueError, "invalid input mode"):
                 validate_record({**record, "input": bad})
 

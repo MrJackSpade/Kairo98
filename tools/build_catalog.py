@@ -191,9 +191,10 @@ def validate_record(record):
             valid_bindings(controller.get("bindings", [])), "invalid controller")
     input_mode = record.get("input", {"mode": "auto"})
     require(isinstance(input_mode, dict) and "mode" in input_mode and
-            set(input_mode) <= {"mode", "touch"} and
+            set(input_mode) <= {"mode", "touch", "secondary"} and
             input_mode["mode"] in ("auto", "keyboard", "mouse") and
-            input_mode.get("touch", "touchpad") in ("touchpad", "direct"), "invalid input mode")
+            input_mode.get("touch", "touchpad") in ("touchpad", "direct") and
+            input_mode.get("secondary", "keyboard") in ("keyboard", "touchpad"), "invalid input mode")
     media = record.get("media", [])
     require(isinstance(media, list) and len(media) <= 16 and
             all(isinstance(x, dict) and isinstance(x.get("role"), str) and

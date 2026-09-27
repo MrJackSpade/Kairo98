@@ -274,7 +274,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
                 WindowInsets.Type.navigationBars())
         }
         buildUi()
-        secondaryKeyboard = SecondaryKeyboardDisplay(this, inputRouter,
+        secondaryKeyboard = SecondaryKeyboardDisplay(this, inputRouter, mouseRouter,
             { available ->
                 if (available && secondaryKeyboard.isKeyboardVisible &&
                     keyboardPanel.visibility == View.VISIBLE) {
@@ -379,7 +379,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
         keyboardPanel = Pc98KeyboardPanel(this, inputRouter, ::hideKeyboard)
         root.addView(keyboardPanel, FrameLayout.LayoutParams(-1, dp(260), Gravity.BOTTOM))
         swappedKeyboardPanel = Pc98KeyboardPanel(this, inputRouter, {}, showClose = false,
-            onSwap = { secondaryKeyboard.toggleSwap() })
+            onSwap = { secondaryKeyboard.toggleSwap() }, mouse = mouseRouter)
         root.addView(swappedKeyboardPanel, FrameLayout.LayoutParams(-1, -1))
 
         backdrop = View(this).apply {
@@ -961,6 +961,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
                         mountedFloppies[1] = result.floppyB?.displayName
                         currentTitle = game.title
                         currentGame = game
+                        setSecondaryInitialMode(game.inputSecondary == "touchpad")
                         selectedStartup = choices
                         inputModeDecider.reset()
                         gamepadMapper.bindings = effectiveControllerBindings(game)
@@ -1358,7 +1359,8 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
         val sections = listOf(
             "CONTROLS" to listOf(
                 Row("Touch input", "${inputMode.name.lowercase().replaceFirstChar(Char::uppercase)} · " +
-                    "${if (touch == "direct") "direct tap" else "touchpad"} · ${source("input")}", true) {
+                    "${if (touch == "direct") "direct tap" else "touchpad"} · " +
+                    "second screen: ${game.inputSecondary ?: "keyboard"} · ${source("input")}", true) {
                     showInputModeChoices(entry) },
                 Row("Controller mapping", "${effectiveControllerBindings(game).size} bindings · $controllerSource", true) {
                     showControllerBindings(entry) }),
@@ -1938,6 +1940,11 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
 
     private fun touchStorage(direct: Boolean) = if (direct) "direct" else "touchpad"
 
+    private fun setSecondaryInitialMode(touchpad: Boolean) {
+        if (::secondaryKeyboard.isInitialized) secondaryKeyboard.setInitialMode(touchpad)
+        if (::swappedKeyboardPanel.isInitialized) swappedKeyboardPanel.setInitialMode(touchpad)
+    }
+
     private fun directTapActive(): Boolean =
         (currentGame?.inputTouch ?: touchStorage(globalTouchDirect)) == "direct"
 
@@ -1961,6 +1968,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
             else InputModeDecider.parse(game?.inputMode ?: InputModeDecider.storageValue(globalInputMode))
         val direct = if (entry == null) globalTouchDirect
             else (game?.inputTouch ?: touchStorage(globalTouchDirect)) == "direct"
+        val secondaryTouchpad = game?.inputSecondary == "touchpad"
         val body = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
             setPadding(dp(22), dp(8), dp(22), 0)
@@ -1984,6 +1992,11 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
         val touchGroup = group(listOf("Touchpad (drag to move, tap to click)",
             "Direct tap (click where you touch)"), if (direct) 1 else 0)
         body.addView(touchGroup)
+        val secondaryGroup = if (entry != null) {
+            body.addView(heading("SECOND SCREEN START MODE"))
+            group(listOf("Keyboard", "Mouse touchpad"), if (secondaryTouchpad) 1 else 0)
+                .also { body.addView(it) }
+        } else null
         body.addView(TextView(this).apply {
             text = "Direct tap lands on the touched point in games that move the cursor one pixel " +
                 "per mouse count and stop it at the screen's top-left edge."
@@ -2008,16 +2021,22 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
                 } else {
                     romLibrary.catalog.setOverride(entry.contentId!!, "input", JSONObject()
                         .put("mode", InputModeDecider.storageValue(chosenMode))
-                        .put("touch", touchStorage(chosenDirect)))
-                    if (currentEntry?.contentId == entry.contentId)
+                        .put("touch", touchStorage(chosenDirect))
+                        .put("secondary", if (secondaryGroup != null &&
+                            checkedIndex(secondaryGroup) == 1) "touchpad" else "keyboard"))
+                    if (currentEntry?.contentId == entry.contentId) {
                         currentGame = romLibrary.catalog.resolve(entry.contentId, entry.displayName)
+                        setSecondaryInitialMode(currentGame?.inputSecondary == "touchpad")
+                    }
                 }
             }
             .setNegativeButton("Cancel", null)
         if (entry != null) builder.setNeutralButton("Use app default") { _, _ ->
             romLibrary.catalog.resetOverride(entry.contentId!!, "input")
-            if (currentEntry?.contentId == entry.contentId)
+            if (currentEntry?.contentId == entry.contentId) {
                 currentGame = romLibrary.catalog.resolve(entry.contentId, entry.displayName)
+                setSecondaryInitialMode(currentGame?.inputSecondary == "touchpad")
+            }
         }
         builder.showStyled()
     }
@@ -2579,6 +2598,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
                     mountedFloppies[1] = null
                     currentTitle = name
                     currentGame = null
+                    setSecondaryInitialMode(false)
                     inputModeDecider.reset()
                     gamepadMapper.bindings = globalControllerBindings()
                     libraryVisible = false

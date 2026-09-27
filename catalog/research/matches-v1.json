@@ -15491,6 +15491,7 @@
       "platform": "pc98",
       "databaseId": "187676",
       "title": "Aegeankai no Shizuku",
+      "input": {"mode": "auto", "secondary": "touchpad"},
       "aliases": [
         "Aegean Kai no Shizuku",
         "Aegean no Shizuku"

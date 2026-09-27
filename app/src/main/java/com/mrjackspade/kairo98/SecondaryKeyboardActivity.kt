@@ -46,6 +46,10 @@ class SecondaryKeyboardActivity : Activity() {
         if (::content.isInitialized) content.setAppearance(showKeyboard, color, swapped, info)
     }
 
+    internal fun setInitialMode(touchpad: Boolean) {
+        if (::content.isInitialized) content.setInitialMode(touchpad)
+    }
+
     override fun dispatchKeyEvent(event: KeyEvent): Boolean =
         owner?.forwardKey(event) ?: super.dispatchKeyEvent(event)
 

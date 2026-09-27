@@ -14,6 +14,7 @@ import android.view.Gravity
 import android.view.MotionEvent
 import android.view.View
 import android.widget.LinearLayout
+import android.widget.ImageView
 import android.widget.TextView
 
 /** Fitted, paged guest keyboard. Every key uses the same scan-code input router. */
@@ -22,7 +23,8 @@ internal class Pc98KeyboardPanel(
     private val input: InputRouter,
     private val onClose: () -> Unit,
     private val showClose: Boolean = true,
-    private val onSwap: (() -> Unit)? = null
+    private val onSwap: (() -> Unit)? = null,
+    mouse: MouseInputRouter? = null
 ) : LinearLayout(context) {
     private data class Key(
         val label: String,
@@ -31,12 +33,13 @@ internal class Pc98KeyboardPanel(
         val shifted: String? = null,
         val chordShift: Boolean = false
     )
-    private enum class Page { ABC, SYMBOLS, PC98 }
+    private enum class Page { ABC, SYMBOLS, PC98, TOUCHPAD }
 
     private val handler = Handler(Looper.getMainLooper())
     private val latched = mutableSetOf<Int>()
     private val keyViews = mutableListOf<Pair<Key, TextView>>()
-    private val pageViews = mutableMapOf<Page, TextView>()
+    private val pageViews = mutableMapOf<Page, View>()
+    private val touchpad = mouse?.let { SecondaryTouchpadView(context, it) }
     private val content = LinearLayout(context).apply { orientation = VERTICAL }
     private val highlightUntil = mutableMapOf<Int, Long>()
     private var lastPressed = emptySet<Int>()
@@ -90,6 +93,20 @@ internal class Pc98KeyboardPanel(
                 setMargins(dp(2), 0, dp(2), 0)
             })
         }
+        if (touchpad != null) {
+            val tab = ImageView(context).apply {
+                setImageResource(R.drawable.ic_mouse)
+                imageTintList = keyText()
+                setPadding(dp(10), dp(7), dp(10), dp(7))
+                contentDescription = "Mouse touchpad mode"
+                background = keyBackground(action = true)
+                setOnClickListener { showPage(Page.TOUCHPAD) }
+            }
+            pageViews[Page.TOUCHPAD] = tab
+            header.addView(tab, LayoutParams(0, dp(34), 1f).apply {
+                setMargins(dp(2), 0, dp(2), 0)
+            })
+        }
         if (showClose) {
             header.addView(TextView(context).apply {
                 text = "Close ×"
@@ -119,17 +136,21 @@ internal class Pc98KeyboardPanel(
 
     override fun onSizeChanged(width: Int, height: Int, oldWidth: Int, oldHeight: Int) {
         super.onSizeChanged(width, height, oldWidth, oldHeight)
-        if (onSwap != null) {
-            val rowsHeight = minOf(dp(320), (height - dp(90)).coerceAtLeast(0))
-            val rowsWidth = minOf(width, dp(900))
-            if (content.layoutParams.height != rowsHeight ||
-                content.layoutParams.width != rowsWidth)
-                content.layoutParams = LayoutParams(rowsWidth, rowsHeight)
-        }
+        updateContentSize()
+    }
+
+    private fun updateContentSize() {
+        if (onSwap == null || width <= 0 || height <= 0) return
+        val availableHeight = (height - dp(90)).coerceAtLeast(0)
+        val rowsHeight = if (page == Page.TOUCHPAD) availableHeight else minOf(dp(320), availableHeight)
+        val rowsWidth = if (page == Page.TOUCHPAD) width else minOf(width, dp(900))
+        if (content.layoutParams.height != rowsHeight || content.layoutParams.width != rowsWidth)
+            content.layoutParams = LayoutParams(rowsWidth, rowsHeight)
     }
 
     fun close() {
         visibility = View.GONE
+        touchpad?.close()
         input.releasePrefix("touch-key:")
         input.releasePrefix("touch-mod:")
         latched.clear()
@@ -139,6 +160,7 @@ internal class Pc98KeyboardPanel(
     }
 
     private fun showPage(target: Page) {
+        if (page == Page.TOUCHPAD) touchpad?.close()
         input.releasePrefix("touch-key:")
         if (page != target) {
             for (shift in listOf(0x70, 0x7d)) {
@@ -146,16 +168,27 @@ internal class Pc98KeyboardPanel(
             }
         }
         page = target
+        updateContentSize()
         content.removeAllViews()
         keyViews.clear()
+        if (target == Page.TOUCHPAD) {
+            touchpad?.let { content.addView(it, LayoutParams(-1, -1)) }
+            pageViews.forEach { (name, view) -> view.isActivated = name == page }
+            return
+        }
         val rows = when (page) {
             Page.ABC -> alphabetRows()
             Page.SYMBOLS -> symbolRows()
             Page.PC98 -> pc98Rows()
+            Page.TOUCHPAD -> emptyList()
         }
         rows.forEach(::row)
         pageViews.forEach { (name, view) -> view.isActivated = name == page }
         updateLegends()
+    }
+
+    fun setInitialMode(touchpadMode: Boolean) {
+        if (touchpad != null) showPage(if (touchpadMode) Page.TOUCHPAD else Page.ABC)
     }
 
     private fun alphabetRows(): List<List<Key>> = listOf(

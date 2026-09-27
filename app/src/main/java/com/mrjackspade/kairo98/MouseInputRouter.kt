@@ -6,6 +6,9 @@ import kotlin.math.sqrt
 /** Combines controller and touch owners before sending PC-98 mouse input. */
 class MouseInputRouter(private val move: (Int, Int) -> Unit,
                        private val button: (Int, Boolean) -> Unit) {
+    @Synchronized fun moveBy(dx: Int, dy: Int) {
+        if (dx != 0 || dy != 0) move(dx, dy)
+    }
     private data class Held(val target: String, val strength: Float)
     private val owners = HashMap<String, Held>()
     private val buttonCounts = IntArray(2)

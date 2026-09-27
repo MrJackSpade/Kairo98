@@ -64,7 +64,7 @@ def generate(matches_path, gallery, assets, art_assets, ffmpeg, quality, reuse_a
             metadata["description"] = description
         if entry.get("aliases"):
             metadata["aliases"] = entry["aliases"]
-        for field in ("machine", "launch", "controller"):
+        for field in ("machine", "launch", "controller", "input"):
             if entry.get(field):
                 metadata[field] = entry[field]
         artwork = dict(committed.get(key, {}).get("artwork", {})) if reuse_art else {}
