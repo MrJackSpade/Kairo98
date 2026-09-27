@@ -394,13 +394,15 @@ class LibraryScreen(
         }
     }
     fun showEntries(items: List<LibraryEntry>) {
-        allEntries = items
-        pinnedId = lastPlayedId()?.takeIf { id -> items.any { it.id == id } }
+        allEntries = items.filterNot { entry ->
+            entry.contentId?.let(catalog::hiddenFromLibrary) == true
+        }
+        pinnedId = lastPlayedId()?.takeIf { id -> allEntries.any { it.id == id } }
         reportedSelection = "none"
         applyFilter()
         if (entries.isNotEmpty()) list.setSelection(if (selectedIndex == 0) 0 else positionOf(selectedIndex))
         if (detailOpen) {
-            val refreshed = items.firstOrNull { it.id == detailEntryId }
+            val refreshed = allEntries.firstOrNull { it.id == detailEntryId }
             if (refreshed == null) closeDetail() else detailPage.show(refreshed)
         }
     }

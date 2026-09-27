@@ -1,6 +1,9 @@
 {
   "schemaVersion": 1,
   "games": {
+    "sha256-fd-v1:a2c5fdf9c42df5bb9136f75c5ef1d517b14eb4f97566136394be5dd6893689f6": {
+      "hidden": true
+    },
     "sha256-fd-v1:45ae7823bf4992b53b7a7327eba64293536c4a0b7de7fcb0d26d9e8d6ca5eeca": {
       "media": [{"role": "bootFloppy", "contentId": "sha256-fd-v1:45ae7823bf4992b53b7a7327eba64293536c4a0b7de7fcb0d26d9e8d6ca5eeca"}]
     },

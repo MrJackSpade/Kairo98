@@ -294,6 +294,15 @@ class GameCatalog(private val context: Context) {
         overrides = updated
     }
 
+    /** Hide a known support disk without removing it from media lookup or disk swaps. */
+    @Synchronized fun hiddenFromLibrary(contentId: String): Boolean {
+        if (!validId(contentId)) return false
+        fun hidden(source: JSONObject?): Boolean? = source?.optJSONObject("games")
+            ?.optJSONObject(contentId)?.opt("hidden") as? Boolean
+        return listOfNotNull(hidden(base), hidden(shardFor(contentId)), hidden(update),
+            hidden(additions), hidden(overrides)).lastOrNull() == true
+    }
+
     @Synchronized fun resetOverride(contentId: String, field: String? = null) {
         val updated = JSONObject(overrides.toString())
         val games = updated.optJSONObject("games") ?: return
@@ -352,6 +361,7 @@ class GameCatalog(private val context: Context) {
     private fun validField(field: String, value: Any): Boolean = when (field) {
         "title" -> value is String && validTitle(value)
         "eroge" -> value is Boolean
+        "hidden" -> value is Boolean
         "description" -> value is String && validDescription(value)
         "aliases" -> value is org.json.JSONArray && value.length() <= 64 &&
             (0 until value.length()).all { index ->
@@ -581,7 +591,7 @@ class GameCatalog(private val context: Context) {
         private const val MAX_ASSET_JSON = 64 * 1024 * 1024
         private const val MAX_LOCAL_JSON = 8L * 1024 * 1024
         private const val UPDATE_URL = "https://raw.githubusercontent.com/MrJackSpade/Kairo98/main/catalog/online-v1.json"
-        private val FIELDS = setOf("title", "description", "aliases", "artwork", "machine", "controller", "input", "media", "launch", "startupChoices", "diskSwaps", "eroge")
+        private val FIELDS = setOf("title", "description", "aliases", "artwork", "machine", "controller", "input", "media", "launch", "startupChoices", "diskSwaps", "eroge", "hidden")
         private val INPUT_MODES = setOf("auto", "keyboard", "mouse")
         private val INPUT_TOUCH = setOf("touchpad", "direct")
         private val INPUT_SECONDARY = setOf("keyboard", "touchpad")

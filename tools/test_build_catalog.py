@@ -113,6 +113,20 @@ class CatalogBuildTests(unittest.TestCase):
                 self.assertEqual({field: hashed[content_id][field] for field in ("eroge",)
                                   if field in hashed[content_id]}, expected)
 
+    def test_hidden_support_disk_is_hash_specific(self):
+        record = self.source["datasets"][0]["games"][0]
+        self.assertIs(validate_record({**record, "hidden": True})["hidden"], True)
+        self.assertIs(validate_record({**record, "hidden": False})["hidden"], False)
+        with self.assertRaisesRegex(ValueError, "invalid hidden flag"):
+            validate_record({**record, "hidden": 1})
+        source = json.loads(Path("catalog/source-v1.json").read_text(encoding="utf-8"))
+        games = {content_id: game for dataset in source["datasets"] for game in dataset["games"]
+                 for content_id in game["contentIds"]}
+        floppy = "sha256-fd-v1:a2c5fdf9c42df5bb9136f75c5ef1d517b14eb4f97566136394be5dd6893689f6"
+        hard_disk = "sha256-hdi-v1:feb217409983bea0671b42ff1b9a1811d789a8d1964765004bdd1e222bca2ad0"
+        self.assertIs(games[floppy]["hidden"], True)
+        self.assertNotIn("hidden", games[hard_disk])
+
     def test_floppy_content_id_is_accepted(self):
         record = self.source["datasets"][0]["games"][0]
         floppy = "sha256-fd-v1:" + "a" * 64

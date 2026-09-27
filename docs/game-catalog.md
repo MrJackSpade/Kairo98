@@ -1,5 +1,9 @@
 # Kairo98 game catalog, version 1
 
+## Support disks
+
+A hash-specific `"hidden": true` catalog field removes a disk from the playable library and recent-game shortcut while keeping it available for media lookup and disk swaps. Usagi na Panic's `User.hdm` is a DOS support disk: booting it alone reaches a missing-command-interpreter prompt. Its HDI is the playable entry and runs `T.EXE` through `AUTOEXEC.BAT`. The hidden flag is attached only to the known floppy hash in `catalog/startup-profiles-v1.json`; other Usagi images are unaffected. This catalog field requires an app version that understands it.
+
 ## Adult-content labels
 
 The optional `eroge` field is a Boolean erotic-content label. `true` shows an Eroge tag on game details and the DS-mode lower screen; `false` means the title has been reviewed as not eroge. An absent field means unreviewed, not safe for all audiences. The game settings page lets a user override or reset the label. Name matches and all linked disk variants inherit the same catalog title label.
