@@ -6,7 +6,7 @@
         android:allowBackup="false"
         android:enableOnBackInvokedCallback="true"
         android:icon="@mipmap/ic_launcher"
-        android:label="${appLabel}"
+        android:label="Kairo98"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:theme="@style/Theme.Kairo98">
         <activity
