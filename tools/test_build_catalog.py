@@ -88,6 +88,31 @@ class CatalogBuildTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "invalid description"):
             validate_record({**record, "description": " "})
 
+    def test_adult_labels_require_boolean_and_match_review(self):
+        record = self.source["datasets"][0]["games"][0]
+        for value in (True, False):
+            self.assertIs(validate_record({**record, "eroge": value})["eroge"], value)
+        for value in (None, "yes", 1):
+            with self.assertRaisesRegex(ValueError, "invalid eroge label"):
+                validate_record({**record, "eroge": value})
+        matches = json.loads(Path("catalog/research/matches-v1.json").read_text(encoding="utf-8-sig"))["entries"]
+        review = json.loads(Path("catalog/research/adult-content-v1.json").read_text(encoding="utf-8"))["games"]
+        names = json.loads(Path("app/src/main/assets/catalog/name-index-v1.json").read_text(encoding="utf-8"))["games"]
+        source = json.loads(Path("catalog/source-v1.json").read_text(encoding="utf-8"))
+        hashed = {content_id: game for dataset in source["datasets"] for game in dataset["games"]
+                  for content_id in game["contentIds"]}
+        self.assertEqual(len(matches), len(review))
+        self.assertEqual(len(matches), len(names))
+        for entry in matches:
+            key = f'{entry["platform"]}:{entry["databaseId"]}'
+            status = review[key]["status"]
+            self.assertIn(status, ("eroge", "nonadult", "unreviewed"))
+            expected = {"eroge": status == "eroge"} if status != "unreviewed" else {}
+            self.assertEqual({field: names[key][field] for field in ("eroge",) if field in names[key]}, expected)
+            for content_id in entry.get("contentIds", []):
+                self.assertEqual({field: hashed[content_id][field] for field in ("eroge",)
+                                  if field in hashed[content_id]}, expected)
+
     def test_floppy_content_id_is_accepted(self):
         record = self.source["datasets"][0]["games"][0]
         floppy = "sha256-fd-v1:" + "a" * 64

@@ -10,7 +10,7 @@ from urllib.parse import urlsplit
 
 CONTENT_ID = re.compile(r"sha256-(?:hdi|fd)-v1:[0-9a-f]{64}\Z")
 ART_PATH = re.compile(r"art/(?!.*\.\.)[A-Za-z0-9_./-]{1,252}\Z")
-FIELDS = {"title", "description", "aliases", "artwork", "machine", "controller", "input", "media", "launch", "startupChoices", "diskSwaps"}
+FIELDS = {"title", "description", "aliases", "artwork", "machine", "controller", "input", "media", "launch", "startupChoices", "diskSwaps", "eroge"}
 SCREEN_HASH = re.compile(r"[0-9a-f]{16}\Z")
 SHORT_ID = re.compile(r"[a-z0-9-]{1,40}\Z")
 
@@ -160,6 +160,7 @@ def validate_record(record):
     require(isinstance(ids, list) and ids and len(ids) <= 32, "contentIds must contain 1–32 hashes")
     require(all(isinstance(value, str) and CONTENT_ID.fullmatch(value) for value in ids), "invalid content ID")
     require(len(ids) == len(set(ids)), "duplicate content ID in one game")
+    require("eroge" not in record or type(record["eroge"]) is bool, "invalid eroge label")
     title = record.get("title")
     require(isinstance(title, str) and 0 < len(title.strip()) <= 256, "invalid title")
     description = record.get("description")

@@ -166,6 +166,8 @@ class GameDetailPage(
         val media = entry.zipEntry ?: entry.path
         tags.addView(tag(if (DiskFormat.isFloppy(media)) "Floppy disk" else "Hard disk"),
             LinearLayout.LayoutParams(-2, -2))
+        if (game.eroge == true) tags.addView(tag("Eroge"),
+            LinearLayout.LayoutParams(-2, -2).apply { topMargin = dp(4) })
         (variantLabel(entry.path) ?: entry.zipEntry?.let(::variantLabel))?.split("  ·  ")?.forEach {
             tags.addView(tag(it), LinearLayout.LayoutParams(-2, -2).apply { topMargin = dp(4) })
         }

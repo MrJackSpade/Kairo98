@@ -1,5 +1,11 @@
 # Kairo98 game catalog, version 1
 
+## Adult-content labels
+
+The optional `eroge` field is a Boolean erotic-content label. `true` shows an Eroge tag on game details and the DS-mode lower screen; `false` means the title has been reviewed as not eroge. An absent field means unreviewed, not safe for all audiences. The game settings page lets a user override or reset the label. Name matches and all linked disk variants inherit the same catalog title label.
+
+`catalog/research/adult-content-v1.json` records a review result for all 3,342 PC-88/PC-98 catalog titles. The 26 September 2026 review compared exact normalized titles and aliases with the [VNDB database dump](https://vndb.org/d14). Only unambiguous matches with unanimous `has_ero` values on official, complete, non-patch releases for the matching platform received a label. Usagi na Panic also has a manual review from [PC98.org](https://www.pc98.org/usagip1.html), which lists adult content as none. This yielded 797 eroge, 205 reviewed as not eroge, and 2,340 unreviewed titles. The review file records the VNDB IDs and releases behind decisions; it never treats a missing or conflicting match as safe. `tools/audit_vndb_adult_content.py` reproduces the review from the pinned dump, and `tools/build_review_catalog.py --reuse-art` applies it to the catalog sources and name index. The dump itself is not packaged. See [licensing](licensing.md) for its terms.
+
 For local disk research and consolidated LaunchBox identity matches, see the [catalog workbench](catalog-workbench.md). `catalog/source-v1.json` is generated from the matched records with known disk hashes; the app also ships a unique-name index for PC-98 records without a linked hash. Hash matches take priority over name matches.
 
 The app identifies an HDI by `sha256-hdi-v1:` and a floppy by `sha256-fd-v1:`, followed by the lowercase SHA-256 hex digest of the **extracted image bytes**. A standalone image and the same image inside any ZIP have the same ID. ZIP metadata, compression, and sidecar files do not enter the digest. A ZIP with multiple images yields one library entry and content ID per image. These identifiers match metadata; the source document URI and ZIP entry name remain separate launch locators.

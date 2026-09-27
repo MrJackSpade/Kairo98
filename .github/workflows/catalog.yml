@@ -3,6 +3,8 @@ on:
   push:
     paths:
       - 'tools/build_catalog.py'
+      - 'tools/build_review_catalog.py'
+      - 'tools/audit_vndb_adult_content.py'
       - 'tools/build_online_catalog.py'
       - 'tools/test_build_catalog.py'
       - 'tools/import_art.py'
@@ -13,14 +15,18 @@ on:
       - 'app/src/withImages/assets/art/**'
       - 'app/src/main/assets/catalog/**'
       - 'catalog/source-v1.json'
+      - 'catalog/research/adult-content*.json'
       - 'catalog/online-v1.json'
       - 'app/src/main/java/com/mrjackspade/kairo98/GameCatalog.kt'
+      - 'app/src/main/java/com/mrjackspade/kairo98/GameDetailPage.kt'
       - 'app/src/main/java/com/mrjackspade/kairo98/MainActivity.kt'
       - 'app/src/main/java/com/mrjackspade/kairo98/LibraryScreen.kt'
       - '.github/workflows/catalog.yml'
   pull_request:
     paths:
       - 'tools/build_catalog.py'
+      - 'tools/build_review_catalog.py'
+      - 'tools/audit_vndb_adult_content.py'
       - 'tools/build_online_catalog.py'
       - 'tools/test_build_catalog.py'
       - 'tools/import_art.py'
@@ -31,8 +37,10 @@ on:
       - 'app/src/withImages/assets/art/**'
       - 'app/src/main/assets/catalog/**'
       - 'catalog/source-v1.json'
+      - 'catalog/research/adult-content*.json'
       - 'catalog/online-v1.json'
       - 'app/src/main/java/com/mrjackspade/kairo98/GameCatalog.kt'
+      - 'app/src/main/java/com/mrjackspade/kairo98/GameDetailPage.kt'
       - 'app/src/main/java/com/mrjackspade/kairo98/MainActivity.kt'
       - 'app/src/main/java/com/mrjackspade/kairo98/LibraryScreen.kt'
       - '.github/workflows/catalog.yml'

@@ -1,5 +1,9 @@
 # License audit: Android development build
 
+## VNDB adult-content metadata
+
+The adult-content review in `catalog/research/adult-content-v1.json` derives title matches and release `has_ero` flags from the official [VNDB database dump](https://vndb.org/d14), dated 26 September 2026. VNDB publishes database rights under ODbL 1.0 and individual database contents under DbCL. The derived review and `eroge` catalog fields are available in this public repository under ODbL 1.0 with attribution to VNDB contributors. The reviewed dump SHA-256 is recorded in the review file. The app does not package the VNDB dump, user records, anime data, or descriptions. The manual Usagi na Panic nonadult finding cites its source separately. Future reviews should use a fresh dump, preserve source and license attribution, and update the derived review file.
+
 Audited 25 September 2026 against two locally built `0.2.0-icon-dev` debug APKs and two release AABs. This audit applies to these exact inputs and packages, not the already published `v0.2.0` binaries. Repeat it after changes to sources or packaging. The [21/W maintainer's license table](https://simk98.github.io/np21w/download.html) identifies the rev104 BSD-only package and separately warns about fmgen and GPL components. Archive hashes and import details are in [source-import.md](source-import.md).
 
 ## Native source and flags

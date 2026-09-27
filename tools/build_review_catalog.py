@@ -25,6 +25,7 @@ def generate(matches_path, gallery, assets, art_assets, ffmpeg, quality, reuse_a
     """reuse_art keeps the committed artwork and provenance instead of re-encoding the
     gallery, for metadata-only changes on a machine without the gallery or ffmpeg."""
     matches = json.loads(matches_path.read_text(encoding="utf-8-sig"))["entries"]
+    adult_review = json.loads((matches_path.parent / "adult-content-v1.json").read_text(encoding="utf-8"))["games"]
     descriptions_path = matches_path.parent / "descriptions-v1.json"
     description_notes = json.loads(descriptions_path.read_text(encoding="utf-8"))
     descriptions = description_notes["descriptions"]
@@ -64,6 +65,9 @@ def generate(matches_path, gallery, assets, art_assets, ffmpeg, quality, reuse_a
             metadata["description"] = description
         if entry.get("aliases"):
             metadata["aliases"] = entry["aliases"]
+        adult_status = adult_review.get(key, {}).get("status", "unreviewed")
+        if adult_status in ("eroge", "nonadult"):
+            metadata["eroge"] = adult_status == "eroge"
         for field in ("machine", "launch", "controller", "input"):
             if entry.get(field):
                 metadata[field] = entry[field]
@@ -131,9 +135,9 @@ def generate(matches_path, gallery, assets, art_assets, ffmpeg, quality, reuse_a
 
     unique_names = {name: next(iter(keys)) for name, keys in sorted(names.items()) if len(keys) == 1}
     source = {"schemaVersion": 1, "datasets": [{"id": "reviewed-research-2026-09-24",
-        "provenance": {"source": "Kairo98 local match catalog and LaunchBox image cache",
-                       "license": "Artwork redistribution rights audit pending",
-                       "attribution": "LaunchBox Games Database contributors; Kairo98 original descriptions"},
+        "provenance": {"source": "Kairo98 local match catalog, LaunchBox image cache, and VNDB 2026-09-26 dump",
+                       "license": "VNDB derived adult-content metadata: ODbL 1.0; artwork redistribution rights audit pending",
+                       "attribution": "LaunchBox Games Database contributors; VNDB contributors; Kairo98 original descriptions"},
         "games": source_games}]}
     manifest, shards = build(source)
     catalog = assets / "catalog"

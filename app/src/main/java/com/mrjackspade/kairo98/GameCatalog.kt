@@ -27,6 +27,7 @@ class GameCatalog(private val context: Context) {
         val contentId: String,
         val title: String,
         val description: String?,
+        val eroge: Boolean?,
         val boxArt: String?,
         val preview: String?,
         val boxArtUrl: String?,
@@ -223,6 +224,7 @@ class GameCatalog(private val context: Context) {
         return Game(
             contentId, title.ifBlank { fileName },
             merged.optString("description").takeIf(::validDescription),
+            merged.opt("eroge") as? Boolean,
             artworkStore.availablePath(boxArtPath),
             artworkStore.availablePath(previewPath),
             boxArtUrl, previewUrl, boxArtPath, previewPath,
@@ -349,6 +351,7 @@ class GameCatalog(private val context: Context) {
 
     private fun validField(field: String, value: Any): Boolean = when (field) {
         "title" -> value is String && validTitle(value)
+        "eroge" -> value is Boolean
         "description" -> value is String && validDescription(value)
         "aliases" -> value is org.json.JSONArray && value.length() <= 64 &&
             (0 until value.length()).all { index ->
@@ -578,7 +581,7 @@ class GameCatalog(private val context: Context) {
         private const val MAX_ASSET_JSON = 64 * 1024 * 1024
         private const val MAX_LOCAL_JSON = 8L * 1024 * 1024
         private const val UPDATE_URL = "https://raw.githubusercontent.com/MrJackSpade/Kairo98/main/catalog/online-v1.json"
-        private val FIELDS = setOf("title", "description", "aliases", "artwork", "machine", "controller", "input", "media", "launch", "startupChoices", "diskSwaps")
+        private val FIELDS = setOf("title", "description", "aliases", "artwork", "machine", "controller", "input", "media", "launch", "startupChoices", "diskSwaps", "eroge")
         private val INPUT_MODES = setOf("auto", "keyboard", "mouse")
         private val INPUT_TOUCH = setOf("touchpad", "direct")
         private val INPUT_SECONDARY = setOf("keyboard", "touchpad")
