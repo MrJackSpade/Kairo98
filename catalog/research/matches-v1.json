@@ -24597,6 +24597,7 @@
       "platform": "pc98",
       "databaseId": "442277",
       "title": "Fatal Relations",
+      "machine": {"gdcClockTenthsMHz": 25},
       "aliases": [
         "Kindan no Ketsuzoku"
       ],
