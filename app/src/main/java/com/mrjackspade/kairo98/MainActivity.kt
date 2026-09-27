@@ -299,7 +299,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
             { onScreenControls.eightWayDpad }, { onScreenControls.eightWayDpad = it })
         libraryScreen = LibraryScreen(this, romLibrary.catalog,
             ::chooseRomFolder, { refreshLibrary(false) }, { refreshLibrary(true) },
-            ::updateGameCatalog,
+            { updateGameCatalog(false) },
             if (resources.getBoolean(R.bool.catalog_art_download_enabled))
                 ::downloadMissingImages else null, ::cancelArtworkDownload,
             settingsEntries(), { preferences.getString("last_played_entry", null) },
@@ -336,6 +336,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
             if (setupStep < 2) firstRunSetup.show(if (setupStep == 0)
                 FirstRunSetup.Step.ROM_FOLDER else FirstRunSetup.Step.FIRMWARE)
             applyPauseState()
+            updateGameCatalog(true)
         }
     }
 
@@ -764,26 +765,32 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
 
     private fun cancelArtworkDownload() { artworkDownloadCancelled.set(true) }
 
-    private fun updateGameCatalog() {
+    private fun updateGameCatalog(silent: Boolean) {
         if (catalogUpdateRunning) {
-            toast("Catalog update is already running")
+            if (!silent) toast("Catalog update is already running")
             return
         }
         catalogUpdateRunning = true
-        libraryScreen.showStatus("Checking game catalog…")
+        if (!silent) libraryScreen.showStatus("Checking game catalog…")
         Thread {
-            val result = try {
-                if (romLibrary.catalog.downloadUpdate()) "Game catalog updated"
-                else "Game catalog is already current"
+            var changed: Boolean? = null
+            var failure: String? = null
+            try {
+                changed = romLibrary.catalog.downloadUpdate()
             } catch (error: Exception) {
                 android.util.Log.w("Kairo98", "Catalog update failed", error)
-                "Catalog update failed: ${error.message ?: "Unknown error"}"
+                failure = error.message ?: "Unknown error"
             }
             runOnUiThread {
                 catalogUpdateRunning = false
                 if (!isDestroyed) {
-                    libraryScreen.showEntries(libraryEntries)
-                    libraryScreen.showStatus(result)
+                    if (changed == true) libraryScreen.showEntries(libraryEntries)
+                    if (!silent) libraryScreen.showStatus(when {
+                        failure != null -> "Catalog update failed: $failure"
+                        changed == true -> "Game catalog updated"
+                        else -> "Game catalog is already current"
+                    })
+                    else if (changed == true && libraryVisible) toast("Game catalog updated")
                 }
             }
         }.start()
