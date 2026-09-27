@@ -292,7 +292,6 @@ void run_machine(std::string image, std::string font_path, std::string bios_dir,
         present_stop = false;
         present_dropped = 0;
     }
-    kairo98_gpudraw_set_enabled(screen_hash_sampling.load(std::memory_order_relaxed) ? 0 : 1);
     std::thread presenter(present_loop);
     AAudioStream *audio = nullptr;
     AAudioStreamBuilder *builder = nullptr;
@@ -461,6 +460,10 @@ void run_machine(std::string image, std::string font_path, std::string bios_dir,
             }
         }
         if (stop || paused) continue;
+        // Choose rendering and sampling together on the emulation thread. A UI
+        // request arriving during this frame takes effect on the next frame.
+        const bool sample_screen = screen_hash_sampling.load(std::memory_order_relaxed);
+        kairo98_gpudraw_set_enabled(sample_screen ? 0 : 1);
         const auto core_start = std::chrono::steady_clock::now();
         kairo98_machine_exec();
         const auto core_end = std::chrono::steady_clock::now();
@@ -489,7 +492,7 @@ void run_machine(std::string image, std::string font_path, std::string bios_dir,
         }
         prompt_frames = kairo98_machine_dos_prompt() ? prompt_frames + 1 : 0;
         dos_prompt_ready.store(prompt_frames >= 15);
-        if (screen_hash_sampling.load(std::memory_order_relaxed) &&
+        if (sample_screen &&
             std::chrono::steady_clock::now() >= next_hash) {
             screen_hash.store(hash_guest_frame(), std::memory_order_relaxed);
             screen_hash_serial.fetch_add(1, std::memory_order_release);
@@ -873,7 +876,6 @@ extern "C" JNIEXPORT void JNICALL
 Java_com_mrjackspade_kairo98_MainActivity_nativeSetScreenHashSampling(JNIEnv *, jobject,
                                                                         jboolean enabled) {
     screen_hash_sampling.store(enabled == JNI_TRUE, std::memory_order_relaxed);
-    kairo98_gpudraw_set_enabled(enabled == JNI_TRUE ? 0 : 1);
     clear_screen_hash();
 }
 

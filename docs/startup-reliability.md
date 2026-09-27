@@ -92,8 +92,21 @@ correction is measured separately using the Night Slave procedure in
 | --- | ---: | ---: | ---: | ---: |
 | Preceding accepted build, `9a8efd8` | 8.667 | 19.244 | 60.004 | 0 |
 | Focus correction, diagnostics removed | 8.711 | 19.211 | 59.992 | 0 |
+| Sampling correction, diagnostics removed | 8.700 | 19.356 | 59.999 | 0 |
 
 The focus correction is accepted: its 0.044 ms core-plus-mixing increase is
 within the 0.089 ms baseline run span measured earlier. Heavy core time decreased
 slightly, the combat interval had no underruns, and the screenshot confirms the
 same battle workload.
+
+The sampling correction is also accepted: core plus mixing decreased by
+0.011 ms from the focus correction, and heavy core time increased by 0.145 ms,
+within the earlier 0.178 ms baseline run span. Relative to `9a8efd8`, the combined
+corrections add 0.033 ms core plus mixing and 0.112 ms heavy core time, both within
+those measured spans. The combat interval had no underruns, the screenshot
+confirms the same battle workload, and thermal status remained 0. The production
+build is installed on the RG DS.
+
+Raw production measurements are retained locally under
+`.downloads/perf-review/runs/startup-focus-clean-1/20260926-235401-attempt1/`
+and `startup-sampling-clean-1/20260927-000024-attempt1/`.

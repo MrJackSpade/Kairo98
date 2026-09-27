@@ -58,7 +58,8 @@ typedef struct {
     unsigned short rgb[KAIRO98_GPU_ROWS * KAIRO98_GPU_COLS];
 } kairo98_gpu_frame_t;
 
-/* Host switch: 0 forces the CPU conversion for following frames. */
+/* Emulation-thread switch, applied before executing a frame: 0 forces CPU
+ * conversion and requests a full redraw when leaving the GPU path. */
 void kairo98_gpudraw_set_enabled(int enabled);
 
 /* Called by the worker after pccore_exec when the core redrew. Fills the

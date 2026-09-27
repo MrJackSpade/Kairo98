@@ -27,6 +27,9 @@ static int palette_current = -1;
 static int palette_next = 0;
 
 void kairo98_gpudraw_set_enabled(int enabled) {
+    /* A static GPU image may have no dirty rows. Refresh the CPU copy before
+     * sampling it, even if the guest does not change its screen again. */
+    if (gpu_enabled && !enabled) scrndraw_redraw();
     gpu_enabled = enabled ? 1 : 0;
 }
 
