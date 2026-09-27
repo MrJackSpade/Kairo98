@@ -22,9 +22,7 @@ import android.widget.ScrollView
 import android.widget.TextView
 import android.widget.Toast
 import java.util.concurrent.Executors
-
-/** One settings row, shown the same way in the game menu and the library menu. */
-data class SettingsEntry(val title: String, val value: () -> String, val action: () -> Unit)
+import com.mrjackspade.kairo.frontend.SettingsEntry
 
 /**
  * The part of a file name that tells revisions of one game apart: its bracketed and
@@ -539,25 +537,13 @@ class LibraryScreen(
     }
 
     private fun drawerAction(title: String, description: String, action: () -> Unit): TextView {
-        val item = LinearLayout(context).apply {
-            orientation = LinearLayout.VERTICAL
-            setPadding(dp(14), dp(10), dp(12), dp(10))
-            isFocusable = true
-            isClickable = true
-            background = Ui.rowBackground(context)
-            contentDescription = "$title. $description"
-            setOnClickListener {
-                closeActions()
-                action()
-            }
+        val row = Ui.actionRow(context, title, { description }, 66, 10) {
+            closeActions()
+            action()
         }
-        item.addView(Ui.text(context, title, Ui.BODY))
-        val detail = Ui.text(context, description, Ui.SECONDARY, Ui.TEXT_MUTED)
-        item.addView(detail)
-        actionsDrawer.addView(item, LinearLayout.LayoutParams(-1, -2))
-        item.minimumHeight = dp(66)
-        actionItems.add(item)
-        return detail
+        actionsDrawer.addView(row.view, LinearLayout.LayoutParams(-1, -2))
+        actionItems.add(row.view)
+        return row.detail
     }
 
     fun refreshSettingValues() {

@@ -8,6 +8,7 @@ import com.mrjackspade.kairo.frontend.GamepadMapper
 import com.mrjackspade.kairo.frontend.OnScreenControls
 import com.mrjackspade.kairo.frontend.ControllerEditor
 import com.mrjackspade.kairo.frontend.ControllerBinding
+import com.mrjackspade.kairo.frontend.SettingsEntry
 
 import com.mrjackspade.kairo.frontend.MouseInputRouter
 import com.mrjackspade.kairo.frontend.PhysicalControllerBinding
@@ -507,28 +508,13 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
 
     private fun menuItem(content: LinearLayout, title: String, detail: () -> String,
                          action: () -> Unit) {
-        val item = LinearLayout(this).apply {
-            orientation = LinearLayout.VERTICAL
-            minimumHeight = dp(56)
-            setPadding(dp(14), dp(9), dp(12), dp(9))
-            isFocusable = true
-            isClickable = true
-            background = menuHighlight()
-            setOnClickListener { clicked ->
-                focusMenuItem(menuItems.indexOf(clicked))
-                action()
-            }
+        val row = Ui.actionRow(this, title, detail) { clicked ->
+            focusMenuItem(menuItems.indexOf(clicked))
+            action()
         }
-        item.addView(TextView(this).apply {
-            text = title
-            textSize = Ui.BODY
-            setTextColor(Ui.TEXT)
-        })
-        val value = Ui.text(this, detail(), Ui.SECONDARY, Ui.TEXT_MUTED)
-        item.addView(value)
-        content.addView(item, LinearLayout.LayoutParams(-1, -2))
-        menuItems.add(item)
-        menuValues.add(value to detail)
+        content.addView(row.view, LinearLayout.LayoutParams(-1, -2))
+        menuItems.add(row.view)
+        menuValues.add(row.detail to detail)
     }
 
 
