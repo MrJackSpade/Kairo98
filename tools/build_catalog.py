@@ -105,6 +105,7 @@ def valid_image_url(value):
 CONTROLLER_INPUT = re.compile(r"(?:virtual:[a-z0-9]+|button:[0-9]{1,4}|(?:axis|hat):[0-9]{1,3}:[+-])\Z")
 CONTROLLER_CONTROLS = {"up", "down", "left", "right", "a", "b", "x", "y",
                        "l1", "r1", "l2", "r2", "start", "select", "menu",
+                       "lsup", "lsdown", "lsleft", "lsright",
                        "rsup", "rsdown", "rsleft", "rsright"}
 CONTROLLER_ACTIONS = {"menu", "pause", "restart", "exit"}
 CONTROLLER_JOYSTICK = {"up", "down", "left", "right", "button1", "button2"}

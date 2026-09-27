@@ -93,6 +93,7 @@ class CatalogBuildTests(unittest.TestCase):
             {"input": "virtual:a", "keys": [112, 29]},
             {"input": "axis:0:+", "action": "menu"},
             {"input": "hat:15:-", "joystick": "left"},
+            {"input": "virtual:lsright", "mouse": "moveRight"},
             {"input": "virtual:rsright", "mouse": "moveRight"},
         ]}
         validate_record({**record, "controller": valid})

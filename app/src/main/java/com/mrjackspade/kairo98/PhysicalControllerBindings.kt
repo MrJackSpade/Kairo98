@@ -11,6 +11,7 @@ data class PhysicalControllerBinding(val input: String, val control: String)
 object PhysicalControllerBindings {
     val controls = listOf("up", "down", "left", "right", "a", "b", "x", "y",
         "l1", "r1", "l2", "r2", "start", "select", "menu",
+        "lsup", "lsdown", "lsleft", "lsright",
         "rsup", "rsdown", "rsleft", "rsright")
     private val inputPattern = Regex("(?:button:[0-9]{1,4}|(?:axis|hat):[0-9]{1,3}:[+-])")
 
@@ -63,10 +64,10 @@ object PhysicalControllerBindings {
         PhysicalControllerBinding("hat:${MotionEvent.AXIS_HAT_X}:+", "right"),
         PhysicalControllerBinding("hat:${MotionEvent.AXIS_HAT_Y}:-", "up"),
         PhysicalControllerBinding("hat:${MotionEvent.AXIS_HAT_Y}:+", "down"),
-        PhysicalControllerBinding("axis:${MotionEvent.AXIS_X}:-", "left"),
-        PhysicalControllerBinding("axis:${MotionEvent.AXIS_X}:+", "right"),
-        PhysicalControllerBinding("axis:${MotionEvent.AXIS_Y}:-", "up"),
-        PhysicalControllerBinding("axis:${MotionEvent.AXIS_Y}:+", "down"),
+        PhysicalControllerBinding("axis:${MotionEvent.AXIS_X}:-", "lsleft"),
+        PhysicalControllerBinding("axis:${MotionEvent.AXIS_X}:+", "lsright"),
+        PhysicalControllerBinding("axis:${MotionEvent.AXIS_Y}:-", "lsup"),
+        PhysicalControllerBinding("axis:${MotionEvent.AXIS_Y}:+", "lsdown"),
         PhysicalControllerBinding("axis:${MotionEvent.AXIS_Z}:-", "rsleft"),
         PhysicalControllerBinding("axis:${MotionEvent.AXIS_Z}:+", "rsright"),
         PhysicalControllerBinding("axis:${MotionEvent.AXIS_RZ}:-", "rsup"),

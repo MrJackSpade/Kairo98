@@ -341,7 +341,12 @@ class ControllerEditor(
             val bindings = load(scope).associateBy { it.input }
             for (control in PhysicalControllerBindings.controls) {
                 val input = "virtual:$control"
-                row(virtualLabel(control), (bindings[input]?.let(::targetLabel) ?: "Unassigned") + "  ▾", true) {
+                val inherited = if (control.startsWith("ls"))
+                    bindings["virtual:" + control.removePrefix("ls")] else null
+                val value = bindings[input]?.let(::targetLabel)
+                    ?: inherited?.let { targetLabel(it) + " (follows D-pad)" }
+                    ?: "Unassigned"
+                row(virtualLabel(control), value + "  ▾", true) {
                     chooseInput(input)
                 }
             }
@@ -669,6 +674,10 @@ class ControllerEditor(
 
     private fun virtualLabel(control: String): String = when (control) {
         "l1", "r1", "l2", "r2" -> control.uppercase()
+        "lsup" -> "Left stick up"
+        "lsdown" -> "Left stick down"
+        "lsleft" -> "Left stick left"
+        "lsright" -> "Left stick right"
         "rsup" -> "Right stick up"
         "rsdown" -> "Right stick down"
         "rsleft" -> "Right stick left"
@@ -739,6 +748,7 @@ class ControllerEditor(
     companion object {
         private val PHYSICAL_DISPLAY_CONTROLS = listOf("a", "b", "x", "y", "up", "down",
             "left", "right", "l1", "r1", "l2", "r2", "start", "select", "menu",
+            "lsup", "lsdown", "lsleft", "lsright",
             "rsup", "rsdown", "rsleft", "rsright")
         private val MODIFIERS = setOf(0x70, 0x71, 0x72, 0x73, 0x74, 0x7d)
     }

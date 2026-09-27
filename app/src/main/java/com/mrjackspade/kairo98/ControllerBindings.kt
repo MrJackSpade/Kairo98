@@ -89,9 +89,13 @@ object ControllerBindings {
         ControllerBinding("virtual:down", listOf(0x3d)),
         ControllerBinding("virtual:left", listOf(0x3b)),
         ControllerBinding("virtual:right", listOf(0x3c)),
-        ControllerBinding("virtual:rsup", mouse = "moveUp"),
-        ControllerBinding("virtual:rsdown", mouse = "moveDown"),
-        ControllerBinding("virtual:rsleft", mouse = "moveLeft"),
-        ControllerBinding("virtual:rsright", mouse = "moveRight")
+        ControllerBinding("virtual:lsup", mouse = "moveUp"),
+        ControllerBinding("virtual:lsdown", mouse = "moveDown"),
+        ControllerBinding("virtual:lsleft", mouse = "moveLeft"),
+        ControllerBinding("virtual:lsright", mouse = "moveRight"),
+        ControllerBinding("virtual:rsup", listOf(0x43)),
+        ControllerBinding("virtual:rsdown", listOf(0x4b)),
+        ControllerBinding("virtual:rsleft", listOf(0x46)),
+        ControllerBinding("virtual:rsright", listOf(0x48))
     )
 }
