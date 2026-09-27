@@ -646,7 +646,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
         val info = SecondaryKeyboardDisplay.LibraryInfo(game.title, listOf(fileLabel(entry)) + tags,
             game.description ?: "No description available yet.", null)
         secondaryKeyboard.setLibraryInfo(info)
-        val art = game.boxArt ?: game.preview ?: return
+        val art = game.preview ?: return
         libraryArtExecutor.execute {
             val bitmap = try {
                 romLibrary.catalog.openArtwork(art).use {

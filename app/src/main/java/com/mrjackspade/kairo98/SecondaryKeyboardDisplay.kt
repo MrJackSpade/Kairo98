@@ -305,6 +305,9 @@ internal class SecondaryKeyboardContent(
     override fun onSizeChanged(width: Int, height: Int, oldWidth: Int, oldHeight: Int) {
         super.onSizeChanged(width, height, oldWidth, oldHeight)
         if (width <= 0 || height <= 0) return
+        libraryArt.layoutParams = (libraryArt.layoutParams as LinearLayout.LayoutParams).apply {
+            this.width = minOf(dp(300), ((width - dp(48)).coerceAtLeast(0) * 0.46f).roundToInt())
+        }
         val scale = minOf(width / 640f, height / 400f)
         val gameWidth = (640 * scale).roundToInt().coerceAtLeast(1)
         val gameHeight = (400 * scale).roundToInt().coerceAtLeast(1)
