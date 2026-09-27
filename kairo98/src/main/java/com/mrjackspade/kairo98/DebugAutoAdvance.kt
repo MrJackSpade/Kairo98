@@ -1,5 +1,7 @@
 package com.mrjackspade.kairo98
 
+import com.mrjackspade.kairo.frontend.InputRouter
+
 import android.os.SystemClock
 import java.io.File
 import java.util.concurrent.locks.LockSupport

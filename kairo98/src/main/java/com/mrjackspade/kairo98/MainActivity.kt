@@ -1,5 +1,14 @@
 package com.mrjackspade.kairo98
 
+import com.mrjackspade.kairo.frontend.GuestKeyboardPanel
+
+import com.mrjackspade.kairo.frontend.InputRouter
+import com.mrjackspade.kairo.frontend.JoystickInputRouter
+import com.mrjackspade.kairo.frontend.GamepadMapper
+import com.mrjackspade.kairo.frontend.OnScreenControls
+import com.mrjackspade.kairo.frontend.ControllerEditor
+import com.mrjackspade.kairo.frontend.ControllerBinding
+
 import com.mrjackspade.kairo.frontend.MouseInputRouter
 import com.mrjackspade.kairo.frontend.PhysicalControllerBinding
 import com.mrjackspade.kairo.frontend.PhysicalControllerBindings
@@ -94,7 +103,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
     private val joystickRouter = JoystickInputRouter(::nativeJoystick)
     private val mouseRouter = MouseInputRouter(::nativeMouseMove, ::nativeMouseButton)
     private val gamepadMapper = GamepadMapper(inputRouter, joystickRouter, mouseRouter,
-        ::controllerAction, ::controllerActionReleased)
+        ::controllerAction, ::controllerActionReleased, ControllerBindings.defaults())
     private lateinit var inputManager: InputManager
     private val inputDeviceListener = object : InputManager.InputDeviceListener {
         override fun onInputDeviceAdded(deviceId: Int) = Unit
@@ -106,14 +115,14 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
     private val handler = Handler(Looper.getMainLooper())
     private lateinit var root: FrameLayout
     private lateinit var screen: SurfaceView
-    private lateinit var keyboardPanel: Pc98KeyboardPanel
-    private lateinit var swappedKeyboardPanel: Pc98KeyboardPanel
+    private lateinit var keyboardPanel: GuestKeyboardPanel
+    private lateinit var swappedKeyboardPanel: GuestKeyboardPanel
     private lateinit var secondaryKeyboard: SecondaryKeyboardDisplay
     private lateinit var onScreenControls: OnScreenControls
     private lateinit var libraryScreen: LibraryScreen
     private lateinit var firstRunSetup: FirstRunSetup
     private lateinit var romLibrary: RomLibrary
-    private lateinit var controllerEditor: ControllerEditor
+    private lateinit var controllerEditor: ControllerEditor<LibraryEntry>
     private var libraryVisible = true
     private var romTree: Uri? = null
     private var scanCancelled = AtomicBoolean(false)
@@ -302,7 +311,9 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
                 gamepadMapper.deadZone = value
                 preferences.edit().putFloat("controller_dead_zone", value).apply()
             }, ::applyPauseState, ::showOnScreenControls,
-            { onScreenControls.eightWayDpad }, { onScreenControls.eightWayDpad = it })
+            { onScreenControls.eightWayDpad }, { onScreenControls.eightWayDpad = it },
+            LibraryEntry::id, Pc98KeyNames::label, ControllerBindings.JOYSTICK,
+            { ControllerBindings.toJson(it) })
         libraryScreen = LibraryScreen(this, romLibrary.catalog,
             ::chooseRomFolder, { refreshLibrary(false) }, { refreshLibrary(true) },
             { updateGameCatalog(false) },
@@ -385,9 +396,10 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
         root.addOnLayoutChangeListener { _, _, _, _, _, _, _, _, _ -> updateViewport() }
         onScreenControls = OnScreenControls(this, root, gamepadMapper, preferences, ::applyPauseState)
 
-        keyboardPanel = Pc98KeyboardPanel(this, inputRouter, ::hideKeyboard)
+        keyboardPanel = GuestKeyboardPanel(this, inputRouter, Pc98KeyboardLayout.value, ::hideKeyboard)
         root.addView(keyboardPanel, FrameLayout.LayoutParams(-1, dp(260), Gravity.BOTTOM))
-        swappedKeyboardPanel = Pc98KeyboardPanel(this, inputRouter, {}, showClose = false,
+        swappedKeyboardPanel = GuestKeyboardPanel(this, inputRouter, Pc98KeyboardLayout.value,
+            {}, showClose = false,
             onSwap = { secondaryKeyboard.toggleSwap() }, mouse = mouseRouter)
         root.addView(swappedKeyboardPanel, FrameLayout.LayoutParams(-1, -1))
 
@@ -2106,7 +2118,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
                         changes["secondary"] = chosenSecondary
                     if (changes.isNotEmpty()) romLibrary.catalog.updateOverrideSubfields(
                         entry.contentId!!, "input", changes)
-                    if (currentEntry?.contentId == entry.contentId) {
+                    if (entry.contentId != null && currentEntry?.contentId == entry.contentId) {
                         currentGame = romLibrary.catalog.resolve(entry.contentId, entry.displayName)
                         setSecondaryInitialMode(currentGame?.inputSecondary == "touchpad")
                     }

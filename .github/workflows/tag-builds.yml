@@ -68,6 +68,20 @@ jobs:
             echo "Missing release notes: $notes" >&2
             exit 1
           fi
+      - name: Require accessible shared source for a tagged release
+        if: github.event_name == 'push'
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          visibility=$(gh api repos/MrJackSpade/Kairo --jq .private) || {
+            echo "The pinned Kairo frontend source is not publicly accessible" >&2
+            exit 1
+          }
+          if [[ "$visibility" != "false" ]]; then
+            echo "The pinned Kairo frontend source must be public before this release" >&2
+            exit 1
+          fi
       - name: Prepare persistent beta signing key
         env:
           KEYSTORE_B64: ${{ secrets.KAIRO98_BETA_KEYSTORE_B64 }}
