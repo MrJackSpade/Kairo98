@@ -22,7 +22,7 @@ These screenshots show a development build on a Retroid Pocket Classic. Game ima
 
 The library reads HDI hard disks and supported floppy formats, including FDI, D88, NFD, HDM, and XDF. Images can be loose files or inside ZIP archives. Kairo98 matches known games by the disk image's contents, so recompressing a ZIP does not change its catalog match. Some games need a separate boot floppy or a specific setup; support for those is still being expanded.
 
-The current release uses the `com.loxifi.kairo98` Android package and does not bundle game artwork. Earlier releases used a different package ID, so moving from `v0.3.0` or earlier requires a new install. Use **Library menu → Download missing images** to fetch artwork for games in your library. Downloads are saved in the app and can be retried. The paid Google Play edition is built from the same source revision with the same features and behavior.
+Use **Library menu → Download missing images** to fetch artwork for games in your library. Downloads are saved in the app and can be retried. The paid Google Play edition is built from the same source revision with the same features and behavior.
 
 Games and firmware are not included with Kairo98.
 
