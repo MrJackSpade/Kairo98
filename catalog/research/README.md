@@ -12,7 +12,7 @@ The ignored `.downloads/catalog-height360` gallery contains all 6,299 selected i
 
 The local gallery currently contains all 6,123 selected images for the 3,342 matched records. On 2026-09-24, `tools/enrich_catalog_media.py` fetched and checked all 3,342 exact game pages against the catalog titles. The 526 pages whose cached metadata lacked a cover or screenshot supplied no additional image in either missing category. All source pages and the gallery stay under ignored `.downloads/`.
 
-Image URLs are source references, **not** redistribution permission. The 360-pixel images were approved for inclusion in the development app on 24 September 2026. The bundled assets retain their source URLs and file hashes in `app/src/withImages/assets/art/catalog-provenance-v1.json`; no ROM, game data, or LaunchBox overview text is packaged. The license audit remains a release gate; see [art rights](../../docs/art-rights.md).
+Image URLs are source references, **not** redistribution permission. The 360-pixel images were approved for inclusion in the development app on 24 September 2026. The bundled assets retain their source URLs and file hashes in `kairo98/src/withImages/assets/art/catalog-provenance-v1.json`; no ROM, game data, or LaunchBox overview text is packaged. The license audit remains a release gate; see [art rights](../../docs/art-rights.md).
 
 ## Coverage
 

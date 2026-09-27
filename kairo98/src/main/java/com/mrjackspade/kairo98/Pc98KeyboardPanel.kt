@@ -1,5 +1,10 @@
 package com.mrjackspade.kairo98
 
+import com.mrjackspade.kairo.frontend.MouseInputRouter
+import com.mrjackspade.kairo.frontend.PixelTextView
+import com.mrjackspade.kairo.frontend.SecondaryTouchpadView
+import com.mrjackspade.kairo.frontend.Ui
+
 import android.content.Context
 import android.content.res.ColorStateList
 import android.graphics.Color

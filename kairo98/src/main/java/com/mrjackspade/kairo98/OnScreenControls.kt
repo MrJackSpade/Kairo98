@@ -1,5 +1,8 @@
 package com.mrjackspade.kairo98
 
+import com.mrjackspade.kairo.frontend.DpadView
+import com.mrjackspade.kairo.frontend.Ui
+
 import android.app.Activity
 import android.content.SharedPreferences
 import android.content.res.Configuration

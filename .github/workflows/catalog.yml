@@ -12,16 +12,19 @@ on:
       - 'tools/make_synthetic_catalog.py'
       - 'docs/fixtures/catalog/**'
       - 'docs/fixtures/art-source/**'
-      - 'app/src/withImages/assets/art/**'
-      - 'app/src/main/assets/catalog/**'
+      - 'kairo98/src/withImages/assets/art/**'
+      - 'kairo98/src/main/assets/catalog/**'
       - 'catalog/source-v1.json'
       - 'catalog/startup-profiles-v1.json'
       - 'catalog/research/adult-content*.json'
       - 'catalog/online-v1.json'
-      - 'app/src/main/java/com/mrjackspade/kairo98/GameCatalog.kt'
-      - 'app/src/main/java/com/mrjackspade/kairo98/GameDetailPage.kt'
-      - 'app/src/main/java/com/mrjackspade/kairo98/MainActivity.kt'
-      - 'app/src/main/java/com/mrjackspade/kairo98/LibraryScreen.kt'
+      - 'shared'
+      - 'settings.gradle.kts'
+      - 'kairo98/build.gradle.kts'
+      - 'kairo98/src/main/java/com/mrjackspade/kairo98/GameCatalog.kt'
+      - 'kairo98/src/main/java/com/mrjackspade/kairo98/GameDetailPage.kt'
+      - 'kairo98/src/main/java/com/mrjackspade/kairo98/MainActivity.kt'
+      - 'kairo98/src/main/java/com/mrjackspade/kairo98/LibraryScreen.kt'
       - '.github/workflows/catalog.yml'
   pull_request:
     paths:
@@ -35,32 +38,40 @@ on:
       - 'tools/make_synthetic_catalog.py'
       - 'docs/fixtures/catalog/**'
       - 'docs/fixtures/art-source/**'
-      - 'app/src/withImages/assets/art/**'
-      - 'app/src/main/assets/catalog/**'
+      - 'kairo98/src/withImages/assets/art/**'
+      - 'kairo98/src/main/assets/catalog/**'
       - 'catalog/source-v1.json'
       - 'catalog/startup-profiles-v1.json'
       - 'catalog/research/adult-content*.json'
       - 'catalog/online-v1.json'
-      - 'app/src/main/java/com/mrjackspade/kairo98/GameCatalog.kt'
-      - 'app/src/main/java/com/mrjackspade/kairo98/GameDetailPage.kt'
-      - 'app/src/main/java/com/mrjackspade/kairo98/MainActivity.kt'
-      - 'app/src/main/java/com/mrjackspade/kairo98/LibraryScreen.kt'
+      - 'shared'
+      - 'settings.gradle.kts'
+      - 'kairo98/build.gradle.kts'
+      - 'kairo98/src/main/java/com/mrjackspade/kairo98/GameCatalog.kt'
+      - 'kairo98/src/main/java/com/mrjackspade/kairo98/GameDetailPage.kt'
+      - 'kairo98/src/main/java/com/mrjackspade/kairo98/MainActivity.kt'
+      - 'kairo98/src/main/java/com/mrjackspade/kairo98/LibraryScreen.kt'
       - '.github/workflows/catalog.yml'
 jobs:
   test:
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Check out pinned Kairo frontend
+        env:
+          KAIRO_SHARED_DEPLOY_KEY: ${{ secrets.KAIRO_SHARED_DEPLOY_KEY }}
+        run: bash tools/checkout_shared.sh
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
       - run: python -m pip install Pillow==11.3.0
       - run: python -m unittest discover -s tools -p 'test_*.py'
-      - run: python tools/build_online_catalog.py catalog/source-v1.json app/src/main/assets/catalog/name-index-v1.json /tmp/online-v1.json
+      - run: python tools/build_online_catalog.py catalog/source-v1.json kairo98/src/main/assets/catalog/name-index-v1.json /tmp/online-v1.json
       - run: cmp catalog/online-v1.json /tmp/online-v1.json
       - run: python tools/build_catalog.py catalog/source-v1.json /tmp/reviewed-catalog
-      - run: diff -r /tmp/reviewed-catalog/shards app/src/main/assets/catalog/shards
-      - run: cmp /tmp/reviewed-catalog/manifest-v1.json app/src/main/assets/catalog/manifest-v1.json
+      - run: diff -r /tmp/reviewed-catalog/shards kairo98/src/main/assets/catalog/shards
+      - run: cmp /tmp/reviewed-catalog/manifest-v1.json kairo98/src/main/assets/catalog/manifest-v1.json
       - run: python tools/build_catalog.py docs/fixtures/catalog/source-v1.json /tmp/kairo98-catalog
       - run: python tools/build_catalog.py docs/fixtures/catalog/source-v1.json /tmp/kairo98-catalog-2
       - run: diff -r /tmp/kairo98-catalog /tmp/kairo98-catalog-2
@@ -82,7 +93,7 @@ jobs:
       - uses: gradle/actions/setup-gradle@v6
         with:
           cache-provider: basic
-      - run: ./gradlew --no-daemon :app:compileWithImagesDebugKotlin :app:compileWithoutImagesDebugKotlin
+      - run: ./gradlew --no-daemon :kairo98:compileWithImagesDebugKotlin :kairo98:compileWithoutImagesDebugKotlin
       - uses: actions/upload-artifact@v4
         with:
           name: synthetic-catalog-and-art

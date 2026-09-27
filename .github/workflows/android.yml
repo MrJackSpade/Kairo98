@@ -1,0 +1,47 @@
+name: Android debug build
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/android.yml'
+      - 'build.gradle.kts'
+      - 'settings.gradle.kts'
+      - 'gradle/**'
+      - 'gradle.properties'
+      - 'gradlew'
+      - 'kairo98/**'
+      - 'shared'
+      - 'tools/checkout_shared.sh'
+  pull_request:
+    paths:
+      - '.github/workflows/android.yml'
+      - 'build.gradle.kts'
+      - 'settings.gradle.kts'
+      - 'gradle/**'
+      - 'gradle.properties'
+      - 'gradlew'
+      - 'kairo98/**'
+      - 'shared'
+      - 'tools/checkout_shared.sh'
+  workflow_dispatch:
+
+jobs:
+  build:
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check out pinned Kairo frontend
+        env:
+          KAIRO_SHARED_DEPLOY_KEY: ${{ secrets.KAIRO_SHARED_DEPLOY_KEY }}
+        run: bash tools/checkout_shared.sh
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: android-actions/setup-android@v4
+        with:
+          packages: 'platform-tools platforms;android-36 build-tools;36.0.0 ndk;28.2.13676358 cmake;3.22.1'
+      - uses: gradle/actions/setup-gradle@v4
+      - run: ./gradlew --no-daemon :kairo98:assembleWithoutImagesDebug

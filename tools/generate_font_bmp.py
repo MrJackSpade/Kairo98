@@ -20,7 +20,7 @@ import struct
 from pathlib import Path
 
 root = Path(__file__).resolve().parent.parent
-target = root / "app/src/main/assets/font/kairo98-font.bmp"
+target = root / "kairo98/src/main/assets/font/kairo98-font.bmp"
 
 WIDTH = HEIGHT = 2048
 STRIDE = WIDTH // 8

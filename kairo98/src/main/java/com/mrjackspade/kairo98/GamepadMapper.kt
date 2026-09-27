@@ -1,5 +1,9 @@
 package com.mrjackspade.kairo98
 
+import com.mrjackspade.kairo.frontend.MouseInputRouter
+import com.mrjackspade.kairo.frontend.PhysicalControllerBinding
+import com.mrjackspade.kairo.frontend.PhysicalControllerBindings
+
 import android.view.InputDevice
 import android.view.KeyEvent
 import android.view.MotionEvent

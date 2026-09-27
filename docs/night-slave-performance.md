@@ -75,7 +75,7 @@ The side-effect counter advances on every guest memory write, every read of non-
 - `kairo98_tlb.h` exposes the data TLB fast lookups so the segment-level read and write functions in `cpu_mem.mcr` resolve ordinary RAM to a host pointer without descending through the paging layer. The same functions route word reads and writes to the graphics VRAM windows (A8000-BFFFF, E0000-E7FFF) straight to the bank handler that `memp_read16` and `memp_write16` would reach after their range tests.
 - `USE_CPU_EIPMASK` and `USE_CPU_DIRECTREG`, which the desktop IA-32 build already uses, are enabled.
 - Presentation moved to its own thread in `native_bridge.cpp`. `ANativeWindow_lock` waits for the compositor, and that wait used to be charged to the emulation thread. Frames are copied only when the core reports a redraw or the surface changed. The worker thread runs at the priority Android uses for urgent display work.
-- Thin LTO and an optional profile-guided build (`-Pkairo98PgoMode=generate` to record, `-Pkairo98PgoMode=use -Pkairo98PgoProfile=...` to apply) are wired into `CMakeLists.txt`. The profile under `app/src/main/cpp/pgo/` came from the same battle run.
+- Thin LTO and an optional profile-guided build (`-Pkairo98PgoMode=generate` to record, `-Pkairo98PgoMode=use -Pkairo98PgoProfile=...` to apply) are wired into `CMakeLists.txt`. The profile under `kairo98/src/main/cpp/pgo/` came from the same battle run.
 
 Rusty booted on the final build and played through its intro scenes with correct graphics. Rewriting the 16-bit flag lookup to avoid its 64 KB table measured no change and was reverted. Raising the core's compiler setting had already been ruled out.
 

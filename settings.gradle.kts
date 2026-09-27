@@ -15,4 +15,6 @@ dependencyResolutionManagement {
 }
 
 rootProject.name = "Kairo98"
-include(":app")
+include(":kairo98")
+include(":frontend")
+project(":frontend").projectDir = file("shared/frontend")

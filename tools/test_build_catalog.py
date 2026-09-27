@@ -97,7 +97,7 @@ class CatalogBuildTests(unittest.TestCase):
                 validate_record({**record, "eroge": value})
         matches = json.loads(Path("catalog/research/matches-v1.json").read_text(encoding="utf-8-sig"))["entries"]
         review = json.loads(Path("catalog/research/adult-content-v1.json").read_text(encoding="utf-8"))["games"]
-        names = json.loads(Path("app/src/main/assets/catalog/name-index-v1.json").read_text(encoding="utf-8"))["games"]
+        names = json.loads(Path("kairo98/src/main/assets/catalog/name-index-v1.json").read_text(encoding="utf-8"))["games"]
         source = json.loads(Path("catalog/source-v1.json").read_text(encoding="utf-8"))
         hashed = {content_id: game for dataset in source["datasets"] for game in dataset["games"]
                   for content_id in game["contentIds"]}

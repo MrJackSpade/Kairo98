@@ -165,8 +165,8 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--matches", type=Path, default=Path("catalog/research/matches-v1.json"))
     parser.add_argument("--gallery", type=Path, default=Path(".downloads/catalog-height360"))
-    parser.add_argument("--assets", type=Path, default=Path("app/src/main/assets"))
-    parser.add_argument("--art-assets", type=Path, default=Path("app/src/withImages/assets"))
+    parser.add_argument("--assets", type=Path, default=Path("kairo98/src/main/assets"))
+    parser.add_argument("--art-assets", type=Path, default=Path("kairo98/src/withImages/assets"))
     parser.add_argument("--ffmpeg", type=Path, default=Path("C:/bin/ffmpeg.exe"))
     parser.add_argument("--quality", type=int, default=25)
     parser.add_argument("--reuse-art", action="store_true",
