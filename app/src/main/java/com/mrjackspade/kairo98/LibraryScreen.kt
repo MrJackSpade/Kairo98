@@ -183,7 +183,7 @@ class LibraryScreen(
             view.tag = holder
         }
         val entry = entries[index]
-        val pinned = entry.id == pinnedId && items.firstOrNull() is Header
+        val pinned = index == 0 && pinnedId != null && items.firstOrNull() is Header
         val game = catalog.resolve(entry.contentId ?: "", entry.displayName)
         holder.title.text = game.title
         holder.detail.text = entry.error?.let { "${fileLabel(entry)}  ·  $it. Fix the source, then Refresh." }
@@ -572,16 +572,26 @@ class LibraryScreen(
     }
 
     private fun applyFilter() {
+        val selectedId = entries.getOrNull(selectedIndex)?.id
+        val selectedWasPinned = selectedIndex == 0 &&
+            (items.firstOrNull() as? Header)?.pinned == true
         val query = search.text.toString().trim()
         val pinned = pinnedId?.takeIf { query.isEmpty() }?.let { id -> allEntries.firstOrNull { it.id == id } }
-        val ordered = pinned?.let { listOf(it) + (allEntries - it) } ?: allEntries
+        // Keep the recent shortcut while leaving its game in the full library below.
+        val ordered = pinned?.let { listOf(it) + allEntries } ?: allEntries
         entries = if (query.isEmpty()) ordered else ordered.filter { entry ->
             catalog.resolve(entry.contentId ?: "", entry.displayName).title.contains(query, ignoreCase = true) ||
                 entry.displayName.contains(query, ignoreCase = true)
         }
         emptyState.visibility = if (entries.isEmpty()) View.VISIBLE else View.GONE
         if (entries.isEmpty() && allEntries.isNotEmpty()) emptyState.text = "No games match \"$query\""
-        selectedIndex = selectedIndex.coerceIn(0, (entries.size - 1).coerceAtLeast(0))
+        val selectedMatch = when {
+            selectedWasPinned && pinned?.id == selectedId -> 0
+            selectedId != null -> entries.indexOfLast { it.id == selectedId }
+            else -> -1
+        }
+        selectedIndex = if (selectedMatch >= 0) selectedMatch else
+            selectedIndex.coerceIn(0, (entries.size - 1).coerceAtLeast(0))
         items = if (pinned != null && entries.isNotEmpty()) listOf(Header("CONTINUE", true), Game(0)) +
             (if (entries.size > 1) listOf(Header("ALL GAMES", false)) else emptyList()) +
             (1 until entries.size).map(::Game)
