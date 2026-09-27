@@ -3,9 +3,12 @@ package com.mrjackspade.kairo98
 import android.content.Context
 import android.util.AtomicFile
 import org.json.JSONObject
+import java.io.ByteArrayOutputStream
 import java.io.File
 import java.io.InputStream
+import java.net.HttpURLConnection
 import java.net.URI
+import java.net.URL
 import java.text.Normalizer
 import java.util.concurrent.atomic.AtomicBoolean
 
@@ -54,22 +57,85 @@ class GameCatalog(private val context: Context) {
     private val shardNames = readShardNames()
     private val shardCache = object : android.util.LruCache<String, JSONObject>(8) {}
     private val fallbackRecords = HashMap<String, JSONObject>()
+    private val updatedFallbackIds = HashSet<String>()
     private val additionsFile = File(context.filesDir, "user-catalog-v1.json")
     private val overridesFile = File(context.filesDir, "overrides-v1.json")
+    private val updateFile = File(context.filesDir, "catalog-update-v1.json")
+    private val updateApkFile = File(context.filesDir, "catalog-update-apk-v1.txt")
+    private val apkInstallTime = context.packageManager
+        .getPackageInfo(context.packageName, 0).lastUpdateTime.toString()
+    private var update = readUpdate()
     private var additions = readLocal(additionsFile)
     private var overrides = readLocal(overridesFile)
 
     @Synchronized fun reloadAdditions() { additions = readLocal(additionsFile) }
 
+    /** Call from a worker thread. An invalid or interrupted download leaves the current catalog intact. */
+    fun downloadUpdate(): Boolean {
+        val connection = (URL(UPDATE_URL).openConnection() as HttpURLConnection).apply {
+            instanceFollowRedirects = false
+            connectTimeout = 10000
+            readTimeout = 20000
+        }
+        val bytes = try {
+            require(connection.responseCode == HttpURLConnection.HTTP_OK) {
+                "Catalog server returned ${connection.responseCode}"
+            }
+            require(connection.contentLengthLong <= MAX_LOCAL_JSON) { "Catalog update is too large" }
+            connection.inputStream.use { input ->
+                val output = ByteArrayOutputStream()
+                val chunk = ByteArray(8192)
+                while (true) {
+                    val count = input.read(chunk)
+                    if (count < 0) break
+                    require(output.size().toLong() + count <= MAX_LOCAL_JSON) {
+                        "Catalog update is too large"
+                    }
+                    output.write(chunk, 0, count)
+                }
+                output.toByteArray()
+            }
+        } finally { connection.disconnect() }
+        val parsed = parseUpdate(bytes) ?: throw IllegalArgumentException("Invalid catalog update")
+        synchronized(this) {
+            if (isUpdateFromThisApk() && updateFile.isFile && runCatching {
+                    AtomicFile(updateFile).readFully().contentEquals(bytes)
+                }.getOrDefault(false)) return false
+            val atomic = AtomicFile(updateFile)
+            val stream = atomic.startWrite()
+            try {
+                stream.write(bytes)
+                atomic.finishWrite(stream)
+            } catch (error: Exception) {
+                atomic.failWrite(stream)
+                throw error
+            }
+            val marker = AtomicFile(updateApkFile)
+            val markerStream = marker.startWrite()
+            try {
+                markerStream.write(apkInstallTime.toByteArray(Charsets.UTF_8))
+                marker.finishWrite(markerStream)
+            } catch (error: Exception) {
+                marker.failWrite(markerStream)
+                throw error
+            }
+            update = parsed
+            fallbackRecords.clear()
+            updatedFallbackIds.clear()
+        }
+        return true
+    }
+
     @Synchronized fun sourceOf(contentId: String, field: String, subfield: String? = null): String = when {
         hasField(overrides, contentId, field, subfield) -> "User override"
         hasField(additions, contentId, field, subfield) -> "User catalog"
+        hasField(update, contentId, field, subfield) -> "Updated catalog"
         hasField(base, contentId, field, subfield) -> "Shipped catalog"
         shardFor(contentId)?.let { hasField(it, contentId, field, subfield) } == true -> "Shipped catalog"
         fallbackRecords[contentId]?.let { record ->
             if (subfield == null) record.has(field)
             else record.optJSONObject(field)?.has(subfield) == true
-        } == true -> "Shipped catalog"
+        } == true -> if (contentId in updatedFallbackIds) "Updated catalog" else "Shipped catalog"
         else -> if (field == "title") "Filename" else "App default"
     }
 
@@ -84,14 +150,20 @@ class GameCatalog(private val context: Context) {
         val merged = JSONObject()
         val baseRecord = base.optJSONObject("games")?.optJSONObject(contentId)
         val shardRecord = shardFor(contentId)?.optJSONObject("games")?.optJSONObject(contentId)
+        val updateRecord = update.optJSONObject("games")?.optJSONObject(contentId)
         merge(merged, baseRecord)
         merge(merged, shardRecord)
-        if (baseRecord == null && shardRecord == null) {
-            lookupByName(fileName)?.let { fallback ->
+        if (baseRecord == null && shardRecord == null && updateRecord == null) {
+            lookupByName(fileName)?.let { (fallback, fromUpdate) ->
                 merge(merged, fallback)
-                if (validId(contentId)) fallbackRecords[contentId] = fallback
+                if (validId(contentId)) {
+                    fallbackRecords[contentId] = fallback
+                    if (fromUpdate) updatedFallbackIds.add(contentId)
+                    else updatedFallbackIds.remove(contentId)
+                }
             }
         }
+        merge(merged, updateRecord)
         merge(merged, additions.optJSONObject("games")?.optJSONObject(contentId))
         val user = overrides.optJSONObject("games")?.optJSONObject(contentId)
         merge(merged, user)
@@ -390,7 +462,7 @@ class GameCatalog(private val context: Context) {
         }
     } catch (_: Exception) { empty() }
 
-    private fun lookupByName(fileName: String): JSONObject? {
+    private fun lookupByName(fileName: String): Pair<JSONObject, Boolean>? {
         val simple = fileName.substringAfterLast('/').substringAfterLast('\\')
             .replace(Regex("\\[[^]]*]"), "")
             .replace(Regex("\\((?:disk|disc|fd)\\s*\\d+[^)]*\\)", RegexOption.IGNORE_CASE), "")
@@ -399,8 +471,12 @@ class GameCatalog(private val context: Context) {
         val key = Normalizer.normalize(simple, Normalizer.Form.NFKC).lowercase()
             .filter(Char::isLetterOrDigit)
         if (key.length < 4) return null
+        val updatedNames = update.optJSONObject("nameIndex")
+        val updatedId = updatedNames?.optJSONObject("names")?.optString(key)
+        updatedId?.let { updatedNames?.optJSONObject("games")?.optJSONObject(it) }
+            ?.let { return it to true }
         val id = nameIndex.optJSONObject("names")?.optString(key) ?: return null
-        return nameIndex.optJSONObject("games")?.optJSONObject(id)
+        return nameIndex.optJSONObject("games")?.optJSONObject(id)?.let { it to false }
     }
 
     private fun readShardNames(): Set<String> = try {
@@ -426,6 +502,48 @@ class GameCatalog(private val context: Context) {
         if (!file.isFile || file.length() > MAX_LOCAL_JSON) empty()
         else parse(AtomicFile(file).readFully().toString(Charsets.UTF_8))
     } catch (_: Exception) { empty() }
+
+    private fun readUpdate(): JSONObject = try {
+        if (!isUpdateFromThisApk() || !updateFile.isFile ||
+            updateFile.length() > MAX_LOCAL_JSON) empty()
+        else parseUpdate(AtomicFile(updateFile).readFully()) ?: empty()
+    } catch (_: Exception) { empty() }
+
+    private fun isUpdateFromThisApk(): Boolean = try {
+        AtomicFile(updateApkFile).readFully().toString(Charsets.UTF_8) == apkInstallTime
+    } catch (_: Exception) { false }
+
+    private fun parseUpdate(bytes: ByteArray): JSONObject? {
+        return try {
+        val root = JSONObject(bytes.toString(Charsets.UTF_8))
+        if (root.optInt("schemaVersion") != 1 || root.length() != 3) return null
+        val games = root.optJSONObject("games") ?: return null
+        val names = root.optJSONObject("nameIndex") ?: return null
+        if (names.optInt("schemaVersion") != 1 || names.length() != 3) return null
+        val nameGames = names.optJSONObject("games") ?: return null
+        val nameKeys = names.optJSONObject("names") ?: return null
+        if (!validRecords(games, { validId(it) }) ||
+            !validRecords(nameGames, { it.matches(Regex("[a-z0-9]+:[0-9]+")) })) return null
+        for (key in nameKeys.keys()) {
+            if (!key.matches(Regex("[\\p{L}\\p{N}]{4,128}"))) return null
+            val id = nameKeys.opt(key) as? String ?: return null
+            if (!nameGames.has(id)) return null
+        }
+        root
+        } catch (_: Exception) { null }
+    }
+
+    private fun validRecords(records: JSONObject, validKey: (String) -> Boolean): Boolean {
+        for (key in records.keys()) {
+            if (!validKey(key)) return false
+            val record = records.optJSONObject(key) ?: return false
+            for (field in record.keys()) {
+                if (field !in FIELDS || !validField(field, record.opt(field) ?: return false))
+                    return false
+            }
+        }
+        return true
+    }
 
     private fun parse(text: String): JSONObject = try {
         JSONObject(text).takeIf { it.optInt("schemaVersion") == 1 && it.optJSONObject("games") != null }
@@ -459,6 +577,7 @@ class GameCatalog(private val context: Context) {
     companion object {
         private const val MAX_ASSET_JSON = 64 * 1024 * 1024
         private const val MAX_LOCAL_JSON = 8L * 1024 * 1024
+        private const val UPDATE_URL = "https://raw.githubusercontent.com/MrJackSpade/Kairo98/main/catalog/online-v1.json"
         private val FIELDS = setOf("title", "description", "aliases", "artwork", "machine", "controller", "input", "media", "launch", "startupChoices", "diskSwaps")
         private val INPUT_MODES = setOf("auto", "keyboard", "mouse")
         private val INPUT_TOUCH = setOf("touchpad", "direct")

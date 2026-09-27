@@ -51,6 +51,7 @@ class LibraryScreen(
     private val chooseFolder: () -> Unit,
     private val refresh: () -> Unit,
     private val rehash: () -> Unit,
+    private val updateCatalog: () -> Unit,
     private val downloadMissingImages: (() -> Unit)?,
     private val cancelArtworkDownload: () -> Unit,
     private val settings: List<SettingsEntry>,
@@ -352,6 +353,7 @@ class LibraryScreen(
         drawerAction("Select ROM folder", "Choose where disk images and ZIP games are stored", chooseFolder)
         drawerAction("Refresh", "Scan for added, changed, or removed games", refresh)
         drawerAction("Rehash", "Recheck every game image", rehash)
+        drawerAction("Update game catalog", "Fetch game details and controller defaults", updateCatalog)
         if (downloadMissingImages != null) drawerAction("Download missing images",
             "Fetch artwork for games in this library", downloadMissingImages)
         actionsDrawer.addView(Ui.sectionLabel(context, "SETTINGS"))

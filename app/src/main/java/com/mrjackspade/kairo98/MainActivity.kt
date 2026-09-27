@@ -113,6 +113,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
     private var scanCancelled = AtomicBoolean(false)
     private var artworkDownloadCancelled = AtomicBoolean(false)
     @Volatile private var artworkDownloadRunning = false
+    @Volatile private var catalogUpdateRunning = false
     private var currentEntry: LibraryEntry? = null
     private var currentDisk: File? = null
     private var currentIsFloppy = false
@@ -298,6 +299,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
             { onScreenControls.eightWayDpad }, { onScreenControls.eightWayDpad = it })
         libraryScreen = LibraryScreen(this, romLibrary.catalog,
             ::chooseRomFolder, { refreshLibrary(false) }, { refreshLibrary(true) },
+            ::updateGameCatalog,
             if (resources.getBoolean(R.bool.catalog_art_download_enabled))
                 ::downloadMissingImages else null, ::cancelArtworkDownload,
             settingsEntries(), { preferences.getString("last_played_entry", null) },
@@ -761,6 +763,31 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
     }
 
     private fun cancelArtworkDownload() { artworkDownloadCancelled.set(true) }
+
+    private fun updateGameCatalog() {
+        if (catalogUpdateRunning) {
+            toast("Catalog update is already running")
+            return
+        }
+        catalogUpdateRunning = true
+        libraryScreen.showStatus("Checking game catalog…")
+        Thread {
+            val result = try {
+                if (romLibrary.catalog.downloadUpdate()) "Game catalog updated"
+                else "Game catalog is already current"
+            } catch (error: Exception) {
+                android.util.Log.w("Kairo98", "Catalog update failed", error)
+                "Catalog update failed: ${error.message ?: "Unknown error"}"
+            }
+            runOnUiThread {
+                catalogUpdateRunning = false
+                if (!isDestroyed) {
+                    libraryScreen.showEntries(libraryEntries)
+                    libraryScreen.showStatus(result)
+                }
+            }
+        }.start()
+    }
 
     private fun downloadMissingImages() {
         if (artworkDownloadRunning) {

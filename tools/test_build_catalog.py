@@ -6,6 +6,7 @@ import unittest
 from pathlib import Path
 
 from build_catalog import build, compact, main, validate_record
+from build_online_catalog import build_pack
 from make_synthetic_catalog import synthetic_source
 
 
@@ -19,6 +20,17 @@ class CatalogBuildTests(unittest.TestCase):
         self.assertEqual(compact(first[0]), compact(second[0]))
         self.assertEqual(first[1], second[1])
         self.assertEqual(first[0]["shards"], ["00"])
+
+    def test_online_pack_contains_each_variant_and_name_fallback(self):
+        name_index = {"schemaVersion": 1, "games": {"pc98:1": {"title": "By name"}},
+                      "names": {"byname": "pc98:1"}}
+        pack = build_pack(self.source, name_index)
+        _, shards = build(self.source)
+        self.assertEqual(pack["games"], {key: value for shard in shards.values()
+                                          for key, value in shard.items()})
+        self.assertEqual(pack["nameIndex"], name_index)
+        with self.assertRaisesRegex(ValueError, "invalid name index alias"):
+            build_pack(self.source, {**name_index, "names": {"byname": "pc98:missing"}})
 
     def test_large_synthetic_index(self):
         manifest, shards = build(synthetic_source(10000))
