@@ -1388,23 +1388,25 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
                        val destructive: Boolean = false, val action: () -> Unit)
         val controllerSource = if (game.controllerBindings == null ||
             (game.controllerBindings == "[]" && !game.overriddenFields.contains("controller"))) "Global"
-            else source("controller", fallback = "Global")
+            else source("controller", "bindings", fallback = "Global")
         val inputMode = InputModeDecider.parse(game.inputMode ?: InputModeDecider.storageValue(globalInputMode))
         val touch = game.inputTouch ?: touchStorage(globalTouchDirect)
         val sections = listOf(
             "CONTROLS" to listOf(
-                Row("Touch input", "${inputMode.name.lowercase().replaceFirstChar(Char::uppercase)} · " +
-                    "${if (touch == "direct") "direct tap" else "touchpad"} · " +
-                    "second screen: ${game.inputSecondary ?: "keyboard"} · ${source("input")}", true) {
+                Row("Touch input", "${inputMode.name.lowercase().replaceFirstChar(Char::uppercase)} " +
+                    "(${source("input", "mode")}) · " +
+                    "${if (touch == "direct") "direct tap" else "touchpad"} " +
+                    "(${source("input", "touch")}) · second screen: " +
+                    "${game.inputSecondary ?: "keyboard"} (${source("input", "secondary")})", true) {
                     showInputModeChoices(entry) },
                 Row("Controller mapping", "${effectiveControllerBindings(game).size} bindings · $controllerSource", true) {
                     showControllerBindings(entry) }),
             "MACHINE" to listOf(
-                Row("Machine clock", "${game.baseClockTenthsMHz?.let { "${it / 10.0} MHz" } ?: "App default"} · ${source("machine")}", true) {
+                Row("Machine clock", "${game.baseClockTenthsMHz?.let { "${it / 10.0} MHz" } ?: "App default"} · ${source("machine", "baseClockTenthsMHz")}", true) {
                     editGameClock(entry) },
-                Row("GDC clock", "${game.gdcClockTenthsMHz?.let { "${it / 10.0} MHz" } ?: "5.0 MHz (app default)"} · ${source("machine")}", true) {
+                Row("GDC clock", "${game.gdcClockTenthsMHz?.let { "${it / 10.0} MHz" } ?: "5.0 MHz (app default)"} · ${source("machine", "gdcClockTenthsMHz")}", true) {
                     editGameGdcClock(entry) },
-                Row("CPU speed", "${cpuSpeedLabel(game)} · ${source("machine")}", true) {
+                Row("CPU speed", "${cpuSpeedLabel(game)} · ${source("machine", "cpuMultiple")}", true) {
                     editGameCpuSpeed(entry) },
                 Row("Startup command", "${game.launchCommand ?: "None"} · ${source("launch")}", true) {
                     editGameText(entry, "launch", game.launchCommand ?: "") }),
@@ -1424,14 +1426,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
                     AlertDialog.Builder(this).setTitle("File information")
                         .setMessage("${entry.path}${entry.zipEntry?.let { "\n$it" } ?: ""}\n\n" +
                             (id ?: entry.error ?: "Not hashed"))
-                        .setPositiveButton("Close", null).showStyled() }),
-            "" to listOf(
-                Row("Reset all custom settings", "Restore this game's catalog values", true, destructive = true) {
-                    AlertDialog.Builder(this).setTitle("Reset all settings?")
-                        .setMessage("Restore this game's current catalog defaults.")
-                        .setPositiveButton("Reset") { _, _ -> saveGameSetting(entry) {
-                            catalog.resetOverride(id!!)
-                        } }.setNegativeButton("Cancel", null).showStyled() }))
+                        .setPositiveButton("Close", null).showStyled() }))
         val list = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
             setPadding(dp(12), 0, dp(12), dp(4))
@@ -1440,6 +1435,19 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
             .setView(ScrollView(this).apply { addView(list) })
             .setNegativeButton("Close", null)
         if (entry.playable) builder.setPositiveButton("Play") { _, _ -> launchEntry(entry) }
+        if (id != null) builder.setNeutralButton("Reset defaults") { _, _ ->
+            AlertDialog.Builder(this).setTitle("Reset all game settings?")
+                .setMessage("Remove every custom setting for this game and use its catalog defaults.")
+                .setPositiveButton("Reset") { _, _ -> saveGameSetting(entry,
+                    "Game settings reset. Machine changes apply on next launch or restart.") {
+                    catalog.resetOverride(id)
+                    if (currentEntry?.contentId == id) {
+                        currentGame = catalog.resolve(id, entry.displayName)
+                        setSecondaryInitialMode(currentGame?.inputSecondary == "touchpad")
+                        gamepadMapper.bindings = effectiveControllerBindings(currentGame)
+                    }
+                } }.setNegativeButton("Cancel") { _, _ -> showGameDetails(entry) }.showStyled()
+        }
         val dialog = builder.showStyled()
         sections.forEach { (heading, rows) ->
             list.addView(TextView(this).apply {
@@ -1619,10 +1627,11 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
             .setPositiveButton("Save") { _, _ -> saveGameSetting(entry) {
                 val value = input.text.toString().trim()
                 if (field == "title") romLibrary.catalog.setOverride(entry.contentId!!, field, value)
-                else if (value.isEmpty()) romLibrary.catalog.resetOverride(entry.contentId!!, field)
-                else romLibrary.catalog.setOverride(entry.contentId!!, field,
-                    JSONObject().put("type", "guestCommand").put("text", value)
-                        .put("ready", "dosPrompt").put("timeoutMs", 30000))
+                else if (value.isEmpty()) romLibrary.catalog.updateOverrideSubfields(
+                    entry.contentId!!, "launch", mapOf("text" to null, "commands" to null,
+                        "screenHashes" to null))
+                else romLibrary.catalog.updateOverrideSubfields(entry.contentId!!, "launch",
+                    mapOf("text" to value, "commands" to null, "screenHashes" to null))
             } }.setNeutralButton("Reset") { _, _ -> saveGameSetting(entry) {
                 romLibrary.catalog.resetOverride(entry.contentId!!, field)
             } }.setNegativeButton("Cancel") { _, _ -> showGameDetails(entry) }.showStyled()
@@ -1631,22 +1640,19 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
     private fun editGameClock(entry: LibraryEntry) {
         val current = romLibrary.catalog.resolve(entry.contentId!!, entry.displayName)
         AlertDialog.Builder(this).setTitle("Machine clock")
-            .setSingleChoiceItems(arrayOf("Reset machine settings", "2 MHz", "2.5 MHz"),
-                when (current.baseClockTenthsMHz) { 20 -> 1; 25 -> 2; else -> 0 }) { dialog, which ->
+            .setSingleChoiceItems(arrayOf("Use catalog default", "2 MHz", "2.5 MHz"),
+                if (romLibrary.catalog.sourceOf(entry.contentId!!, "machine", "baseClockTenthsMHz") !=
+                    "User override") 0 else when (current.baseClockTenthsMHz) {
+                    20 -> 1; 25 -> 2; else -> 0
+                }) { dialog, which ->
                 dialog.dismiss()
                 saveGameSetting(entry) {
-                    if (which == 0) romLibrary.catalog.resetOverride(entry.contentId!!, "machine")
-                    else romLibrary.catalog.setOverride(entry.contentId!!, "machine",
-                        machineSettings(current).put("baseClockTenthsMHz", if (which == 1) 20 else 25))
+                    if (which == 0) romLibrary.catalog.resetOverrideSubfield(entry.contentId!!,
+                        "machine", "baseClockTenthsMHz")
+                    else romLibrary.catalog.setOverrideSubfield(entry.contentId!!, "machine",
+                        "baseClockTenthsMHz", if (which == 1) 20 else 25)
                 }
             }.setNegativeButton("Cancel") { _, _ -> showGameDetails(entry) }.showStyled()
-    }
-
-    /** The game's current machine settings, so editing one keeps the others. */
-    private fun machineSettings(game: GameCatalog.Game) = JSONObject().apply {
-        game.baseClockTenthsMHz?.let { put("baseClockTenthsMHz", it) }
-        game.gdcClockTenthsMHz?.let { put("gdcClockTenthsMHz", it) }
-        game.cpuMultiple?.let { put("cpuMultiple", it) }
     }
 
     /** CPU MHz for a clock multiple on the game's base clock (2.4576 or 1.9968 MHz). */
@@ -1662,19 +1668,18 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
     private fun editGameCpuSpeed(entry: LibraryEntry) {
         val current = romLibrary.catalog.resolve(entry.contentId!!, entry.displayName)
         val multiples = listOf(1, 2, 3, 4, 6, 8, 10, 12, 16, DEFAULT_CPU_MULTIPLE)
-        val labels = listOf("App default (%.1f MHz)".format(cpuMhz(current, DEFAULT_CPU_MULTIPLE))) +
+        val labels = listOf("Use catalog default") +
             multiples.map { "%.1f MHz (x%d)".format(cpuMhz(current, it), it) }
-        val selected = current.cpuMultiple?.let { multiples.indexOf(it) + 1 } ?: 0
+        val selected = if (romLibrary.catalog.sourceOf(entry.contentId!!, "machine", "cpuMultiple") ==
+            "User override") current.cpuMultiple?.let { multiples.indexOf(it) + 1 } ?: 0 else 0
         AlertDialog.Builder(this).setTitle("CPU speed")
             .setSingleChoiceItems(labels.toTypedArray(), selected) { dialog, which ->
                 dialog.dismiss()
                 saveGameSetting(entry) {
-                    val settings = machineSettings(current).apply {
-                        remove("cpuMultiple")
-                        if (which > 0) put("cpuMultiple", multiples[which - 1])
-                    }
-                    if (settings.length() == 0) romLibrary.catalog.resetOverride(entry.contentId!!, "machine")
-                    else romLibrary.catalog.setOverride(entry.contentId!!, "machine", settings)
+                    if (which == 0) romLibrary.catalog.resetOverrideSubfield(entry.contentId!!,
+                        "machine", "cpuMultiple")
+                    else romLibrary.catalog.setOverrideSubfield(entry.contentId!!, "machine",
+                        "cpuMultiple", multiples[which - 1])
                 }
             }.setNegativeButton("Cancel") { _, _ -> showGameDetails(entry) }.showStyled()
     }
@@ -1682,13 +1687,17 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
     private fun editGameGdcClock(entry: LibraryEntry) {
         val current = romLibrary.catalog.resolve(entry.contentId!!, entry.displayName)
         AlertDialog.Builder(this).setTitle("GDC clock")
-            .setSingleChoiceItems(arrayOf("Reset machine settings", "2.5 MHz", "5 MHz"),
-                when (current.gdcClockTenthsMHz) { 25 -> 1; 50 -> 2; else -> 0 }) { dialog, which ->
+            .setSingleChoiceItems(arrayOf("Use catalog default", "2.5 MHz", "5 MHz"),
+                if (romLibrary.catalog.sourceOf(entry.contentId!!, "machine", "gdcClockTenthsMHz") !=
+                    "User override") 0 else when (current.gdcClockTenthsMHz) {
+                    25 -> 1; 50 -> 2; else -> 0
+                }) { dialog, which ->
                 dialog.dismiss()
                 saveGameSetting(entry) {
-                    if (which == 0) romLibrary.catalog.resetOverride(entry.contentId!!, "machine")
-                    else romLibrary.catalog.setOverride(entry.contentId!!, "machine",
-                        machineSettings(current).put("gdcClockTenthsMHz", if (which == 1) 25 else 50))
+                    if (which == 0) romLibrary.catalog.resetOverrideSubfield(entry.contentId!!,
+                        "machine", "gdcClockTenthsMHz")
+                    else romLibrary.catalog.setOverrideSubfield(entry.contentId!!, "machine",
+                        "gdcClockTenthsMHz", if (which == 1) 25 else 50)
                 }
             }.setNegativeButton("Cancel") { _, _ -> showGameDetails(entry) }.showStyled()
     }
@@ -2077,11 +2086,20 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
                         .putString("input_mode", InputModeDecider.storageValue(chosenMode))
                         .putString("touch_mouse", touchStorage(chosenDirect)).apply()
                 } else {
-                    romLibrary.catalog.setOverride(entry.contentId!!, "input", JSONObject()
-                        .put("mode", InputModeDecider.storageValue(chosenMode))
-                        .put("touch", touchStorage(chosenDirect))
-                        .put("secondary", if (secondaryGroup != null &&
-                            checkedIndex(secondaryGroup) == 1) "touchpad" else "keyboard"))
+                    val chosenModeValue = InputModeDecider.storageValue(chosenMode)
+                    val chosenTouch = touchStorage(chosenDirect)
+                    val chosenSecondary = if (secondaryGroup != null &&
+                        checkedIndex(secondaryGroup) == 1) "touchpad" else "keyboard"
+                    val changes = linkedMapOf<String, Any?>()
+                    if (chosenModeValue != (game?.inputMode ?:
+                            InputModeDecider.storageValue(globalInputMode)))
+                        changes["mode"] = chosenModeValue
+                    if (chosenTouch != (game?.inputTouch ?: touchStorage(globalTouchDirect)))
+                        changes["touch"] = chosenTouch
+                    if (chosenSecondary != (game?.inputSecondary ?: "keyboard"))
+                        changes["secondary"] = chosenSecondary
+                    if (changes.isNotEmpty()) romLibrary.catalog.updateOverrideSubfields(
+                        entry.contentId!!, "input", changes)
                     if (currentEntry?.contentId == entry.contentId) {
                         currentGame = romLibrary.catalog.resolve(entry.contentId, entry.displayName)
                         setSecondaryInitialMode(currentGame?.inputSecondary == "touchpad")
@@ -2089,7 +2107,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
                 }
             }
             .setNegativeButton("Cancel", null)
-        if (entry != null) builder.setNeutralButton("Use app default") { _, _ ->
+        if (entry != null) builder.setNeutralButton("Use catalog defaults") { _, _ ->
             romLibrary.catalog.resetOverride(entry.contentId!!, "input")
             if (currentEntry?.contentId == entry.contentId) {
                 currentGame = romLibrary.catalog.resolve(entry.contentId, entry.displayName)
@@ -2226,14 +2244,14 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
     private fun saveControllerBindings(entry: LibraryEntry?, bindings: List<ControllerBinding>) {
         val json = ControllerBindings.toJson(bindings)
         if (entry == null) preferences.edit().putString("controller_global_v1", json.toString()).apply()
-        else romLibrary.catalog.setOverride(entry.contentId!!, "controller",
-            JSONObject().put("profile", "custom-v1").put("bindings", json))
+        else romLibrary.catalog.setOverrideSubfield(entry.contentId!!, "controller", "bindings", json)
         refreshControllerBindings(entry)
     }
 
     private fun resetControllerBindings(entry: LibraryEntry?) {
         if (entry == null) preferences.edit().remove("controller_global_v1").apply()
-        else romLibrary.catalog.resetOverride(entry.contentId!!, "controller")
+        else romLibrary.catalog.updateOverrideSubfields(entry.contentId!!, "controller",
+            mapOf("bindings" to null, "profile" to null))
         refreshControllerBindings(entry)
     }
 

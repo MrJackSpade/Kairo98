@@ -56,11 +56,6 @@ class SecondaryKeyboardActivity : Activity() {
     override fun dispatchGenericMotionEvent(event: MotionEvent): Boolean =
         owner?.forwardMotion(event) ?: super.dispatchGenericMotionEvent(event)
 
-    override fun onWindowFocusChanged(hasFocus: Boolean) {
-        super.onWindowFocusChanged(hasFocus)
-        if (hasFocus) owner?.reclaimFocus()
-    }
-
     internal val activeGameSurface: android.view.SurfaceView?
         get() = if (::content.isInitialized) content.activeGameSurface else null
 

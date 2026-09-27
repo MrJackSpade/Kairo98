@@ -175,12 +175,15 @@ internal class SecondaryKeyboardDisplay(
     }
 
     /*
-     * Android sends keys and controller sticks to the display that last took focus, so a
-     * touch on the second screen or opening it can move input there. Anything that
-     * arrives on the second screen is handed to the game screen's activity, and the game
-     * screen is brought back to the front so its dialogs and focus navigation get input.
+     * Android sends keys and controller sticks to the display that last took focus.
+     * Forward them to the game, then return focus after a completed key press. Returning
+     * focus as soon as the second display gains it cancels touches on its mode tabs.
      */
-    internal fun forwardKey(event: KeyEvent): Boolean = activity.dispatchKeyEvent(event)
+    internal fun forwardKey(event: KeyEvent): Boolean {
+        val handled = activity.dispatchKeyEvent(event)
+        if (event.action == KeyEvent.ACTION_UP) reclaimFocus()
+        return handled
+    }
 
     internal fun forwardMotion(event: MotionEvent): Boolean = activity.dispatchGenericMotionEvent(event)
 
@@ -268,10 +271,6 @@ internal class SecondaryKeyboardDisplay(
 
         override fun dispatchGenericMotionEvent(event: MotionEvent) = forwardMotion(event)
 
-        override fun onWindowFocusChanged(hasFocus: Boolean) {
-            super.onWindowFocusChanged(hasFocus)
-            if (hasFocus) reclaimFocus()
-        }
     }
 
     internal fun forwardGameSurface(surface: Surface?, width: Int, height: Int) {

@@ -85,7 +85,7 @@ internal class Pc98KeyboardPanel(
                 gravity = Gravity.CENTER
                 textSize = Ui.SECONDARY
                 setTextColor(keyText())
-                setOnClickListener { showPage(target) }
+                attachPageSwitch(this, target)
             }
             tab.background = keyBackground(action = true)
             pageViews[target] = tab
@@ -100,7 +100,7 @@ internal class Pc98KeyboardPanel(
                 setPadding(dp(10), dp(7), dp(10), dp(7))
                 contentDescription = "Mouse touchpad mode"
                 background = keyBackground(action = true)
-                setOnClickListener { showPage(Page.TOUCHPAD) }
+                attachPageSwitch(this, Page.TOUCHPAD)
             }
             pageViews[Page.TOUCHPAD] = tab
             header.addView(tab, LayoutParams(0, dp(34), 1f).apply {
@@ -157,6 +157,16 @@ internal class Pc98KeyboardPanel(
         highlightUntil.clear()
         lastPressed = emptySet()
         updateLegends()
+    }
+
+    private fun attachPageSwitch(tab: View, target: Page) {
+        tab.setOnClickListener { if (page != target) showPage(target) }
+        tab.setOnTouchListener { _, event ->
+            // A focus change can cancel ACTION_UP on a second display. Switch on press
+            // while retaining the normal click path for keyboard and accessibility input.
+            if (event.actionMasked == MotionEvent.ACTION_DOWN && page != target) showPage(target)
+            false
+        }
     }
 
     private fun showPage(target: Page) {

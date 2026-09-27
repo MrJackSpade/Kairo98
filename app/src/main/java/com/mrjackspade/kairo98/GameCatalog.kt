@@ -152,10 +152,12 @@ class GameCatalog(private val context: Context) {
         val baseRecord = base.optJSONObject("games")?.optJSONObject(contentId)
         val shardRecord = shardFor(contentId)?.optJSONObject("games")?.optJSONObject(contentId)
         val updateRecord = update.optJSONObject("games")?.optJSONObject(contentId)
+        var fallbackRecord: JSONObject? = null
         merge(merged, baseRecord)
         merge(merged, shardRecord)
         if (baseRecord == null && shardRecord == null && updateRecord == null) {
             lookupByName(fileName)?.let { (fallback, fromUpdate) ->
+                fallbackRecord = fallback
                 merge(merged, fallback)
                 if (validId(contentId)) {
                     fallbackRecords[contentId] = fallback
@@ -165,7 +167,8 @@ class GameCatalog(private val context: Context) {
             }
         }
         merge(merged, updateRecord)
-        merge(merged, additions.optJSONObject("games")?.optJSONObject(contentId))
+        val additionRecord = additions.optJSONObject("games")?.optJSONObject(contentId)
+        merge(merged, additionRecord)
         val user = overrides.optJSONObject("games")?.optJSONObject(contentId)
         merge(merged, user)
         val title = merged.optString("title").takeIf { validTitle(it) }
@@ -176,12 +179,24 @@ class GameCatalog(private val context: Context) {
         val input = merged.optJSONObject("input")
         val media = merged.optJSONArray("media")
         val launch = merged.optJSONObject("launch")
-        val commands = launch?.takeIf { validField("launch", it) }?.let { value ->
+        val commands = launch?.takeIf { validField("launch", it) &&
+            (it.has("commands") || it.has("text")) }?.let { value ->
             value.optJSONArray("commands")?.let { array ->
                 (0 until array.length()).map(array::getString)
             } ?: listOf(value.getString("text"))
         } ?: emptyList()
-        val commandHashes = launch?.optJSONArray("screenHashes")?.let { groups ->
+        val sources = listOf(baseRecord, shardRecord, fallbackRecord, updateRecord,
+            additionRecord, user)
+        val commandSource = sources.indexOfLast { record ->
+            record?.optJSONObject("launch")?.let { it.has("text") || it.has("commands") } == true
+        }
+        val hashSource = sources.indexOfLast { record ->
+            record?.optJSONObject("launch")?.has("screenHashes") == true
+        }
+        val commandHashes = launch?.optJSONArray("screenHashes")?.takeIf { groups ->
+            commands.isNotEmpty() && hashSource >= commandSource &&
+                groups.length() == commands.size
+        }?.let { groups ->
             (0 until groups.length()).map { index -> parseHashes(groups.optJSONArray(index)) }
         } ?: emptyList()
         val choices = merged.optJSONArray("startupChoices")?.takeIf {
@@ -285,6 +300,7 @@ class GameCatalog(private val context: Context) {
     @Synchronized fun setOverride(contentId: String, field: String, value: Any) {
         require(validId(contentId)) { "Invalid game ID" }
         require(field in FIELDS) { "Unsupported field" }
+        require(field !in OBJECT_FIELDS) { "Use subfield updates for nested settings" }
         require(validField(field, value)) { "Invalid $field" }
         val updated = JSONObject(overrides.toString())
         val games = updated.optJSONObject("games") ?: JSONObject().also { updated.put("games", it) }
@@ -303,6 +319,40 @@ class GameCatalog(private val context: Context) {
             hidden(additions), hidden(overrides)).lastOrNull() == true
     }
 
+    @Synchronized fun updateOverrideSubfields(contentId: String, field: String,
+                                              changes: Map<String, Any?>) {
+        require(validId(contentId)) { "Invalid game ID" }
+        require(field in OBJECT_FIELDS) { "Unsupported setting" }
+        if (changes.isEmpty()) return
+        for ((subfield, value) in changes) {
+            require(subfield in OBJECT_FIELDS.getValue(field)) { "Unsupported setting" }
+            require(value == null || if (field == "launch") when (subfield) {
+                "type" -> value == "guestCommand"
+                "text" -> value is String && validCommand(value)
+                "timeoutMs" -> value is Int && value in 1000..120000
+                "ready" -> value == "dosPrompt"
+                else -> false
+            } else validField(field, JSONObject().put(subfield, value))) {
+                "Invalid $field.$subfield"
+            }
+        }
+        val updated = JSONObject(overrides.toString())
+        val games = updated.optJSONObject("games") ?: JSONObject().also { updated.put("games", it) }
+        val entry = games.optJSONObject(contentId) ?: JSONObject().also { games.put(contentId, it) }
+        val fields = entry.optJSONObject(field) ?: JSONObject().also { entry.put(field, it) }
+        for ((subfield, value) in changes) {
+            if (value == null) fields.remove(subfield)
+            else fields.put(subfield, value)
+        }
+        if (fields.length() == 0) entry.remove(field)
+        if (entry.length() == 0) games.remove(contentId)
+        writeLocal(overridesFile, updated)
+        overrides = updated
+    }
+
+    fun setOverrideSubfield(contentId: String, field: String, subfield: String, value: Any) =
+        updateOverrideSubfields(contentId, field, mapOf(subfield to value))
+
     @Synchronized fun resetOverride(contentId: String, field: String? = null) {
         val updated = JSONObject(overrides.toString())
         val games = updated.optJSONObject("games") ?: return
@@ -318,28 +368,17 @@ class GameCatalog(private val context: Context) {
         overrides = updated
     }
 
-    @Synchronized fun setArtworkOverride(contentId: String, kind: String, path: String) {
-        require(validId(contentId) && kind in ART_PATH_FIELDS && validArtPath(path))
-        val updated = JSONObject(overrides.toString())
-        val games = updated.optJSONObject("games") ?: JSONObject().also { updated.put("games", it) }
-        val entry = games.optJSONObject(contentId) ?: JSONObject().also { games.put(contentId, it) }
-        val artwork = entry.optJSONObject("artwork") ?: JSONObject().also { entry.put("artwork", it) }
-        artwork.put(kind, path)
-        writeLocal(overridesFile, updated)
-        overrides = updated
+    fun resetOverrideSubfield(contentId: String, field: String, subfield: String) =
+        updateOverrideSubfields(contentId, field, mapOf(subfield to null))
+
+    fun setArtworkOverride(contentId: String, kind: String, path: String) {
+        require(kind in ART_PATH_FIELDS && validArtPath(path))
+        setOverrideSubfield(contentId, "artwork", kind, path)
     }
 
-    @Synchronized fun resetArtworkOverride(contentId: String, kind: String) {
-        require(validId(contentId) && kind in ART_PATH_FIELDS)
-        val updated = JSONObject(overrides.toString())
-        val games = updated.optJSONObject("games") ?: return
-        val entry = games.optJSONObject(contentId) ?: return
-        val artwork = entry.optJSONObject("artwork") ?: return
-        artwork.remove(kind)
-        if (artwork.length() == 0) entry.remove("artwork")
-        if (entry.length() == 0) games.remove(contentId)
-        writeLocal(overridesFile, updated)
-        overrides = updated
+    fun resetArtworkOverride(contentId: String, kind: String) {
+        require(kind in ART_PATH_FIELDS)
+        resetOverrideSubfield(contentId, "artwork", kind)
     }
 
     private fun merge(target: JSONObject, source: JSONObject?) {
@@ -348,10 +387,14 @@ class GameCatalog(private val context: Context) {
             if (source.has(field)) {
                 val value = source.opt(field) ?: continue
                 if (validField(field, value)) {
-                    if (field == "artwork" && value is JSONObject) {
-                        val artwork = JSONObject(target.optJSONObject("artwork")?.toString() ?: "{}")
-                        for (kind in ART_FIELDS) if (value.has(kind)) artwork.put(kind, value.get(kind))
-                        target.put("artwork", artwork)
+                    // Nested settings override only matching keys; array settings remain atomic.
+                    if (field in OBJECT_FIELDS && value is JSONObject) {
+                        val merged = JSONObject(target.optJSONObject(field)?.toString() ?: "{}")
+                        if (field == "launch" && (value.has("text") || value.has("commands"))) {
+                            merged.remove(if (value.has("text")) "commands" else "text")
+                        }
+                        for (kind in value.keys()) merged.put(kind, value.get(kind))
+                        target.put(field, merged)
                     } else target.put(field, value)
                 }
             }
@@ -367,19 +410,26 @@ class GameCatalog(private val context: Context) {
             (0 until value.length()).all { index ->
                 (value.opt(index) as? String)?.let(::validTitle) == true
             }
-        "artwork" -> value is JSONObject && ART_PATH_FIELDS.all {
+        "artwork" -> value is JSONObject &&
+            value.keys().asSequence().all { it in ART_FIELDS } && ART_PATH_FIELDS.all {
             !value.has(it) || validArtPath(value.optString(it))
         } && ART_URL_FIELDS.all { !value.has(it) || validImageUrl(value.optString(it)) }
-        "machine" -> value is JSONObject && (!value.has("baseClockTenthsMHz") ||
+        "machine" -> value is JSONObject &&
+            value.keys().asSequence().all { it in OBJECT_FIELDS.getValue("machine") } &&
+            (!value.has("baseClockTenthsMHz") ||
             (value.opt("baseClockTenthsMHz") is Int && value.optInt("baseClockTenthsMHz") in listOf(20, 25))) &&
             (!value.has("gdcClockTenthsMHz") ||
                 (value.opt("gdcClockTenthsMHz") is Int && value.optInt("gdcClockTenthsMHz") in listOf(25, 50))) &&
             (!value.has("cpuMultiple") ||
                 (value.opt("cpuMultiple") is Int && value.optInt("cpuMultiple") in CPU_MULTIPLES))
-        "controller" -> value is JSONObject && (!value.has("profile") ||
+        "controller" -> value is JSONObject &&
+            value.keys().asSequence().all { it in OBJECT_FIELDS.getValue("controller") } &&
+            (!value.has("profile") ||
             (value.opt("profile") is String && value.optString("profile").length in 1..64)) &&
             (!value.has("bindings") || value.optJSONArray("bindings")?.let(ControllerBindings::valid) == true)
-        "input" -> value is JSONObject && value.optString("mode") in INPUT_MODES &&
+        "input" -> value is JSONObject && value.length() > 0 &&
+            value.keys().asSequence().all { it in INPUT_FIELDS } &&
+            (!value.has("mode") || value.optString("mode") in INPUT_MODES) &&
             (!value.has("touch") || value.optString("touch") in INPUT_TOUCH) &&
             (!value.has("secondary") || value.optString("secondary") in INPUT_SECONDARY)
         "media" -> value is org.json.JSONArray && value.length() <= 16 &&
@@ -395,18 +445,19 @@ class GameCatalog(private val context: Context) {
                     value.optJSONObject(it)?.optString("role") == role
                 } <= 1
             }
-        "launch" -> value is JSONObject && value.optString("type") == "guestCommand" &&
-            (if (value.has("commands")) {
-                !value.has("text") && value.optJSONArray("commands")?.let { commands ->
+        "launch" -> value is JSONObject && value.length() > 0 &&
+            value.keys().asSequence().all { it in OBJECT_FIELDS.getValue("launch") } &&
+            (!value.has("type") || value.optString("type") == "guestCommand") &&
+            !(value.has("text") && value.has("commands")) &&
+            (!value.has("commands") || value.optJSONArray("commands")?.let { commands ->
                     commands.length() in 1..4 && (0 until commands.length()).all { index ->
                         (commands.opt(index) as? String)?.let(::validCommand) == true
                     }
-                } == true
-            } else validCommand(value.optString("text"))) &&
+                } == true) &&
+            (!value.has("text") || validCommand(value.optString("text"))) &&
             (!value.has("ready") || value.optString("ready") == "dosPrompt") &&
             (!value.has("screenHashes") || value.optJSONArray("screenHashes")?.let { groups ->
-                val count = value.optJSONArray("commands")?.length() ?: 1
-                groups.length() == count && (0 until count).all { index ->
+                groups.length() in 1..4 && (0 until groups.length()).all { index ->
                     validHashes(groups.optJSONArray(index))
                 }
             } == true) &&
@@ -600,6 +651,14 @@ class GameCatalog(private val context: Context) {
         private val ART_PATH_FIELDS = setOf("boxArt", "preview")
         private val ART_URL_FIELDS = setOf("boxArtUrl", "previewUrl")
         private val ART_FIELDS = ART_PATH_FIELDS + ART_URL_FIELDS
+        private val INPUT_FIELDS = setOf("mode", "touch", "secondary")
+        private val OBJECT_FIELDS = mapOf(
+            "artwork" to ART_FIELDS,
+            "machine" to setOf("baseClockTenthsMHz", "gdcClockTenthsMHz", "cpuMultiple"),
+            "controller" to setOf("profile", "bindings"),
+            "input" to INPUT_FIELDS,
+            "launch" to setOf("type", "text", "commands", "ready", "timeoutMs", "screenHashes")
+        )
         private val ID = Regex("sha256-(?:hdi|fd)-v1:[0-9a-f]{64}")
         private val MEDIA_ROLE = Regex("[A-Za-z0-9_-]{1,32}")
         fun validId(value: String) = ID.matches(value)
