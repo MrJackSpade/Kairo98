@@ -9,7 +9,10 @@ android {
     ndkVersion = "28.2.13676358"
 
     defaultConfig {
-        applicationId = providers.gradleProperty("kairo98ApplicationId").orNull ?: "com.loxifi.kairo98"
+        val configuredAppId = providers.gradleProperty("kairo98ApplicationId").orNull ?: "com.loxifi.kairo98"
+        applicationId = configuredAppId
+        manifestPlaceholders["appLabel"] =
+            if (configuredAppId.endsWith(".dev")) "Kairo98 Dev" else "Kairo98"
         minSdk = 26
         targetSdk = 36
         versionCode = providers.gradleProperty("kairo98VersionCode").orNull?.toInt() ?: 1
