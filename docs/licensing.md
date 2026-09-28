@@ -8,7 +8,7 @@ Kairo98 does not include BIOS ROMs, game files, operating systems, or commercial
 
 ## Catalog metadata and artwork
 
-Some adult-content flags derive from the [VNDB database dump](https://vndb.org/d14). The derived review data is attributed to VNDB contributors under ODbL 1.0 and DbCL; its source checksum is recorded with the data in `catalog/research/adult-content-v1.json`. The app does not bundle the VNDB dump.
+Some catalog metadata derives from the [VNDB database dump](https://vndb.org/d14). The derived review data is attributed to VNDB contributors under ODbL 1.0 and DbCL; its source checksum is recorded with the research data. The app does not bundle the VNDB dump.
 
 The optional artwork catalog contains downscaled cover and screenshot images with source references in `kairo98/src/withImages/assets/art/catalog-provenance-v1.json`. A source URL does not establish permission to redistribute an image. The distributed `withoutImages` variant omits that artwork and lets users download missing images for their own library. See [artwork rights](art-rights.md) for the project's asset policy.
 

@@ -88,13 +88,13 @@ class CatalogBuildTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "invalid description"):
             validate_record({**record, "description": " "})
 
-    def test_adult_labels_require_boolean_and_match_review(self):
+    def test_heart_markers_require_boolean_and_match_review(self):
         record = self.source["datasets"][0]["games"][0]
         for value in (True, False):
-            self.assertIs(validate_record({**record, "eroge": value})["eroge"], value)
+            self.assertIs(validate_record({**record, "heart": value})["heart"], value)
         for value in (None, "yes", 1):
-            with self.assertRaisesRegex(ValueError, "invalid eroge label"):
-                validate_record({**record, "eroge": value})
+            with self.assertRaisesRegex(ValueError, "invalid heart marker"):
+                validate_record({**record, "heart": value})
         matches = json.loads(Path("catalog/research/matches-v1.json").read_text(encoding="utf-8-sig"))["entries"]
         review = json.loads(Path("catalog/research/adult-content-v1.json").read_text(encoding="utf-8"))["games"]
         names = json.loads(Path("kairo98/src/main/assets/catalog/name-index-v1.json").read_text(encoding="utf-8"))["games"]
@@ -107,10 +107,10 @@ class CatalogBuildTests(unittest.TestCase):
             key = f'{entry["platform"]}:{entry["databaseId"]}'
             status = review[key]["status"]
             self.assertIn(status, ("eroge", "nonadult", "unreviewed"))
-            expected = {"eroge": status == "eroge"} if status != "unreviewed" else {}
-            self.assertEqual({field: names[key][field] for field in ("eroge",) if field in names[key]}, expected)
+            expected = {"heart": True} if status == "eroge" else {}
+            self.assertEqual({field: names[key][field] for field in ("heart",) if field in names[key]}, expected)
             for content_id in entry.get("contentIds", []):
-                self.assertEqual({field: hashed[content_id][field] for field in ("eroge",)
+                self.assertEqual({field: hashed[content_id][field] for field in ("heart",)
                                   if field in hashed[content_id]}, expected)
 
     def test_hidden_support_disk_is_hash_specific(self):

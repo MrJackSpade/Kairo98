@@ -66,8 +66,8 @@ def generate(matches_path, gallery, assets, art_assets, ffmpeg, quality, reuse_a
         if entry.get("aliases"):
             metadata["aliases"] = entry["aliases"]
         adult_status = adult_review.get(key, {}).get("status", "unreviewed")
-        if adult_status in ("eroge", "nonadult"):
-            metadata["eroge"] = adult_status == "eroge"
+        if adult_status == "eroge":
+            metadata["heart"] = True
         for field in ("machine", "launch", "controller", "input"):
             if entry.get(field):
                 metadata[field] = entry[field]
@@ -136,7 +136,7 @@ def generate(matches_path, gallery, assets, art_assets, ffmpeg, quality, reuse_a
     unique_names = {name: next(iter(keys)) for name, keys in sorted(names.items()) if len(keys) == 1}
     source = {"schemaVersion": 1, "datasets": [{"id": "reviewed-research-2026-09-24",
         "provenance": {"source": "Kairo98 local match catalog, LaunchBox image cache, and VNDB 2026-09-26 dump",
-                       "license": "VNDB derived adult-content metadata: ODbL 1.0; artwork redistribution rights audit pending",
+                       "license": "VNDB-derived metadata: ODbL 1.0; artwork redistribution rights audit pending",
                        "attribution": "LaunchBox Games Database contributors; VNDB contributors; Kairo98 original descriptions"},
         "games": source_games}]}
     manifest, shards = build(source)

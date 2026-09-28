@@ -8,8 +8,6 @@ The library reads HDI and supported FDI, D88, NFD, FDD, DCP/DCU, HDM, and XDF fl
 
 Catalog schema version 1 uses a `games` object keyed by content ID. Records can contain a title, description, aliases, artwork references, machine settings, controller bindings, media roles, launch commands, startup choices, disk-swap rules, and input mode. A `hidden` support disk remains available for swaps but does not appear as a playable entry.
 
-An optional `eroge` flag can mark reviewed adult content. `false` means reviewed as nonadult; an absent flag means unreviewed. Users can override the label in game settings. Derived review records and VNDB source IDs are in [the research data](../catalog/research/adult-content-v1.json).
-
 A catalog command is bounded guest text sent as PC-98 key events. It is never an Android process or host shell command. [Startup choices and screen hashes](startup-choices.md) describe guarded commands, menu answers, and automatic disk swaps.
 
 User catalog additions and explicit overrides live in app-private storage. Overrides replace individual metadata fields; removing an override exposes the latest catalog value. The library cache records source locations and content IDs, not game bytes, and can be rebuilt by scanning the selected folder.

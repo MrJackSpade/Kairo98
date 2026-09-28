@@ -25,9 +25,9 @@
     "pc98:187678": "The fourth GaoGao story returns to a world split between human shelters and mutated tribes. Two protagonists search for Canaan, a promised refuge, as the remaining civilization struggles to survive.",
     "pc98:203804": "The SIS crew investigates an abandoned spacecraft after two members develop a mysterious illness. This short, heavily animated science-fiction adventure follows the consequences of their encounter.",
     "pc98:181173": "Race in a PC-98 Grand Prix game from West Side, released in 1990. Compete on circuits and manage the demands of high-speed driving rather than navigating an adventure story.",
-    "pc98:195517": "Ayayo takes a part-time job in Mr. Suzuki's shop in this short illustrated adult story. Occasional choices alter parts of the narrative, which includes animated scenes.",
+    "pc98:195517": "Ayayo takes a part-time job in Mr. Suzuki's shop in this short illustrated story. Occasional choices alter parts of the narrative, which includes animated scenes.",
     "pc98:183493": "A reluctant descendant of a legendary hero inherits a magical sword as the demon lord Gargantua threatens to return. Explore a fantasy world and fight to stop his revival.",
-    "pc98:187301": "Kazuya joins a robotic resistance leader against a government that controls people with PSYCO technology. Fight brainwashed opponents and pursue the regime in this adult science-fiction game.",
+    "pc98:187301": "Kazuya joins a robotic resistance leader against a government that controls people with PSYCO technology. Fight brainwashed opponents and pursue the regime in this science-fiction game.",
     "pc98:187303": "After the first game's revolt, Kazuya discovers that the PSYCO mind-control program has resurfaced at a school. The sequel sends him against another group of affected opponents.",
     "pc98:187371": "Robbed on his return to a town with an unresolved mystery, a young man enters its mahjong circuit to earn money and uncover what happened to a woman he once saw attacked.",
     "pc98:195536": "Demon hunters Lime and Bass enter the human world to recover jewels stolen by BEM creatures. The first episode presents their mission as a short animated adventure with occasional command choices.",
@@ -44,11 +44,11 @@
     "pc98:470842": "Lime is kidnapped, leaving Bass to rescue her in the series' twelfth and final installment. The animated finale closes the group's long-running adventure.",
     "pc98:156032": "Takuya finds a device that lets him travel between parallel worlds while searching for his missing father. The branching adventure links clues across timelines and follows several intertwined lives.",
     "pc98:470421": "Thunder-wielding adventurer Raidy investigates a tower whose monsters have been abducting villagers. Explore its first-person corridors, gather equipment, and fight through the dungeon.",
-    "pc98:219471": "Yumi investigates a secluded academy after a friend sent there disappears. This illustrated adult adventure follows a single story path, with occasional context-sensitive choices.",
+    "pc98:219471": "Yumi investigates a secluded academy after a friend sent there disappears. This illustrated adventure follows a single story path, with occasional context-sensitive choices.",
     "pc98:190331": "Saiko travels across a board-like map and challenges magical creatures at mahjong. Shops, treasure, and other spaces give the matches a light role-playing framework.",
     "pc98:183374": "Hunt Gorgus, the man who killed your father, across towns and monster-filled dungeons. This top-down RPG uses turn-based battles, equipment, and side quests to build the hero's strength.",
     "pc98:187422": "Follow apprentice sorceress Arle through three linked first-person dungeon RPGs at different stages of her life. Spell choices and status conveyed through portraits replace the usual visible statistic display.",
-    "pc98:197770": "College student Hiroaki tries to understand the strange luck that seems to shape his encounters and grant his wishes. This adult illustrated adventure follows his investigation of that power.",
+    "pc98:197770": "College student Hiroaki tries to understand the strange luck that seems to shape his encounters and grant his wishes. This illustrated adventure follows his investigation of that power.",
     "pc98:198851": "Choose from five fighters for overhead arena duels. Each character wields two attack objects that can also block; win by draining an opponent's health or knocking them out of the ring.",
     "pc98:187467": "In an alternate Japan shaped by the science of meta-topology, a school of gifted young women becomes central to an old political conflict. This illustrated adventure mixes science-fiction history with campus drama.",
     "pc98:183384": "Knight Eagle Windeed pursues a way to restore balance to a world whose four elements have fallen into conflict. Travel between kingdoms, meet allies, and battle threats in this fantasy RPG.",
@@ -80,8 +80,8 @@
     "pc98:156156": "Spend a summer meeting classmates, friends, and other potential partners in a college-life dating simulation. Schedule activities and make choices that shape which relationship develops.",
     "pc98:187687": "Bunny-eared warrior Ramy protects people and animals from hostile creatures, beginning aboard a penguin-filled ship. Jump, dash, and use her sword through side-scrolling action stages.",
     "pc98:156033": "Women fighters representing family restaurants enter a national martial-arts tournament. Choose a competitor and fight through the Variable Geo roster in one-on-one matches.",
-    "pc98:183085": "Kendo captain and Asuka face a strained relationship when his cousin Miki moves in. This animated Viper follow-up uses occasional choices to steer its adult drama.",
-    "pc98:183088": "Ogawa summons the demon Carrera again, but she arrives with Mercedes and an angel soon interrupts them. The Viper sequel is an adult animated story with limited player input.",
+    "pc98:183085": "Kendo captain and Asuka face a strained relationship when his cousin Miki moves in. This animated Viper follow-up uses occasional choices to steer its drama.",
+    "pc98:183088": "Ogawa summons the demon Carrera again, but she arrives with Mercedes and an angel soon interrupts them. The Viper sequel is an animated story with limited player input.",
     "pc98:183093": "Two animated stories, Rise and Imagine, make up this Viper volume. Rise follows martial artist Akira after she and her friends are taken by a hidden subterranean group.",
     "pc98:440348": "Siblings Meena and Otto can channel spiritual energy into magic. A request to gather healing plants leads them into a trap in a forest, beginning a fantasy RPG journey.",
     "pc98:191573": "Soldier Kiyomi is sent after four escaped prisoners in a war-scarred future Tokyo. Investigate scenes and people through point-and-click interactions in this science-fiction adventure.",
@@ -135,17 +135,36 @@
     "pc98:187703": "The shattering of the Words Worth tablet sparks war between the surface and underground tribes. Guide Astral through first-person dungeons to discover the culprit and restore peace.",
     "pc98:183481": "Latok and fairy Pixie hunt a necromancer trying to summon a new demon into Xak. Explore connected regions, gain strength, and fight monsters in real time in this action RPG sequel.",
     "pc98:156059": "Student Kouji repeatedly dreams of a mysterious space station and its crew. His teacher urges him to investigate, and the line between the dream and his waking life begins to dissolve.",
-    "pc98:183795": "Adol searches for six stolen books that preserve the secret of ancient Ys. Explore towns and wilderness, upgrade equipment, and defeat enemies through the series' real-time bump combat."
+    "pc98:183795": "Adol searches for six stolen books that preserve the secret of ancient Ys. Explore towns and wilderness, upgrade equipment, and defeat enemies through the series' real-time bump combat.",
+    "pc98:183306": "Carry out a secret mission for Princess Leticia while exploring Vagrand and its intrigues in a menu-driven adventure."
   },
   "additionalSources": {
-    "pc98:189332": ["https://baba-jpc.neocities.org/translations/alice/alice"],
-    "pc98:189333": ["https://romhackplaza.org/translations/alices-cottage-ii-english-translation-pc-98"],
-    "pc98:187676": ["https://www.hardcoregaming101.net/aegeankai-no-shizuku-japanese-video-game-obscurity/"],
-    "pc98:197630": ["https://baba-jpc.neocities.org/translations/milk/milk"],
-    "pc98:197631": ["https://baba-jpc.neocities.org/translations/milk/milk"],
-    "pc98:198820": ["https://www.pc98.org/reserve.html"],
-    "pc98:198821": ["https://www.pc98.org/reserv12.html"],
-    "pc98:197860": ["https://advgamer.com/strush/"],
-    "pc98:191004": ["https://koeitecmo.wiki/wiki/Tamashii_no_Mon_Dante_no_Shinkyoku_yori"]
+    "pc98:189332": [
+      "https://baba-jpc.neocities.org/translations/alice/alice"
+    ],
+    "pc98:189333": [
+      "https://romhackplaza.org/translations/alices-cottage-ii-english-translation-pc-98"
+    ],
+    "pc98:187676": [
+      "https://www.hardcoregaming101.net/aegeankai-no-shizuku-japanese-video-game-obscurity/"
+    ],
+    "pc98:197630": [
+      "https://baba-jpc.neocities.org/translations/milk/milk"
+    ],
+    "pc98:197631": [
+      "https://baba-jpc.neocities.org/translations/milk/milk"
+    ],
+    "pc98:198820": [
+      "https://www.pc98.org/reserve.html"
+    ],
+    "pc98:198821": [
+      "https://www.pc98.org/reserv12.html"
+    ],
+    "pc98:197860": [
+      "https://advgamer.com/strush/"
+    ],
+    "pc98:191004": [
+      "https://koeitecmo.wiki/wiki/Tamashii_no_Mon_Dante_no_Shinkyoku_yori"
+    ]
   }
 }

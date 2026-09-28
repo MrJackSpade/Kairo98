@@ -638,7 +638,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
         val tags = listOf(if (DiskFormat.isFloppy(media)) "Floppy disk" else "Hard disk") +
             ((variantLabel(entry.path) ?: entry.zipEntry?.let(::variantLabel))?.split("  ·  ") ?: emptyList())
         val info = SecondaryKeyboardDisplay.LibraryInfo(game.title,
-            listOf(fileLabel(entry)) + tags + if (game.eroge == true) listOf("Eroge") else emptyList(),
+            listOf(fileLabel(entry)) + tags + game.tags,
             game.description ?: "No description available yet.", null)
         secondaryKeyboard.setLibraryInfo(info)
         val art = game.preview ?: return
@@ -1364,9 +1364,6 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
             "LIBRARY" to listOf(
                 GameSettingsRow("Title", "${game.title} · ${source("title", fallback = "Filename")}", true) {
                     editGameText(entry, "title", game.title) },
-                GameSettingsRow("Adult content", "${when (game.eroge) { true -> "Eroge"; false -> "Not eroge"; null -> "Unreviewed" }} · " +
-                    source("eroge", fallback = "Unreviewed"), true) {
-                    editGameEroge(entry) },
                 GameSettingsRow("Box art", "${if (game.boxArt == null) "None" else "Available"} · ${source("artwork", "boxArt")}", true) {
                     editGameArt(entry, "boxArt", game.boxArt ?: "") },
                 GameSettingsRow("Screenshot", "${if (game.preview == null) "None" else "Available"} · ${source("artwork", "preview")}", true) {
@@ -1548,24 +1545,6 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
             toast("Could not save: ${error.message ?: "Invalid value"}")
         }
         showGameDetails(entry)
-    }
-
-    private fun editGameEroge(entry: LibraryEntry) {
-        val game = romLibrary.catalog.resolve(entry.contentId!!, entry.displayName)
-        val selected = when {
-            "eroge" !in game.overriddenFields -> 0
-            game.eroge == true -> 1
-            else -> 2
-        }
-        AlertDialog.Builder(this).setTitle("Eroge label")
-            .setSingleChoiceItems(arrayOf("Use catalog label", "Mark as eroge", "Not eroge"),
-                selected) { dialog, which ->
-                dialog.dismiss()
-                saveGameSetting(entry, "Eroge label saved") {
-                    if (which == 0) romLibrary.catalog.resetOverride(entry.contentId!!, "eroge")
-                    else romLibrary.catalog.setOverride(entry.contentId!!, "eroge", which == 1)
-                }
-            }.setNegativeButton("Cancel") { _, _ -> showGameDetails(entry) }.showStyled()
     }
 
     private fun editGameText(entry: LibraryEntry, field: String, current: String) {

@@ -30,7 +30,7 @@ class GameCatalog(private val context: Context) : LibraryCatalog {
         val contentId: String,
         override val title: String,
         override val description: String?,
-        val eroge: Boolean?,
+        val heart: Boolean?,
         override val boxArt: String?,
         override val preview: String?,
         val boxArtUrl: String?,
@@ -55,7 +55,7 @@ class GameCatalog(private val context: Context) : LibraryCatalog {
         val launchTimeoutMs: Int,
         val overriddenFields: Set<String>
     ) : LibraryGame {
-        override val tags: List<String> get() = if (eroge == true) listOf("Eroge") else emptyList()
+        override val tags: List<String> get() = if (heart == true) listOf("♥") else emptyList()
     }
 
     private val base = readAsset("catalog/base-v1.json")
@@ -244,7 +244,7 @@ class GameCatalog(private val context: Context) : LibraryCatalog {
         return Game(
             contentId, title.ifBlank { fileName },
             merged.optString("description").takeIf(::validDescription),
-            merged.opt("eroge") as? Boolean,
+            merged.opt("heart") as? Boolean,
             artworkStore.availablePath(boxArtPath),
             artworkStore.availablePath(previewPath),
             boxArtUrl, previewUrl, boxArtPath, previewPath,
@@ -408,7 +408,7 @@ class GameCatalog(private val context: Context) : LibraryCatalog {
 
     private fun validField(field: String, value: Any): Boolean = when (field) {
         "title" -> value is String && validTitle(value)
-        "eroge" -> value is Boolean
+        "heart" -> value is Boolean
         "hidden" -> value is Boolean
         "description" -> value is String && validDescription(value)
         "aliases" -> value is org.json.JSONArray && value.length() <= 64 &&
@@ -647,7 +647,7 @@ class GameCatalog(private val context: Context) : LibraryCatalog {
         private const val MAX_ASSET_JSON = 64 * 1024 * 1024
         private const val MAX_LOCAL_JSON = 8L * 1024 * 1024
         private const val UPDATE_URL = "https://raw.githubusercontent.com/MrJackSpade/Kairo98/main/catalog/online-v1.json"
-        private val FIELDS = setOf("title", "description", "aliases", "artwork", "machine", "controller", "input", "media", "launch", "startupChoices", "diskSwaps", "eroge", "hidden")
+        private val FIELDS = setOf("title", "description", "aliases", "artwork", "machine", "controller", "input", "media", "launch", "startupChoices", "diskSwaps", "heart", "hidden")
         private val INPUT_MODES = setOf("auto", "keyboard", "mouse")
         private val INPUT_TOUCH = setOf("touchpad", "direct")
         private val INPUT_SECONDARY = setOf("keyboard", "touchpad")
