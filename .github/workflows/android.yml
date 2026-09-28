@@ -33,11 +33,11 @@ on:
       version_code:
         description: 'Version code greater than the installed app'
         type: string
-        default: '601'
+        default: '700'
       version_name:
         description: 'Visible development version'
         type: string
-        default: '0.6.1-dev'
+        default: '0.7.0-dev'
 
 jobs:
   build:

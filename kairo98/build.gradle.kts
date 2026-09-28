@@ -12,8 +12,8 @@ android {
         applicationId = providers.gradleProperty("kairo98ApplicationId").orNull ?: "com.loxifi.kairo98"
         minSdk = 26
         targetSdk = 36
-        versionCode = providers.gradleProperty("kairo98VersionCode").orNull?.toInt() ?: 1
-        versionName = providers.gradleProperty("kairo98VersionName").orNull ?: "0.1.0-dev"
+        versionCode = providers.gradleProperty("kairo98VersionCode").orNull?.toInt() ?: 700
+        versionName = providers.gradleProperty("kairo98VersionName").orNull ?: "0.7.0-dev"
         ndk {
             abiFilters += "arm64-v8a"
         }
