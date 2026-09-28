@@ -32061,6 +32061,30 @@
         "pc98:ChampionSoft.zip:Little Vampire",
         "translated:littlevampire"
       ],
+      "controller": {
+        "profile": "little-vampire-v1",
+        "bindings": [
+          {"input": "virtual:a", "keys": [28]},
+          {"input": "virtual:b", "keys": [42]},
+          {"input": "virtual:x", "keys": [43]},
+          {"input": "virtual:y", "keys": [52]},
+          {"input": "virtual:start", "keys": [28]},
+          {"input": "virtual:select", "keys": [0]},
+          {"input": "virtual:menu", "action": "menu"},
+          {"input": "virtual:up", "keys": [58]},
+          {"input": "virtual:down", "keys": [61]},
+          {"input": "virtual:left", "keys": [59]},
+          {"input": "virtual:right", "keys": [60]},
+          {"input": "virtual:lsup", "mouse": "moveUp"},
+          {"input": "virtual:lsdown", "mouse": "moveDown"},
+          {"input": "virtual:lsleft", "mouse": "moveLeft"},
+          {"input": "virtual:lsright", "mouse": "moveRight"},
+          {"input": "virtual:rsup", "keys": [67]},
+          {"input": "virtual:rsdown", "keys": [75]},
+          {"input": "virtual:rsleft", "keys": [70]},
+          {"input": "virtual:rsright", "keys": [72]}
+        ]
+      },
       "contentIds": [
         "sha256-hdi-v1:e017fca45eabaf3a025efe04d639b82d1b068de142086e85412ce4be9948d280",
         "sha256-hdi-v1:e2e6976ad88cf4426524c8342dc1ac2e403360bab4e698a8d16c794c0972a43f"
