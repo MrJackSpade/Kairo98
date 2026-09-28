@@ -9,6 +9,8 @@ import com.mrjackspade.kairo.frontend.GamepadMapper
 import com.mrjackspade.kairo.frontend.OnScreenControls
 import com.mrjackspade.kairo.frontend.ControllerEditor
 import com.mrjackspade.kairo.frontend.ControllerGuestSpec
+import com.mrjackspade.kairo.frontend.CatalogArtworkDownloadController
+import com.mrjackspade.kairo.frontend.CatalogUpdateController
 import com.mrjackspade.kairo.frontend.ControllerProfileStore
 import com.mrjackspade.kairo.frontend.ControllerBinding
 import com.mrjackspade.kairo.frontend.SettingsEntry
@@ -80,7 +82,6 @@ import java.net.HttpURLConnection
 import java.net.URL
 import java.nio.file.Files
 import java.nio.file.StandardCopyOption
-import java.util.concurrent.CancellationException
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.math.floor
 import kotlin.math.ceil
@@ -147,9 +148,15 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
     private var romTree: Uri?
         get() = libraryFlow.tree
         set(value) { libraryFlow.tree = value }
-    private var artworkDownloadCancelled = AtomicBoolean(false)
-    @Volatile private var artworkDownloadRunning = false
-    @Volatile private var catalogUpdateRunning = false
+    private val artworkDownloads by lazy {
+        CatalogArtworkDownloadController(this, libraryScreen, { libraryEntries },
+            romLibrary.catalog::missingArtworkFor, romLibrary.catalog::downloadArtwork)
+    }
+    private val catalogUpdates by lazy {
+        CatalogUpdateController(this, { romLibrary.catalog.downloadUpdate() },
+            libraryScreen::showStatus, { libraryScreen.showEntries(libraryEntries) },
+            { if (libraryVisible) toast("Game catalog updated") })
+    }
     private var currentEntry: LibraryEntry? = null
     private var sessionFromFrontend = false
     private var externalEntries: List<LibraryEntry> = emptyList()
@@ -709,102 +716,11 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
 
     private fun refreshLibrary(forceHash: Boolean) = libraryFlow.refresh(forceHash)
 
-    private fun cancelArtworkDownload() { artworkDownloadCancelled.set(true) }
+    private fun cancelArtworkDownload() = artworkDownloads.cancel()
 
-    private fun updateGameCatalog(silent: Boolean) {
-        if (catalogUpdateRunning) {
-            if (!silent) toast("Catalog update is already running")
-            return
-        }
-        catalogUpdateRunning = true
-        if (!silent) libraryScreen.showStatus("Checking game catalog…")
-        Thread {
-            var changed: Boolean? = null
-            var failure: String? = null
-            try {
-                changed = romLibrary.catalog.downloadUpdate()
-            } catch (error: Exception) {
-                android.util.Log.w("Kairo98", "Catalog update failed", error)
-                failure = error.message ?: "Unknown error"
-            }
-            runOnUiThread {
-                catalogUpdateRunning = false
-                if (!isDestroyed) {
-                    if (changed == true) libraryScreen.showEntries(libraryEntries)
-                    if (!silent) libraryScreen.showStatus(when {
-                        failure != null -> "Catalog update failed: $failure"
-                        changed == true -> "Game catalog updated"
-                        else -> "Game catalog is already current"
-                    })
-                    else if (changed == true && libraryVisible) toast("Game catalog updated")
-                }
-            }
-        }.start()
-    }
+    private fun updateGameCatalog(silent: Boolean) = catalogUpdates.check(silent)
 
-    private fun downloadMissingImages() {
-        if (artworkDownloadRunning) {
-            toast("Images are already downloading")
-            return
-        }
-        val entries = libraryEntries.toList()
-        if (entries.none { it.playable }) {
-            toast("Add games to the library first")
-            return
-        }
-        artworkDownloadRunning = true
-        val cancelled = AtomicBoolean(false)
-        artworkDownloadCancelled = cancelled
-        libraryScreen.showArtworkProgress(0, 0, 0)
-        Thread {
-            var completed = 0
-            var downloaded = 0
-            var failures = 0
-            var total = 0
-            var errorMessage: String? = null
-            try {
-                val sources = romLibrary.catalog.missingArtworkFor(entries)
-                total = sources.size
-                runOnUiThread {
-                    if (!isDestroyed) libraryScreen.showArtworkProgress(0, total, 0)
-                }
-                for (source in sources) {
-                    if (cancelled.get()) break
-                    try {
-                        romLibrary.catalog.downloadArtwork(source, cancelled)
-                        downloaded++
-                    } catch (_: CancellationException) {
-                        break
-                    } catch (error: Exception) {
-                        failures++
-                        android.util.Log.w("Kairo98", "Artwork download failed: ${source.path}", error)
-                    }
-                    completed++
-                    val progress = completed
-                    val failed = failures
-                    runOnUiThread {
-                        if (!isDestroyed) libraryScreen.showArtworkProgress(progress, total, failed)
-                    }
-                }
-            } catch (error: Exception) {
-                errorMessage = error.message ?: "Unknown error"
-            }
-            val result = when {
-                errorMessage != null -> "Image download failed: $errorMessage"
-                total == 0 -> "No missing catalog images for this library"
-                cancelled.get() -> "Image download stopped · $downloaded saved"
-                failures == 0 -> "Downloaded $downloaded images"
-                else -> "Downloaded $downloaded images · $failures failed. Tap again to retry."
-            }
-            runOnUiThread {
-                artworkDownloadRunning = false
-                if (!isDestroyed) {
-                    libraryScreen.refreshArtwork()
-                    libraryScreen.finishArtworkDownload(result)
-                }
-            }
-        }.start()
-    }
+    private fun downloadMissingImages() = artworkDownloads.start()
 
     private fun decodeDebugGameQuery(encoded: String): String? = runCatching {
         String(android.util.Base64.decode(encoded,
@@ -2465,7 +2381,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
         if (relocating) { super.onDestroy(); return }
         startGeneration++
         libraryFlow.cancel()
-        artworkDownloadCancelled.set(true)
+        if (::libraryFlow.isInitialized) artworkDownloads.cancel()
         releaseInputs()
         secondaryKeyboard.stop()
         inputManager.unregisterInputDeviceListener(inputDeviceListener)

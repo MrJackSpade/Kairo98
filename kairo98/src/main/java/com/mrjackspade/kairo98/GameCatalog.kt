@@ -1,17 +1,16 @@
 package com.mrjackspade.kairo98
 
+import com.mrjackspade.kairo.frontend.CatalogArtworkStore
+import com.mrjackspade.kairo.frontend.CatalogSnapshotStore
 import com.mrjackspade.kairo.frontend.LibraryCatalog
 import com.mrjackspade.kairo.frontend.LibraryGame
 
 import android.content.Context
 import android.util.AtomicFile
 import org.json.JSONObject
-import java.io.ByteArrayOutputStream
 import java.io.File
 import java.io.InputStream
-import java.net.HttpURLConnection
 import java.net.URI
-import java.net.URL
 import java.text.Normalizer
 import java.util.concurrent.atomic.AtomicBoolean
 
@@ -23,8 +22,7 @@ class GameCatalog(private val context: Context) : LibraryCatalog {
                              val options: List<StartupOption>)
     data class DiskSwap(val id: String, val drive: Int, val contentId: String,
                         val screenHashes: Set<Long>, val key: String, val enter: Boolean)
-    private val bundledImages = context.assets.list("art/catalog")?.isNotEmpty() == true
-    private val artworkStore = CatalogArtworkStore(context, bundledImages)
+    private val artworkStore = CatalogArtworkStore(context, ::validImageUrl)
     data class ArtworkSource(val path: String, val url: String)
     data class Game(
         val contentId: String,
@@ -66,10 +64,10 @@ class GameCatalog(private val context: Context) : LibraryCatalog {
     private val updatedFallbackIds = HashSet<String>()
     private val additionsFile = File(context.filesDir, "user-catalog-v1.json")
     private val overridesFile = File(context.filesDir, "overrides-v1.json")
-    private val updateFile = File(context.filesDir, "catalog-update-v1.json")
-    private val updateApkFile = File(context.filesDir, "catalog-update-apk-v1.txt")
-    private val apkInstallTime = context.packageManager
-        .getPackageInfo(context.packageName, 0).lastUpdateTime.toString()
+    private val snapshot = CatalogSnapshotStore(context, "catalog-update-v1.json",
+        UPDATE_URL, MAX_LOCAL_JSON) { file ->
+        require(parseUpdate(file.readBytes()) != null) { "Invalid catalog update" }
+    }
     private var update = readUpdate()
     private var additions = readLocal(additionsFile)
     private var overrides = readLocal(overridesFile)
@@ -78,54 +76,9 @@ class GameCatalog(private val context: Context) : LibraryCatalog {
 
     /** Call from a worker thread. An invalid or interrupted download leaves the current catalog intact. */
     fun downloadUpdate(): Boolean {
-        val connection = (URL(UPDATE_URL).openConnection() as HttpURLConnection).apply {
-            instanceFollowRedirects = false
-            connectTimeout = 10000
-            readTimeout = 20000
-        }
-        val bytes = try {
-            require(connection.responseCode == HttpURLConnection.HTTP_OK) {
-                "Catalog server returned ${connection.responseCode}"
-            }
-            require(connection.contentLengthLong <= MAX_LOCAL_JSON) { "Catalog update is too large" }
-            connection.inputStream.use { input ->
-                val output = ByteArrayOutputStream()
-                val chunk = ByteArray(8192)
-                while (true) {
-                    val count = input.read(chunk)
-                    if (count < 0) break
-                    require(output.size().toLong() + count <= MAX_LOCAL_JSON) {
-                        "Catalog update is too large"
-                    }
-                    output.write(chunk, 0, count)
-                }
-                output.toByteArray()
-            }
-        } finally { connection.disconnect() }
-        val parsed = parseUpdate(bytes) ?: throw IllegalArgumentException("Invalid catalog update")
+        if (!snapshot.download()) return false
         synchronized(this) {
-            if (isUpdateFromThisApk() && updateFile.isFile && runCatching {
-                    AtomicFile(updateFile).readFully().contentEquals(bytes)
-                }.getOrDefault(false)) return false
-            val atomic = AtomicFile(updateFile)
-            val stream = atomic.startWrite()
-            try {
-                stream.write(bytes)
-                atomic.finishWrite(stream)
-            } catch (error: Exception) {
-                atomic.failWrite(stream)
-                throw error
-            }
-            val marker = AtomicFile(updateApkFile)
-            val markerStream = marker.startWrite()
-            try {
-                markerStream.write(apkInstallTime.toByteArray(Charsets.UTF_8))
-                marker.finishWrite(markerStream)
-            } catch (error: Exception) {
-                marker.failWrite(markerStream)
-                throw error
-            }
-            update = parsed
+            update = readUpdate()
             fallbackRecords.clear()
             updatedFallbackIds.clear()
         }
@@ -279,7 +232,6 @@ class GameCatalog(private val context: Context) : LibraryCatalog {
     override fun openArtwork(path: String): InputStream = artworkStore.open(path)
 
     fun missingArtworkFor(entries: List<LibraryEntry>): List<ArtworkSource> {
-        if (bundledImages) return emptyList()
         return entries.asSequence().filter { it.playable }
             .flatMap { entry ->
                 val id = entry.contentId ?: ""
@@ -573,14 +525,8 @@ class GameCatalog(private val context: Context) : LibraryCatalog {
     } catch (_: Exception) { empty() }
 
     private fun readUpdate(): JSONObject = try {
-        if (!isUpdateFromThisApk() || !updateFile.isFile ||
-            updateFile.length() > MAX_LOCAL_JSON) empty()
-        else parseUpdate(AtomicFile(updateFile).readFully()) ?: empty()
+        snapshot.activeFile()?.let { parseUpdate(it.readBytes()) } ?: empty()
     } catch (_: Exception) { empty() }
-
-    private fun isUpdateFromThisApk(): Boolean = try {
-        AtomicFile(updateApkFile).readFully().toString(Charsets.UTF_8) == apkInstallTime
-    } catch (_: Exception) { false }
 
     private fun parseUpdate(bytes: ByteArray): JSONObject? {
         return try {
