@@ -18,7 +18,7 @@ jobs:
   build:
     runs-on: ubuntu-24.04
     permissions:
-      contents: read
+      contents: write
     steps:
       - uses: actions/checkout@v4
       - name: Check out pinned Kairo frontend
@@ -136,3 +136,25 @@ jobs:
             kairo98/build/outputs/bundle/withoutImagesRelease/kairo98-withoutImages-release.aab
           if-no-files-found: error
           retention-days: 30
+      - name: Publish GitHub Release
+        if: github.event_name == 'push'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          tag="$GITHUB_REF_NAME"
+          apk="$RUNNER_TEMP/Kairo98-$tag.apk"
+          bundle="$RUNNER_TEMP/Kairo98-$tag-play.aab"
+          cp kairo98/build/outputs/apk/withoutImages/release/kairo98-withoutImages-release.apk "$apk"
+          cp kairo98/build/outputs/bundle/withoutImagesRelease/kairo98-withoutImages-release.aab "$bundle"
+          if gh release view "$tag" >/dev/null 2>&1; then
+            gh release upload "$tag" "$apk" "$bundle" --clobber
+          else
+            release_flags=()
+            if [[ "$tag" == *-* ]]; then
+              release_flags+=(--prerelease)
+            fi
+            gh release create "$tag" "$apk" "$bundle" \
+              --verify-tag "${release_flags[@]}" --title "Kairo98 $KAIRO98_VERSION_NAME" \
+              --notes-file "docs/releases/$tag.md"
+          fi
