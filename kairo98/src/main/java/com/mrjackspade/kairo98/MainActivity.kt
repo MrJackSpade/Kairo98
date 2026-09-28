@@ -7,6 +7,8 @@ import com.mrjackspade.kairo.frontend.JoystickInputRouter
 import com.mrjackspade.kairo.frontend.GamepadMapper
 import com.mrjackspade.kairo.frontend.OnScreenControls
 import com.mrjackspade.kairo.frontend.ControllerEditor
+import com.mrjackspade.kairo.frontend.ControllerGuestSpec
+import com.mrjackspade.kairo.frontend.ControllerProfileStore
 import com.mrjackspade.kairo.frontend.ControllerBinding
 import com.mrjackspade.kairo.frontend.SettingsEntry
 import com.mrjackspade.kairo.frontend.TouchInputSettingsDialog
@@ -17,6 +19,9 @@ import com.mrjackspade.kairo.frontend.PhysicalControllerBindings
 import com.mrjackspade.kairo.frontend.PixelTextView
 import com.mrjackspade.kairo.frontend.Ui
 import com.mrjackspade.kairo.frontend.LibraryScreen
+import com.mrjackspade.kairo.frontend.LibraryFlow
+import com.mrjackspade.kairo.frontend.FrontendNavigation
+import com.mrjackspade.kairo.frontend.SessionFlow
 import com.mrjackspade.kairo.frontend.LibraryStrings
 import com.mrjackspade.kairo.frontend.SessionAction
 import com.mrjackspade.kairo.frontend.SessionDrawer
@@ -120,6 +125,10 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
     }
 
     private val preferences by lazy { getSharedPreferences("kairo98", MODE_PRIVATE) }
+    private val controllerProfiles by lazy {
+        ControllerProfileStore(preferences, ControllerBindings::parse,
+            { ControllerBindings.toJson(it).toString() })
+    }
     private val handler = Handler(Looper.getMainLooper())
     private lateinit var root: FrameLayout
     private lateinit var screen: SurfaceView
@@ -127,13 +136,15 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
     private lateinit var swappedKeyboardPanel: GuestKeyboardPanel
     private lateinit var secondaryKeyboard: SecondaryKeyboardDisplay
     private lateinit var onScreenControls: OnScreenControls
-    private lateinit var libraryScreen: LibraryScreen<LibraryEntry>
+    private lateinit var libraryFlow: LibraryFlow<LibraryEntry>
+    private val libraryScreen: LibraryScreen<LibraryEntry> get() = libraryFlow.screen
     private lateinit var firstRunSetup: FirstRunSetup
     private lateinit var romLibrary: RomLibrary
     private lateinit var controllerEditor: ControllerEditor<LibraryEntry>
     private var libraryVisible = true
-    private var romTree: Uri? = null
-    private var scanCancelled = AtomicBoolean(false)
+    private var romTree: Uri?
+        get() = libraryFlow.tree
+        set(value) { libraryFlow.tree = value }
     private var artworkDownloadCancelled = AtomicBoolean(false)
     @Volatile private var artworkDownloadRunning = false
     @Volatile private var catalogUpdateRunning = false
@@ -165,7 +176,9 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
     private var debugAdvanceIntervalMs = 100
     private var debugAutoAdvance: DebugAutoAdvance? = null
     private var lastTraceSerial = 0L
-    private var libraryEntries = emptyList<LibraryEntry>()
+    private var libraryEntries: List<LibraryEntry>
+        get() = libraryFlow.entries
+        set(value) { libraryFlow.entries = value }
     private var pendingDebugGame: String? = null
     private var pendingDebugLaunch: String? = null
     private lateinit var backdrop: View
@@ -173,7 +186,8 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
     private lateinit var menuStatus: TextView
     private lateinit var mediaLabel: TextView
     private lateinit var sessionDrawer: SessionDrawer
-    private var menuOpen = false
+    private lateinit var sessionFlow: SessionFlow
+    private val menuOpen: Boolean get() = sessionFlow.isOpen
     private var userPaused = false
     private var activityVisible = false
     private var integerScaling = true
@@ -273,7 +287,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
         }
         gamepadMapper.physicalBindings = physicalControllerBindings()
         gamepadMapper.bindings = globalControllerBindings()
-        gamepadMapper.deadZone = preferences.getFloat("controller_dead_zone", 0.35f)
+        gamepadMapper.deadZone = controllerProfiles.deadZone
         inputManager = getSystemService(INPUT_SERVICE) as InputManager
         inputManager.registerInputDeviceListener(inputDeviceListener, handler)
         window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
@@ -315,18 +329,47 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
             ::resetPhysicalControllerBindings,
             { gamepadMapper.deadZone }, { value ->
                 gamepadMapper.deadZone = value
-                preferences.edit().putFloat("controller_dead_zone", value).apply()
+                controllerProfiles.deadZone = value
             }, ::applyPauseState, ::showOnScreenControls,
             { onScreenControls.eightWayDpad }, { onScreenControls.eightWayDpad = it },
-            LibraryEntry::id, Pc98KeyNames::label, ControllerBindings.JOYSTICK,
+            LibraryEntry::id, ControllerGuestSpec("PC-98", (0..127).toList(),
+                Pc98KeyNames::label, setOf(0x70, 0x71, 0x72, 0x73, 0x74, 0x7d),
+                ControllerBindings.JOYSTICK.zip(listOf("Up", "Down", "Left", "Right",
+                    "Button 1", "Button 2")),
+                "Uses the joystick input on the emulated sound board. Games must support joystick 1.",
+                listOf("menu" to "Open menu", "pause" to "Pause or resume",
+                    "fastForward" to "Fast forward while held", "restart" to "Restart",
+                    "exit" to "Exit")),
             { ControllerBindings.toJson(it) })
-        libraryScreen = LibraryScreen(this, romLibrary.catalog, LibraryStrings("KAIRO98"),
+        val libraryPage = LibraryScreen(this, romLibrary.catalog, LibraryStrings("KAIRO98"),
             ::chooseRomFolder, { refreshLibrary(false) }, { refreshLibrary(true) },
             { updateGameCatalog(false) },
             if (resources.getBoolean(R.bool.catalog_art_download_enabled))
                 ::downloadMissingImages else null, ::cancelArtworkDownload,
             settingsEntries(), { preferences.getString("last_played_entry", null) },
             ::launchEntry, ::showDetailPreview, ::showGameDetails, ::showLibrarySelection)
+        libraryFlow = LibraryFlow(this, preferences, libraryPage, ROM_FOLDER_REQUEST,
+            romLibrary::cached, romLibrary::scan, ::folderLabel,
+            "Choose a ROM folder to find disk images and ZIP games",
+            "Folder access expired. Select the ROM folder again.",
+            { entries ->
+                val errors = entries.count { it.error != null }
+                "${entries.count { it.playable }} games" +
+                    (if (errors == 0) "" else " · $errors unreadable") +
+                    " · ${romLibrary.hashCount} hashes this scan"
+            },
+            { _ ->
+                selectPendingDebugGame()
+                pendingDebugLaunch?.let { query ->
+                    android.util.Log.w("Kairo98", "ADB game not found or ambiguous: $query")
+                    pendingDebugLaunch = null
+                }
+            },
+            { _ ->
+                if (firstRunSetup.isChoosingRomFolder) advanceFirstRunFirmware()
+                else refreshLibrary(false)
+            },
+            { message -> if (firstRunSetup.isOpen) toast(message) })
         root.addView(libraryScreen, FrameLayout.LayoutParams(-1, -1))
         swapStatus = TextView(this).apply {
             visibility = View.GONE
@@ -343,19 +386,10 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
         root.addView(firstRunSetup, FrameLayout.LayoutParams(-1, -1))
         handler.post(updateStatus)
         root.post {
-            val saved = preferences.getString("rom_tree", null)
-            romTree = saved?.let(Uri::parse)
+            libraryFlow.restore()
             val setupStep = preferences.getInt("onboarding_step_v1", if (romTree == null) 0 else 2)
-            libraryScreen.showFolder(romTree?.let(::folderLabel))
-            if (romTree == null) {
-                libraryScreen.showStatus("Choose a ROM folder to find disk images and ZIP games")
-            } else if (!hasRomGrant(romTree!!)) {
-                libraryScreen.showStatus("Folder access expired. Select the ROM folder again.")
-            } else {
-                libraryEntries = romLibrary.cached(romTree!!)
-                libraryScreen.showEntries(libraryEntries)
-                if (setupStep >= 2 && !selectPendingDebugGame()) refreshLibrary(false)
-            }
+            if (romTree != null && hasRomGrant(romTree!!) && setupStep >= 2 &&
+                !selectPendingDebugGame()) refreshLibrary(false)
             if (setupStep < 2) firstRunSetup.show(if (setupStep == 0)
                 FirstRunSetup.Step.ROM_FOLDER else FirstRunSetup.Step.FIRMWARE)
             applyPauseState()
@@ -434,6 +468,27 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
         drawer = sessionDrawer.drawer
         mediaLabel = sessionDrawer.mediaLabel
         menuStatus = sessionDrawer.status
+        sessionFlow = SessionFlow(sessionDrawer,
+            { currentTitle ?: "No disk selected" },
+            { if (preparingFont) "Preparing PC-98 font" else menuStatusText() },
+            {
+                commandCancelled.set(true)
+                releaseInputs()
+                hideKeyboard()
+            },
+            { open ->
+                if (open) onScreenControls.refreshVisibility(false)
+                applyPauseState()
+            },
+            { screen.requestFocus() },
+            {
+                handler.postDelayed({
+                    if (menuOpen && Build.VERSION.SDK_INT >= 30) {
+                        window.insetsController?.hide(WindowInsets.Type.statusBars() or
+                            WindowInsets.Type.navigationBars())
+                    }
+                }, 300)
+            })
 
         setContentView(root)
         screen.requestFocus()
@@ -467,7 +522,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
 
     private fun refreshSettingValues() {
         sessionDrawer.refreshValues()
-        if (::libraryScreen.isInitialized) libraryScreen.refreshSettingValues()
+        if (::libraryFlow.isInitialized) libraryScreen.refreshSettingValues()
     }
 
     private fun toggleMute() {
@@ -503,31 +558,9 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
         }
     }
 
-    private fun openMenu() {
-        commandCancelled.set(true)
-        releaseInputs()
-        hideKeyboard()
-        if (menuOpen) return
-        menuOpen = true
-        onScreenControls.refreshVisibility(false)
-        applyPauseState()
-        sessionDrawer.open(currentTitle ?: "No disk selected",
-            if (preparingFont) "Preparing PC-98 font" else menuStatusText())
-        handler.postDelayed({
-            if (menuOpen && Build.VERSION.SDK_INT >= 30) {
-                window.insetsController?.hide(WindowInsets.Type.statusBars() or
-                    WindowInsets.Type.navigationBars())
-            }
-        }, 300)
-    }
+    private fun openMenu() = sessionFlow.open()
 
-    private fun closeMenu() {
-        if (!menuOpen) return
-        menuOpen = false
-        applyPauseState()
-        screen.requestFocus()
-        sessionDrawer.close()
-    }
+    private fun closeMenu() = sessionFlow.close()
 
     private val libraryArtExecutor = java.util.concurrent.Executors.newSingleThreadExecutor()
     private var librarySelectionGeneration = 0
@@ -590,20 +623,13 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
                 !(::controllerEditor.isInitialized && controllerEditor.isOpen))
     }
 
-    private fun hasRomGrant(uri: Uri) = contentResolver.persistedUriPermissions.any {
-        it.uri == uri && it.isReadPermission
-    }
+    private fun hasRomGrant(uri: Uri) = libraryFlow.hasGrant(uri)
 
     private fun folderLabel(uri: Uri): String = try {
         "ROM folder · " + DocumentsContract.getTreeDocumentId(uri).substringAfterLast('/')
     } catch (_: Exception) { "ROM folder selected" }
 
-    private fun chooseRomFolder() {
-        startActivityForResult(Intent(Intent.ACTION_OPEN_DOCUMENT_TREE).apply {
-            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION or
-                Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION)
-        }, ROM_FOLDER_REQUEST)
-    }
+    private fun chooseRomFolder() = libraryFlow.chooseFolder()
 
     private fun advanceFirstRunFirmware() {
         preferences.edit().putInt("onboarding_step_v1", 1).apply()
@@ -619,48 +645,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
         else libraryScreen.showStatus("Choose a ROM folder from the library menu when you're ready")
     }
 
-    private fun refreshLibrary(forceHash: Boolean) {
-        val tree = romTree ?: run {
-            libraryScreen.showStatus("Select a ROM folder first")
-            return
-        }
-        if (!hasRomGrant(tree)) {
-            libraryScreen.showStatus("Folder access expired. Select the ROM folder again.")
-            return
-        }
-        scanCancelled.set(true)
-        val cancelled = AtomicBoolean(false)
-        scanCancelled = cancelled
-        libraryScreen.showStatus(if (forceHash) "Rehashing ROM folder…" else "Scanning ROM folder…")
-        Thread {
-            try {
-                val entries = romLibrary.scan(tree, forceHash, cancelled) { message ->
-                    runOnUiThread { if (!cancelled.get()) libraryScreen.showStatus(message) }
-                }
-                runOnUiThread {
-                    if (!cancelled.get()) {
-                        libraryEntries = entries
-                        libraryScreen.showEntries(entries)
-                        selectPendingDebugGame()
-                        pendingDebugLaunch?.let { query ->
-                            android.util.Log.w("Kairo98", "ADB game not found or ambiguous: $query")
-                            pendingDebugLaunch = null
-                        }
-                        val errors = entries.count { it.error != null }
-                        libraryScreen.showStatus("${entries.count { it.playable }} games" +
-                            (if (errors == 0) "" else " · $errors unreadable") +
-                            " · ${romLibrary.hashCount} hashes this scan")
-                    }
-                }
-            } catch (_: java.util.concurrent.CancellationException) {
-            } catch (error: Exception) {
-                runOnUiThread {
-                    if (!cancelled.get()) libraryScreen.showStatus(
-                        "Scan failed: ${error.message ?: "Unknown error"}. Select folder or refresh.")
-                }
-            }
-        }.start()
-    }
+    private fun refreshLibrary(forceHash: Boolean) = libraryFlow.refresh(forceHash)
 
     private fun cancelArtworkDownload() { artworkDownloadCancelled.set(true) }
 
@@ -899,7 +884,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
                         inputModeDecider.reset()
                         gamepadMapper.bindings = effectiveControllerBindings(game)
                         userPaused = false
-                        menuOpen = false
+                        sessionFlow.reset()
                         libraryVisible = false
                         libraryScreen.visibility = View.GONE
                         screen.requestFocus()
@@ -1974,20 +1959,17 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
             .setView(scroll).setPositiveButton("Done", null).showStyled()
     }
 
-    private fun globalControllerBindings() =
-        ControllerBindings.parse(preferences.getString("controller_global_v1", null))
+    private fun globalControllerBindings() = controllerProfiles.global()
 
-    private fun physicalControllerBindings() =
-        PhysicalControllerBindings.parse(preferences.getString("controller_physical_v1", null))
+    private fun physicalControllerBindings() = controllerProfiles.physical()
 
     private fun savePhysicalControllerBindings(bindings: List<PhysicalControllerBinding>) {
-        preferences.edit().putString("controller_physical_v1",
-            PhysicalControllerBindings.toJson(bindings).toString()).apply()
+        controllerProfiles.savePhysical(bindings)
         gamepadMapper.physicalBindings = bindings
     }
 
     private fun resetPhysicalControllerBindings() {
-        preferences.edit().remove("controller_physical_v1").apply()
+        controllerProfiles.resetPhysical()
         gamepadMapper.physicalBindings = physicalControllerBindings()
     }
 
@@ -2063,13 +2045,13 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
 
     private fun saveControllerBindings(entry: LibraryEntry?, bindings: List<ControllerBinding>) {
         val json = ControllerBindings.toJson(bindings)
-        if (entry == null) preferences.edit().putString("controller_global_v1", json.toString()).apply()
+        if (entry == null) controllerProfiles.saveGlobal(bindings)
         else romLibrary.catalog.setOverrideSubfield(entry.contentId!!, "controller", "bindings", json)
         refreshControllerBindings(entry)
     }
 
     private fun resetControllerBindings(entry: LibraryEntry?) {
-        if (entry == null) preferences.edit().remove("controller_global_v1").apply()
+        if (entry == null) controllerProfiles.resetGlobal()
         else romLibrary.catalog.updateOverrideSubfields(entry.contentId!!, "controller",
             mapOf("bindings" to null, "profile" to null))
         refreshControllerBindings(entry)
@@ -2383,7 +2365,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
     override fun onDestroy() {
         if (relocating) { super.onDestroy(); return }
         startGeneration++
-        scanCancelled.set(true)
+        libraryFlow.cancel()
         artworkDownloadCancelled.set(true)
         releaseInputs()
         secondaryKeyboard.stop()
@@ -2398,28 +2380,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
     @Deprecated("Android activity result callback")
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
-        if (requestCode == ROM_FOLDER_REQUEST) {
-            if (resultCode == RESULT_OK && data?.data != null) {
-                val tree = data.data ?: return
-                try {
-                    contentResolver.takePersistableUriPermission(tree,
-                        Intent.FLAG_GRANT_READ_URI_PERMISSION)
-                    romTree = tree
-                    preferences.edit().putString("rom_tree", tree.toString()).apply()
-                    libraryScreen.showFolder(folderLabel(tree))
-                    libraryScreen.showEntries(emptyList())
-                    if (firstRunSetup.isChoosingRomFolder) advanceFirstRunFirmware()
-                    else refreshLibrary(false)
-                } catch (error: Exception) {
-                    val message = "Cannot keep folder access: ${error.message}"
-                    libraryScreen.showStatus(message)
-                    if (firstRunSetup.isOpen) toast(message)
-                }
-            } else if (romTree == null) {
-                libraryScreen.showStatus("Choose a ROM folder when you're ready")
-            }
-            return
-        }
+        if (libraryFlow.handleActivityResult(requestCode, resultCode, data)) return
         if (requestCode == BIOS_REQUEST) {
             if (resultCode == RESULT_OK && data?.data != null) importBiosRom(data.data!!)
             return
@@ -2704,35 +2665,6 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
         }.start()
     }
 
-    private fun uiControl(event: KeyEvent): String? {
-        gamepadMapper.controlForButton(event)?.let { return it }
-        // D-pad keys mean the same thing on menus from any source, including a built-in gamepad.
-        when (event.keyCode) {
-            KeyEvent.KEYCODE_DPAD_UP -> return "up"
-            KeyEvent.KEYCODE_DPAD_DOWN -> return "down"
-            KeyEvent.KEYCODE_DPAD_LEFT -> return "left"
-            KeyEvent.KEYCODE_DPAD_RIGHT -> return "right"
-            KeyEvent.KEYCODE_DPAD_CENTER -> return "a"
-        }
-        when (event.keyCode) {
-            KeyEvent.KEYCODE_ESCAPE, KeyEvent.KEYCODE_BACK -> return "b"
-            KeyEvent.KEYCODE_MENU -> return "menu"
-        }
-        if (KeyEvent.isGamepadButton(event.keyCode) ||
-            event.isFromSource(InputDevice.SOURCE_GAMEPAD) ||
-            event.isFromSource(InputDevice.SOURCE_JOYSTICK)) return null
-        return when (event.keyCode) {
-            KeyEvent.KEYCODE_DPAD_UP -> "up"
-            KeyEvent.KEYCODE_DPAD_DOWN -> "down"
-            KeyEvent.KEYCODE_DPAD_LEFT -> "left"
-            KeyEvent.KEYCODE_DPAD_RIGHT -> "right"
-            KeyEvent.KEYCODE_ENTER -> "a"
-            KeyEvent.KEYCODE_ESCAPE, KeyEvent.KEYCODE_BACK -> "b"
-            KeyEvent.KEYCODE_MENU -> "menu"
-            else -> null
-        }
-    }
-
     override fun dispatchKeyEvent(event: KeyEvent): Boolean {
         // A key press means a controller or keyboard is in use. Leave touch mode now, so the
         // next screen's focus lands where it is requested and no press is spent leaving it.
@@ -2753,44 +2685,10 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
             return true
         }
         if (libraryVisible) {
-            val control = uiControl(event)
-            if (libraryScreen.detailOpen) {
-                if (control == "a" || control == "b" || control == "menu") {
-                    if (event.action == KeyEvent.ACTION_DOWN && event.repeatCount == 0) {
-                        when (control) {
-                            "a" -> libraryScreen.activateDetail()
-                            "menu" -> libraryScreen.detailsSelection()
-                            else -> libraryScreen.closeDetail()
-                        }
-                    }
-                    return true
-                }
-                return super.dispatchKeyEvent(event)
-            }
-            if (libraryScreen.actionsOpen) {
-                if (event.action == KeyEvent.ACTION_DOWN) {
-                    when (control) {
-                        "down" -> libraryScreen.moveActionSelection(1)
-                        "up" -> libraryScreen.moveActionSelection(-1)
-                        "a" -> if (event.repeatCount == 0) libraryScreen.activateAction()
-                        "b", "menu" -> libraryScreen.closeActions()
-                    }
-                }
-                return true
-            }
-            if (event.action == KeyEvent.ACTION_DOWN) {
-                when (control) {
-                    "down" -> libraryScreen.moveSelection(1)
-                    "up" -> libraryScreen.moveSelection(-1)
-                    // The list is one column; sideways must not wander to the header buttons.
-                    "left", "right" -> {}
-                    "a" -> if (event.repeatCount == 0) libraryScreen.activateSelection()
-                    "menu" -> if (event.repeatCount == 0) libraryScreen.openActions()
-                    "b" -> if (event.repeatCount == 0) onBackPressed()
-                    else -> return super.dispatchKeyEvent(event)
-                }
-            }
-            return true
+            if (FrontendNavigation.library(libraryScreen,
+                    FrontendNavigation.control(event, gamepadMapper), event,
+                    ::handleBack)) return true
+            return super.dispatchKeyEvent(event)
         }
         if ((event.keyCode == KeyEvent.KEYCODE_BUTTON_MODE &&
             !gamepadMapper.hasButton(event.keyCode)) ||
@@ -2801,25 +2699,9 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
             return true
         }
         if (menuOpen) {
-            val control = uiControl(event)
-            // The session row reads left to right, the list top to bottom; both walk the same order.
-            if (control == "down" || control == "up" || control == "left" || control == "right") {
-                if (event.action == KeyEvent.ACTION_DOWN) {
-                    focusMenuItem(sessionDrawer.selectedIndex +
-                        if (control == "down" || control == "right") 1 else -1)
-                }
-                return true
-            }
-            if (control == "b") {
-                if (event.action == KeyEvent.ACTION_DOWN && event.repeatCount == 0) closeMenu()
-                return true
-            }
-            if (control == "a") {
-                if (event.action == KeyEvent.ACTION_DOWN && event.repeatCount == 0) {
-                    sessionDrawer.activateSelected()
-                }
-                return true
-            }
+            if (FrontendNavigation.session(sessionDrawer,
+                    FrontendNavigation.control(event, gamepadMapper), event,
+                    ::closeMenu)) return true
             super.dispatchKeyEvent(event)
             return true
         }
