@@ -1,22 +1,11 @@
 package com.mrjackspade.kairo98
 
-import com.mrjackspade.kairo.frontend.Ui
-
 import android.app.Activity
-import android.graphics.Color
-import android.graphics.drawable.GradientDrawable
-import android.view.Gravity
-import android.view.KeyEvent
-import android.view.View
-import android.widget.FrameLayout
-import android.widget.LinearLayout
-import android.widget.ScrollView
-import android.widget.TextView
-import kotlin.math.roundToInt
+import com.mrjackspade.kairo.frontend.FirstRunScreen
 
-/** Two explicit first-run steps; Android's document picker opens only after a button press. */
+/** PC-98 setup steps displayed by the shared first-run screen. */
 internal class FirstRunSetup(
-    private val activity: Activity,
+    activity: Activity,
     private val selectRomFolder: () -> Unit,
     private val skipRomFolder: () -> Unit,
     private val selectBios: () -> Unit,
@@ -26,46 +15,18 @@ internal class FirstRunSetup(
     private val hasBios: () -> Boolean,
     private val hasFont: () -> Boolean,
     private val hasRhythm: () -> Boolean
-) : FrameLayout(activity) {
+) : FirstRunScreen(activity) {
     enum class Step { ROM_FOLDER, FIRMWARE }
 
-    private val card = LinearLayout(activity).apply { orientation = LinearLayout.VERTICAL }
     private var step = Step.ROM_FOLDER
     private var busy: String? = null
-    val isOpen: Boolean get() = visibility == View.VISIBLE
     val isChoosingRomFolder: Boolean get() = isOpen && step == Step.ROM_FOLDER
-
-    init {
-        visibility = View.GONE
-        setBackgroundColor(Ui.BG)
-        elevation = dp(24).toFloat()
-        isFocusableInTouchMode = true
-        val scroll = ScrollView(activity).apply { isFillViewport = true }
-        val center = LinearLayout(activity).apply {
-            orientation = LinearLayout.VERTICAL
-            gravity = Gravity.CENTER
-            setPadding(dp(20), dp(32), dp(20), dp(32))
-        }
-        center.addView(card, LinearLayout.LayoutParams(
-            minOf(dp(520), activity.resources.displayMetrics.widthPixels - dp(40)), -2))
-        scroll.addView(center)
-        addView(scroll, LayoutParams(-1, -1))
-    }
 
     fun show(next: Step) {
         step = next
         busy = null
-        visibility = View.VISIBLE
         render()
     }
-
-    override fun onSizeChanged(width: Int, height: Int, oldWidth: Int, oldHeight: Int) {
-        super.onSizeChanged(width, height, oldWidth, oldHeight)
-        val widthAvailable = (width - dp(40)).coerceAtLeast(dp(240))
-        card.layoutParams = card.layoutParams.apply { this.width = minOf(dp(520), widthAvailable) }
-    }
-
-    fun close() { visibility = View.GONE }
 
     fun setBusy(message: String?) {
         busy = message
@@ -76,117 +37,31 @@ internal class FirstRunSetup(
         if (isOpen && step == Step.FIRMWARE) render()
     }
 
-    fun handleKey(event: KeyEvent): Boolean {
-        if (!isOpen) return false
-        if (event.keyCode == KeyEvent.KEYCODE_BACK || event.keyCode == KeyEvent.KEYCODE_ESCAPE ||
-            event.keyCode == KeyEvent.KEYCODE_BUTTON_B) {
-            if (event.action == KeyEvent.ACTION_DOWN && event.repeatCount == 0) back()
-            return true
-        }
-        if (event.keyCode == KeyEvent.KEYCODE_ENTER ||
-            event.keyCode == KeyEvent.KEYCODE_DPAD_CENTER ||
-            event.keyCode == KeyEvent.KEYCODE_BUTTON_A) {
-            if (event.action == KeyEvent.ACTION_DOWN && event.repeatCount == 0)
-                activity.currentFocus?.performClick()
-            return true
-        }
-        if (event.keyCode == KeyEvent.KEYCODE_DPAD_UP ||
-            event.keyCode == KeyEvent.KEYCODE_DPAD_DOWN) {
-            if (event.action == KeyEvent.ACTION_DOWN)
-                activity.currentFocus?.focusSearch(if (event.keyCode == KeyEvent.KEYCODE_DPAD_UP)
-                    View.FOCUS_UP else View.FOCUS_DOWN)?.requestFocus()
-            return true
-        }
-        return true
-    }
-
-    fun back() {
-        if (busy != null) return
-        if (step == Step.ROM_FOLDER) skipRomFolder() else finish()
-    }
-
     private fun render() {
-        card.removeAllViews()
-        text("KAIRO98", Ui.TITLE, Ui.TEXT, bold = true, bottom = 26)
-        text(if (step == Step.ROM_FOLDER) "SETUP  ·  1 OF 2" else "SETUP  ·  2 OF 2",
-            13f, Ui.ACCENT, bottom = 10)
-        if (step == Step.ROM_FOLDER) {
-            text("Choose a ROM folder", Ui.DISPLAY, Ui.TEXT, bold = true, bottom = 14)
-            text("Select the folder containing your PC-98 games. Kairo98 will scan its disk images and ZIP files.",
-                17f, Ui.TEXT_MUTED, bottom = 28)
-            button("Select ROM folder", "Find games on this device", true, selectRomFolder)
-            button("Skip for now", "You can choose one from the library later", false, skipRomFolder)
-        } else {
-            text("Optional firmware and font", Ui.DISPLAY, Ui.TEXT, bold = true, bottom = 14)
-            text("Import them now, or add them later from Library → Machine.",
-                17f, Ui.TEXT_MUTED, bottom = 28)
-            button("Import BIOS ROM", if (hasBios()) "Imported" else "Not set",
-                false, selectBios, busy == null)
-            button("Import Font BMP", if (hasFont()) "Imported" else "Using generated font",
-                false, selectFont, busy == null)
-            button("Import YM2608 rhythm ROM", if (hasRhythm()) "Imported" else "Not set",
-                false, selectRhythm, busy == null)
-            busy?.let { text(it, Ui.SECONDARY, Ui.ACCENT, bottom = 10) }
-            button(if (hasBios() || hasFont() || hasRhythm()) "Continue to library" else "Skip for now",
-                "Open the game library", true, finish, busy == null)
-        }
-        if (busy == null) card.post {
-            if (isOpen && activity.currentFocus?.isDescendantOf(card) != true)
-                (0 until card.childCount).map(card::getChildAt).firstOrNull { it.isFocusable }
-                    ?.requestFocus()
-        }
-    }
-
-    private fun View.isDescendantOf(ancestor: View): Boolean {
-        var parent = parent
-        while (parent is View) {
-            if (parent === ancestor) return true
-            parent = parent.parent
-        }
-        return false
-    }
-
-    private fun text(value: String, size: Float, color: Int, bold: Boolean = false,
-                     bottom: Int = 0) {
-        card.addView(TextView(activity).apply {
-            text = value
-            textSize = size
-            setTextColor(color)
-            if (bold) typeface = android.graphics.Typeface.DEFAULT_BOLD
-        }, LinearLayout.LayoutParams(-1, -2).apply { bottomMargin = dp(bottom) })
-    }
-
-    private fun button(title: String, subtitle: String, primary: Boolean,
-                       action: () -> Unit, enabled: Boolean = true) {
-        val row = LinearLayout(activity).apply {
-            orientation = LinearLayout.VERTICAL
-            gravity = Gravity.CENTER_VERTICAL
-            setPadding(dp(18), dp(10), dp(18), dp(10))
-            background = GradientDrawable().apply {
-                setColor(if (primary) Ui.SELECTED else Ui.RAISED)
-                cornerRadius = dp(9).toFloat()
+        val folder = step == Step.ROM_FOLDER
+        val actions = if (folder) listOf(
+            FirstRunScreen.Action("Select ROM folder", "Find games on this device", primary = true,
+                onClick = selectRomFolder),
+            FirstRunScreen.Action("Skip for now", "You can choose one from the library later",
+                onClick = skipRomFolder)
+        ) else listOf(
+            FirstRunScreen.Action("Import BIOS ROM", if (hasBios()) "Imported" else "Not set",
+                enabled = busy == null, onClick = selectBios),
+            FirstRunScreen.Action("Import Font BMP", if (hasFont()) "Imported" else "Using generated font",
+                enabled = busy == null, onClick = selectFont),
+            FirstRunScreen.Action("Import YM2608 rhythm ROM", if (hasRhythm()) "Imported" else "Not set",
+                enabled = busy == null, onClick = selectRhythm),
+            FirstRunScreen.Action(if (hasBios() || hasFont() || hasRhythm()) "Continue to library" else "Skip for now",
+                "Open the game library", primary = true, enabled = busy == null, onClick = finish)
+        )
+        super.show(FirstRunScreen.Page("KAIRO98", if (folder) "SETUP  ·  1 OF 2" else "SETUP  ·  2 OF 2",
+            if (folder) "Choose a ROM folder" else "Optional firmware and font",
+            if (folder) "Select the folder containing your PC-98 games. Kairo98 will scan its disk images and ZIP files."
+            else "Import them now, or add them later from Library → Machine.",
+            actions, busy)) {
+            if (busy == null) {
+                if (folder) skipRomFolder() else finish()
             }
-            isEnabled = enabled
-            isClickable = enabled
-            isFocusable = enabled
-            alpha = if (enabled) 1f else .55f
-            contentDescription = "$title. $subtitle"
-            setOnClickListener { action() }
         }
-        row.addView(TextView(activity).apply {
-            text = title
-            textSize = Ui.TITLE
-            setTextColor(Ui.TEXT)
-        })
-        row.addView(TextView(activity).apply {
-            text = subtitle
-            textSize = Ui.SECONDARY
-            setTextColor(Ui.TEXT_MUTED)
-        })
-        card.addView(row, LinearLayout.LayoutParams(-1, dp(76)).apply {
-            bottomMargin = dp(10)
-        })
     }
-
-    private fun dp(value: Int) = (value * activity.resources.displayMetrics.density).roundToInt()
 }
