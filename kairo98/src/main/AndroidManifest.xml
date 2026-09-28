@@ -11,13 +11,24 @@
         android:theme="@style/Theme.Kairo98">
         <activity
             android:name=".MainActivity"
+            android:launchMode="singleTop"
             android:configChanges="orientation|screenSize|smallestScreenSize|keyboardHidden"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:scheme="content" android:mimeType="*/*" />
+                <data android:scheme="file" android:mimeType="*/*" />
+            </intent-filter>
         </activity>
+        <activity-alias
+            android:name="${applicationId}.Launch"
+            android:targetActivity=".MainActivity"
+            android:exported="true" />
         <activity
             android:name=".SecondaryKeyboardActivity"
             android:configChanges="orientation|screenSize|smallestScreenSize|keyboardHidden"

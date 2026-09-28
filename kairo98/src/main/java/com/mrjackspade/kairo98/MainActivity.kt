@@ -20,6 +20,7 @@ import com.mrjackspade.kairo.frontend.PixelTextView
 import com.mrjackspade.kairo.frontend.Ui
 import com.mrjackspade.kairo.frontend.LibraryScreen
 import com.mrjackspade.kairo.frontend.LibraryFlow
+import com.mrjackspade.kairo.frontend.ExternalGameIntent
 import com.mrjackspade.kairo.frontend.FrontendNavigation
 import com.mrjackspade.kairo.frontend.SessionFlow
 import com.mrjackspade.kairo.frontend.LibraryStrings
@@ -149,6 +150,8 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
     @Volatile private var artworkDownloadRunning = false
     @Volatile private var catalogUpdateRunning = false
     private var currentEntry: LibraryEntry? = null
+    private var externalEntries: List<LibraryEntry> = emptyList()
+    private var externalLaunchGeneration = 0
     private var currentDisk: File? = null
     private var currentIsFloppy = false
     private val mountedFloppies = arrayOfNulls<String>(2)
@@ -388,13 +391,69 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
         root.post {
             libraryFlow.restore()
             val setupStep = preferences.getInt("onboarding_step_v1", if (romTree == null) 0 else 2)
-            if (romTree != null && hasRomGrant(romTree!!) && setupStep >= 2 &&
+            val externallyRequested = savedInstanceState == null &&
+                (intent.data != null || intent.hasExtra("ROM"))
+            if (externallyRequested) dispatchExternalGame(intent)
+            else if (romTree != null && hasRomGrant(romTree!!) && setupStep >= 2 &&
                 !selectPendingDebugGame()) refreshLibrary(false)
-            if (setupStep < 2) firstRunSetup.show(if (setupStep == 0)
+            if (setupStep < 2 && !externallyRequested) firstRunSetup.show(if (setupStep == 0)
                 FirstRunSetup.Step.ROM_FOLDER else FirstRunSetup.Step.FIRMWARE)
             applyPauseState()
             updateGameCatalog(true)
         }
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        dispatchExternalGame(intent)
+    }
+
+    private fun dispatchExternalGame(intent: Intent) {
+        val request = try { ExternalGameIntent.file(intent, contentResolver) }
+        catch (failure: Exception) {
+            libraryScreen.showStatus(failure.message ?: "Invalid game file")
+            return
+        } ?: return
+        val matching = libraryEntries.filter {
+            ExternalGameIntent.sameDocument(Uri.parse(it.uri), request.uri)
+        }
+        if (matching.isNotEmpty()) {
+            chooseExternalGame(matching)
+            return
+        }
+        val generation = ++externalLaunchGeneration
+        libraryScreen.showStatus("Opening ${request.name}…")
+        Thread {
+            val inspected = runCatching {
+                romLibrary.inspectExternal(request, AtomicBoolean(false))
+            }
+            runOnUiThread {
+                if (generation != externalLaunchGeneration || isDestroyed) return@runOnUiThread
+                inspected.onSuccess { entries ->
+                    externalEntries = entries
+                    chooseExternalGame(entries)
+                }.onFailure { failure ->
+                    libraryScreen.showStatus("Could not open ${request.name}: ${failure.message}")
+                }
+            }
+        }.apply { name = "Kairo98-external-game"; start() }
+    }
+
+    private fun chooseExternalGame(entries: List<LibraryEntry>) {
+        val playable = entries.filter { it.playable }
+        if (playable.isEmpty()) {
+            libraryScreen.showStatus("No playable PC-98 disk found")
+            return
+        }
+        val preferred = playable.singleOrNull()
+            ?: playable.filter { !it.isFloppy }.singleOrNull()
+            ?: playable.filter { it.displayName.contains("boot", true) }.singleOrNull()
+        if (preferred != null) { launchEntry(preferred); return }
+        AlertDialog.Builder(this).setTitle("Choose boot disk")
+            .setItems(playable.map { it.displayName }.toTypedArray()) { _, which ->
+                launchEntry(playable[which])
+            }.setNegativeButton("Cancel", null).showStyled()
     }
 
     private fun routeRgDsToUpperDisplay(): Boolean {
@@ -774,7 +833,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
             toast(entry.error ?: "Refresh this entry before playing")
             return
         }
-        if (romTree == null || !hasRomGrant(romTree!!)) {
+        if (entry !in externalEntries && (romTree == null || !hasRomGrant(romTree!!))) {
             libraryScreen.showStatus("Folder access expired. Select the ROM folder again.")
             return
         }
@@ -823,12 +882,13 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
         libraryScreen.showStatus("Preparing ${entry.displayName}…")
         Thread {
             val result = try {
-                val media = bootMediaFor(entry, libraryEntries, game.requiredBootFloppyId)
+                val sources = libraryEntries + externalEntries
+                val media = bootMediaFor(entry, sources, game.requiredBootFloppyId)
                 val swapSources = game.diskSwaps.map { rule ->
-                    rule.contentId to requiredFloppyFor(rule.contentId, entry, libraryEntries)
+                    rule.contentId to requiredFloppyFor(rule.contentId, entry, sources)
                 }.toMap()
                 val floppyB = game.initialFloppyBId?.let { id ->
-                    requiredFloppyFor(id, entry, libraryEntries)
+                    requiredFloppyFor(id, entry, sources)
                 }
                 val primary = media?.hardDisk ?: entry
                 val disk = romLibrary.prepare(primary, cancelled) { message ->

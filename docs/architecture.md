@@ -51,6 +51,4 @@ Both operations run on the emulation thread between frames through the command q
 
 ## Storage and launch
 
-The exported launch activity will accept a game URI or path from Android frontends. Android's storage permissions require resolving or importing the image before the native core opens it. Disk changes must work after launch for multi-disk games. Imported firmware stays outside the distributed app.
-
-The exact intent contract and package ID will be fixed when the Android project is created. LaunchBox documents its custom emulator intent format: <https://feedback.launchbox-app.com/en/help/articles/7096169-custom-emulator-with-code>. See [migration plan](migration-plan.md) for the sequence and verification gates.
+The exported `com.loxifi.kairo98.Launch` activity alias accepts an Android `VIEW` intent with a `content://` or `file://` URI, or LaunchBox's `ROM` string extra containing a URI or absolute path. The shared frontend parses that intent; Kairo98 inspects and hashes the selected disk or ZIP using the same content IDs as its library scan, then stages the boot media before the native core opens it. Existing library entries can be reused when their document URI matches. ZIP-contained disks remain available for disk changes. Imported firmware stays outside the distributed app. [LaunchBox setup](../README.md#launchbox-for-android) uses its three-field Custom Emulator mode.

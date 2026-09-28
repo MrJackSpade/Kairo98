@@ -2,6 +2,7 @@
 
 import com.mrjackspade.kairo.frontend.LibraryItem
 import com.mrjackspade.kairo.frontend.DocumentTreeWalker
+import com.mrjackspade.kairo.frontend.ExternalGameFile
 
 import android.content.Context
 import android.net.Uri
@@ -99,6 +100,45 @@ class RomLibrary(private val context: Context) {
 
     fun cached(treeUri: Uri): List<LibraryEntry> = readStore().let { snapshot ->
         if (snapshot.first == treeUri.toString()) snapshot.second else emptyList()
+    }
+
+    /** Inspect one launcher-provided document without requiring a selected ROM tree. */
+    fun inspectExternal(file: ExternalGameFile, cancelled: AtomicBoolean): List<LibraryEntry> {
+        val source = Source(file.uri, file.name, file.size, file.modified)
+        if (DiskFormat.supported(file.name)) {
+            val candidate = entry(source, null, file.size, -1, null)
+            val id = context.contentResolver.openInputStream(file.uri)?.use {
+                contentId(it, file.size, -1, cancelled, file.name)
+            } ?: error("Unable to open ${file.name}")
+            return listOf(candidate.copy(contentId = id))
+        }
+        require(file.name.endsWith(".zip", true)) { "Unsupported PC-98 game file: ${file.name}" }
+        val archive = cachedZip(source, false, cancelled)
+        return ZipFile(archive).use { zip ->
+            val names = HashSet<String>()
+            val found = ArrayList<LibraryEntry>()
+            val entries = zip.entries()
+            var inspected = 0
+            while (entries.hasMoreElements()) {
+                checkCancelled(cancelled)
+                require(++inspected <= MAX_ZIP_ENTRIES) { "ZIP has too many entries" }
+                val item = entries.nextElement()
+                val path = safeEntryName(item.name)
+                require(names.add(path.lowercase(Locale.ROOT))) { "Duplicate ZIP entry" }
+                if (item.isDirectory || !DiskFormat.supported(path)) continue
+                require(found.size < MAX_ZIP_IMAGES) { "ZIP has too many disk images" }
+                require(item.size in 1..imageLimit(path) && item.compressedSize > 0 &&
+                    item.size / item.compressedSize <= MAX_EXPANSION_RATIO) {
+                    "Disk image exceeds size or expansion limit"
+                }
+                val id = zip.getInputStream(item).use {
+                    contentId(it, item.size, item.crc, cancelled, path)
+                }
+                found.add(entry(source, item.name, item.size, item.crc, id))
+            }
+            require(found.isNotEmpty()) { "No PC-98 disk image in ZIP" }
+            found
+        }
     }
 
     fun scan(treeUri: Uri, forceHash: Boolean, cancelled: AtomicBoolean,
