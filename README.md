@@ -24,37 +24,12 @@ The library accepts HDI hard disks and supported floppy formats including FDI, D
 
 The library menu can download missing artwork for games it recognizes. The free GitHub and paid Google Play editions have the same features and behavior.
 
-## Use with LaunchBox for Android
+## External frontends
 
-Import your PC-98 files into LaunchBox's **NEC PC-9801** platform. Open that platform, tap the **top-right three-dot menu → Emulator Settings**, and choose **Custom Emulator** as the default emulator (without “With Code”). Enter:
+Use the [external frontend setup guide](docs/frontends.md) to launch Kairo98 games from other apps:
 
-| Setting | Value |
-| --- | --- |
-| Custom Emulator Package Name | `com.loxifi.kairo98` |
-| Custom Emulator Activity Name | `com.loxifi.kairo98.Launch` |
-| Custom Emulator ROM Path Key | `ROM` |
-
-Turn **Extract ROM Archives** off. Kairo98 reads ZIPs itself. A game launched from LaunchBox opens directly; choosing **Library** in the game menu closes Kairo98 and returns to the frontend.
-
-## Use with ES-DE
-
-Add an Android package rule for Kairo98 to ES-DE's custom `es_find_rules.xml`:
-
-```xml
-<emulator name="KAIRO98">
-  <rule type="androidpackage">
-    <entry>com.loxifi.kairo98/com.loxifi.kairo98.Launch</entry>
-  </rule>
-</emulator>
-```
-
-In the PC-98 system's custom `es_systems.xml` configuration, add this launch command and select it as the emulator:
-
-```xml
-<command label="Kairo98">%EMULATOR_KAIRO98% %ACTION%=android.intent.action.VIEW %DATA%=%ROMPROVIDER%</command>
-```
-
-See the [ES-DE Android configuration guide](https://gitlab.com/es-de/emulationstation-de/-/blob/master/INSTALL.md) for the custom file locations and system override syntax. Keep ZIP extraction off in the frontend. Returning to **Library** closes a frontend-launched game and returns to ES-DE.
+- [LaunchBox for Android](docs/frontends.md#launchbox-for-android)
+- [ES-DE](docs/frontends.md#es-de)
 
 ## Controls
 
