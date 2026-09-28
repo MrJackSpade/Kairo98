@@ -3,6 +3,7 @@ package com.mrjackspade.kairo98
 import com.mrjackspade.kairo.frontend.GuestKeyboardPanel
 
 import com.mrjackspade.kairo.frontend.InputRouter
+import com.mrjackspade.kairo.frontend.InputModeDecider
 import com.mrjackspade.kairo.frontend.JoystickInputRouter
 import com.mrjackspade.kairo.frontend.GamepadMapper
 import com.mrjackspade.kairo.frontend.OnScreenControls
@@ -665,8 +666,9 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
             !editingControls && !preparingFont &&
             !(::controllerEditor.isInitialized && controllerEditor.isOpen)
         if (::swappedKeyboardPanel.isInitialized) {
-            if (::secondaryKeyboard.isInitialized && secondaryKeyboard.swapped && showingGuest)
-                swappedKeyboardPanel.visibility = View.VISIBLE
+            if (::secondaryKeyboard.isInitialized && secondaryKeyboard.swapped && showingGuest &&
+                swappedKeyboardPanel.visibility != View.VISIBLE)
+                swappedKeyboardPanel.open()
             else if (swappedKeyboardPanel.visibility == View.VISIBLE)
                 swappedKeyboardPanel.close()
         }
@@ -951,6 +953,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
                         gamepadMapper.bindings = effectiveControllerBindings(game)
                         userPaused = false
                         sessionFlow.reset()
+                        libraryScreen.dismissSystemKeyboard()
                         libraryVisible = false
                         libraryScreen.visibility = View.GONE
                         screen.requestFocus()
@@ -998,7 +1001,8 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
     private fun showKeyboard() {
         if (::secondaryKeyboard.isInitialized && secondaryKeyboard.isKeyboardVisible) return
         if (keyboardPanel.visibility == View.VISIBLE) return
-        keyboardPanel.visibility = View.VISIBLE
+        libraryScreen.dismissSystemKeyboard()
+        keyboardPanel.open()
         updateViewport()
         applyPauseState()
         handler.postDelayed({
