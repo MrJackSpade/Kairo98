@@ -1,5 +1,8 @@
 ﻿package com.mrjackspade.kairo98
 
+import com.mrjackspade.kairo.frontend.LibraryItem
+import com.mrjackspade.kairo.frontend.DocumentTreeWalker
+
 import android.content.Context
 import android.net.Uri
 import android.provider.DocumentsContract
@@ -18,19 +21,20 @@ import java.util.zip.ZipFile
 
 /** A source location is separate from the uncompressed disk-image content ID. */
 data class LibraryEntry(
-    val id: String,
+    override val id: String,
     val uri: String,
-    val path: String,
-    val zipEntry: String?,
+    override val path: String,
+    override val zipEntry: String?,
     val sourceSize: Long,
     val sourceModified: Long,
     val imageSize: Long,
     val imageCrc: Long,
-    val contentId: String?,
-    val error: String? = null
-) {
-    val displayName: String get() = (zipEntry ?: path).substringAfterLast('/').substringAfterLast('\\')
-    val playable: Boolean get() = contentId != null && error == null
+    override val contentId: String?,
+    override val error: String? = null
+) : LibraryItem {
+    override val displayName: String get() = (zipEntry ?: path).substringAfterLast('/').substringAfterLast('\\')
+    override val playable: Boolean get() = contentId != null && error == null
+    override val mediaLabel: String get() = if (isFloppy) "Floppy disk" else "Hard disk"
     val isFloppy: Boolean get() = DiskFormat.isFloppy(displayName)
 }
 
@@ -252,51 +256,13 @@ class RomLibrary(private val context: Context) {
 
     private fun enumerate(tree: Uri, cancelled: AtomicBoolean,
                           progress: (String) -> Unit): Pair<List<Source>, List<LibraryEntry>> {
-        val result = ArrayList<Source>()
-        val errors = ArrayList<LibraryEntry>()
-        val rootId = DocumentsContract.getTreeDocumentId(tree)
-        val queue = ArrayDeque<Pair<String, String>>()
-        queue.add(rootId to "")
-        var visited = 0
-        while (queue.isNotEmpty()) {
-            checkCancelled(cancelled)
-            val (parentId, parentPath) = queue.removeFirst()
-            require(parentPath.count { it == '/' } <= MAX_DEPTH) { "ROM folder is too deep" }
-            val children = DocumentsContract.buildChildDocumentsUriUsingTree(tree, parentId)
-            try { context.contentResolver.query(children, PROJECTION, null, null, null)?.use { cursor ->
-                val idColumn = cursor.getColumnIndexOrThrow(DocumentsContract.Document.COLUMN_DOCUMENT_ID)
-                val nameColumn = cursor.getColumnIndexOrThrow(DocumentsContract.Document.COLUMN_DISPLAY_NAME)
-                val mimeColumn = cursor.getColumnIndexOrThrow(DocumentsContract.Document.COLUMN_MIME_TYPE)
-                val sizeColumn = cursor.getColumnIndexOrThrow(DocumentsContract.Document.COLUMN_SIZE)
-                val timeColumn = cursor.getColumnIndexOrThrow(DocumentsContract.Document.COLUMN_LAST_MODIFIED)
-                while (cursor.moveToNext()) {
-                    checkCancelled(cancelled)
-                    require(++visited <= MAX_DOCUMENTS) { "ROM folder has too many files" }
-                    val id = cursor.getString(idColumn) ?: continue
-                    val name = cursor.getString(nameColumn) ?: continue
-                    val path = if (parentPath.isEmpty()) name else "$parentPath/$name"
-                    if (cursor.getString(mimeColumn) == DocumentsContract.Document.MIME_TYPE_DIR) {
-                        queue.add(id to path)
-                    } else if (DiskFormat.supported(name) || name.endsWith(".zip", true)) {
-                        val uri = DocumentsContract.buildDocumentUriUsingTree(tree, id)
-                        val size = if (cursor.isNull(sizeColumn)) -1 else cursor.getLong(sizeColumn)
-                        val modified = if (cursor.isNull(timeColumn)) 0 else cursor.getLong(timeColumn)
-                        result.add(Source(uri, path, size, modified))
-                        if (result.size % 20 == 0) progress("Found ${result.size} media files")
-                    }
-                }
-            } ?: error("Unable to read ROM folder")
-            } catch (cancel: CancellationException) { throw cancel }
-            catch (error: Exception) {
-                if (parentPath.isEmpty()) throw error
-                val folder = Source(DocumentsContract.buildDocumentUriUsingTree(tree, parentId),
-                    parentPath, -1, 0)
-                errors.add(entry(folder, null, -1, -1, null,
-                    "Unreadable folder: ${error.message ?: "provider error"}"))
-                progress("Skipping unreadable folder: $parentPath")
+        val result = DocumentTreeWalker(context.contentResolver).scan(tree, cancelled,
+            { name -> DiskFormat.supported(name) || name.endsWith(".zip", true) }, progress)
+        return result.files.map { Source(it.uri, it.path, it.size, it.modified) } to
+            result.folders.map { folder ->
+                entry(Source(folder.uri, folder.path, -1, 0), null, -1, -1, null,
+                    "Unreadable folder: ${folder.message}")
             }
-        }
-        return result to errors
     }
 
     @Synchronized private fun cachedZip(source: Source, force: Boolean,

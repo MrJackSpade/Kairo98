@@ -27,7 +27,7 @@ The Android session flyout is an activity overlay above the 640×400 surface. It
 
 ## Visual design
 
-`shared/frontend/` now owns `Ui.kt` and the app's design system: named color roles, a five-step type scale (12, 14, 16, 20, 28 sp), two corner radii, and shared rows, buttons, icons, dialogs, and the in-app message bar that replaces system toasts. Screens use these instead of their own values. Icons remain the app's own 24 dp line drawables in `res/drawable`. The wordmark and section labels are drawn by `PixelTextView` from pinned Spleen 8x16 glyphs, generated into the shared library asset by `shared/tools/generate_ui_pixel_font.py`. While the library is open, the second screen shows the selected game's screenshot, tags, and description.
+`shared/frontend/` owns `Ui.kt` and the design system: named color roles, a five-step type scale (12, 14, 16, 20, 28 sp), two corner radii, and shared rows, buttons, icons, dialogs, and the in-app message bar. It also owns the library list, game detail page, document-tree walker, and in-game session drawer used by Kairo98 and KairoDos. Product-specific file readers and catalog resolvers implement the shared library interfaces; each app supplies its name, settings, keyboard, and emulator actions. Shared navigation icons live with the frontend; PC-98-only icons remain in this app. The wordmark and section labels are drawn by `PixelTextView` from pinned Spleen 8x16 glyphs, generated into the shared library asset by `shared/tools/generate_ui_pixel_font.py`. While the library is open, the second screen shows the selected game's screenshot, tags, and description.
 
 ## Input model
 

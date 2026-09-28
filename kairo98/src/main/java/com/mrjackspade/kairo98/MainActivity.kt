@@ -16,6 +16,14 @@ import com.mrjackspade.kairo.frontend.PhysicalControllerBinding
 import com.mrjackspade.kairo.frontend.PhysicalControllerBindings
 import com.mrjackspade.kairo.frontend.PixelTextView
 import com.mrjackspade.kairo.frontend.Ui
+import com.mrjackspade.kairo.frontend.LibraryScreen
+import com.mrjackspade.kairo.frontend.LibraryStrings
+import com.mrjackspade.kairo.frontend.SessionAction
+import com.mrjackspade.kairo.frontend.SessionDrawer
+import com.mrjackspade.kairo.frontend.GameSettingsRow
+import com.mrjackspade.kairo.frontend.GameSettingsSheet
+import com.mrjackspade.kairo.frontend.fileLabel
+import com.mrjackspade.kairo.frontend.variantLabel
 
 import android.app.Activity
 import android.app.ActivityOptions
@@ -119,7 +127,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
     private lateinit var swappedKeyboardPanel: GuestKeyboardPanel
     private lateinit var secondaryKeyboard: SecondaryKeyboardDisplay
     private lateinit var onScreenControls: OnScreenControls
-    private lateinit var libraryScreen: LibraryScreen
+    private lateinit var libraryScreen: LibraryScreen<LibraryEntry>
     private lateinit var firstRunSetup: FirstRunSetup
     private lateinit var romLibrary: RomLibrary
     private lateinit var controllerEditor: ControllerEditor<LibraryEntry>
@@ -164,9 +172,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
     private lateinit var drawer: ScrollView
     private lateinit var menuStatus: TextView
     private lateinit var mediaLabel: TextView
-    private val menuItems = ArrayList<View>()
-    private val menuValues = ArrayList<Pair<TextView, () -> String>>()
-    private var selectedMenuIndex = 0
+    private lateinit var sessionDrawer: SessionDrawer
     private var menuOpen = false
     private var userPaused = false
     private var activityVisible = false
@@ -314,7 +320,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
             { onScreenControls.eightWayDpad }, { onScreenControls.eightWayDpad = it },
             LibraryEntry::id, Pc98KeyNames::label, ControllerBindings.JOYSTICK,
             { ControllerBindings.toJson(it) })
-        libraryScreen = LibraryScreen(this, romLibrary.catalog,
+        libraryScreen = LibraryScreen(this, romLibrary.catalog, LibraryStrings("KAIRO98"),
             ::chooseRomFolder, { refreshLibrary(false) }, { refreshLibrary(true) },
             { updateGameCatalog(false) },
             if (resources.getBoolean(R.bool.catalog_art_download_enabled))
@@ -403,119 +409,37 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
             onSwap = { secondaryKeyboard.toggleSwap() }, mouse = mouseRouter)
         root.addView(swappedKeyboardPanel, FrameLayout.LayoutParams(-1, -1))
 
-        backdrop = View(this).apply {
-            setBackgroundColor(Ui.SCRIM)
-            visibility = View.GONE
-            alpha = 0f
-            setOnClickListener { closeMenu() }
-        }
-        root.addView(backdrop, FrameLayout.LayoutParams(-1, -1))
-
-        drawer = ScrollView(this).apply {
-            visibility = View.GONE
-            elevation = dp(16).toFloat()
-            isFillViewport = true
-            overScrollMode = View.OVER_SCROLL_NEVER
-            setBackgroundColor(Ui.SURFACE)
-        }
-        val drawerWidth = minOf(dp(320), resources.displayMetrics.widthPixels - dp(40))
-        root.addView(drawer, FrameLayout.LayoutParams(drawerWidth, -1, Gravity.START))
-        val content = LinearLayout(this).apply {
-            orientation = LinearLayout.VERTICAL
-            setPadding(dp(12), dp(20), dp(12), dp(24))
-        }
-        drawer.addView(content)
-
-        content.addView(PixelTextView(this).apply {
-            text = "KAIRO98"
-            scale = 2
-            setPadding(dp(12), 0, dp(12), dp(14))
-        })
-        mediaLabel = Ui.text(this, "", Ui.TITLE, bold = true).apply {
-            maxLines = 2
-            ellipsize = android.text.TextUtils.TruncateAt.END
-            setPadding(dp(12), 0, dp(12), dp(2))
-        }
-        content.addView(mediaLabel)
-        menuStatus = Ui.text(this, "", Ui.SECONDARY, Ui.TEXT_MUTED).apply {
-            maxLines = 4
-            setPadding(dp(12), 0, dp(12), dp(14))
-            contentDescription = "Machine status. Tap for details."
-            setOnClickListener {
-                showMachineDetails = !showMachineDetails
-                text = menuStatusText()
-            }
-        }
-        content.addView(menuStatus)
-        val sessionActions = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL }
-        content.addView(sessionActions, LinearLayout.LayoutParams(-1, dp(66)).apply {
-            bottomMargin = dp(8)
-        })
-        sessionIcon(sessionActions, R.drawable.ic_play, "Resume") {
-            userPaused = false
-            closeMenu()
-        }
-        sessionIcon(sessionActions, R.drawable.ic_save, "Save") { showStateSlots(saving = true) }
-        sessionIcon(sessionActions, R.drawable.ic_load, "Load") { showStateSlots(saving = false) }
-        sessionIcon(sessionActions, R.drawable.ic_restart, "Restart") { confirmRestart() }
-        sessionIcon(sessionActions, R.drawable.ic_library, "Library") { showLibrary() }
-        section(content, "SESSION")
-        menuItem(content, "Pause", { if (userPaused) "On · tap to let the game run again"
-            else "Close the menu with the game stopped" }) {
-            userPaused = !userPaused
-            closeMenu()
-        }
-        menuItem(content, "Mount", { "Hard disk and floppy images" }) { showMountMenu() }
-        menuItem(content, "Exit", { "Stop the machine and close Kairo98" }) { confirmExit() }
-
-        section(content, "SETTINGS")
-        settingsEntries().forEach { entry -> menuItem(content, entry.title, entry.value, entry.action) }
+        sessionDrawer = SessionDrawer(this, root, "KAIRO98", ::closeMenu, {
+            showMachineDetails = !showMachineDetails
+            menuStatus.text = menuStatusText()
+        }, listOf(
+            SessionAction("Resume", R.drawable.ic_play) {
+                userPaused = false
+                closeMenu()
+            },
+            SessionAction("Save", R.drawable.ic_save) { showStateSlots(saving = true) },
+            SessionAction("Load", R.drawable.ic_load) { showStateSlots(saving = false) },
+            SessionAction("Restart", R.drawable.ic_restart) { confirmRestart() },
+            SessionAction("Library", R.drawable.ic_library) { showLibrary() }
+        ), listOf(
+            SettingsEntry("Pause", { if (userPaused) "On · tap to let the game run again"
+                else "Close the menu with the game stopped" }) {
+                userPaused = !userPaused
+                closeMenu()
+            },
+            SettingsEntry("Mount", { "Hard disk and floppy images" }) { showMountMenu() },
+            SettingsEntry("Exit", { "Stop the machine and close Kairo98" }) { confirmExit() }
+        ), settingsEntries())
+        backdrop = sessionDrawer.backdrop
+        drawer = sessionDrawer.drawer
+        mediaLabel = sessionDrawer.mediaLabel
+        menuStatus = sessionDrawer.status
 
         setContentView(root)
         screen.requestFocus()
     }
 
-    private fun section(content: LinearLayout, title: String) {
-        content.addView(Ui.sectionLabel(this, title))
-    }
-
-    private fun sessionIcon(row: LinearLayout, icon: Int, label: String,
-                            action: () -> Unit): View {
-        val button = LinearLayout(this).apply {
-            orientation = LinearLayout.VERTICAL
-            gravity = Gravity.CENTER
-            contentDescription = label
-            isFocusable = true
-            isClickable = true
-            background = menuHighlight()
-            setOnClickListener { clicked ->
-                focusMenuItem(menuItems.indexOf(clicked))
-                action()
-            }
-        }
-        button.addView(Ui.icon(this, icon, if (icon == R.drawable.ic_play) Ui.ACCENT else Ui.TEXT))
-        button.addView(Ui.text(this, label, Ui.LABEL, Ui.TEXT_MUTED).apply {
-            gravity = Gravity.CENTER
-            setPadding(0, dp(4), 0, 0)
-        })
-        row.addView(button, LinearLayout.LayoutParams(0, -1, 1f))
-        menuItems.add(button)
-        return button
-    }
-
     private fun menuHighlight() = Ui.rowBackground(this)
-
-    private fun menuItem(content: LinearLayout, title: String, detail: () -> String,
-                         action: () -> Unit) {
-        val row = Ui.actionRow(this, title, detail) { clicked ->
-            focusMenuItem(menuItems.indexOf(clicked))
-            action()
-        }
-        content.addView(row.view, LinearLayout.LayoutParams(-1, -2))
-        menuItems.add(row.view)
-        menuValues.add(row.detail to detail)
-    }
-
 
     /** One settings list, shown the same way in the game menu and the library menu. */
     private fun settingsEntries() = listOf(
@@ -542,7 +466,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
     }
 
     private fun refreshSettingValues() {
-        menuValues.forEach { (view, value) -> view.text = value() }
+        sessionDrawer.refreshValues()
         if (::libraryScreen.isInitialized) libraryScreen.refreshSettingValues()
     }
 
@@ -553,19 +477,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
         refreshSettingValues()
     }
 
-    private fun focusMenuItem(index: Int) {
-        if (menuItems.isEmpty()) return
-        menuItems[selectedMenuIndex].isSelected = false
-        selectedMenuIndex = index.coerceIn(0, menuItems.lastIndex)
-        val item = menuItems[selectedMenuIndex]
-        item.isSelected = true
-        item.requestFocus()
-        if (drawer.height > 0 && item.bottom > drawer.scrollY + drawer.height) {
-            drawer.smoothScrollTo(0, item.bottom - drawer.height + dp(16))
-        } else if (item.top < drawer.scrollY) {
-            drawer.smoothScrollTo(0, (item.top - dp(16)).coerceAtLeast(0))
-        }
-    }
+    private fun focusMenuItem(index: Int) = sessionDrawer.focus(index)
 
     private fun updateViewport() {
         if (!::root.isInitialized || root.width <= 0 || root.height <= 0) return
@@ -599,17 +511,8 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
         menuOpen = true
         onScreenControls.refreshVisibility(false)
         applyPauseState()
-        drawer.scrollTo(0, 0)
-        focusMenuItem(0)
-        refreshSettingValues()
-        mediaLabel.text = currentTitle ?: "No disk selected"
-        menuStatus.text = if (preparingFont) "Preparing PC-98 font" else menuStatusText()
-        backdrop.visibility = View.VISIBLE
-        backdrop.alpha = 0f
-        drawer.visibility = View.VISIBLE
-        drawer.translationX = -drawer.layoutParams.width.toFloat()
-        backdrop.animate().alpha(1f).setDuration(180).start()
-        drawer.animate().translationX(0f).setDuration(180).start()
+        sessionDrawer.open(currentTitle ?: "No disk selected",
+            if (preparingFont) "Preparing PC-98 font" else menuStatusText())
         handler.postDelayed({
             if (menuOpen && Build.VERSION.SDK_INT >= 30) {
                 window.insetsController?.hide(WindowInsets.Type.statusBars() or
@@ -623,15 +526,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
         menuOpen = false
         applyPauseState()
         screen.requestFocus()
-        backdrop.animate().alpha(0f).setDuration(160).withEndAction {
-            if (!menuOpen) backdrop.visibility = View.GONE
-        }.start()
-        drawer.animate().translationX(-drawer.layoutParams.width.toFloat())
-            .setDuration(160).withEndAction {
-                if (!menuOpen) {
-                    drawer.visibility = View.GONE
-                }
-            }.start()
+        sessionDrawer.close()
     }
 
     private val libraryArtExecutor = java.util.concurrent.Executors.newSingleThreadExecutor()
@@ -1387,8 +1282,6 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
         val catalog = romLibrary.catalog
         fun source(field: String, subfield: String? = null, fallback: String = "App default") =
             id?.let { catalog.sourceOf(it, field, subfield) } ?: fallback
-        data class Row(val title: String, val value: String, val needsHash: Boolean,
-                       val destructive: Boolean = false, val action: () -> Unit)
         val controllerSource = if (game.controllerBindings == null ||
             (game.controllerBindings == "[]" && !game.overriddenFields.contains("controller"))) "Global"
             else source("controller", "bindings", fallback = "Global")
@@ -1396,100 +1289,56 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
         val touch = game.inputTouch ?: touchStorage(globalTouchDirect)
         val sections = listOf(
             "CONTROLS" to listOf(
-                Row("Touch input", "${inputMode.name.lowercase().replaceFirstChar(Char::uppercase)} " +
+                GameSettingsRow("Touch input", "${inputMode.name.lowercase().replaceFirstChar(Char::uppercase)} " +
                     "(${source("input", "mode")}) · " +
                     "${if (touch == "direct") "direct tap" else "touchpad"} " +
                     "(${source("input", "touch")}) · second screen: " +
                     "${game.inputSecondary ?: "keyboard"} (${source("input", "secondary")})", true) {
                     showInputModeChoices(entry) },
-                Row("Controller mapping", "${effectiveControllerBindings(game).size} bindings · $controllerSource", true) {
+                GameSettingsRow("Controller mapping", "${effectiveControllerBindings(game).size} bindings · $controllerSource", true) {
                     showControllerBindings(entry) }),
             "MACHINE" to listOf(
-                Row("Machine clock", "${game.baseClockTenthsMHz?.let { "${it / 10.0} MHz" } ?: "App default"} · ${source("machine", "baseClockTenthsMHz")}", true) {
+                GameSettingsRow("Machine clock", "${game.baseClockTenthsMHz?.let { "${it / 10.0} MHz" } ?: "App default"} · ${source("machine", "baseClockTenthsMHz")}", true) {
                     editGameClock(entry) },
-                Row("GDC clock", "${game.gdcClockTenthsMHz?.let { "${it / 10.0} MHz" } ?: "5.0 MHz (app default)"} · ${source("machine", "gdcClockTenthsMHz")}", true) {
+                GameSettingsRow("GDC clock", "${game.gdcClockTenthsMHz?.let { "${it / 10.0} MHz" } ?: "5.0 MHz (app default)"} · ${source("machine", "gdcClockTenthsMHz")}", true) {
                     editGameGdcClock(entry) },
-                Row("CPU speed", "${cpuSpeedLabel(game)} · ${source("machine", "cpuMultiple")}", true) {
+                GameSettingsRow("CPU speed", "${cpuSpeedLabel(game)} · ${source("machine", "cpuMultiple")}", true) {
                     editGameCpuSpeed(entry) },
-                Row("Startup command", "${game.launchCommand ?: "None"} · ${source("launch")}", true) {
+                GameSettingsRow("Startup command", "${game.launchCommand ?: "None"} · ${source("launch")}", true) {
                     editGameText(entry, "launch", game.launchCommand ?: "") }),
             "LIBRARY" to listOf(
-                Row("Title", "${game.title} · ${source("title", fallback = "Filename")}", true) {
+                GameSettingsRow("Title", "${game.title} · ${source("title", fallback = "Filename")}", true) {
                     editGameText(entry, "title", game.title) },
-                Row("Adult content", "${when (game.eroge) { true -> "Eroge"; false -> "Not eroge"; null -> "Unreviewed" }} · " +
+                GameSettingsRow("Adult content", "${when (game.eroge) { true -> "Eroge"; false -> "Not eroge"; null -> "Unreviewed" }} · " +
                     source("eroge", fallback = "Unreviewed"), true) {
                     editGameEroge(entry) },
-                Row("Box art", "${if (game.boxArt == null) "None" else "Available"} · ${source("artwork", "boxArt")}", true) {
+                GameSettingsRow("Box art", "${if (game.boxArt == null) "None" else "Available"} · ${source("artwork", "boxArt")}", true) {
                     editGameArt(entry, "boxArt", game.boxArt ?: "") },
-                Row("Screenshot", "${if (game.preview == null) "None" else "Available"} · ${source("artwork", "preview")}", true) {
+                GameSettingsRow("Screenshot", "${if (game.preview == null) "None" else "Available"} · ${source("artwork", "preview")}", true) {
                     editGameArt(entry, "preview", game.preview ?: "") },
-                Row("View screenshot", if (game.preview == null) "No screenshot available" else "Open full size", false) {
+                GameSettingsRow("View screenshot", if (game.preview == null) "No screenshot available" else "Open full size", false) {
                     showGamePreview(entry) },
-                Row("File information", "Path, ZIP entry, and content ID", false) {
+                GameSettingsRow("File information", "Path, ZIP entry, and content ID", false) {
                     AlertDialog.Builder(this).setTitle("File information")
                         .setMessage("${entry.path}${entry.zipEntry?.let { "\n$it" } ?: ""}\n\n" +
                             (id ?: entry.error ?: "Not hashed"))
                         .setPositiveButton("Close", null).showStyled() }))
-        val list = LinearLayout(this).apply {
-            orientation = LinearLayout.VERTICAL
-            setPadding(dp(12), 0, dp(12), dp(4))
-        }
-        val builder = AlertDialog.Builder(this).setTitle(game.title)
-            .setView(ScrollView(this).apply { addView(list) })
-            .setNegativeButton("Close", null)
-        if (entry.playable) builder.setPositiveButton("Play") { _, _ -> launchEntry(entry) }
-        if (id != null) builder.setNeutralButton("Reset defaults") { _, _ ->
-            AlertDialog.Builder(this).setTitle("Reset all game settings?")
-                .setMessage("Remove every custom setting for this game and use its catalog defaults.")
-                .setPositiveButton("Reset") { _, _ -> saveGameSetting(entry,
-                    "Game settings reset. Machine changes apply on next launch or restart.") {
-                    catalog.resetOverride(id)
-                    if (currentEntry?.contentId == id) {
-                        currentGame = catalog.resolve(id, entry.displayName)
-                        setSecondaryInitialMode(currentGame?.inputSecondary == "touchpad")
-                        gamepadMapper.bindings = effectiveControllerBindings(currentGame)
-                    }
-                } }.setNegativeButton("Cancel") { _, _ -> showGameDetails(entry) }.showStyled()
-        }
-        val dialog = builder.showStyled()
-        sections.forEach { (heading, rows) ->
-            list.addView(TextView(this).apply {
-                text = heading
-                textSize = Ui.LABEL
-                letterSpacing = 0.14f
-                setTextColor(Ui.ACCENT)
-                setPadding(dp(12), dp(if (heading.isEmpty()) 6 else 14), dp(12), dp(4))
-            })
-            rows.forEach { row ->
-                val item = LinearLayout(this).apply {
-                    orientation = LinearLayout.VERTICAL
-                    setPadding(dp(12), dp(9), dp(12), dp(9))
-                    isFocusable = true
-                    isClickable = true
-                    background = menuHighlight()
-                    setOnClickListener {
-                        if (id == null && row.needsHash) {
-                            toast("This file needs a successful hash before settings can be saved")
-                            return@setOnClickListener
+        GameSettingsSheet.show(this, game.title, entry.playable, id != null, sections,
+            { launchEntry(entry) },
+            if (id == null) null else {{
+                AlertDialog.Builder(this).setTitle("Reset all game settings?")
+                    .setMessage("Remove every custom setting for this game and use its catalog defaults.")
+                    .setPositiveButton("Reset") { _, _ -> saveGameSetting(entry,
+                        "Game settings reset. Machine changes apply on next launch or restart.") {
+                        catalog.resetOverride(id)
+                        if (currentEntry?.contentId == id) {
+                            currentGame = catalog.resolve(id, entry.displayName)
+                            setSecondaryInitialMode(currentGame?.inputSecondary == "touchpad")
+                            gamepadMapper.bindings = effectiveControllerBindings(currentGame)
                         }
-                        dialog.dismiss()
-                        row.action()
-                    }
-                }
-                item.addView(TextView(this).apply {
-                    text = row.title
-                    textSize = Ui.BODY
-                    setTextColor(if (row.destructive) Ui.DANGER else Color.WHITE)
-                })
-                item.addView(TextView(this).apply {
-                    text = row.value
-                    textSize = Ui.LABEL
-                    setTextColor(Ui.TEXT_MUTED)
-                })
-                list.addView(item, LinearLayout.LayoutParams(-1, -2))
-            }
-        }
-        (0 until list.childCount).map(list::getChildAt).firstOrNull { it.isFocusable }?.requestFocus()
+                    } }.setNegativeButton("Cancel") { _, _ -> showGameDetails(entry) }.showStyled()
+            }},
+            { toast("This file needs a successful hash before settings can be saved") })
     }
 
     private fun showGamePreview(entry: LibraryEntry) = showGameArt(entry, "preview", true)
@@ -2956,7 +2805,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
             // The session row reads left to right, the list top to bottom; both walk the same order.
             if (control == "down" || control == "up" || control == "left" || control == "right") {
                 if (event.action == KeyEvent.ACTION_DOWN) {
-                    focusMenuItem(selectedMenuIndex +
+                    focusMenuItem(sessionDrawer.selectedIndex +
                         if (control == "down" || control == "right") 1 else -1)
                 }
                 return true
@@ -2967,7 +2816,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
             }
             if (control == "a") {
                 if (event.action == KeyEvent.ACTION_DOWN && event.repeatCount == 0) {
-                    menuItems[selectedMenuIndex].performClick()
+                    sessionDrawer.activateSelected()
                 }
                 return true
             }

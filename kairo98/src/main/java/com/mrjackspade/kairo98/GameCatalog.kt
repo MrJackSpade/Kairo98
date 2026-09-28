@@ -1,5 +1,8 @@
 package com.mrjackspade.kairo98
 
+import com.mrjackspade.kairo.frontend.LibraryCatalog
+import com.mrjackspade.kairo.frontend.LibraryGame
+
 import android.content.Context
 import android.util.AtomicFile
 import org.json.JSONObject
@@ -13,7 +16,7 @@ import java.text.Normalizer
 import java.util.concurrent.atomic.AtomicBoolean
 
 /** Versioned, data-only metadata. Nothing in this file is executed by Android. */
-class GameCatalog(private val context: Context) {
+class GameCatalog(private val context: Context) : LibraryCatalog {
     data class StartupInput(val key: Char, val enter: Boolean, val screenHashes: Set<Long>)
     data class StartupOption(val id: String, val label: String, val inputs: List<StartupInput>)
     data class StartupChoice(val id: String, val title: String, val screenHashes: Set<Long>,
@@ -25,11 +28,11 @@ class GameCatalog(private val context: Context) {
     data class ArtworkSource(val path: String, val url: String)
     data class Game(
         val contentId: String,
-        val title: String,
-        val description: String?,
+        override val title: String,
+        override val description: String?,
         val eroge: Boolean?,
-        val boxArt: String?,
-        val preview: String?,
+        override val boxArt: String?,
+        override val preview: String?,
         val boxArtUrl: String?,
         val previewUrl: String?,
         val boxArtCatalogPath: String?,
@@ -51,7 +54,9 @@ class GameCatalog(private val context: Context) {
         val diskSwaps: List<DiskSwap>,
         val launchTimeoutMs: Int,
         val overriddenFields: Set<String>
-    )
+    ) : LibraryGame {
+        override val tags: List<String> get() = if (eroge == true) listOf("Eroge") else emptyList()
+    }
 
     private val base = readAsset("catalog/base-v1.json")
     private val nameIndex = readAsset("catalog/name-index-v1.json")
@@ -147,7 +152,7 @@ class GameCatalog(private val context: Context) {
             else record.optJSONObject(field)?.has(subfield) == true
     }
 
-    @Synchronized fun resolve(contentId: String, fileName: String): Game {
+    @Synchronized override fun resolve(contentId: String, fileName: String): Game {
         val merged = JSONObject()
         val baseRecord = base.optJSONObject("games")?.optJSONObject(contentId)
         val shardRecord = shardFor(contentId)?.optJSONObject("games")?.optJSONObject(contentId)
@@ -271,7 +276,7 @@ class GameCatalog(private val context: Context) {
         )
     }
 
-    fun openArtwork(path: String): InputStream = artworkStore.open(path)
+    override fun openArtwork(path: String): InputStream = artworkStore.open(path)
 
     fun missingArtworkFor(entries: List<LibraryEntry>): List<ArtworkSource> {
         if (bundledImages) return emptyList()
@@ -311,7 +316,7 @@ class GameCatalog(private val context: Context) {
     }
 
     /** Hide a known support disk without removing it from media lookup or disk swaps. */
-    @Synchronized fun hiddenFromLibrary(contentId: String): Boolean {
+    @Synchronized override fun hiddenFromLibrary(contentId: String): Boolean {
         if (!validId(contentId)) return false
         fun hidden(source: JSONObject?): Boolean? = source?.optJSONObject("games")
             ?.optJSONObject(contentId)?.opt("hidden") as? Boolean
