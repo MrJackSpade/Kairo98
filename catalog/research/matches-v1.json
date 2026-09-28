@@ -15912,6 +15912,7 @@
         "sha256-hdi-v1:33bc95398aeb8538410d364795ab1590f92586186054b286b023d1e508e4da8f"
       ],
       "description": "",
+      "controller": {"profile": "alice-no-yakata-v1", "bindings": [{"input": "virtual:a", "keys": [28]}, {"input": "virtual:b", "keys": [42]}, {"input": "virtual:x", "keys": [43]}, {"input": "virtual:y", "keys": [52]}, {"input": "virtual:start", "keys": [28]}, {"input": "virtual:select", "keys": [0]}, {"input": "virtual:menu", "action": "menu"}, {"input": "virtual:up", "keys": [58]}, {"input": "virtual:down", "keys": [61]}, {"input": "virtual:left", "keys": [59]}, {"input": "virtual:right", "keys": [60]}, {"input": "virtual:lsup", "mouse": "moveUp"}, {"input": "virtual:lsdown", "mouse": "moveDown"}, {"input": "virtual:lsleft", "mouse": "moveLeft"}, {"input": "virtual:lsright", "mouse": "moveRight"}, {"input": "virtual:rsup", "keys": [67]}, {"input": "virtual:rsdown", "keys": [75]}, {"input": "virtual:rsleft", "keys": [70]}, {"input": "virtual:rsright", "keys": [72]}]},
       "pageUrl": "https://gamesdb.launchbox-app.com/games/details/139332-alice-no-yakata",
       "boxArtUrl": "https://images.launchbox-app.com/4954edb9-4757-48d2-857a-198110b84a2a.jpg",
       "screenshotUrl": "https://images.launchbox-app.com/795898b6-c08b-4982-8f0b-0ba2f50b8358.png"
@@ -15933,6 +15934,7 @@
         "sha256-hdi-v1:b1102e4213a5f1c5746c1d85b0ae8dac9be4881c13dcb60289f236e8564ebe1b"
       ],
       "description": "",
+      "controller": {"profile": "alice-no-yakata-v1", "bindings": [{"input": "virtual:a", "keys": [28]}, {"input": "virtual:b", "keys": [42]}, {"input": "virtual:x", "keys": [43]}, {"input": "virtual:y", "keys": [52]}, {"input": "virtual:start", "keys": [28]}, {"input": "virtual:select", "keys": [0]}, {"input": "virtual:menu", "action": "menu"}, {"input": "virtual:up", "keys": [58]}, {"input": "virtual:down", "keys": [61]}, {"input": "virtual:left", "keys": [59]}, {"input": "virtual:right", "keys": [60]}, {"input": "virtual:lsup", "mouse": "moveUp"}, {"input": "virtual:lsdown", "mouse": "moveDown"}, {"input": "virtual:lsleft", "mouse": "moveLeft"}, {"input": "virtual:lsright", "mouse": "moveRight"}, {"input": "virtual:rsup", "keys": [67]}, {"input": "virtual:rsdown", "keys": [75]}, {"input": "virtual:rsleft", "keys": [70]}, {"input": "virtual:rsright", "keys": [72]}]},
       "pageUrl": "https://gamesdb.launchbox-app.com/games/details/139333-alice-no-yakata-ii",
       "boxArtUrl": "https://images.launchbox-app.com/8123e02e-6271-4806-aafb-a0c765d384f0.png",
       "screenshotUrl": "https://images.launchbox-app.com/4c0db754-27fc-47c7-ae50-25f30deb1d26.png"
@@ -15947,6 +15949,7 @@
       ],
       "contentIds": [],
       "description": "",
+      "controller": {"profile": "alice-no-yakata-v1", "bindings": [{"input": "virtual:a", "keys": [28]}, {"input": "virtual:b", "keys": [42]}, {"input": "virtual:x", "keys": [43]}, {"input": "virtual:y", "keys": [52]}, {"input": "virtual:start", "keys": [28]}, {"input": "virtual:select", "keys": [0]}, {"input": "virtual:menu", "action": "menu"}, {"input": "virtual:up", "keys": [58]}, {"input": "virtual:down", "keys": [61]}, {"input": "virtual:left", "keys": [59]}, {"input": "virtual:right", "keys": [60]}, {"input": "virtual:lsup", "mouse": "moveUp"}, {"input": "virtual:lsdown", "mouse": "moveDown"}, {"input": "virtual:lsleft", "mouse": "moveLeft"}, {"input": "virtual:lsright", "mouse": "moveRight"}, {"input": "virtual:rsup", "keys": [67]}, {"input": "virtual:rsdown", "keys": [75]}, {"input": "virtual:rsleft", "keys": [70]}, {"input": "virtual:rsright", "keys": [72]}]},
       "pageUrl": "https://gamesdb.launchbox-app.com/games/details/139334-alice-no-yakata-iii",
       "boxArtUrl": "https://images.launchbox-app.com/06e27eb3-8599-468f-824b-709d02da12c6.jpg",
       "screenshotUrl": "https://images.launchbox-app.com/c0be105c-c422-42a8-8ba2-f7b46f1eecd0.png"
