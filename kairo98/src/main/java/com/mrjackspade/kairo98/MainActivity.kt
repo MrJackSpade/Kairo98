@@ -344,7 +344,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
                 "Uses the joystick input on the emulated sound board. Games must support joystick 1.",
                 listOf("menu" to "Open menu", "pause" to "Pause or resume",
                     "fastForward" to "Fast forward while held", "restart" to "Restart",
-                    "exit" to "Exit")),
+                    "exit" to "Exit"), ControllerBindings.NUMBER_KEYS),
             { ControllerBindings.toJson(it) })
         val libraryPage = LibraryScreen(this, romLibrary.catalog, LibraryStrings("KAIRO98"),
             ::chooseRomFolder, { refreshLibrary(false) }, { refreshLibrary(true) },
