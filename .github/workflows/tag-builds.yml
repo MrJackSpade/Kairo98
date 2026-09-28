@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: 'Version name for a test build'
+        description: 'Version name for a manual build'
         required: true
         default: '0.1.0-ci'
 
@@ -18,9 +18,11 @@ jobs:
   build:
     runs-on: ubuntu-24.04
     permissions:
-      contents: write
+      contents: read
     steps:
       - uses: actions/checkout@v4
+      - name: Check out pinned Kairo frontend
+        run: bash tools/checkout_shared.sh
       - uses: actions/setup-java@v6
         with:
           distribution: temurin
@@ -64,6 +66,20 @@ jobs:
             echo "Missing release notes: $notes" >&2
             exit 1
           fi
+      - name: Require accessible shared source for a tagged release
+        if: github.event_name == 'push'
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          visibility=$(gh api repos/MrJackSpade/Kairo --jq .private) || {
+            echo "The pinned Kairo frontend source is not publicly accessible" >&2
+            exit 1
+          }
+          if [[ "$visibility" != "false" ]]; then
+            echo "The pinned Kairo frontend source must be public before this release" >&2
+            exit 1
+          fi
       - name: Prepare persistent beta signing key
         env:
           KEYSTORE_B64: ${{ secrets.KAIRO98_BETA_KEYSTORE_B64 }}
@@ -77,32 +93,29 @@ jobs:
           keystore="$RUNNER_TEMP/kairo98-beta.p12"
           printf '%s' "$KEYSTORE_B64" | base64 --decode > "$keystore"
           echo "KAIRO98_BETA_KEYSTORE=$keystore" >> "$GITHUB_ENV"
-      - name: Build both release APKs and the Play bundle
+      - name: Build release APK and matching Play bundle
         env:
           KAIRO98_BETA_PASSWORD: ${{ secrets.KAIRO98_BETA_PASSWORD }}
         run: >-
           ./gradlew --no-daemon
-          :app:assembleWithImagesRelease :app:assembleWithoutImagesRelease
-          :app:bundleWithoutImagesRelease
+          :kairo98:assembleWithoutImagesRelease
+          :kairo98:bundleWithoutImagesRelease
           -Pkairo98VersionName="$KAIRO98_VERSION_NAME"
           -Pkairo98VersionCode="$KAIRO98_VERSION_CODE"
       - name: Verify release signer
         shell: bash
         run: |
           expected="c321ec6b35e2509741362fcc3fede816c81510aa8133d791ea55ce0e1594a51c"
-          bundle=app/build/outputs/bundle/withoutImagesRelease/app-withoutImages-release.aab
-          for apk in \
-            app/build/outputs/apk/withImages/release/app-withImages-release.apk \
-            app/build/outputs/apk/withoutImages/release/app-withoutImages-release.apk; do
-            actual=$("$ANDROID_HOME/build-tools/36.0.0/apksigner" verify --print-certs "$apk" |
-              awk '/Signer #1 certificate SHA-256 digest:/ {print $NF}')
-            if [[ "$actual" != "$expected" ]]; then
-              echo "Unexpected release signing certificate for $apk: $actual" >&2
-              exit 1
-            fi
-            "$ANDROID_HOME/build-tools/36.0.0/aapt" dump badging "$apk" |
-              grep -F "package: name='com.loxifi.kairo98'"
-          done
+          bundle=kairo98/build/outputs/bundle/withoutImagesRelease/kairo98-withoutImages-release.aab
+          apk=kairo98/build/outputs/apk/withoutImages/release/kairo98-withoutImages-release.apk
+          actual=$("$ANDROID_HOME/build-tools/36.0.0/apksigner" verify --print-certs "$apk" |
+            awk '/Signer #1 certificate SHA-256 digest:/ {print $NF}')
+          if [[ "$actual" != "$expected" ]]; then
+            echo "Unexpected release signing certificate for $apk: $actual" >&2
+            exit 1
+          fi
+          "$ANDROID_HOME/build-tools/36.0.0/aapt" dump badging "$apk" |
+            grep -F "package: name='com.loxifi.kairo98'"
           jarsigner -verify "$bundle" | grep -F "jar verified"
           bundle_signer=$(keytool -printcert -jarfile "$bundle" |
             awk '/SHA256:/ {print $2}' | tr -d ':' | tr '[:upper:]' '[:lower:]')
@@ -113,42 +126,13 @@ jobs:
       - name: Audit distribution contents
         run: >-
           python3 tools/audit_play_release.py
-          app/build/outputs/apk/withoutImages/release/app-withoutImages-release.apk
-          app/build/outputs/bundle/withoutImagesRelease/app-withoutImages-release.aab
-          app/build/outputs/apk/withImages/release/app-withImages-release.apk
+          kairo98/build/outputs/apk/withoutImages/release/kairo98-withoutImages-release.apk
+          kairo98/build/outputs/bundle/withoutImagesRelease/kairo98-withoutImages-release.aab
       - uses: actions/upload-artifact@v4
         with:
           name: kairo98-${{ env.KAIRO98_ARTIFACT_REF }}-non-artwork
           path: |
-            app/build/outputs/apk/withoutImages/release/app-withoutImages-release.apk
-            app/build/outputs/bundle/withoutImagesRelease/app-withoutImages-release.aab
+            kairo98/build/outputs/apk/withoutImages/release/kairo98-withoutImages-release.apk
+            kairo98/build/outputs/bundle/withoutImagesRelease/kairo98-withoutImages-release.aab
           if-no-files-found: error
           retention-days: 30
-      - uses: actions/upload-artifact@v4
-        with:
-          name: kairo98-${{ env.KAIRO98_ARTIFACT_REF }}-with-images
-          path: app/build/outputs/apk/withImages/release/app-withImages-release.apk
-          if-no-files-found: error
-          retention-days: 30
-      - name: Publish GitHub Release
-        if: github.event_name == 'push'
-        env:
-          GH_TOKEN: ${{ github.token }}
-        shell: bash
-        run: |
-          tag="$GITHUB_REF_NAME"
-          with_images="$RUNNER_TEMP/Kairo98-$tag-with-images.apk"
-          without_images="$RUNNER_TEMP/Kairo98-$tag-without-images.apk"
-          cp app/build/outputs/apk/withImages/release/app-withImages-release.apk "$with_images"
-          cp app/build/outputs/apk/withoutImages/release/app-withoutImages-release.apk "$without_images"
-          if gh release view "$tag" >/dev/null 2>&1; then
-            gh release upload "$tag" "$with_images" "$without_images" --clobber
-          else
-            release_flags=()
-            if [[ "$tag" == *-* ]]; then
-              release_flags+=(--prerelease)
-            fi
-            gh release create "$tag" "$with_images" "$without_images" \
-              --verify-tag "${release_flags[@]}" --title "Kairo98 $KAIRO98_VERSION_NAME" \
-              --notes-file "docs/releases/$tag.md"
-          fi

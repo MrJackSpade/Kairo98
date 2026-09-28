@@ -1,5 +1,22 @@
 package com.mrjackspade.kairo98
 
+import com.mrjackspade.kairo.frontend.GuestKeyboardPanel
+
+import com.mrjackspade.kairo.frontend.InputRouter
+import com.mrjackspade.kairo.frontend.JoystickInputRouter
+import com.mrjackspade.kairo.frontend.GamepadMapper
+import com.mrjackspade.kairo.frontend.OnScreenControls
+import com.mrjackspade.kairo.frontend.ControllerEditor
+import com.mrjackspade.kairo.frontend.ControllerBinding
+import com.mrjackspade.kairo.frontend.SettingsEntry
+import com.mrjackspade.kairo.frontend.TouchInputSettingsDialog
+
+import com.mrjackspade.kairo.frontend.MouseInputRouter
+import com.mrjackspade.kairo.frontend.PhysicalControllerBinding
+import com.mrjackspade.kairo.frontend.PhysicalControllerBindings
+import com.mrjackspade.kairo.frontend.PixelTextView
+import com.mrjackspade.kairo.frontend.Ui
+
 import android.app.Activity
 import android.app.ActivityOptions
 import android.app.AlertDialog
@@ -38,8 +55,6 @@ import android.widget.EditText
 import android.widget.ImageView
 import android.widget.SeekBar
 import android.widget.LinearLayout
-import android.widget.RadioButton
-import android.widget.RadioGroup
 import android.widget.ScrollView
 import android.widget.TextView
 import android.widget.Toast
@@ -88,7 +103,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
     private val joystickRouter = JoystickInputRouter(::nativeJoystick)
     private val mouseRouter = MouseInputRouter(::nativeMouseMove, ::nativeMouseButton)
     private val gamepadMapper = GamepadMapper(inputRouter, joystickRouter, mouseRouter,
-        ::controllerAction, ::controllerActionReleased)
+        ::controllerAction, ::controllerActionReleased, ControllerBindings.defaults())
     private lateinit var inputManager: InputManager
     private val inputDeviceListener = object : InputManager.InputDeviceListener {
         override fun onInputDeviceAdded(deviceId: Int) = Unit
@@ -100,14 +115,14 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
     private val handler = Handler(Looper.getMainLooper())
     private lateinit var root: FrameLayout
     private lateinit var screen: SurfaceView
-    private lateinit var keyboardPanel: Pc98KeyboardPanel
-    private lateinit var swappedKeyboardPanel: Pc98KeyboardPanel
+    private lateinit var keyboardPanel: GuestKeyboardPanel
+    private lateinit var swappedKeyboardPanel: GuestKeyboardPanel
     private lateinit var secondaryKeyboard: SecondaryKeyboardDisplay
     private lateinit var onScreenControls: OnScreenControls
     private lateinit var libraryScreen: LibraryScreen
     private lateinit var firstRunSetup: FirstRunSetup
     private lateinit var romLibrary: RomLibrary
-    private lateinit var controllerEditor: ControllerEditor
+    private lateinit var controllerEditor: ControllerEditor<LibraryEntry>
     private var libraryVisible = true
     private var romTree: Uri? = null
     private var scanCancelled = AtomicBoolean(false)
@@ -296,7 +311,9 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
                 gamepadMapper.deadZone = value
                 preferences.edit().putFloat("controller_dead_zone", value).apply()
             }, ::applyPauseState, ::showOnScreenControls,
-            { onScreenControls.eightWayDpad }, { onScreenControls.eightWayDpad = it })
+            { onScreenControls.eightWayDpad }, { onScreenControls.eightWayDpad = it },
+            LibraryEntry::id, Pc98KeyNames::label, ControllerBindings.JOYSTICK,
+            { ControllerBindings.toJson(it) })
         libraryScreen = LibraryScreen(this, romLibrary.catalog,
             ::chooseRomFolder, { refreshLibrary(false) }, { refreshLibrary(true) },
             { updateGameCatalog(false) },
@@ -379,9 +396,10 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
         root.addOnLayoutChangeListener { _, _, _, _, _, _, _, _, _ -> updateViewport() }
         onScreenControls = OnScreenControls(this, root, gamepadMapper, preferences, ::applyPauseState)
 
-        keyboardPanel = Pc98KeyboardPanel(this, inputRouter, ::hideKeyboard)
+        keyboardPanel = GuestKeyboardPanel(this, inputRouter, Pc98KeyboardLayout.value, ::hideKeyboard)
         root.addView(keyboardPanel, FrameLayout.LayoutParams(-1, dp(260), Gravity.BOTTOM))
-        swappedKeyboardPanel = Pc98KeyboardPanel(this, inputRouter, {}, showClose = false,
+        swappedKeyboardPanel = GuestKeyboardPanel(this, inputRouter, Pc98KeyboardLayout.value,
+            {}, showClose = false,
             onSwap = { secondaryKeyboard.toggleSwap() }, mouse = mouseRouter)
         root.addView(swappedKeyboardPanel, FrameLayout.LayoutParams(-1, -1))
 
@@ -489,28 +507,13 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
 
     private fun menuItem(content: LinearLayout, title: String, detail: () -> String,
                          action: () -> Unit) {
-        val item = LinearLayout(this).apply {
-            orientation = LinearLayout.VERTICAL
-            minimumHeight = dp(56)
-            setPadding(dp(14), dp(9), dp(12), dp(9))
-            isFocusable = true
-            isClickable = true
-            background = menuHighlight()
-            setOnClickListener { clicked ->
-                focusMenuItem(menuItems.indexOf(clicked))
-                action()
-            }
+        val row = Ui.actionRow(this, title, detail) { clicked ->
+            focusMenuItem(menuItems.indexOf(clicked))
+            action()
         }
-        item.addView(TextView(this).apply {
-            text = title
-            textSize = Ui.BODY
-            setTextColor(Ui.TEXT)
-        })
-        val value = Ui.text(this, detail(), Ui.SECONDARY, Ui.TEXT_MUTED)
-        item.addView(value)
-        content.addView(item, LinearLayout.LayoutParams(-1, -2))
-        menuItems.add(item)
-        menuValues.add(value to detail)
+        content.addView(row.view, LinearLayout.LayoutParams(-1, -2))
+        menuItems.add(row.view)
+        menuValues.add(row.detail to detail)
     }
 
 
@@ -2036,49 +2039,17 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
         val direct = if (entry == null) globalTouchDirect
             else (game?.inputTouch ?: touchStorage(globalTouchDirect)) == "direct"
         val secondaryTouchpad = game?.inputSecondary == "touchpad"
-        val body = LinearLayout(this).apply {
-            orientation = LinearLayout.VERTICAL
-            setPadding(dp(22), dp(8), dp(22), 0)
-        }
-        fun heading(text: String) = Ui.sectionLabel(this, text).apply { setPadding(0, dp(14), 0, dp(4)) }
-        fun group(labels: List<String>, selected: Int) = RadioGroup(this).apply {
-            labels.forEachIndexed { index, label ->
-                addView(RadioButton(this@MainActivity).apply {
-                    id = View.generateViewId()
-                    text = label
-                    textSize = Ui.SECONDARY
-                    isChecked = index == selected
-                })
-            }
-        }
-        body.addView(heading("SCREEN TAP"))
-        val modeGroup = group(listOf("Auto (follows what the game reads)",
-            "Keyboard (tap opens the PC-98 keyboard)", "Mouse"), modes.indexOf(mode))
-        body.addView(modeGroup)
-        body.addView(heading("MOUSE TOUCH"))
-        val touchGroup = group(listOf("Touchpad (drag to move, tap to click)",
-            "Direct tap (click where you touch)"), if (direct) 1 else 0)
-        body.addView(touchGroup)
-        val secondaryGroup = if (entry != null) {
-            body.addView(heading("SECOND SCREEN START MODE"))
-            group(listOf("Keyboard", "Mouse touchpad"), if (secondaryTouchpad) 1 else 0)
-                .also { body.addView(it) }
-        } else null
-        body.addView(TextView(this).apply {
-            text = "Direct tap lands on the touched point in games that move the cursor one pixel " +
-                "per mouse count and stop it at the screen's top-left edge."
-            textSize = Ui.LABEL
-            setTextColor(Ui.TEXT_MUTED)
-            setPadding(0, dp(6), 0, dp(8))
-        })
-        fun checkedIndex(group: RadioGroup) =
-            (0 until group.childCount).indexOfFirst { (group.getChildAt(it) as RadioButton).isChecked }
-        val builder = AlertDialog.Builder(this)
-            .setTitle(if (entry == null) "Touch input" else "Touch input for ${game?.title}")
-            .setView(ScrollView(this).apply { addView(body) })
-            .setPositiveButton("Save") { _, _ ->
-                val chosenMode = modes[checkedIndex(modeGroup).coerceAtLeast(0)]
-                val chosenDirect = checkedIndex(touchGroup) == 1
+        TouchInputSettingsDialog.builder(this, TouchInputSettingsDialog.Options(
+            title = if (entry == null) "Touch input" else "Touch input for ${game?.title}",
+            modeLabels = listOf("Auto (follows what the game reads)",
+                "Keyboard (tap opens the PC-98 keyboard)", "Mouse"),
+            modeIndex = modes.indexOf(mode),
+            directTouch = direct,
+            secondaryTouchpad = if (entry == null) null else secondaryTouchpad,
+            directTouchExplanation = "Direct tap lands on the touched point in games that move the " +
+                "cursor one pixel per mouse count and stop it at the screen's top-left edge.",
+            onSave = { chosenModeIndex, chosenDirect, chosenSecondary ->
+                val chosenMode = modes[chosenModeIndex]
                 if (entry == null) {
                     globalInputMode = chosenMode
                     globalTouchDirect = chosenDirect
@@ -2088,33 +2059,33 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
                 } else {
                     val chosenModeValue = InputModeDecider.storageValue(chosenMode)
                     val chosenTouch = touchStorage(chosenDirect)
-                    val chosenSecondary = if (secondaryGroup != null &&
-                        checkedIndex(secondaryGroup) == 1) "touchpad" else "keyboard"
+                    val chosenSecondaryValue = if (chosenSecondary == true) "touchpad" else "keyboard"
                     val changes = linkedMapOf<String, Any?>()
                     if (chosenModeValue != (game?.inputMode ?:
                             InputModeDecider.storageValue(globalInputMode)))
                         changes["mode"] = chosenModeValue
                     if (chosenTouch != (game?.inputTouch ?: touchStorage(globalTouchDirect)))
                         changes["touch"] = chosenTouch
-                    if (chosenSecondary != (game?.inputSecondary ?: "keyboard"))
-                        changes["secondary"] = chosenSecondary
+                    if (chosenSecondaryValue != (game?.inputSecondary ?: "keyboard"))
+                        changes["secondary"] = chosenSecondaryValue
                     if (changes.isNotEmpty()) romLibrary.catalog.updateOverrideSubfields(
                         entry.contentId!!, "input", changes)
-                    if (currentEntry?.contentId == entry.contentId) {
+                    if (entry.contentId != null && currentEntry?.contentId == entry.contentId) {
                         currentGame = romLibrary.catalog.resolve(entry.contentId, entry.displayName)
                         setSecondaryInitialMode(currentGame?.inputSecondary == "touchpad")
                     }
                 }
+            },
+            onReset = entry?.let { selectedEntry ->
+                {
+                    romLibrary.catalog.resetOverride(selectedEntry.contentId!!, "input")
+                    if (currentEntry?.contentId == selectedEntry.contentId) {
+                        currentGame = romLibrary.catalog.resolve(selectedEntry.contentId, selectedEntry.displayName)
+                        setSecondaryInitialMode(currentGame?.inputSecondary == "touchpad")
+                    }
+                }
             }
-            .setNegativeButton("Cancel", null)
-        if (entry != null) builder.setNeutralButton("Use catalog defaults") { _, _ ->
-            romLibrary.catalog.resetOverride(entry.contentId!!, "input")
-            if (currentEntry?.contentId == entry.contentId) {
-                currentGame = romLibrary.catalog.resolve(entry.contentId, entry.displayName)
-                setSecondaryInitialMode(currentGame?.inputSecondary == "touchpad")
-            }
-        }
-        builder.showStyled()
+        )).showStyled()
     }
 
     private fun showAbout() {

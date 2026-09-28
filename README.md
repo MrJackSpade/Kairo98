@@ -44,3 +44,5 @@ Kairo98 is still being tested across PC-98 games. If a game fails to boot, has g
 Kairo98 is an independent project built from a pinned Neko Project 21/W core with [ymfm](https://github.com/aaronsgiles/ymfm) sound emulation. It is not an official Neko Project 21/W release.
 
 See the [roadmap](docs/roadmap.md), [game catalog notes](docs/game-catalog.md), and [licensing and credits](docs/licensing.md) for more detail.
+
+First-party Kairo98 code is [GPL-2.0-or-later](LICENSE.md). The shared [Kairo frontend](https://github.com/MrJackSpade/Kairo) is pinned as a submodule. That repository remains private while its distribution audit is completed; builds in this transition use authenticated CI access. No new binary is release-ready until the shared source is available to its recipients, the license audit is complete, and a game boots on an Android device.

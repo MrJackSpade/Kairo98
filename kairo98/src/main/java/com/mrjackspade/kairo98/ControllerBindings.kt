@@ -1,18 +1,19 @@
 package com.mrjackspade.kairo98
 
+import com.mrjackspade.kairo.frontend.MouseInputRouter
+import com.mrjackspade.kairo.frontend.PhysicalControllerBindings
+import com.mrjackspade.kairo.frontend.ControllerBinding
+import com.mrjackspade.kairo.frontend.JoystickInputRouter
+
 import org.json.JSONArray
 import org.json.JSONObject
-
-data class ControllerBinding(val input: String, val keys: List<Int> = emptyList(),
-                             val action: String? = null, val joystick: String? = null,
-                             val mouse: String? = null)
 
 /** Assigns stable virtual controls to PC-98 keys, joystick, mouse, or app actions. */
 object ControllerBindings {
     // Physical inputs remain valid while old user profiles are being migrated.
     private val INPUT = Regex("(?:virtual:[a-z0-9]+|button:[0-9]{1,4}|(?:axis|hat):[0-9]{1,3}:[+-])")
     private val ACTIONS = setOf("menu", "pause", "restart", "exit", "fastForward")
-    val JOYSTICK = listOf("up", "down", "left", "right", "button1", "button2")
+    val JOYSTICK = JoystickInputRouter.DEFAULT_CONTROLS
 
     fun valid(array: JSONArray): Boolean {
         if (array.length() > 128) return false

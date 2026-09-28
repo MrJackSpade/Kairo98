@@ -1,0 +1,98 @@
+name: Android debug build
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/android.yml'
+      - 'build.gradle.kts'
+      - 'settings.gradle.kts'
+      - 'gradle/**'
+      - 'gradle.properties'
+      - 'gradlew'
+      - 'kairo98/**'
+      - 'shared'
+      - 'tools/checkout_shared.sh'
+  pull_request:
+    paths:
+      - '.github/workflows/android.yml'
+      - 'build.gradle.kts'
+      - 'settings.gradle.kts'
+      - 'gradle/**'
+      - 'gradle.properties'
+      - 'gradlew'
+      - 'kairo98/**'
+      - 'shared'
+      - 'tools/checkout_shared.sh'
+  workflow_dispatch:
+    inputs:
+      signed_device_test:
+        description: 'Build an APK that updates the installed beta-signed app'
+        type: boolean
+        default: false
+      version_code:
+        description: 'Version code greater than the installed app'
+        type: string
+        default: '700'
+      version_name:
+        description: 'Version name for signed device test'
+        type: string
+        default: '0.7.0'
+
+jobs:
+  build:
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check out pinned Kairo frontend
+        run: bash tools/checkout_shared.sh
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: android-actions/setup-android@v4
+        with:
+          packages: 'platform-tools platforms;android-36 build-tools;36.0.0 ndk;28.2.13676358 cmake;3.22.1'
+      - uses: gradle/actions/setup-gradle@v4
+      - name: Prepare persistent beta signing key
+        if: inputs.signed_device_test
+        env:
+          KEYSTORE_B64: ${{ secrets.KAIRO98_BETA_KEYSTORE_B64 }}
+          KAIRO98_BETA_PASSWORD: ${{ secrets.KAIRO98_BETA_PASSWORD }}
+          TEST_VERSION_CODE: ${{ inputs.version_code }}
+          TEST_VERSION_NAME: ${{ inputs.version_name }}
+        run: |
+          if [[ -z "$KEYSTORE_B64" || -z "$KAIRO98_BETA_PASSWORD" ]]; then
+            echo "Beta signing secrets are missing" >&2
+            exit 1
+          fi
+          if [[ ! "$TEST_VERSION_CODE" =~ ^[1-9][0-9]*$ ]] ||
+             [[ ! "$TEST_VERSION_NAME" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?$ ]]; then
+            echo "Invalid test version" >&2
+            exit 1
+          fi
+          keystore="$RUNNER_TEMP/kairo98-beta.p12"
+          printf '%s' "$KEYSTORE_B64" | base64 --decode > "$keystore"
+          echo "KAIRO98_BETA_KEYSTORE=$keystore" >> "$GITHUB_ENV"
+      - name: Build ordinary debug APK
+        if: ${{ !inputs.signed_device_test }}
+        run: ./gradlew --no-daemon :kairo98:assembleWithoutImagesDebug
+      - name: Build signed device test APK
+        if: inputs.signed_device_test
+        env:
+          KAIRO98_BETA_PASSWORD: ${{ secrets.KAIRO98_BETA_PASSWORD }}
+          TEST_VERSION_CODE: ${{ inputs.version_code }}
+          TEST_VERSION_NAME: ${{ inputs.version_name }}
+        run: >-
+          ./gradlew --no-daemon :kairo98:assembleWithoutImagesDebug
+          -Pkairo98VersionName="$TEST_VERSION_NAME"
+          -Pkairo98VersionCode="$TEST_VERSION_CODE"
+      - name: Upload signed device test APK
+        if: inputs.signed_device_test
+        uses: actions/upload-artifact@v4
+        with:
+          name: kairo98-signed-device-test
+          path: kairo98/build/outputs/apk/withoutImages/debug/*.apk
+          if-no-files-found: error
+          retention-days: 7

@@ -1,5 +1,7 @@
 package com.mrjackspade.kairo98
 
+import com.mrjackspade.kairo.frontend.Ui
+
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
@@ -67,7 +69,7 @@ class GameDetailPage(
             setPadding(dp(4), 0, dp(14), 0)
             background = Ui.focusable(context, Color.TRANSPARENT, null)
             setOnClickListener { back() }
-            addView(Ui.icon(context, R.drawable.ic_back, Ui.ACCENT_SOFT, 20))
+            addView(Ui.icon(context, com.mrjackspade.kairo.frontend.R.drawable.ic_back, Ui.ACCENT_SOFT, 20))
             addView(Ui.text(context, "Library", Ui.BODY, Ui.ACCENT_SOFT).apply { setPadding(dp(4), 0, 0, 0) })
         }
         body.addView(backButton, LinearLayout.LayoutParams(-2, dp(44)))

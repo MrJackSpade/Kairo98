@@ -1,6 +1,6 @@
 # Source import policy
 
-This repository is independent. It will have one Git remote, `origin`, pointing to this project's repository. Do not add an `upstream` remote, fork relationship, submodule, subtree sync, or automated upstream merge.
+This repository is independent. Its only Git remote is `origin`, pointing to this project's repository. The first-party Kairo frontend is pinned at `shared/` as a submodule. Do not add an `upstream` remote, fork relationship, other submodule, subtree sync, or automated upstream merge.
 
 ## 21/W snapshot
 
@@ -12,7 +12,7 @@ The copied source has no `sound/fmgen/`, `sound/mame/`, `fpemul_dosbox.c`, or `f
 
 ## ymfm snapshot
 
-A pinned [ymfm](https://github.com/aaronsgiles/ymfm) source snapshot is in `third_party/ymfm/`. Its root `.gitignore` was omitted; the `LICENSE` file, source, and examples are preserved. Android compiles only `ymfm_opn.cpp`, `ymfm_adpcm.cpp`, and `ymfm_ssg.cpp` from this snapshot. The project-owned adapter is `app/src/main/cpp/android_host/ymfm_bridge.cpp`; it receives 21/W OPNA register writes and supplies FM, SSG, and ADPCM-B PCM to the sound mixer. The adapter uses the existing 21/W 256 KiB ADPCM RAM. It reads an optional user-imported 8 KiB `ym2608_adpcm_rom.bin` for ymfm's rhythm channels; without that ROM, the legacy 21/W rhythm WAV path remains available for external `2608_*.wav` files. No rhythm ROM or WAV is bundled.
+A pinned [ymfm](https://github.com/aaronsgiles/ymfm) source snapshot is in `third_party/ymfm/`. Its root `.gitignore` was omitted; the `LICENSE` file, source, and examples are preserved. Android compiles only `ymfm_opn.cpp`, `ymfm_adpcm.cpp`, and `ymfm_ssg.cpp` from this snapshot. The project-owned adapter is `kairo98/src/main/cpp/android_host/ymfm_bridge.cpp`; it receives 21/W OPNA register writes and supplies FM, SSG, and ADPCM-B PCM to the sound mixer. The adapter uses the existing 21/W 256 KiB ADPCM RAM. It reads an optional user-imported 8 KiB `ym2608_adpcm_rom.bin` for ymfm's rhythm channels; without that ROM, the legacy 21/W rhythm WAV path remains available for external `2608_*.wav` files. No rhythm ROM or WAV is bundled.
 
 ## Spleen bitmap font
 
@@ -24,11 +24,11 @@ Japanese glyphs use the public-domain [Shinonome](http://openlab.ring.gr.jp/efon
 
 ## Bundled FONT.BMP
 
-`tools/generate_font_bmp.py` writes `app/src/main/assets/font/kairo98-font.bmp`, a 2048x2048 monochrome bitmap in the layout 21/W's FONT.BMP loader reads. It follows 21/W's `font/fontmake.c`: ANK 0x20-0x7E and 0xA1-0xDF and JIS X 0208 kanji and symbols come from Shinonome, and 21/W's built-in `font/fontdata.res` glyphs supply the ANK graphic characters, half-width row 0x2B, and NEC row 0x2C. Half-width rows 0x29-0x2A and the other derived glyphs are converted from those with fontmake.c's `copyglyph` rules. The kanji use fontmake.c's JIS 78 code swaps and PC-98 unassigned-code filter. The app uses this bitmap when no FONT.BMP is imported. It has no NEC row 0x2D special characters or IBM extension kanji in rows 0x78-0x7C, because Shinonome covers only JIS X 0208.
+`tools/generate_font_bmp.py` writes `kairo98/src/main/assets/font/kairo98-font.bmp`, a 2048x2048 monochrome bitmap in the layout 21/W's FONT.BMP loader reads. It follows 21/W's `font/fontmake.c`: ANK 0x20-0x7E and 0xA1-0xDF and JIS X 0208 kanji and symbols come from Shinonome, and 21/W's built-in `font/fontdata.res` glyphs supply the ANK graphic characters, half-width row 0x2B, and NEC row 0x2C. Half-width rows 0x29-0x2A and the other derived glyphs are converted from those with fontmake.c's `copyglyph` rules. The kanji use fontmake.c's JIS 78 code swaps and PC-98 unassigned-code filter. The app uses this bitmap when no FONT.BMP is imported. It has no NEC row 0x2D special characters or IBM extension kanji in rows 0x78-0x7C, because Shinonome covers only JIS X 0208.
 
 ## Kairo98 launcher artwork
 
-The Kairo98 launcher artwork was added on 25 September 2026. The original PNG is preserved as `app/src/main/res/drawable-nodpi/kairo98_icon_art.png` (SHA-256 `855676faeb93c96a852415aa2b305c71479d2603db0fae09fbffddf1109bb947`). Android uses it in both APK variants; the adaptive icon XML adds a dark background and inset without changing the PNG.
+The Kairo98 launcher artwork was added on 25 September 2026. The original PNG is preserved as `kairo98/src/main/res/drawable-nodpi/kairo98_icon_art.png` (SHA-256 `855676faeb93c96a852415aa2b305c71479d2603db0fae09fbffddf1109bb947`). Android uses it in both APK variants; the adaptive icon XML adds a dark background and inset without changing the PNG.
 
 ## Provenance record
 

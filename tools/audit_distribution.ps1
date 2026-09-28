@@ -1,13 +1,13 @@
 $ErrorActionPreference = 'Stop'
 $root = (Resolve-Path (Join-Path $PSScriptRoot '..')).Path
-$compilerDbs = @(Get-ChildItem -LiteralPath (Join-Path $root 'app/.cxx') -Recurse -Filter 'compile_commands.json' -File)
+$compilerDbs = @(Get-ChildItem -LiteralPath (Join-Path $root 'kairo98/.cxx') -Recurse -Filter 'compile_commands.json' -File)
 $apkPaths = @(
-    'app/build/outputs/apk/withImages/debug/app-withImages-debug.apk',
-    'app/build/outputs/apk/withoutImages/debug/app-withoutImages-debug.apk'
+    'kairo98/build/outputs/apk/withImages/debug/kairo98-withImages-debug.apk',
+    'kairo98/build/outputs/apk/withoutImages/debug/kairo98-withoutImages-debug.apk'
 )
 $bundlePaths = @(
-    'app/build/outputs/bundle/withImagesRelease/app-withImages-release.aab',
-    'app/build/outputs/bundle/withoutImagesRelease/app-withoutImages-release.aab'
+    'kairo98/build/outputs/bundle/withImagesRelease/kairo98-withImages-release.aab',
+    'kairo98/build/outputs/bundle/withoutImagesRelease/kairo98-withoutImages-release.aab'
 )
 
 function Sha256([System.IO.Stream]$stream) {
@@ -33,17 +33,17 @@ $blockedFlags = @($commands | Where-Object { $_.command -match '(?i)-D(SUPPORT_F
 if ($blockedFlags.Count) { throw 'Blocked native build definition found' }
 $np21w = @($sourcePaths | Where-Object { $_ -match '/third_party/np21w/' })
 $ymfm = @($sourcePaths | Where-Object { $_ -match '/third_party/ymfm/' })
-$hostSources = @($sourcePaths | Where-Object { $_ -match '/app/src/main/cpp/' })
+$hostSources = @($sourcePaths | Where-Object { $_ -match '/kairo98/src/main/cpp/' })
 if ($ymfm.Count -ne 3 -or @($hostSources | Where-Object { $_ -match '/ymfm_bridge.cpp$' }).Count -ne 1) {
     throw 'Expected ymfm bridge and three pinned ymfm sources'
 }
 
 Add-Type -AssemblyName System.IO.Compression.FileSystem
-$noticeFile = [System.IO.File]::OpenRead((Join-Path $root 'app/src/main/assets/THIRD_PARTY_NOTICES.txt'))
+$noticeFile = [System.IO.File]::OpenRead((Join-Path $root 'kairo98/src/main/assets/THIRD_PARTY_NOTICES.txt'))
 try { $expectedNoticeHash = Sha256 $noticeFile } finally { $noticeFile.Dispose() }
-$iconFile = [System.IO.File]::OpenRead((Join-Path $root 'app/src/main/res/drawable-nodpi/kairo98_icon_art.png'))
+$iconFile = [System.IO.File]::OpenRead((Join-Path $root 'kairo98/src/main/res/drawable-nodpi/kairo98_icon_art.png'))
 try { $expectedIconHash = Sha256 $iconFile } finally { $iconFile.Dispose() }
-$noticeText = [System.IO.File]::ReadAllText((Join-Path $root 'app/src/main/assets/THIRD_PARTY_NOTICES.txt'))
+$noticeText = [System.IO.File]::ReadAllText((Join-Path $root 'kairo98/src/main/assets/THIRD_PARTY_NOTICES.txt'))
 if ($noticeText -notmatch 'Android NDK 28\.2\.13676358 LLVM' -or $noticeText -notmatch 'libc\+\+abi') {
     throw 'Static C++ runtime notice missing'
 }

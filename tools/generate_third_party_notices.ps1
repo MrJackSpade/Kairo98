@@ -26,5 +26,5 @@ foreach ($notice in $notices) {
     [void]$content.AppendLine(('=' * 72))
     [void]$content.AppendLine($source)
 }
-$destination = Join-Path $root 'app/src/main/assets/THIRD_PARTY_NOTICES.txt'
+$destination = Join-Path $root 'kairo98/src/main/assets/THIRD_PARTY_NOTICES.txt'
 [System.IO.File]::WriteAllText($destination, $content.ToString(), [System.Text.UTF8Encoding]::new($false))

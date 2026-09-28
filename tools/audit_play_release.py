@@ -39,7 +39,7 @@ def inspect(path: pathlib.Path, bundle: bool, allow_art: bool = False) -> dict[s
         )
         for asset in REQUIRED:
             assert prefix + asset in files, f"Missing {asset} in {path}"
-            expected = (ROOT / "app/src/main" / asset).read_bytes()
+            expected = (ROOT / "kairo98/src/main" / asset).read_bytes()
             assert archive.read(prefix + asset) == expected, (
                 f"Packaged {asset} differs from source in {path}"
             )

@@ -1,5 +1,12 @@
 package com.mrjackspade.kairo98
 
+import com.mrjackspade.kairo.frontend.GuestKeyboardPanel
+
+import com.mrjackspade.kairo.frontend.InputRouter
+
+import com.mrjackspade.kairo.frontend.MouseInputRouter
+import com.mrjackspade.kairo.frontend.Ui
+
 import android.app.Activity
 import android.app.ActivityManager
 import android.app.ActivityOptions
@@ -197,11 +204,12 @@ internal class SecondaryKeyboardDisplay(
         }
     }
 
-    internal fun attachCompanion(value: SecondaryKeyboardActivity): Pc98KeyboardPanel {
+    internal fun attachCompanion(value: SecondaryKeyboardActivity): GuestKeyboardPanel {
         companionStarting = false
         companion = value
         onAvailabilityChanged(true)
-        return Pc98KeyboardPanel(value, input, {}, showClose = false, onSwap = ::toggleSwap,
+        return GuestKeyboardPanel(value, input, Pc98KeyboardLayout.value, {},
+            showClose = false, onSwap = ::toggleSwap,
             mouse = mouse).also { it.setInitialMode(touchpadMode) }
     }
 
@@ -257,7 +265,7 @@ internal class SecondaryKeyboardDisplay(
             window?.decorView?.systemUiVisibility = View.SYSTEM_UI_FLAG_FULLSCREEN or
                 View.SYSTEM_UI_FLAG_HIDE_NAVIGATION or View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
             content = SecondaryKeyboardContent(context,
-                Pc98KeyboardPanel(context, input, {}, showClose = false,
+                GuestKeyboardPanel(context, input, Pc98KeyboardLayout.value, {}, showClose = false,
                     onSwap = ::toggleSwap, mouse = mouse), ::forwardGameSurface, onGameTouch)
             setContentView(content)
         }
@@ -283,7 +291,7 @@ internal class SecondaryKeyboardDisplay(
 
 internal class SecondaryKeyboardContent(
     context: Context,
-    private val keyboard: Pc98KeyboardPanel,
+    private val keyboard: GuestKeyboardPanel,
     private val onGameSurface: (Surface?, Int, Int) -> Unit,
     private val onGameTouch: (MotionEvent, Int, Int) -> Boolean
 ) : FrameLayout(context), SurfaceHolder.Callback {

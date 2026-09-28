@@ -1,5 +1,7 @@
 package com.mrjackspade.kairo98
 
+import com.mrjackspade.kairo.frontend.Ui
+
 import android.app.Activity
 import android.graphics.Color
 import android.graphics.drawable.GradientDrawable
