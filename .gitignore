@@ -15,6 +15,7 @@ cmake-build-*/
 out/
 
 # Local data and firmware
+/docs/local/
 /.downloads/
 /roms/
 /bios/

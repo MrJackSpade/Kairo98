@@ -1,34 +1,32 @@
 # Kairo98
 
-Kairo98 is a PC-98 emulator for Android, built for phones and handhelds. Browse your games, open one to see its details, and play with a controller or touch controls.
+Kairo98 is an Android PC-98 emulator for phones and handhelds. It combines a game library, controller and touch mapping, an on-screen PC-98 keyboard, and per-game settings with a pinned Neko Project 21/W emulator core and [ymfm](https://github.com/aaronsgiles/ymfm) sound emulation. It is an independent project, not an official release of either core.
 
-Kairo98 is in active development, and game compatibility varies.
+[KairoDos](https://github.com/MrJackSpade/KairoDos) is the companion Android DOS emulator. Both apps use the [Kairo shared frontend](https://github.com/MrJackSpade/Kairo) for their library and controls. The [Kairo98 translation project](https://github.com/MrJackSpade/Kairo98-Patches) provides separate English patch work for PC-98 games.
 
 ## Screenshots
 
 | Game library | Game details |
 | --- | --- |
-| ![Kairo98 game library showing translated PC-98 games](docs/screenshots/library.png) | ![Rusty game details in Kairo98](docs/screenshots/game-details.png) |
+| ![Kairo98 game library](docs/screenshots/library.png) | ![Game details in Kairo98](docs/screenshots/game-details.png) |
 | Playing a game | On-screen keyboard |
-| ![Rusty running in Kairo98 on Android](docs/screenshots/running-game.png) | ![Kairo98 on-screen PC-98 keyboard](docs/screenshots/keyboard.png) |
+| ![A game running in Kairo98](docs/screenshots/running-game.png) | ![Kairo98 PC-98 keyboard](docs/screenshots/keyboard.png) |
 
-These screenshots show a development build on a Retroid Pocket Classic. Game images in the screenshots are not bundled with the non-artwork app.
+Games shown in screenshots are user-provided and are not bundled with the app.
 
-## Get started
+## Install and add games
 
-1. Download the non-artwork APK from [GitHub Releases](https://github.com/MrJackSpade/Kairo98/releases) and install it on an **ARM64 device running Android 8.0 or newer**.
-2. On first launch, choose the folder containing your PC-98 disk images. You can skip this and choose a folder later from the library menu.
-3. Tap a game to open its details, then tap **Play**. A controller can navigate the library too.
+1. Install the APK from [GitHub Releases](https://github.com/MrJackSpade/Kairo98/releases) on an ARM64 device running Android 8.0 or newer.
+2. Open Kairo98 and select a folder containing your PC-98 disks. You can choose or change the folder from the library menu later.
+3. Select a game, review its details, and tap **Play**.
 
-The library reads HDI hard disks and supported floppy formats, including FDI, D88, NFD, HDM, and XDF. Images can be loose files or inside ZIP archives. Kairo98 matches known games by the disk image's contents, so recompressing a ZIP does not change its catalog match. Some games need a separate boot floppy or a specific setup; support for those is still being expanded.
+The library accepts HDI hard disks and supported floppy formats including FDI, D88, NFD, HDM, and XDF, as loose files or inside ZIP archives. Catalog matches use disk contents, so recompressing an archive does not change its identity. Some games require a separate boot disk, manual disk swap, or imported firmware. Games, operating systems, and firmware are not supplied.
 
-Use **Library menu → Download missing images** to fetch artwork for games in your library. Downloads are saved in the app and can be retried. The paid Google Play edition is built from the same source revision with the same features and behavior.
+The library menu can download missing artwork for games it recognizes. The free GitHub and paid Google Play editions have the same features and behavior.
 
-Games and firmware are not included with Kairo98.
+## Use with LaunchBox for Android
 
-## LaunchBox for Android
-
-Import your PC-98 game files into LaunchBox's NEC PC-9801 platform. Open that platform, tap the **top-right three-dot menu → Emulator Settings**, and set **Default Emulator** to **Custom Emulator** (the option without “With Code”). Enter:
+Import your PC-98 files into LaunchBox's **NEC PC-9801** platform. Open that platform, tap the **top-right three-dot menu → Emulator Settings**, and choose **Custom Emulator** as the default emulator (without “With Code”). Enter:
 
 | Setting | Value |
 | --- | --- |
@@ -36,27 +34,36 @@ Import your PC-98 game files into LaunchBox's NEC PC-9801 platform. Open that pl
 | Custom Emulator Activity Name | `com.loxifi.kairo98.Launch` |
 | Custom Emulator ROM Path Key | `ROM` |
 
-Leave **Extract ROM Archives** off; Kairo98 reads disk images inside ZIPs. You do not need a launch command or a folder selection in Kairo98 for a game sent by LaunchBox. For a frontend-launched game, the in-game **Library** action closes Kairo98 and returns to the frontend. This setup launched a PC-98 disk image through LaunchBox on a Retroid Pocket Classic development build.
+Turn **Extract ROM Archives** off. Kairo98 reads ZIPs itself. A game launched from LaunchBox opens directly; choosing **Library** in the game menu closes Kairo98 and returns to the frontend.
 
-ES-DE can send one disk image or ZIP as an Android `VIEW` intent to the same activity. Its Android `es_find_rules.xml` entry is `com.loxifi.kairo98/com.loxifi.kairo98.Launch`; the system command uses `%EMULATOR_KAIRO98% %ACTION%=android.intent.action.VIEW %DATA%=%ROMPROVIDER%`. ES-DE launch has not yet been tested on a device.
+## Use with ES-DE
 
-## Playing and controls
+Add an Android package rule for Kairo98 to ES-DE's custom `es_find_rules.xml`:
 
-- Map controller buttons to PC-98 keys, joystick buttons, mouse actions, or app controls. Keep a global layout or customize one game.
-- Turn on on-screen controls for phones and position them separately in portrait and landscape.
-- Swipe in from the **right edge** for the PC-98 keyboard. Tapping the game screen opens the keyboard or acts as a mouse touchpad, depending on the input mode. You can change that mode for each game if Auto chooses poorly.
-- On a dual-screen Android handheld, Kairo98 covers the second screen and shows the PC-98 keyboard there during play. The mouse icon beside the keyboard pages switches that screen to a touchpad; game settings can choose which page opens first. The keyboard's arrow button swaps the game and controls between screens. If the second screen disconnects, the right-edge keyboard remains available.
-- Open the in-game menu with **Android Back**, a swipe from the **left edge**, or a controller Menu/Mode button when the device sends it to the app. From there you can pause, restart, change disks, open settings, or return to the library.
-- The default display mode keeps the entire picture visible with integer scaling. Cropped integer scaling and fit-to-screen scaling are optional.
+```xml
+<emulator name="KAIRO98">
+  <rule type="androidpackage">
+    <entry>com.loxifi.kairo98/com.loxifi.kairo98.Launch</entry>
+  </rule>
+</emulator>
+```
 
-You can import your own BIOS ROM, font bitmap, and YM2608 rhythm ROM from **Machine** settings. Kairo98 stores imported files in its private app storage. It does not ship games, operating systems, or firmware.
+In the PC-98 system's custom `es_systems.xml` configuration, add this launch command and select it as the emulator:
 
-## Help and project information
+```xml
+<command label="Kairo98">%EMULATOR_KAIRO98% %ACTION%=android.intent.action.VIEW %DATA%=%ROMPROVIDER%</command>
+```
 
-Kairo98 is still being tested across PC-98 games. If a game fails to boot, has graphics or sound problems, or needs a disk change the app cannot handle, [open an issue](https://github.com/MrJackSpade/Kairo98/issues) with the game name and what happened.
+See the [ES-DE Android configuration guide](https://gitlab.com/es-de/emulationstation-de/-/blob/master/INSTALL.md) for the custom file locations and system override syntax. Keep ZIP extraction off in the frontend. Returning to **Library** closes a frontend-launched game and returns to ES-DE.
 
-Kairo98 is an independent project built from a pinned Neko Project 21/W core with [ymfm](https://github.com/aaronsgiles/ymfm) sound emulation. It is not an official Neko Project 21/W release.
+## Controls
 
-See the [roadmap](docs/roadmap.md), [game catalog notes](docs/game-catalog.md), and [licensing and credits](docs/licensing.md) for more detail.
+Map a physical controller to PC-98 keys, joystick and mouse input, or app actions. The same per-game layout also works with on-screen controls. Swipe from the right edge for the PC-98 keyboard. Open the game menu with Android Back, a left-edge swipe, or a controller Menu/Mode button when Android delivers it. The menu offers disk changes, settings, restart, and return to the library. A second Android display can show the keyboard or touchpad during play.
 
-First-party Kairo98 code is [GPL-2.0-or-later](LICENSE.md). The shared [Kairo frontend](https://github.com/MrJackSpade/Kairo) is pinned as a submodule. The shared repository is public, and releases pin an audited commit. Clone this repository with `git clone --recurse-submodules` to obtain the corresponding shared source. Tagged APKs are published only after the exact artifact passes its license audit and boots a game on Android.
+Import your own BIOS, font bitmap, or YM2608 rhythm ROM from **Machine** settings if a game needs them.
+
+## Project information
+
+Report game problems in [Issues](https://github.com/MrJackSpade/Kairo98/issues), including the title, disk format, and what happened. See [catalog behavior](docs/game-catalog.md), [architecture](docs/architecture.md), [source provenance](docs/source-import.md), and [licensing](docs/licensing.md).
+
+First-party code is [GPL-2.0-or-later](LICENSE.md). Clone with `git clone --recurse-submodules` to obtain the pinned shared frontend source.

@@ -1,4 +1,4 @@
-# Source import policy
+﻿# Source import policy
 
 This repository is independent. Its only Git remote is `origin`, pointing to this project's repository. The first-party Kairo frontend is pinned at `shared/` as a submodule. Do not add an `upstream` remote, fork relationship, other submodule, subtree sync, or automated upstream merge.
 
@@ -8,7 +8,7 @@ The first source import uses the maintainer's BSD-only 21/W source package corre
 
 The downloaded outer archive contains `np21w-src-rev104-bsd.zip`. The source ZIP was extracted using Japanese CP932 filenames. All source ZIP files except its root `.gitignore` and `np2tool/` were copied to `third_party/np21w/`. The excluded `np2tool/` subtree contains guest utilities and prebuilt disk, executable, and driver files that are not needed for the Android emulator. The vendored copy contains 1,613 files. Its original `LICENSES/` directory is preserved.
 
-The copied source has no `sound/fmgen/`, `sound/mame/`, `fpemul_dosbox.c`, or `fpemul_dosbox2.c`. `sound/mamebsd/` and BSD SoftFloat 3 source are present but absent from the Android compile inputs. The current Android binary audit is in [licensing.md](licensing.md); repeat it for each distribution build.
+The copied source has no `sound/fmgen/`, `sound/mame/`, `fpemul_dosbox.c`, or `fpemul_dosbox2.c`. `sound/mamebsd/` and BSD SoftFloat 3 source are present but absent from the Android compile inputs. Distribution license requirements are in [licensing.md](licensing.md).
 
 ## ymfm snapshot
 
@@ -28,17 +28,17 @@ Japanese glyphs use the public-domain [Shinonome](http://openlab.ring.gr.jp/efon
 
 ## Kairo98 launcher artwork
 
-The Kairo98 launcher artwork was added on 25 September 2026. The original PNG is preserved as `kairo98/src/main/res/drawable-nodpi/kairo98_icon_art.png` (SHA-256 `855676faeb93c96a852415aa2b305c71479d2603db0fae09fbffddf1109bb947`). Android uses it in both APK variants; the adaptive icon XML adds a dark background and inset without changing the PNG.
+The original PNG is preserved as `kairo98/src/main/res/drawable-nodpi/kairo98_icon_art.png` (SHA-256 `855676faeb93c96a852415aa2b305c71479d2603db0fae09fbffddf1109bb947`). Android uses it in both APK variants; the adaptive icon XML adds a dark background and inset without changing the PNG.
 
 ## Provenance record
 
-| Component | Source version | SHA-256 or commit | License review | Imported |
+| Component | Source version | SHA-256 or commit | License review | Included |
 | --- | --- | --- | --- | --- |
-| 21/W BSD-only source | rev104 | Outer ZIP SHA-256 `0630a6f7bc794e9e8a96a090b1a80434f912b6f0c14f744e07e7932e26d0d3fb`; nested source ZIP SHA-256 `5ef56e04c8304b5af527072b3ca356ecd865e11fb293da5eea6a9962b2d491ab` | Current Android compile inputs and notices audited in [licensing.md](licensing.md) | Yes, 2026-09-22 |
-| ymfm | `81aec25ccbb98f4873a255f7551ac4dadac59b4a` | ZIP SHA-256 `5be43559f608e53008b6ab742bcb11acfa1f97fc0e24d42e6b36745e49f94f7a` | BSD-3-Clause license and compiled sources audited | Yes, 2026-09-22 |
-| Spleen 8x16 | `57f9219328c9f5873085320fe8bc8f7dd34b8791` | BDF SHA-256 `b38b32a66920068965a3101f98071d310c5c74659fe86e55d346140770f8f6e8` | BSD-2-Clause notice packaged and audited | Yes, 2026-09-23 |
-| Shinonome 16-dot fonts | 0.9.11p1 | Archive SHA-256 `95663c95c92ba5765f63ccbdf033eb93b707be01812a989c548db943479c838f`; `shnmk16.bdf` `9965accd5bdbe03bf9395b8dd26dfa4465f4ffa6e9f447c5cb8258644fa1f468`; `shnm8x16r.bdf` `26eae5a2a057c5756b26f6343f235c0967996e6c1316eff38b94ccc31396d078` | Public domain; notice packaged | Yes, 2026-09-26 |
-| Android NDK LLVM runtime notice | NDK `28.2.13676358` | Toolchain `NOTICE` SHA-256 `f96f763beb66a7ba7a667647fc64c0226ace875e590c831fdd9579ec1c1d91e1` | Includes the LLVM exception and libc++/libc++abi notices for the statically linked runtime | Yes, 2026-09-25 |
+| 21/W BSD-only source | rev104 | Outer ZIP SHA-256 `0630a6f7bc794e9e8a96a090b1a80434f912b6f0c14f744e07e7932e26d0d3fb`; nested source ZIP SHA-256 `5ef56e04c8304b5af527072b3ca356ecd865e11fb293da5eea6a9962b2d491ab` | Current Android compile inputs and notices audited in [licensing.md](licensing.md) | Yes |
+| ymfm | `81aec25ccbb98f4873a255f7551ac4dadac59b4a` | ZIP SHA-256 `5be43559f608e53008b6ab742bcb11acfa1f97fc0e24d42e6b36745e49f94f7a` | BSD-3-Clause license and compiled sources audited | Yes |
+| Spleen 8x16 | `57f9219328c9f5873085320fe8bc8f7dd34b8791` | BDF SHA-256 `b38b32a66920068965a3101f98071d310c5c74659fe86e55d346140770f8f6e8` | BSD-2-Clause notice packaged and audited | Yes |
+| Shinonome 16-dot fonts | 0.9.11p1 | Archive SHA-256 `95663c95c92ba5765f63ccbdf033eb93b707be01812a989c548db943479c838f`; `shnmk16.bdf` `9965accd5bdbe03bf9395b8dd26dfa4465f4ffa6e9f447c5cb8258644fa1f468`; `shnm8x16r.bdf` `26eae5a2a057c5756b26f6343f235c0967996e6c1316eff38b94ccc31396d078` | Public domain; notice packaged | Yes |
+| Android NDK LLVM runtime notice | NDK `28.2.13676358` | Toolchain `NOTICE` SHA-256 `f96f763beb66a7ba7a667647fc64c0226ace875e590c831fdd9579ec1c1d91e1` | Includes the LLVM exception and libc++/libc++abi notices for the statically linked runtime | Yes |
 
 21/W archive: <https://drive.google.com/file/d/14_byhfNHKf06-nmC60svoGRehaMniL4D/view?usp=drive_link>. ymfm archive: <https://github.com/aaronsgiles/ymfm/archive/81aec25ccbb98f4873a255f7551ac4dadac59b4a.zip>. Shinonome archive: <http://openlab.ring.gr.jp/efont/dist/shinonome/shinonome-0.9.11p1.tar.bz2>.
 
@@ -68,11 +68,10 @@ The Windows-only integrations and excluded fmgen code are not enabled.
 
 ## Local idle-loop correction
 
-On 2026-09-26, the project-owned idle detector in
+The project-owned idle detector in
 `third_party/np21w/i386c/ia32/kairo98_idle.c` was corrected to skip only complete
 loop periods and execute the residual slice normally. This preserves guest
 state and instruction-cycle overshoot at event boundaries. Its header comment
 was updated with the same rule. These are local changes to the existing
 Android idle optimization; no new upstream snapshot or licensed component was
-imported, and the existing source notices are retained. Correctness checks and
-device measurements are recorded in [performance-fix-validation.md](performance-fix-validation.md).
+imported, and the existing source notices are retained.
