@@ -45,4 +45,4 @@ Kairo98 is an independent project built from a pinned Neko Project 21/W core wit
 
 See the [roadmap](docs/roadmap.md), [game catalog notes](docs/game-catalog.md), and [licensing and credits](docs/licensing.md) for more detail.
 
-First-party Kairo98 code is [GPL-2.0-or-later](LICENSE.md). The shared [Kairo frontend](https://github.com/MrJackSpade/Kairo) is pinned as a submodule. That repository remains private while its distribution audit is completed; builds in this transition use authenticated CI access. No new binary is release-ready until the shared source is available to its recipients, the license audit is complete, and a game boots on an Android device.
+First-party Kairo98 code is [GPL-2.0-or-later](LICENSE.md). The shared [Kairo frontend](https://github.com/MrJackSpade/Kairo) is pinned as a submodule. The shared repository is public, and releases pin an audited commit. Clone this repository with `git clone --recurse-submodules` to obtain the corresponding shared source. Tagged APKs are published only after the exact artifact passes its license audit and boots a game on Android.
