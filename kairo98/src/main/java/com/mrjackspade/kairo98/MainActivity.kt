@@ -150,6 +150,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
     @Volatile private var artworkDownloadRunning = false
     @Volatile private var catalogUpdateRunning = false
     private var currentEntry: LibraryEntry? = null
+    private var sessionFromFrontend = false
     private var externalEntries: List<LibraryEntry> = emptyList()
     private var externalLaunchGeneration = 0
     private var currentDisk: File? = null
@@ -350,7 +351,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
             if (resources.getBoolean(R.bool.catalog_art_download_enabled))
                 ::downloadMissingImages else null, ::cancelArtworkDownload,
             settingsEntries(), { preferences.getString("last_played_entry", null) },
-            ::launchEntry, ::showDetailPreview, ::showGameDetails, ::showLibrarySelection)
+            { launchEntry(it) }, ::showDetailPreview, ::showGameDetails, ::showLibrarySelection)
         libraryFlow = LibraryFlow(this, preferences, libraryPage, ROM_FOLDER_REQUEST,
             romLibrary::cached, romLibrary::scan, ::folderLabel,
             "Choose a ROM folder to find disk images and ZIP games",
@@ -449,10 +450,10 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
         val preferred = playable.singleOrNull()
             ?: playable.filter { !it.isFloppy }.singleOrNull()
             ?: playable.filter { it.displayName.contains("boot", true) }.singleOrNull()
-        if (preferred != null) { launchEntry(preferred); return }
+        if (preferred != null) { launchEntry(preferred, true); return }
         AlertDialog.Builder(this).setTitle("Choose boot disk")
             .setItems(playable.map { it.displayName }.toTypedArray()) { _, which ->
-                launchEntry(playable[which])
+                launchEntry(playable[which], true)
             }.setNegativeButton("Cancel", null).showStyled()
     }
 
@@ -826,7 +827,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
         return false
     }
 
-    private fun launchEntry(entry: LibraryEntry) {
+    private fun launchEntry(entry: LibraryEntry, fromFrontend: Boolean = false) {
         commandCancelled.set(true)
         releaseInputs()
         if (!entry.playable) {
@@ -843,7 +844,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
                 choice.options.firstOrNull { it.id == requested }?.let { choice to it }
             }
             if (selected.size == game.startupChoices.size) {
-                startEntry(entry, game, selected)
+                startEntry(entry, game, selected, fromFrontend)
                 return
             }
             File(filesDir, "performance-auto.txt").writeText(
@@ -851,30 +852,34 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
             return
         }
         if (game.startupChoices.isNotEmpty() && !skipDebugChoices) {
-            chooseStartupOptions(entry, game, 0, emptyList())
-        } else startEntry(entry, game, emptyList())
+            chooseStartupOptions(entry, game, 0, emptyList(), fromFrontend)
+        } else startEntry(entry, game, emptyList(), fromFrontend)
     }
 
     private fun chooseStartupOptions(entry: LibraryEntry, game: GameCatalog.Game, index: Int,
                                      selected: List<Pair<GameCatalog.StartupChoice,
-                                         GameCatalog.StartupOption>>) {
+                                         GameCatalog.StartupOption>>,
+                                     fromFrontend: Boolean) {
         if (index == game.startupChoices.size) {
-            startEntry(entry, game, selected)
+            startEntry(entry, game, selected, fromFrontend)
             return
         }
         val choice = game.startupChoices[index]
         AlertDialog.Builder(this).setTitle(choice.title)
             .setItems(choice.options.map { it.label }.toTypedArray()) { _, which ->
                 chooseStartupOptions(entry, game, index + 1,
-                    selected + (choice to choice.options[which]))
+                    selected + (choice to choice.options[which]), fromFrontend)
             }
-            .setNeutralButton("Play manually") { _, _ -> startEntry(entry, game, selected) }
+            .setNeutralButton("Play manually") { _, _ ->
+                startEntry(entry, game, selected, fromFrontend)
+            }
             .setNegativeButton("Cancel", null).showStyled()
     }
 
     private fun startEntry(entry: LibraryEntry, game: GameCatalog.Game,
                            choices: List<Pair<GameCatalog.StartupChoice,
-                               GameCatalog.StartupOption>>) {
+                               GameCatalog.StartupOption>>,
+                           fromFrontend: Boolean = false) {
         val generation = ++startGeneration
         val cancelled = AtomicBoolean(false)
         preparingFont = true
@@ -931,6 +936,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
                     preparingFont = false
                     if (result != null) {
                         currentEntry = entry
+                        sessionFromFrontend = fromFrontend
                         preferences.edit().putString("last_played_entry", entry.id).apply()
                         currentDisk = result.disk
                         currentIsFloppy = result.bootFloppy == null && entry.isFloppy
@@ -968,6 +974,10 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
     }
 
     private fun showLibrary() {
+        if (sessionFromFrontend) {
+            exitApp()
+            return
+        }
         commandCancelled.set(true)
         releaseInputs()
         hideKeyboard()
@@ -1369,7 +1379,8 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
                             (id ?: entry.error ?: "Not hashed"))
                         .setPositiveButton("Close", null).showStyled() }))
         GameSettingsSheet.show(this, game.title, entry.playable, id != null, sections,
-            { launchEntry(entry) },
+            { launchEntry(entry, sessionFromFrontend && currentEntry?.id == entry.id &&
+                !libraryVisible) },
             if (id == null) null else {{
                 AlertDialog.Builder(this).setTitle("Reset all game settings?")
                     .setMessage("Remove every custom setting for this game and use its catalog defaults.")
@@ -1624,7 +1635,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
         currentEntry?.let { entry ->
             userPaused = false
             closeMenu()
-            launchEntry(entry)
+            launchEntry(entry, sessionFromFrontend)
             return
         }
         val disk = currentDisk
@@ -2312,7 +2323,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
                         currentEntry?.let { entry ->
                             userPaused = false
                             closeMenu()
-                            launchEntry(entry)
+                            launchEntry(entry, sessionFromFrontend)
                         }
                     }
                 }

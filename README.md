@@ -36,7 +36,7 @@ Import your PC-98 game files into LaunchBox's NEC PC-9801 platform. Open that pl
 | Custom Emulator Activity Name | `com.loxifi.kairo98.Launch` |
 | Custom Emulator ROM Path Key | `ROM` |
 
-Leave **Extract ROM Archives** off; Kairo98 reads disk images inside ZIPs. You do not need a launch command or a folder selection in Kairo98 for a game sent by LaunchBox. This setup launched a PC-98 disk image through LaunchBox on a Retroid Pocket Classic development build.
+Leave **Extract ROM Archives** off; Kairo98 reads disk images inside ZIPs. You do not need a launch command or a folder selection in Kairo98 for a game sent by LaunchBox. For a frontend-launched game, the in-game **Library** action closes Kairo98 and returns to the frontend. This setup launched a PC-98 disk image through LaunchBox on a Retroid Pocket Classic development build.
 
 ES-DE can send one disk image or ZIP as an Android `VIEW` intent to the same activity. Its Android `es_find_rules.xml` entry is `com.loxifi.kairo98/com.loxifi.kairo98.Launch`; the system command uses `%EMULATOR_KAIRO98% %ACTION%=android.intent.action.VIEW %DATA%=%ROMPROVIDER%`. ES-DE launch has not yet been tested on a device.
 
