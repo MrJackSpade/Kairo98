@@ -24,6 +24,8 @@ Games shown in screenshots are user-provided and are not bundled with the app.
 
 The library accepts HDI hard disks and supported floppy formats including FDI, D88, NFD, HDM, and XDF, as loose files or inside ZIP archives. Catalog matches use disk contents, so recompressing an archive does not change its identity. Some games require a separate boot disk, manual disk swap, or imported firmware. Games, operating systems, and firmware are not supplied.
 
+To remove a source file from device storage, open its **Game settings** and choose **Delete game file**. Kairo98 names the file in a confirmation; deleting a ZIP removes every game inside it. Saves and settings are kept. If an existing ROM folder grant is read-only, select that folder again to grant write access.
+
 The library menu can download missing artwork for games it recognizes. The free GitHub and paid Google Play editions have the same features and behavior.
 
 ## External frontends

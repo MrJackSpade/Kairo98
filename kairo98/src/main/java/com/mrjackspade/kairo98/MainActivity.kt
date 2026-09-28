@@ -1377,7 +1377,10 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
                     AlertDialog.Builder(this).setTitle("File information")
                         .setMessage("${entry.path}${entry.zipEntry?.let { "\n$it" } ?: ""}\n\n" +
                             (id ?: entry.error ?: "Not hashed"))
-                        .setPositiveButton("Close", null).showStyled() }))
+                        .setPositiveButton("Close", null).showStyled() }) +
+                (if (libraryEntries.any { it.uri == entry.uri }) listOf(
+                    GameSettingsRow("Delete game file", "Permanently remove from device storage",
+                        false, destructive = true) { confirmDeleteGame(entry) }) else emptyList()))
         GameSettingsSheet.show(this, game.title, entry.playable, id != null, sections,
             { launchEntry(entry, sessionFromFrontend && currentEntry?.id == entry.id &&
                 !libraryVisible) },
@@ -1395,6 +1398,48 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
                     } }.setNegativeButton("Cancel") { _, _ -> showGameDetails(entry) }.showStyled()
             }},
             { toast("This file needs a successful hash before settings can be saved") })
+    }
+
+    private fun confirmDeleteGame(entry: LibraryEntry) {
+        val selected = romTree
+        if (selected == null || !libraryFlow.hasWriteGrant(selected)) {
+            AlertDialog.Builder(this).setTitle("Write access required")
+                .setMessage("Select the same ROM folder again and grant write access before " +
+                    "deleting game files.")
+                .setPositiveButton("Choose ROM folder") { _, _ -> chooseRomFolder() }
+                .setNegativeButton("Cancel", null).showStyled()
+            return
+        }
+        if (!libraryVisible && currentEntry?.uri == entry.uri) {
+            toast("Exit this game before deleting its source file")
+            return
+        }
+        val related = libraryEntries.count { it.uri == entry.uri }
+        val sourceEntries = libraryEntries
+        val otherEntries = if (related > 1)
+            "\n\nThis ZIP contains $related library entries. All of them will be removed."
+            else ""
+        val dialog = AlertDialog.Builder(this).setTitle("Permanently delete game file?")
+            .setMessage("Delete ${entry.path} from device storage?\n\n" +
+                "This cannot be undone. Game settings and saves are kept." + otherEntries)
+            .setNegativeButton("Cancel", null)
+            .setPositiveButton("Delete") { _, _ ->
+                libraryScreen.showStatus("Deleting ${entry.path}…")
+                Thread {
+                    val result = runCatching { romLibrary.deleteSource(entry, sourceEntries) }
+                    runOnUiThread {
+                        result.onSuccess {
+                            libraryScreen.closeDetail()
+                            refreshLibrary(false)
+                        }.onFailure { failure ->
+                            toast(failure.message ?: "Could not delete game file")
+                        }
+                    }
+                }.apply { name = "Kairo98-delete-game"; start() }
+            }.create()
+        dialog.show()
+        Ui.styleDialog(dialog)
+        dialog.getButton(AlertDialog.BUTTON_POSITIVE).setTextColor(Ui.DANGER)
     }
 
     private fun showGamePreview(entry: LibraryEntry) = showGameArt(entry, "preview", true)

@@ -102,6 +102,25 @@ class RomLibrary(private val context: Context) {
         if (snapshot.first == treeUri.toString()) snapshot.second else emptyList()
     }
 
+    /** Delete the source document shared by every image entry from that file. */
+    fun deleteSource(entry: LibraryEntry, entries: List<LibraryEntry>) {
+        val sourceUri = Uri.parse(entry.uri)
+        require(DocumentsContract.isDocumentUri(context, sourceUri)) {
+            "This game is not a removable library document"
+        }
+        require(DocumentsContract.deleteDocument(context.contentResolver, sourceUri)) {
+            "The document provider could not delete the game file"
+        }
+        val sourceEntries = entries.filter { it.uri == entry.uri }
+        val archiveKey = sha256(entry.uri.toByteArray()).take(32)
+        archiveCache.listFiles()?.filter { it.name.startsWith("$archiveKey-") ||
+            it.name == "$archiveKey.part" }?.forEach { it.delete() }
+        val imageIds = sourceEntries.map { it.id }.toSet()
+        imageStore.listFiles()?.filter { file ->
+            imageIds.any { file.name.startsWith("$it-") }
+        }?.forEach { it.delete() }
+    }
+
     /** Inspect one launcher-provided document without requiring a selected ROM tree. */
     fun inspectExternal(file: ExternalGameFile, cancelled: AtomicBoolean): List<LibraryEntry> {
         val source = Source(file.uri, file.name, file.size, file.modified)
