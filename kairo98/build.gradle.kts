@@ -13,7 +13,7 @@ android {
         minSdk = 26
         targetSdk = 36
         versionCode = providers.gradleProperty("kairo98VersionCode").orNull?.toInt() ?: 700
-        versionName = providers.gradleProperty("kairo98VersionName").orNull ?: "0.7.0-dev"
+        versionName = providers.gradleProperty("kairo98VersionName").orNull ?: "0.7.0"
         ndk {
             abiFilters += "arm64-v8a"
         }
