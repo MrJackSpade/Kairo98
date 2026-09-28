@@ -14,6 +14,16 @@ local.properties
 cmake-build-*/
 out/
 
+# Temporary files and logs
+/.tmp/
+/tmp/
+*.tmp
+*.temp
+*.log
+*.bak
+*.swp
+*.swo
+
 # Local data and firmware
 /docs/local/
 /.downloads/

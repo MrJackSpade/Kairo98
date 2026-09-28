@@ -6,7 +6,7 @@ This repository is independent. Its only Git remote is `origin`, pointing to thi
 
 The first source import uses the maintainer's BSD-only 21/W source package corresponding to rev104, published on the [official download page](https://simk98.github.io/np21w/download.html). The Android-specific adapter will remain separate from `third_party/np21w/` where practical.
 
-The downloaded outer archive contains `np21w-src-rev104-bsd.zip`. The source ZIP was extracted using Japanese CP932 filenames. All source ZIP files except its root `.gitignore` and `np2tool/` were copied to `third_party/np21w/`. The excluded `np2tool/` subtree contains guest utilities and prebuilt disk, executable, and driver files that are not needed for the Android emulator. The vendored copy contains 1,613 files. Its original `LICENSES/` directory is preserved.
+The downloaded outer archive contains `np21w-src-rev104-bsd.zip`. The source ZIP was extracted using Japanese CP932 filenames. The vendored tree omits the root `.gitignore`, `np2tool/`, and the unused `win9x/resources/nekop2.bmp.bak` backup. The excluded `np2tool/` subtree contains guest utilities and prebuilt disk, executable, and driver files that are not needed for the Android emulator. The original `LICENSES/` directory is preserved.
 
 The copied source has no `sound/fmgen/`, `sound/mame/`, `fpemul_dosbox.c`, or `fpemul_dosbox2.c`. `sound/mamebsd/` and BSD SoftFloat 3 source are present but absent from the Android compile inputs. Distribution license requirements are in [licensing.md](licensing.md).
 
