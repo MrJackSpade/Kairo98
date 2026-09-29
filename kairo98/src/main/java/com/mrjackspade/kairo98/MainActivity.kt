@@ -37,7 +37,11 @@ import com.mrjackspade.kairo.frontend.LibraryStrings
 import com.mrjackspade.kairo.frontend.SessionAction
 import com.mrjackspade.kairo.frontend.SessionDrawer
 import com.mrjackspade.kairo.frontend.GameSettingsRow
-import com.mrjackspade.kairo.frontend.GameSettingsSheet
+import com.mrjackspade.kairo.frontend.GameSettingsCoordinator
+import com.mrjackspade.kairo.frontend.CommonGameSettings
+import com.mrjackspade.kairo.frontend.CommonGameSettingsActions
+import com.mrjackspade.kairo.frontend.GameSettingsValue
+import com.mrjackspade.kairo.frontend.GameTitleEditor
 import com.mrjackspade.kairo.frontend.fileLabel
 import com.mrjackspade.kairo.frontend.variantLabel
 
@@ -1226,59 +1230,65 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
             else source("controller", "bindings", fallback = "Global")
         val inputMode = InputModeDecider.parse(game.inputMode ?: InputModeDecider.storageValue(globalInputMode))
         val touch = game.inputTouch ?: touchStorage(globalTouchDirect)
-        val sections = listOf(
-            "CONTROLS" to listOf(
-                GameSettingsRow("Touch input", "${inputMode.name.lowercase().replaceFirstChar(Char::uppercase)} " +
-                    "(${source("input", "mode")}) · " +
-                    "${if (touch == "direct") "direct tap" else "touchpad"} " +
-                    "(${source("input", "touch")}) · second screen: " +
-                    "${game.inputSecondary ?: "keyboard"} (${source("input", "secondary")})", true) {
-                    showInputModeChoices(entry) },
-                GameSettingsRow("Controller mapping", "${effectiveControllerBindings(game).size} bindings · $controllerSource", true) {
-                    showControllerBindings(entry) }),
-            "MACHINE" to listOf(
-                GameSettingsRow("Machine clock", "${game.baseClockTenthsMHz?.let { "${it / 10.0} MHz" } ?: "App default"} · ${source("machine", "baseClockTenthsMHz")}", true) {
-                    editGameClock(entry) },
-                GameSettingsRow("GDC clock", "${game.gdcClockTenthsMHz?.let { "${it / 10.0} MHz" } ?: "5.0 MHz (app default)"} · ${source("machine", "gdcClockTenthsMHz")}", true) {
-                    editGameGdcClock(entry) },
-                GameSettingsRow("CPU speed", "${cpuSpeedLabel(game)} · ${source("machine", "cpuMultiple")}", true) {
-                    editGameCpuSpeed(entry) },
-                GameSettingsRow("Startup command", "${game.launchCommand ?: "None"} · ${source("launch")}", true) {
-                    editGameText(entry, "launch", game.launchCommand ?: "") }),
-            "LIBRARY" to listOf(
-                GameSettingsRow("Title", "${game.title} · ${source("title", fallback = "Filename")}", true) {
-                    editGameText(entry, "title", game.title) },
-                GameSettingsRow("Box art", "${if (game.boxArt == null) "None" else "Available"} · ${source("artwork", "boxArt")}", true) {
-                    editGameArt(entry, "boxArt", game.boxArt ?: "") },
-                GameSettingsRow("Screenshot", "${if (game.preview == null) "None" else "Available"} · ${source("artwork", "preview")}", true) {
-                    editGameArt(entry, "preview", game.preview ?: "") },
-                GameSettingsRow("View screenshot", if (game.preview == null) "No screenshot available" else "Open full size", false) {
-                    showGamePreview(entry) },
-                GameSettingsRow("File information", "Path, ZIP entry, and content ID", false) {
-                    AlertDialog.Builder(this).setTitle("File information")
-                        .setMessage("${entry.path}${entry.zipEntry?.let { "\n$it" } ?: ""}\n\n" +
-                            (id ?: entry.error ?: "Not hashed"))
-                        .setPositiveButton("Close", null).showStyled() }) +
-                (if (libraryEntries.any { it.uri == entry.uri }) listOf(
-                    GameSettingsRow("Delete game file", "Permanently remove from device storage",
-                        false, destructive = true) { confirmDeleteGame(entry) }) else emptyList()))
-        GameSettingsSheet.show(this, game.title, entry.playable, id != null, sections,
-            { launchEntry(entry, sessionFromFrontend && currentEntry?.id == entry.id &&
-                !libraryVisible) },
-            if (id == null) null else {{
-                AlertDialog.Builder(this).setTitle("Reset all game settings?")
-                    .setMessage("Remove every custom setting for this game and use its catalog defaults.")
-                    .setPositiveButton("Reset") { _, _ -> saveGameSetting(entry,
-                        "Game settings reset. Machine changes apply on next launch or restart.") {
-                        catalog.resetOverride(id)
-                        if (currentEntry?.contentId == id) {
-                            currentGame = catalog.resolve(id, entry.displayName)
-                            setSecondaryInitialMode(currentGame?.inputSecondary == "touchpad")
-                            gamepadMapper.bindings = effectiveControllerBindings(currentGame)
-                        }
-                    } }.setNegativeButton("Cancel") { _, _ -> showGameDetails(entry) }.showStyled()
-            }},
-            { toast("This file needs a successful hash before settings can be saved") })
+        val touchLabel = "${inputMode.name.lowercase().replaceFirstChar(Char::uppercase)} " +
+            "(${source("input", "mode")}) · " +
+            "${if (touch == "direct") "direct tap" else "touchpad"} " +
+            "(${source("input", "touch")}) · second screen: " +
+            "${game.inputSecondary ?: "keyboard"} (${source("input", "secondary")})"
+        val common = CommonGameSettings(
+            title = GameSettingsValue(game.title, source("title", fallback = "Filename")),
+            touch = GameSettingsValue(touchLabel),
+            controller = GameSettingsValue("${effectiveControllerBindings(game).size} bindings",
+                controllerSource),
+            boxArt = GameSettingsValue(if (game.boxArt == null) "None" else "Available",
+                source("artwork", "boxArt")),
+            screenshot = GameSettingsValue(if (game.preview == null) "None" else "Available",
+                source("artwork", "preview")),
+            filePath = entry.path,
+            zipEntry = entry.zipEntry,
+            contentId = id,
+            error = entry.error,
+            deleteKind = if (libraryEntries.any { it.uri == entry.uri }) "game file" else null)
+        val machineRows = listOf(
+            GameSettingsRow("Machine clock", "${game.baseClockTenthsMHz?.let { "${it / 10.0} MHz" } ?: "App default"} · ${source("machine", "baseClockTenthsMHz")}", true) {
+                editGameClock(entry) },
+            GameSettingsRow("GDC clock", "${game.gdcClockTenthsMHz?.let { "${it / 10.0} MHz" } ?: "5.0 MHz (app default)"} · ${source("machine", "gdcClockTenthsMHz")}", true) {
+                editGameGdcClock(entry) },
+            GameSettingsRow("CPU speed", "${cpuSpeedLabel(game)} · ${source("machine", "cpuMultiple")}", true) {
+                editGameCpuSpeed(entry) },
+            GameSettingsRow("Startup command", "${game.launchCommand ?: "None"} · ${source("launch")}", true) {
+                editGameLaunchCommand(entry, game.launchCommand ?: "") })
+        GameSettingsCoordinator.show(this, common, entry.playable, machineRows,
+            CommonGameSettingsActions(
+                play = { launchEntry(entry, sessionFromFrontend && currentEntry?.id == entry.id &&
+                    !libraryVisible) },
+                editTouch = { showInputModeChoices(entry) },
+                editController = { showControllerBindings(entry) },
+                editTitle = { editGameTitle(entry, game.title) },
+                editBoxArt = { editGameArt(entry, "boxArt", game.boxArt ?: "") },
+                editScreenshot = { editGameArt(entry, "preview", game.preview ?: "") },
+                viewScreenshot = { showGamePreview(entry) },
+                delete = if (common.deleteKind == null) null else {{ confirmDeleteGame(entry) }},
+                reset = id?.let { { saveGameSetting(entry,
+                    "Game settings reset. Machine changes apply on next launch or restart.") {
+                    catalog.resetOverride(it)
+                    if (currentEntry?.contentId == it) {
+                        currentGame = catalog.resolve(it, entry.displayName)
+                        setSecondaryInitialMode(currentGame?.inputSecondary == "touchpad")
+                        gamepadMapper.bindings = effectiveControllerBindings(currentGame)
+                    }
+                } } },
+                resetFailed = { failure -> toast(failure.message ?: "Could not reset game settings") },
+                resetCancelled = { showGameDetails(entry) },
+                noHash = { toast("This file needs a successful hash before settings can be saved") }))
+    }
+
+    private fun editGameTitle(entry: LibraryEntry, current: String) {
+        val id = entry.contentId ?: return
+        GameTitleEditor.show(this, current,
+            { value -> saveGameSetting(entry) { romLibrary.catalog.setOverride(id, "title", value) } },
+            { saveGameSetting(entry) { romLibrary.catalog.resetOverride(id, "title") } },
+            { showGameDetails(entry) })
     }
 
     private fun confirmDeleteGame(entry: LibraryEntry) {
@@ -1411,25 +1421,23 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
         showGameDetails(entry)
     }
 
-    private fun editGameText(entry: LibraryEntry, field: String, current: String) {
+    private fun editGameLaunchCommand(entry: LibraryEntry, current: String) {
         val input = EditText(this).apply {
             setSingleLine(true)
             setText(current)
             setSelection(text.length)
-            hint = if (field == "title") "Game title" else "DOS command, such as GAME"
+            hint = "DOS command, such as GAME"
         }
-        AlertDialog.Builder(this).setTitle(if (field == "title") "Game title" else "Guest command")
-            .setView(input)
+        AlertDialog.Builder(this).setTitle("Guest command").setView(input)
             .setPositiveButton("Save") { _, _ -> saveGameSetting(entry) {
                 val value = input.text.toString().trim()
-                if (field == "title") romLibrary.catalog.setOverride(entry.contentId!!, field, value)
-                else if (value.isEmpty()) romLibrary.catalog.updateOverrideSubfields(
+                if (value.isEmpty()) romLibrary.catalog.updateOverrideSubfields(
                     entry.contentId!!, "launch", mapOf("text" to null, "commands" to null,
                         "screenHashes" to null))
                 else romLibrary.catalog.updateOverrideSubfields(entry.contentId!!, "launch",
                     mapOf("text" to value, "commands" to null, "screenHashes" to null))
             } }.setNeutralButton("Reset") { _, _ -> saveGameSetting(entry) {
-                romLibrary.catalog.resetOverride(entry.contentId!!, field)
+                romLibrary.catalog.resetOverride(entry.contentId!!, "launch")
             } }.setNegativeButton("Cancel") { _, _ -> showGameDetails(entry) }.showStyled()
     }
 
