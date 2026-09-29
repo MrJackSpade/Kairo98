@@ -4,6 +4,8 @@ import com.mrjackspade.kairo.frontend.SecondaryDisplayCoordinator
 import com.mrjackspade.kairo.frontend.EdgeSwipeNavigation
 import com.mrjackspade.kairo.frontend.RgDsDisplayRouter
 import com.mrjackspade.kairo.frontend.GuestKeyboardPanel
+import com.mrjackspade.kairo.frontend.StateSlotCoordinator
+import com.mrjackspade.kairo.frontend.StateSlotStore
 import com.mrjackspade.kairo.frontend.GraphicsOptions
 import com.mrjackspade.kairo.frontend.GameDeletionFlow
 
@@ -55,7 +57,6 @@ import android.app.ActivityOptions
 import android.app.AlertDialog
 import android.content.Intent
 import android.content.res.Configuration
-import android.graphics.Bitmap
 import android.graphics.Color
 import android.graphics.BitmapFactory
 import android.graphics.drawable.ColorDrawable
@@ -85,7 +86,6 @@ import android.view.WindowManager
 import android.window.OnBackInvokedDispatcher
 import android.widget.FrameLayout
 import android.widget.EditText
-import android.widget.ImageView
 import android.widget.SeekBar
 import android.widget.LinearLayout
 import android.widget.ScrollView
@@ -341,7 +341,30 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
     private var pendingMouseHold: Runnable? = null
     private var pendingMouseRelease: Runnable? = null
     @Volatile private var preparingFont = false
-    @Volatile private var stateBusy = false
+    private val stateBusy get() = stateFlow.isBusy
+    private val stateFlow by lazy {
+        StateSlotCoordinator(this, handler,
+            { currentEntry?.contentId?.takeIf { !libraryVisible } }, { currentTitle },
+            { StateSlotStore(File(filesDir, "states"), it, "state.np2") },
+            { (if (::secondaryKeyboard.isInitialized) secondaryKeyboard.activeGameSurface else null)
+                ?: screen },
+            { _, scratch -> nativeSaveState(scratch.absolutePath) },
+            { nativeLoadState(it.directory.absolutePath) }, ::stateError,
+            { menuStatus.text = it }, ::toast,
+            {
+                releaseInputs()
+                inputModeDecider.reset()
+                userPaused = false
+                closeMenu()
+            }, { code ->
+                // Native media replacement may require restarting from the original disks.
+                if (code > 3) currentEntry?.let { entry ->
+                    userPaused = false
+                    closeMenu()
+                    launchEntry(entry, sessionFromFrontend)
+                }
+            }, "Save states are available for games started from the library.", R.drawable.ic_save)
+    }
     @Volatile private var startGeneration = 0
 
     private val updateStatus = object : Runnable {
@@ -1853,171 +1876,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
             .setNegativeButton("Cancel", null).showStyled()
     }
 
-    private fun stateSlots(): StateSlots? = currentEntry?.contentId?.takeIf { !libraryVisible }
-        ?.let { StateSlots(File(filesDir, "states"), it) }
-
-    private fun showStateSlots(saving: Boolean) {
-        val slots = stateSlots()
-        if (slots == null) {
-            AlertDialog.Builder(this).setTitle(if (saving) "Save state" else "Load state")
-                .setMessage("Save states are available for games started from the library.")
-                .setPositiveButton("Close", null).showStyled()
-            return
-        }
-        val list = LinearLayout(this).apply {
-            orientation = LinearLayout.VERTICAL
-            setPadding(dp(12), dp(4), dp(12), dp(4))
-        }
-        val dialog = AlertDialog.Builder(this)
-            .setTitle((if (saving) "Save state" else "Load state") + (currentTitle?.let { " · $it" } ?: ""))
-            .setView(ScrollView(this).apply { addView(list) })
-            .setNegativeButton("Cancel", null).showStyled()
-        val format = java.text.DateFormat.getDateTimeInstance(java.text.DateFormat.MEDIUM,
-            java.text.DateFormat.SHORT)
-        slots.slots().forEach { slot ->
-            val available = saving || !slot.empty
-            val row = LinearLayout(this).apply {
-                orientation = LinearLayout.HORIZONTAL
-                gravity = Gravity.CENTER_VERTICAL
-                setPadding(dp(8), dp(8), dp(8), dp(8))
-                isFocusable = available
-                isClickable = available
-                background = menuHighlight()
-                alpha = if (available) 1f else 0.45f
-            }
-            val thumbnail = slots.thumbnail(slot)
-            row.addView(if (thumbnail != null) ImageView(this).apply {
-                scaleType = ImageView.ScaleType.FIT_CENTER
-                background = Ui.rounded(this@MainActivity, Ui.BG, 4)
-                clipToOutline = true
-                setImageBitmap(thumbnail)
-            } else FrameLayout(this).apply {
-                // An empty slot reads as a place to put something, not a missing image.
-                background = GradientDrawable().apply {
-                    cornerRadius = dp(4).toFloat()
-                    setStroke(dp(1), Ui.LINE, dp(4).toFloat(), dp(3).toFloat())
-                }
-                if (saving) addView(Ui.icon(this@MainActivity, R.drawable.ic_save, Ui.TEXT_FAINT, 20),
-                    FrameLayout.LayoutParams(dp(20), dp(20), Gravity.CENTER))
-            }, LinearLayout.LayoutParams(dp(128), dp(80)))
-            val text = LinearLayout(this).apply {
-                orientation = LinearLayout.VERTICAL
-                setPadding(dp(14), 0, 0, 0)
-            }
-            text.addView(TextView(this).apply {
-                this.text = "Slot ${slot.index}"
-                textSize = Ui.BODY
-                setTextColor(Ui.TEXT)
-            })
-            text.addView(TextView(this).apply {
-                this.text = slot.savedAt?.let { format.format(java.util.Date(it)) }
-                    ?: if (saving) "Empty · tap to save here" else "Empty"
-                textSize = Ui.SECONDARY
-                setTextColor(Ui.TEXT_MUTED)
-            })
-            row.addView(text, LinearLayout.LayoutParams(0, -2, 1f))
-            if (available) row.setOnClickListener {
-                dialog.dismiss()
-                val savedAt = slot.savedAt
-                when {
-                    saving && savedAt == null -> saveState(slots, slot.index)
-                    saving -> AlertDialog.Builder(this).setTitle("Overwrite slot ${slot.index}?")
-                        .setMessage("The save from ${format.format(java.util.Date(savedAt!!))} is replaced.")
-                        .setPositiveButton("Overwrite") { _, _ -> saveState(slots, slot.index) }
-                        .setNegativeButton("Cancel", null).showStyled()
-                    else -> AlertDialog.Builder(this).setTitle("Load slot ${slot.index}?")
-                        .setMessage("Progress since that save is lost.")
-                        .setPositiveButton("Load") { _, _ -> loadState(slots, slot.index) }
-                        .setNegativeButton("Cancel", null).showStyled()
-                }
-            }
-            list.addView(row, LinearLayout.LayoutParams(-1, -2).apply { bottomMargin = dp(4) })
-        }
-        (0 until list.childCount).map(list::getChildAt).firstOrNull { it.isFocusable }?.requestFocus()
-    }
-
-    /** Captures the displayed guest frame for a slot thumbnail; null when it cannot be read. */
-    private fun captureThumbnail(done: (Bitmap?) -> Unit) {
-        val surface = (if (::secondaryKeyboard.isInitialized) secondaryKeyboard.activeGameSurface else null)
-            ?: screen
-        if (surface.width <= 0 || surface.height <= 0 || !surface.holder.surface.isValid) {
-            done(null)
-            return
-        }
-        val bitmap = Bitmap.createBitmap(320, 200, Bitmap.Config.ARGB_8888)
-        try {
-            android.view.PixelCopy.request(surface, bitmap, { result ->
-                done(if (result == android.view.PixelCopy.SUCCESS) bitmap else null)
-            }, handler)
-        } catch (_: IllegalArgumentException) {
-            done(null)
-        }
-    }
-
-    private fun saveState(slots: StateSlots, index: Int) {
-        if (stateBusy) return
-        stateBusy = true
-        menuStatus.text = "Saving slot $index…"
-        captureThumbnail { thumbnail ->
-            Thread {
-                val scratch = try { slots.beginSave(index) } catch (_: Exception) { null }
-                val result = scratch?.let { nativeSaveState(it.absolutePath) } ?: 3
-                val message = if (result == 0 && scratch != null) {
-                    try {
-                        slots.commitSave(index, scratch, thumbnail)
-                        "Saved to slot $index"
-                    } catch (error: Exception) {
-                        slots.abandonSave(scratch)
-                        "Save failed: ${error.message}"
-                    }
-                } else {
-                    scratch?.let(slots::abandonSave)
-                    "Save failed (${stateError(result)})"
-                }
-                runOnUiThread {
-                    stateBusy = false
-                    menuStatus.text = message
-                    toast(message)
-                }
-            }.start()
-        }
-    }
-
-    private fun loadState(slots: StateSlots, index: Int) {
-        if (stateBusy) return
-        stateBusy = true
-        menuStatus.text = "Loading slot $index…"
-        val directory = slots.slot(index).directory
-        Thread {
-            val result = nativeLoadState(directory.absolutePath)
-            runOnUiThread {
-                stateBusy = false
-                when (result) {
-                    0 -> {
-                        releaseInputs()
-                        inputModeDecider.reset()
-                        userPaused = false
-                        closeMenu()
-                        toast("Loaded slot $index")
-                    }
-                    // Nothing was changed yet, so the running game continues untouched.
-                    1, 2, 3 -> {
-                        menuStatus.text = "Load failed (${stateError(result)})"
-                        toast("Load failed (${stateError(result)})")
-                    }
-                    else -> {
-                        // The machine was partly replaced; start the game again from its disks.
-                        toast("Load failed (${stateError(result)}). Restarting the game.")
-                        currentEntry?.let { entry ->
-                            userPaused = false
-                            closeMenu()
-                            launchEntry(entry, sessionFromFrontend)
-                        }
-                    }
-                }
-            }
-        }.start()
-    }
+    private fun showStateSlots(saving: Boolean) = stateFlow.show(saving)
 
     private fun stateError(code: Int) = when (code) {
         1 -> "machine not running"
