@@ -10,6 +10,10 @@ import com.mrjackspade.kairo.frontend.GraphicsOptions
 import com.mrjackspade.kairo.frontend.GameDeletionFlow
 
 import com.mrjackspade.kairo.frontend.InputRouter
+import com.mrjackspade.kairo.frontend.InputDispatchCoordinator
+import com.mrjackspade.kairo.frontend.FrontendInputScreens
+import com.mrjackspade.kairo.frontend.ControllerDeviceMonitor
+import com.mrjackspade.kairo.frontend.GuestLifecycleCoordinator
 import com.mrjackspade.kairo.frontend.InputModeDecider
 import com.mrjackspade.kairo.frontend.JoystickInputRouter
 import com.mrjackspade.kairo.frontend.GamepadMapper
@@ -62,7 +66,6 @@ import android.graphics.BitmapFactory
 import android.graphics.drawable.ColorDrawable
 import android.graphics.drawable.GradientDrawable
 import android.graphics.drawable.StateListDrawable
-import android.hardware.input.InputManager
 import android.hardware.display.DisplayManager
 import android.os.Bundle
 import android.os.Build
@@ -133,11 +136,33 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
     private val mouseRouter = MouseInputRouter(::nativeMouseMove, ::nativeMouseButton)
     private val gamepadMapper = GamepadMapper(inputRouter, joystickRouter, mouseRouter,
         ::controllerAction, ::controllerActionReleased, ControllerBindings.defaults())
-    private lateinit var inputManager: InputManager
-    private val inputDeviceListener = object : InputManager.InputDeviceListener {
-        override fun onInputDeviceAdded(deviceId: Int) = Unit
-        override fun onInputDeviceChanged(deviceId: Int) { gamepadMapper.releaseDevice(deviceId) }
-        override fun onInputDeviceRemoved(deviceId: Int) { gamepadMapper.releaseDevice(deviceId) }
+    private val inputDispatch by lazy {
+        InputDispatchCoordinator(FrontendInputScreens(
+            { if (::firstRunSetup.isInitialized) firstRunSetup else null },
+            { if (::onScreenControls.isInitialized) onScreenControls else null },
+            { if (::controllerEditor.isInitialized) controllerEditor else null },
+            { if (::libraryFlow.isInitialized) libraryScreen else null },
+            { if (::sessionDrawer.isInitialized) sessionDrawer else null },
+            { !libraryVisible }, ::handleBack, ::closeMenu),
+            gamepadMapper, inputRouter, ::pc98ScanCode, ::handleBack,
+            { if (menuOpen) closeMenu() else openMenu() },
+            {
+                if (::root.isInitialized && root.isInTouchMode)
+                    (currentFocus ?: screen).requestFocusFromTouch()
+            }, ::releaseTouchInputs,
+            {
+                debugAutoAdvance?.cancel()
+                debugAutoAdvance = null
+            }, setOf("guest-command", "disk-swap", "debug-auto-space"))
+    }
+    private val controllerDevices by lazy { ControllerDeviceMonitor(this, inputDispatch::releaseDevice) }
+    private val guestLifecycle by lazy {
+        GuestLifecycleCoordinator({ releaseInputs() }, ::applyPauseState, {}, {},
+            initiallyVisible = false,
+            companionActive = { ::secondaryKeyboard.isInitialized && secondaryKeyboard.isCompanionActive },
+            beforeSuspend = { commandCancelled.set(true) },
+            resetGestures = edgeSwipes::reset,
+            releaseOnFocusLoss = { releaseInputs(preserveAutomation = true) })
     }
 
     private val preferences by lazy { getSharedPreferences("kairo98", MODE_PRIVATE) }
@@ -319,7 +344,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
     private lateinit var sessionFlow: SessionFlow
     private val menuOpen: Boolean get() = sessionFlow.isOpen
     private var userPaused = false
-    private var activityVisible = false
+    private val activityVisible: Boolean get() = guestLifecycle.isVisible
     private var muted = false
     private var clock = 25
     private var exiting = false
@@ -431,8 +456,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
             handler.post(traceHashes)
         }
         controllerFlow.initialize()
-        inputManager = getSystemService(INPUT_SERVICE) as InputManager
-        inputManager.registerInputDeviceListener(inputDeviceListener, handler)
+        controllerDevices.register(handler)
         window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
         window.addFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN)
         window.addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS)
@@ -1794,14 +1818,10 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
         else controllerFlow.global()
     }
 
-    private fun releaseInputs(preserveAutomation: Boolean = false) {
-        if (!preserveAutomation) {
-            debugAutoAdvance?.cancel()
-            debugAutoAdvance = null
-        }
-        gamepadMapper.releaseAll()
-        inputRouter.releaseAll(if (preserveAutomation)
-            setOf("guest-command", "disk-swap", "debug-auto-space") else emptySet())
+    private fun releaseInputs(preserveAutomation: Boolean = false) =
+        inputDispatch.releaseInputs(preserveAutomation)
+
+    private fun releaseTouchInputs() {
         pendingMouseHold?.let(handler::removeCallbacks)
         pendingMouseHold = null
         pendingMouseRelease?.let(handler::removeCallbacks)
@@ -1931,28 +1951,12 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
     }
 
     override fun onPause() {
-        if (relocating) { super.onPause(); return }
-        if (::secondaryKeyboard.isInitialized && secondaryKeyboard.isCompanionActive) {
-            super.onPause()
-            return
-        }
-        commandCancelled.set(true)
-        releaseInputs()
-        activityVisible = false
-        applyPauseState()
-        secondaryKeyboard.stop()
+        if (!relocating && guestLifecycle.onPause()) secondaryKeyboard.stop()
         super.onPause()
     }
 
     override fun onStop() {
-        if (!relocating) {
-            edgeSwipes.reset()
-            commandCancelled.set(true)
-            releaseInputs()
-            activityVisible = false
-            applyPauseState()
-            secondaryKeyboard.stop()
-        }
+        if (!relocating && guestLifecycle.onStop()) secondaryKeyboard.stop()
         super.onStop()
     }
 
@@ -1960,8 +1964,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
         super.onResume()
         if (relocating) return
         secondaryKeyboard.start(handler)
-        activityVisible = true
-        applyPauseState()
+        guestLifecycle.onResume()
     }
 
     override fun onConfigurationChanged(newConfig: Configuration) {
@@ -1974,11 +1977,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
     override fun onWindowFocusChanged(hasFocus: Boolean) {
         super.onWindowFocusChanged(hasFocus)
         if (relocating) return
-        if (!hasFocus) {
-            // Automated keys go directly to the core and do not require focus.
-            // Release manual input without aborting or shortening those keys.
-            releaseInputs(preserveAutomation = true)
-        }
+        guestLifecycle.onWindowFocusChanged(hasFocus)
     }
 
     override fun onDestroy() {
@@ -1989,7 +1988,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
         if (::libraryFlow.isInitialized) artworkDownloads.cancel()
         releaseInputs()
         secondaryKeyboard.stop()
-        inputManager.unregisterInputDeviceListener(inputDeviceListener)
+        controllerDevices.unregister()
         handler.removeCallbacks(updateStatus)
         handler.removeCallbacks(traceHashes)
         nativeSetSurface(null, 0, 0)
@@ -2286,58 +2285,11 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
         }.start()
     }
 
-    override fun dispatchKeyEvent(event: KeyEvent): Boolean {
-        // A key press means a controller or keyboard is in use. Leave touch mode now, so the
-        // next screen's focus lands where it is requested and no press is spent leaving it.
-        if (event.action == KeyEvent.ACTION_DOWN && ::root.isInitialized && root.isInTouchMode)
-            (currentFocus ?: screen).requestFocusFromTouch()
-        if (::firstRunSetup.isInitialized && firstRunSetup.isOpen)
-            return firstRunSetup.handleKey(event)
-        if (::onScreenControls.isInitialized && onScreenControls.isOpen) {
-            if (onScreenControls.handleKey(event)) return true
-            return super.dispatchKeyEvent(event)
-        }
-        if (::controllerEditor.isInitialized && controllerEditor.isOpen) {
-            if (controllerEditor.handleKey(event)) return true
-            return super.dispatchKeyEvent(event)
-        }
-        if (event.keyCode == KeyEvent.KEYCODE_BACK) {
-            if (event.action == KeyEvent.ACTION_DOWN && event.repeatCount == 0) handleBack()
-            return true
-        }
-        if (libraryVisible) {
-            if (FrontendNavigation.library(libraryScreen,
-                    FrontendNavigation.control(event, gamepadMapper), event,
-                    ::handleBack)) return true
-            return super.dispatchKeyEvent(event)
-        }
-        if ((event.keyCode == KeyEvent.KEYCODE_BUTTON_MODE &&
-            !gamepadMapper.hasButton(event.keyCode)) ||
-            event.keyCode == KeyEvent.KEYCODE_MENU || event.keyCode == KeyEvent.KEYCODE_HOME) {
-            if (event.action == KeyEvent.ACTION_DOWN && event.repeatCount == 0) {
-                if (menuOpen) closeMenu() else openMenu()
-            }
-            return true
-        }
-        if (menuOpen) {
-            if (FrontendNavigation.session(sessionDrawer,
-                    FrontendNavigation.control(event, gamepadMapper), event,
-                    ::closeMenu)) return true
-            super.dispatchKeyEvent(event)
-            return true
-        }
-        if (gamepadMapper.key(event)) return true
-        return super.dispatchKeyEvent(event)
-    }
+    override fun dispatchKeyEvent(event: KeyEvent): Boolean =
+        inputDispatch.dispatchKey(event) { super.dispatchKeyEvent(it) }
 
-    override fun dispatchGenericMotionEvent(event: MotionEvent): Boolean {
-        if (::firstRunSetup.isInitialized && firstRunSetup.isOpen) return true
-        if (::onScreenControls.isInitialized && onScreenControls.isOpen) return true
-        if (::controllerEditor.isInitialized && controllerEditor.isOpen)
-            return controllerEditor.captureMotion(event)
-        if (!menuOpen && !libraryVisible && gamepadMapper.motion(event)) return true
-        return super.dispatchGenericMotionEvent(event)
-    }
+    override fun dispatchGenericMotionEvent(event: MotionEvent): Boolean =
+        inputDispatch.dispatchMotion(event) { super.dispatchGenericMotionEvent(it) }
 
     private fun dispatchGuestTouch(event: MotionEvent) = super.dispatchTouchEvent(event)
 
@@ -2398,35 +2350,11 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
         else openMenu()
     }
 
-    /** App screens that take controller input instead of the guest. */
-    private fun appScreenOpen() = menuOpen || libraryVisible ||
-        (::controllerEditor.isInitialized && controllerEditor.isOpen) ||
-        (::onScreenControls.isInitialized && onScreenControls.isOpen) ||
-        (::firstRunSetup.isInitialized && firstRunSetup.isOpen)
+    override fun onKeyDown(keyCode: Int, event: KeyEvent): Boolean =
+        inputDispatch.physicalKey(event) || super.onKeyDown(keyCode, event)
 
-    private fun isNavigationKey(keyCode: Int) = keyCode == KeyEvent.KEYCODE_DPAD_UP ||
-        keyCode == KeyEvent.KEYCODE_DPAD_DOWN || keyCode == KeyEvent.KEYCODE_DPAD_LEFT ||
-        keyCode == KeyEvent.KEYCODE_DPAD_RIGHT || keyCode == KeyEvent.KEYCODE_TAB
-
-    override fun onKeyDown(keyCode: Int, event: KeyEvent): Boolean {
-        // On app screens, leave directions unhandled so Android moves focus between controls;
-        // other keys stop here so they never reach the guest or close the activity.
-        if (appScreenOpen()) return !isNavigationKey(keyCode)
-        if (KeyEvent.isGamepadButton(keyCode) || event.isFromSource(InputDevice.SOURCE_GAMEPAD) ||
-            event.isFromSource(InputDevice.SOURCE_JOYSTICK)) return true
-        val scanCode = pc98ScanCode(keyCode) ?: return super.onKeyDown(keyCode, event)
-        if (event.repeatCount == 0) inputRouter.hold("keyboard:${event.deviceId}:$keyCode", listOf(scanCode))
-        return true
-    }
-
-    override fun onKeyUp(keyCode: Int, event: KeyEvent): Boolean {
-        if (appScreenOpen()) return !isNavigationKey(keyCode)
-        if (KeyEvent.isGamepadButton(keyCode) || event.isFromSource(InputDevice.SOURCE_GAMEPAD) ||
-            event.isFromSource(InputDevice.SOURCE_JOYSTICK)) return true
-        val scanCode = pc98ScanCode(keyCode) ?: return super.onKeyUp(keyCode, event)
-        inputRouter.release("keyboard:${event.deviceId}:$keyCode")
-        return true
-    }
+    override fun onKeyUp(keyCode: Int, event: KeyEvent): Boolean =
+        inputDispatch.physicalKey(event) || super.onKeyUp(keyCode, event)
 
     private fun pc98ScanCode(key: Int): Int? {
         if (key in KeyEvent.KEYCODE_1..KeyEvent.KEYCODE_9) return key - KeyEvent.KEYCODE_1 + 1
