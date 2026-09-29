@@ -3,12 +3,11 @@
 import com.mrjackspade.kairo.frontend.LibraryItem
 import com.mrjackspade.kairo.frontend.DocumentTreeWalker
 import com.mrjackspade.kairo.frontend.ExternalGameFile
+import com.mrjackspade.kairo.frontend.VersionedLibraryCache
 
 import android.content.Context
 import android.net.Uri
 import android.provider.DocumentsContract
-import android.util.AtomicFile
-import org.json.JSONArray
 import org.json.JSONObject
 import java.io.File
 import java.io.InputStream
@@ -87,6 +86,8 @@ object DiskFormat {
 
 class RomLibrary(private val context: Context) {
     private val store = File(context.filesDir, "library-v1.json")
+    private val storeCache = VersionedLibraryCache(store, 1, "entries", MAX_STORE_BYTES,
+        MAX_DOCUMENTS, ::decodeCacheEntry, ::encodeCacheEntry)
     private val scanLock = Any()
     private val archiveCache = File(context.cacheDir, "rom-archives").apply { mkdirs() }
     private val imageStore = File(context.filesDir, "media").apply {
@@ -98,9 +99,8 @@ class RomLibrary(private val context: Context) {
     @Volatile var hashCount = 0
         private set
 
-    fun cached(treeUri: Uri): List<LibraryEntry> = readStore().let { snapshot ->
-        if (snapshot.first == treeUri.toString()) snapshot.second else emptyList()
-    }
+    fun cached(treeUri: Uri): List<LibraryEntry> =
+        storeCache.readForTree(treeUri.toString())?.entries.orEmpty()
 
     /** Delete the source document shared by every image entry from that file. */
     fun deleteSource(entry: LibraryEntry, entries: List<LibraryEntry>) {
@@ -163,10 +163,10 @@ class RomLibrary(private val context: Context) {
     fun scan(treeUri: Uri, forceHash: Boolean, cancelled: AtomicBoolean,
              progress: (String) -> Unit): List<LibraryEntry> = synchronized(scanLock) {
         checkCancelled(cancelled)
-        val snapshot = readStore()
-        val prior = if (snapshot.first == treeUri.toString()) snapshot.second.associateBy { it.id }
-            else emptyMap()
-        val formatsCurrent = snapshot.third >= MEDIA_FORMATS_VERSION
+        val snapshot = storeCache.readForTree(treeUri.toString())
+        val prior = snapshot?.entries?.associateBy(LibraryEntry::id).orEmpty()
+        val formatsCurrent = (snapshot?.root?.optInt("mediaFormatsVersion", 1) ?: 0) >=
+            MEDIA_FORMATS_VERSION
         val result = ArrayList<LibraryEntry>()
         val (files, folderErrors) = enumerate(treeUri, cancelled, progress)
         result.addAll(folderErrors)
@@ -417,63 +417,36 @@ class RomLibrary(private val context: Context) {
         return normalized
     }
 
-    private fun readStore(): Triple<String?, List<LibraryEntry>, Int> = try {
-        if (!store.isFile || store.length() > MAX_STORE_BYTES) Triple(null, emptyList(), 0)
-        else {
-            val json = JSONObject(AtomicFile(store).readFully().toString(Charsets.UTF_8))
-            if (json.optInt("schemaVersion") != 1) Triple(null, emptyList(), 0)
-            else {
-                val array = json.optJSONArray("entries") ?: JSONArray()
-                val items = ArrayList<LibraryEntry>()
-                for (i in 0 until array.length()) {
-                    val value = array.optJSONObject(i) ?: continue
-                    val id = value.optString("id")
-                    val uri = value.optString("uri")
-                    val path = value.optString("path")
-                    val zipEntry = value.optString("zipEntry").takeIf { it.isNotEmpty() }
-                    if (!LOCATION_ID.matches(id) || !uri.startsWith("content://") ||
-                        path.isBlank() || path.length > 4096 ||
-                        (zipEntry != null && (zipEntry.length > 4096 ||
-                            runCatching { safeEntryName(zipEntry) }.isFailure))) continue
-                    val sourceSize = value.optLong("sourceSize", -1)
-                    val sourceModified = value.optLong("sourceModified")
-                    val imageSize = value.optLong("imageSize", -1)
-                    val imageCrc = value.optLong("imageCrc", -1)
-                    if (sourceSize < -1 || sourceModified < 0 || imageSize < -1 || imageCrc < -1) continue
-                    items.add(LibraryEntry(id, uri, path, zipEntry, sourceSize, sourceModified,
-                        imageSize, imageCrc,
-                        value.optString("contentId").takeIf(GameCatalog::validId),
-                        value.optString("error").takeIf { it.length in 1..1024 }))
-                }
-                Triple(json.optString("treeUri"), items, json.optInt("mediaFormatsVersion", 1))
-            }
-        }
-    } catch (_: Exception) { Triple(null, emptyList(), 0) }
+    private fun decodeCacheEntry(value: JSONObject): LibraryEntry? {
+        val id = value.optString("id")
+        val uri = value.optString("uri")
+        val path = value.optString("path")
+        val zipEntry = value.optString("zipEntry").takeIf { it.isNotEmpty() }
+        if (!LOCATION_ID.matches(id) || !uri.startsWith("content://") ||
+            path.isBlank() || path.length > 4096 ||
+            (zipEntry != null && (zipEntry.length > 4096 ||
+                runCatching { safeEntryName(zipEntry) }.isFailure))) return null
+        val sourceSize = value.optLong("sourceSize", -1)
+        val sourceModified = value.optLong("sourceModified")
+        val imageSize = value.optLong("imageSize", -1)
+        val imageCrc = value.optLong("imageCrc", -1)
+        if (sourceSize < -1 || sourceModified < 0 || imageSize < -1 || imageCrc < -1) return null
+        return LibraryEntry(id, uri, path, zipEntry, sourceSize, sourceModified,
+            imageSize, imageCrc,
+            value.optString("contentId").takeIf(GameCatalog::validId),
+            value.optString("error").takeIf { it.length in 1..1024 })
+    }
+
+    private fun encodeCacheEntry(entry: LibraryEntry) = JSONObject().put("id", entry.id)
+        .put("uri", entry.uri).put("path", entry.path)
+        .put("zipEntry", entry.zipEntry ?: "")
+        .put("sourceSize", entry.sourceSize).put("sourceModified", entry.sourceModified)
+        .put("imageSize", entry.imageSize).put("imageCrc", entry.imageCrc)
+        .put("contentId", entry.contentId ?: "").put("error", entry.error ?: "")
 
     private fun saveStore(tree: Uri, entries: List<LibraryEntry>) {
-        if (store.isFile) {
-            val existing = try { JSONObject(AtomicFile(store).readFully().toString(Charsets.UTF_8)) }
-                catch (_: Exception) { null }
-            require(existing == null || existing.optInt("schemaVersion") == 1) {
-                "Library cache uses a newer schema; update Kairo98 before scanning"
-            }
-        }
-        val array = JSONArray()
-        for (entry in entries) {
-            array.put(JSONObject().put("id", entry.id).put("uri", entry.uri)
-                .put("path", entry.path).put("zipEntry", entry.zipEntry ?: "")
-                .put("sourceSize", entry.sourceSize).put("sourceModified", entry.sourceModified)
-                .put("imageSize", entry.imageSize).put("imageCrc", entry.imageCrc)
-                .put("contentId", entry.contentId ?: "").put("error", entry.error ?: ""))
-        }
-        val bytes = JSONObject().put("schemaVersion", 1)
-            .put("mediaFormatsVersion", MEDIA_FORMATS_VERSION).put("treeUri", tree.toString())
-            .put("entries", array).toString().toByteArray(Charsets.UTF_8)
-        require(bytes.size <= MAX_STORE_BYTES) { "Library cache is too large" }
-        val atomic = AtomicFile(store)
-        val output = atomic.startWrite()
-        try { output.write(bytes); atomic.finishWrite(output) }
-        catch (error: Exception) { atomic.failWrite(output); throw error }
+        storeCache.write(tree.toString(), entries,
+            JSONObject().put("mediaFormatsVersion", MEDIA_FORMATS_VERSION))
     }
 
     companion object {
@@ -484,7 +457,7 @@ class RomLibrary(private val context: Context) {
         private const val MAX_ZIP_IMAGES = 1_000
         private const val MAX_ARCHIVE_BYTES = 8L * 1024 * 1024 * 1024
         private const val MAX_EXPANSION_RATIO = 1000L
-        private const val MAX_STORE_BYTES = 16L * 1024 * 1024
+        private const val MAX_STORE_BYTES = 16 * 1024 * 1024
         private val LOCATION_ID = Regex("[0-9a-f]{32}")
         private val PROJECTION = arrayOf(
             DocumentsContract.Document.COLUMN_DOCUMENT_ID,
