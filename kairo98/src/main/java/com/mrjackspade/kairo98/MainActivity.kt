@@ -479,6 +479,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
 
         keyboardPanel = GuestKeyboardPanel(this, inputRouter, Pc98KeyboardLayout.value, ::hideKeyboard)
         root.addView(keyboardPanel, FrameLayout.LayoutParams(-1, dp(260), Gravity.BOTTOM))
+        onScreenControls.bindGuestKeyboard(keyboardPanel)
         swappedKeyboardPanel = GuestKeyboardPanel(this, inputRouter, Pc98KeyboardLayout.value,
             {}, showClose = false,
             onSwap = { secondaryKeyboard.toggleSwap() }, mouse = mouseRouter)
@@ -660,7 +661,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
             (::controllerEditor.isInitialized && controllerEditor.isOpen) || editingControls)
         if (::onScreenControls.isInitialized) onScreenControls.refreshVisibility(
             !libraryVisible && !menuOpen && !editingControls && activityVisible &&
-                !preparingFont && keyboardPanel.visibility != View.VISIBLE &&
+                !preparingFont &&
                 !(::secondaryKeyboard.isInitialized && secondaryKeyboard.swapped) &&
                 !(::controllerEditor.isInitialized && controllerEditor.isOpen))
     }
