@@ -1,5 +1,7 @@
 package com.mrjackspade.kairo98
 
+import com.mrjackspade.kairo.frontend.CatalogFieldLayers
+import com.mrjackspade.kairo.frontend.LocalCatalogFile
 import com.mrjackspade.kairo.frontend.CatalogArtworkStore
 import com.mrjackspade.kairo.frontend.ArtworkOverridePath
 import com.mrjackspade.kairo.frontend.CatalogSnapshotStore
@@ -273,8 +275,8 @@ class GameCatalog(private val context: Context) : LibraryCatalog {
         if (!validId(contentId)) return false
         fun hidden(source: JSONObject?): Boolean? = source?.optJSONObject("games")
             ?.optJSONObject(contentId)?.opt("hidden") as? Boolean
-        return listOfNotNull(hidden(base), hidden(shardFor(contentId)), hidden(update),
-            hidden(additions), hidden(overrides)).lastOrNull() == true
+        return CatalogFieldLayers.hidden(hidden(base), hidden(shardFor(contentId)),
+            hidden(update), hidden(additions), hidden(overrides))
     }
 
     @Synchronized fun updateOverrideSubfields(contentId: String, field: String,
@@ -520,10 +522,8 @@ class GameCatalog(private val context: Context) : LibraryCatalog {
         return readAsset("catalog/shards/$name.json").also { shardCache.put(name, it) }
     }
 
-    private fun readLocal(file: File): JSONObject = try {
-        if (!file.isFile || file.length() > MAX_LOCAL_JSON) empty()
-        else parse(AtomicFile(file).readFully().toString(Charsets.UTF_8))
-    } catch (_: Exception) { empty() }
+    private fun readLocal(file: File): JSONObject =
+        LocalCatalogFile.read(file, MAX_LOCAL_JSON.toInt()) ?: empty()
 
     private fun readUpdate(): JSONObject = try {
         snapshot.activeFile()?.let { parseUpdate(it.readBytes()) } ?: empty()
