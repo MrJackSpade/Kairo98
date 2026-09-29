@@ -1,5 +1,7 @@
 package com.mrjackspade.kairo98
 
+import com.mrjackspade.kairo.frontend.SecondaryDisplayCoordinator
+import com.mrjackspade.kairo.frontend.RgDsDisplayRouter
 import com.mrjackspade.kairo.frontend.GuestKeyboardPanel
 
 import com.mrjackspade.kairo.frontend.InputRouter
@@ -137,7 +139,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
     private lateinit var screen: SurfaceView
     private lateinit var keyboardPanel: GuestKeyboardPanel
     private lateinit var swappedKeyboardPanel: GuestKeyboardPanel
-    private lateinit var secondaryKeyboard: SecondaryKeyboardDisplay
+    private lateinit var secondaryKeyboard: SecondaryDisplayCoordinator
     private lateinit var onScreenControls: OnScreenControls
     private lateinit var libraryFlow: LibraryFlow<LibraryEntry>
     private val libraryScreen: LibraryScreen<LibraryEntry> get() = libraryFlow.screen
@@ -267,7 +269,10 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        if (routeRgDsToUpperDisplay()) return
+        if (RgDsDisplayRouter.routeToUpper(this)) {
+            relocating = true
+            return
+        }
         if (Build.VERSION.SDK_INT >= 33) {
             onBackInvokedDispatcher.registerOnBackInvokedCallback(
                 OnBackInvokedDispatcher.PRIORITY_DEFAULT) { handleBack() }
@@ -322,7 +327,8 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
                 WindowInsets.Type.navigationBars())
         }
         buildUi()
-        secondaryKeyboard = SecondaryKeyboardDisplay(this, inputRouter, mouseRouter,
+        secondaryKeyboard = SecondaryDisplayCoordinator(this, inputRouter, mouseRouter,
+            Pc98KeyboardLayout.value, "Kairo98",
             { available ->
                 if (available && secondaryKeyboard.isKeyboardVisible &&
                     keyboardPanel.visibility == View.VISIBLE) {
@@ -463,33 +469,6 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
             .setItems(playable.map { it.displayName }.toTypedArray()) { _, which ->
                 launchEntry(playable[which], true)
             }.setNegativeButton("Cancel", null).showStyled()
-    }
-
-    private fun routeRgDsToUpperDisplay(): Boolean {
-        if (!Build.MODEL.equals("RG DS", ignoreCase = true) ||
-            intent.getBooleanExtra("kairo98.displayRedirected", false)) return false
-        val displays = (getSystemService(DISPLAY_SERVICE) as DisplayManager).displays
-        val upper = displays.firstOrNull { it.displayId != Display.DEFAULT_DISPLAY &&
-            it.isValid && it.state != Display.STATE_OFF } ?: return false
-        @Suppress("DEPRECATION")
-        val currentId = windowManager.defaultDisplay.displayId
-        if (currentId == upper.displayId) return false
-        return try {
-            val redirected = Intent(intent).apply {
-                setClass(this@MainActivity, MainActivity::class.java)
-                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_MULTIPLE_TASK)
-                putExtra("kairo98.displayRedirected", true)
-            }
-            val options = ActivityOptions.makeBasic().setLaunchDisplayId(upper.displayId)
-            startActivity(redirected, options.toBundle())
-            relocating = true
-            finish()
-            true
-        } catch (_: SecurityException) {
-            false
-        } catch (_: IllegalArgumentException) {
-            false
-        }
     }
 
     private fun buildUi() {
@@ -645,7 +624,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
         val media = entry.zipEntry ?: entry.path
         val tags = listOf(if (DiskFormat.isFloppy(media)) "Floppy disk" else "Hard disk") +
             ((variantLabel(entry.path) ?: entry.zipEntry?.let(::variantLabel))?.split("  ·  ") ?: emptyList())
-        val info = SecondaryKeyboardDisplay.LibraryInfo(game.title,
+        val info = SecondaryDisplayCoordinator.LibraryInfo(game.title,
             listOf(fileLabel(entry)) + tags + game.tags,
             game.description ?: "No description available yet.", null)
         secondaryKeyboard.setLibraryInfo(info)

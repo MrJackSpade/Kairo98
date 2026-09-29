@@ -29,10 +29,5 @@
             android:name="${applicationId}.Launch"
             android:targetActivity=".MainActivity"
             android:exported="true" />
-        <activity
-            android:name=".SecondaryKeyboardActivity"
-            android:configChanges="orientation|screenSize|smallestScreenSize|keyboardHidden"
-            android:excludeFromRecents="true"
-            android:exported="false" />
     </application>
 </manifest>
