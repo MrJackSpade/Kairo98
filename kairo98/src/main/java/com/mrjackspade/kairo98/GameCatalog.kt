@@ -1,6 +1,7 @@
 package com.mrjackspade.kairo98
 
 import com.mrjackspade.kairo.frontend.CatalogFieldLayers
+import com.mrjackspade.kairo.frontend.GameMetadataOverrides
 import com.mrjackspade.kairo.frontend.LocalCatalogFile
 import com.mrjackspade.kairo.frontend.CatalogArtworkStore
 import com.mrjackspade.kairo.frontend.ArtworkOverridePath
@@ -9,7 +10,6 @@ import com.mrjackspade.kairo.frontend.LibraryCatalog
 import com.mrjackspade.kairo.frontend.LibraryGame
 
 import android.content.Context
-import android.util.AtomicFile
 import org.json.JSONObject
 import java.io.File
 import java.io.InputStream
@@ -73,7 +73,8 @@ class GameCatalog(private val context: Context) : LibraryCatalog {
     }
     private var update = readUpdate()
     private var additions = readLocal(additionsFile)
-    private var overrides = readLocal(overridesFile)
+    private val overrides = GameMetadataOverrides(overridesFile, MAX_LOCAL_JSON.toInt(),
+        schemaEnvelope = true, validRecord = ::validLocalRecord)
 
     @Synchronized fun reloadAdditions() { additions = readLocal(additionsFile) }
 
@@ -88,50 +89,53 @@ class GameCatalog(private val context: Context) : LibraryCatalog {
         return true
     }
 
-    @Synchronized fun sourceOf(contentId: String, field: String, subfield: String? = null): String = when {
-        hasField(overrides, contentId, field, subfield) -> "User override"
-        hasField(additions, contentId, field, subfield) -> "User catalog"
-        hasField(update, contentId, field, subfield) -> "Updated catalog"
-        hasField(base, contentId, field, subfield) -> "Shipped catalog"
-        shardFor(contentId)?.let { hasField(it, contentId, field, subfield) } == true -> "Shipped catalog"
-        fallbackRecords[contentId]?.let { record ->
-            if (subfield == null) record.has(field)
-            else record.optJSONObject(field)?.has(subfield) == true
-        } == true -> if (contentId in updatedFallbackIds) "Updated catalog" else "Shipped catalog"
-        else -> if (field == "title") "Filename" else "App default"
+    @Synchronized fun sourceOf(contentId: String, field: String, subfield: String? = null): String {
+        val path = if (subfield == null) arrayOf(field) else arrayOf(field, subfield)
+        return layered(contentId).sourceOf(*path)
+            ?: if (field == "title") "Filename" else "App default"
     }
 
-    private fun hasField(source: JSONObject, contentId: String, field: String,
-                         subfield: String?): Boolean {
-        val record = source.optJSONObject("games")?.optJSONObject(contentId) ?: return false
-        return if (subfield == null) record.has(field)
-            else record.optJSONObject(field)?.has(subfield) == true
-    }
-
-    @Synchronized override fun resolve(contentId: String, fileName: String): Game {
-        val merged = JSONObject()
+    private fun layered(contentId: String, fileName: String? = null): CatalogFieldLayers.Result {
         val baseRecord = base.optJSONObject("games")?.optJSONObject(contentId)
         val shardRecord = shardFor(contentId)?.optJSONObject("games")?.optJSONObject(contentId)
         val updateRecord = update.optJSONObject("games")?.optJSONObject(contentId)
-        var fallbackRecord: JSONObject? = null
-        merge(merged, baseRecord)
-        merge(merged, shardRecord)
-        if (baseRecord == null && shardRecord == null && updateRecord == null) {
-            lookupByName(fileName)?.let { (fallback, fromUpdate) ->
-                fallbackRecord = fallback
-                merge(merged, fallback)
+        var fallback = fallbackRecords[contentId]
+        if (baseRecord == null && shardRecord == null && updateRecord == null && fileName != null) {
+            lookupByName(fileName)?.let { (record, fromUpdate) ->
+                fallback = record
                 if (validId(contentId)) {
-                    fallbackRecords[contentId] = fallback
-                    if (fromUpdate) updatedFallbackIds.add(contentId)
-                    else updatedFallbackIds.remove(contentId)
+                    fallbackRecords[contentId] = record
+                    if (fromUpdate) updatedFallbackIds.add(contentId) else updatedFallbackIds.remove(contentId)
                 }
             }
-        }
-        merge(merged, updateRecord)
-        val additionRecord = additions.optJSONObject("games")?.optJSONObject(contentId)
-        merge(merged, additionRecord)
-        val user = overrides.optJSONObject("games")?.optJSONObject(contentId)
-        merge(merged, user)
+        } else if (baseRecord != null || shardRecord != null || updateRecord != null) fallback = null
+        return CatalogFieldLayers.merge(listOf(
+            CatalogFieldLayers.Source("Shipped catalog", baseRecord),
+            CatalogFieldLayers.Source("Shipped catalog", shardRecord),
+            CatalogFieldLayers.Source(if (contentId in updatedFallbackIds) "Updated catalog"
+                else "Shipped catalog", fallback),
+            CatalogFieldLayers.Source("Updated catalog", updateRecord),
+            CatalogFieldLayers.Source("User catalog", additions.optJSONObject("games")?.optJSONObject(contentId)),
+            CatalogFieldLayers.Source("User override", overrides.record(contentId))
+        ), { path -> path.size == 1 && path[0] in OBJECT_FIELDS },
+            { path, value -> when (path.size) {
+                1 -> validField(path[0], value)
+                2 -> path[1] in (OBJECT_FIELDS[path[0]] ?: emptySet()) &&
+                    validField(path[0], JSONObject().put(path[1], value))
+                else -> false
+            } },
+            { path, record -> path.size == 1 && validField(path[0], record) },
+            { path, record -> if (path == listOf("launch")) when {
+                record.has("text") -> setOf("commands")
+                record.has("commands") -> setOf("text")
+                else -> emptySet()
+            } else emptySet() })
+    }
+
+    @Synchronized override fun resolve(contentId: String, fileName: String): Game {
+        val layers = layered(contentId, fileName)
+        val merged = layers.record
+        val user = overrides.record(contentId)
         val title = merged.optString("title").takeIf { validTitle(it) }
             ?: fileName.substringAfterLast('/').substringAfterLast('\\').substringBeforeLast('.')
         val artwork = merged.optJSONObject("artwork")
@@ -146,14 +150,9 @@ class GameCatalog(private val context: Context) : LibraryCatalog {
                 (0 until array.length()).map(array::getString)
             } ?: listOf(value.getString("text"))
         } ?: emptyList()
-        val sources = listOf(baseRecord, shardRecord, fallbackRecord, updateRecord,
-            additionRecord, user)
-        val commandSource = sources.indexOfLast { record ->
-            record?.optJSONObject("launch")?.let { it.has("text") || it.has("commands") } == true
-        }
-        val hashSource = sources.indexOfLast { record ->
-            record?.optJSONObject("launch")?.has("screenHashes") == true
-        }
+        val commandSource = maxOf(layers.sourceIndexOf("launch", "text") ?: -1,
+            layers.sourceIndexOf("launch", "commands") ?: -1)
+        val hashSource = layers.sourceIndexOf("launch", "screenHashes") ?: -1
         val commandHashes = launch?.optJSONArray("screenHashes")?.takeIf { groups ->
             commands.isNotEmpty() && hashSource >= commandSource &&
                 groups.length() == commands.size
@@ -262,12 +261,7 @@ class GameCatalog(private val context: Context) : LibraryCatalog {
         require(field in FIELDS) { "Unsupported field" }
         require(field !in OBJECT_FIELDS) { "Use subfield updates for nested settings" }
         require(validField(field, value)) { "Invalid $field" }
-        val updated = JSONObject(overrides.toString())
-        val games = updated.optJSONObject("games") ?: JSONObject().also { updated.put("games", it) }
-        val entry = games.optJSONObject(contentId) ?: JSONObject().also { games.put(contentId, it) }
-        entry.put(field, value)
-        writeLocal(overridesFile, updated)
-        overrides = updated
+        overrides.set(contentId, field, value)
     }
 
     /** Hide a known support disk without removing it from media lookup or disk swaps. */
@@ -276,7 +270,7 @@ class GameCatalog(private val context: Context) : LibraryCatalog {
         fun hidden(source: JSONObject?): Boolean? = source?.optJSONObject("games")
             ?.optJSONObject(contentId)?.opt("hidden") as? Boolean
         return CatalogFieldLayers.hidden(hidden(base), hidden(shardFor(contentId)),
-            hidden(update), hidden(additions), hidden(overrides))
+            hidden(update), hidden(additions), overrides.record(contentId)?.opt("hidden"))
     }
 
     @Synchronized fun updateOverrideSubfields(contentId: String, field: String,
@@ -296,36 +290,16 @@ class GameCatalog(private val context: Context) : LibraryCatalog {
                 "Invalid $field.$subfield"
             }
         }
-        val updated = JSONObject(overrides.toString())
-        val games = updated.optJSONObject("games") ?: JSONObject().also { updated.put("games", it) }
-        val entry = games.optJSONObject(contentId) ?: JSONObject().also { games.put(contentId, it) }
-        val fields = entry.optJSONObject(field) ?: JSONObject().also { entry.put(field, it) }
-        for ((subfield, value) in changes) {
-            if (value == null) fields.remove(subfield)
-            else fields.put(subfield, value)
-        }
-        if (fields.length() == 0) entry.remove(field)
-        if (entry.length() == 0) games.remove(contentId)
-        writeLocal(overridesFile, updated)
-        overrides = updated
+        overrides.updateSubfields(contentId, field, changes)
     }
 
     fun setOverrideSubfield(contentId: String, field: String, subfield: String, value: Any) =
         updateOverrideSubfields(contentId, field, mapOf(subfield to value))
 
     @Synchronized fun resetOverride(contentId: String, field: String? = null) {
-        val updated = JSONObject(overrides.toString())
-        val games = updated.optJSONObject("games") ?: return
-        if (field == null) games.remove(contentId)
-        else {
-            require(field in FIELDS)
-            games.optJSONObject(contentId)?.let {
-                it.remove(field)
-                if (it.length() == 0) games.remove(contentId)
-            }
-        }
-        writeLocal(overridesFile, updated)
-        overrides = updated
+        require(validId(contentId)) { "Invalid game ID" }
+        require(field == null || field in FIELDS)
+        overrides.clear(contentId, field)
     }
 
     fun resetOverrideSubfield(contentId: String, field: String, subfield: String) =
@@ -341,25 +315,10 @@ class GameCatalog(private val context: Context) : LibraryCatalog {
         resetOverrideSubfield(contentId, "artwork", kind)
     }
 
-    private fun merge(target: JSONObject, source: JSONObject?) {
-        if (source == null) return
-        for (field in FIELDS) {
-            if (source.has(field)) {
-                val value = source.opt(field) ?: continue
-                if (validField(field, value)) {
-                    // Nested settings override only matching keys; array settings remain atomic.
-                    if (field in OBJECT_FIELDS && value is JSONObject) {
-                        val merged = JSONObject(target.optJSONObject(field)?.toString() ?: "{}")
-                        if (field == "launch" && (value.has("text") || value.has("commands"))) {
-                            merged.remove(if (value.has("text")) "commands" else "text")
-                        }
-                        for (kind in value.keys()) merged.put(kind, value.get(kind))
-                        target.put(field, merged)
-                    } else target.put(field, value)
-                }
-            }
+    private fun validLocalRecord(contentId: String, record: JSONObject): Boolean =
+        validId(contentId) && record.keys().asSequence().all {
+            it in FIELDS && validField(it, record.opt(it) ?: return@all false)
         }
-    }
 
     private fun validField(field: String, value: Any): Boolean = when (field) {
         "title" -> value is String && validTitle(value)
@@ -523,7 +482,7 @@ class GameCatalog(private val context: Context) : LibraryCatalog {
     }
 
     private fun readLocal(file: File): JSONObject =
-        LocalCatalogFile.read(file, MAX_LOCAL_JSON.toInt()) ?: empty()
+        LocalCatalogFile.read(file, MAX_LOCAL_JSON.toInt(), ::validLocalRecord) ?: empty()
 
     private fun readUpdate(): JSONObject = try {
         snapshot.activeFile()?.let { parseUpdate(it.readBytes()) } ?: empty()
@@ -565,30 +524,6 @@ class GameCatalog(private val context: Context) : LibraryCatalog {
         JSONObject(text).takeIf { it.optInt("schemaVersion") == 1 && it.optJSONObject("games") != null }
             ?: empty()
     } catch (_: Exception) { empty() }
-
-    private fun writeLocal(file: File, json: JSONObject) {
-        if (file.isFile) {
-            val existing = try { JSONObject(AtomicFile(file).readFully().toString(Charsets.UTF_8)) }
-                catch (_: Exception) { null }
-            require(existing != null) {
-                "Existing ${file.name} is unreadable; preserve it and restore a backup before editing"
-            }
-            require(existing.optInt("schemaVersion") == 1) {
-                "This metadata uses a newer schema; update Kairo98 before editing"
-            }
-        }
-        val bytes = json.toString().toByteArray(Charsets.UTF_8)
-        require(bytes.size <= MAX_LOCAL_JSON) { "Metadata is too large" }
-        val atomic = AtomicFile(file)
-        val stream = atomic.startWrite()
-        try {
-            stream.write(bytes)
-            atomic.finishWrite(stream)
-        } catch (error: Exception) {
-            atomic.failWrite(stream)
-            throw error
-        }
-    }
 
     companion object {
         private const val MAX_ASSET_JSON = 64 * 1024 * 1024
