@@ -11,6 +11,8 @@
 
 # Local Windows signing and device updates
 
+- Installed app ID is `com.loxifi.kairo98`; the launch activity retains the `com.mrjackspade.kairo98.MainActivity` namespace. Always update it with `adb install -r` and verify the installed package before testing. Do not install a second application ID. The obsolete `com.mrjackspade.kairo98` package was removed from the Retroid on September 29, 2026; both devices now have only `com.loxifi.kairo98`.
+
 - This workstation has the Android SDK at `D:\android-sdk` and a populated Gradle cache at `C:\Users\Service Account\.gradle`. The checkout path contains a space, so temporarily map it to an unused drive letter when building native code, then remove the mapping.
 - The existing Kairo98 update keystore is `C:\Users\Service Account\Kairo98\.downloads\ci-signing\kairo98-beta.p12`. Its password source is the adjacent `password.txt`. Both are local, ignored files. Load the file into `KAIRO98_BETA_PASSWORD` without printing the value, and set `KAIRO98_BETA_KEYSTORE` to the absolute `.p12` path. Do not commit either file or the password. The keystore alias is `kairo98-beta` and its SHA-256 certificate fingerprint is `C3:21:EC:6B:35:E2:50:97:41:36:2F:CC:3F:ED:E8:16:C8:15:10:AA:81:33:D7:91:EA:55:CE:0E:15:94:A5:1C`.
 - `kairo98/build.gradle.kts` uses those environment variables for its `beta` signing config, including debug builds. Build `:kairo98:assembleWithImagesDebug` with the variables set, then install `kairo98/build/outputs/apk/withImages/debug/kairo98-withImages-debug.apk` with `adb install -r`. An ordinary debug APK is signed by a different key and cannot update the installed app.
