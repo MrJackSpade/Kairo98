@@ -10,6 +10,7 @@ import com.mrjackspade.kairo.frontend.GraphicsOptions
 import com.mrjackspade.kairo.frontend.GameDeletionFlow
 
 import com.mrjackspade.kairo.frontend.InputRouter
+import com.mrjackspade.kairo.frontend.AboutDocuments
 import com.mrjackspade.kairo.frontend.InputDispatchCoordinator
 import com.mrjackspade.kairo.frontend.FrontendInputScreens
 import com.mrjackspade.kairo.frontend.ControllerDeviceMonitor
@@ -1773,40 +1774,9 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
     }
 
     private fun showAbout() {
-        val version = packageManager.getPackageInfo(packageName, 0).versionName
-        AlertDialog.Builder(this).setTitle("Kairo98 $version")
-            .setMessage("Open the menu with a controller Mode/Home button when Android delivers it, Back, Menu, or a swipe from the left edge. Swipe inward from the right edge to open the PC-98 keyboard. Android reserves the system Home key.\n\nPhysical keyboard input goes to the PC-98 while the menu is closed.")
-            .setNeutralButton("Licenses") { _, _ -> showThirdPartyNotices() }
-            .setNegativeButton("Privacy policy") { _, _ -> showPrivacyPolicy() }
-            .setPositiveButton("Done", null).showStyled()
-    }
-
-    private fun showPrivacyPolicy() {
-        val policy = assets.open("PRIVACY_POLICY.txt").bufferedReader().use { it.readText() }
-        val padding = (20 * resources.displayMetrics.density).toInt()
-        val content = TextView(this).apply {
-            text = policy
-            textSize = Ui.SECONDARY
-            setTextColor(Ui.TEXT)
-            setPadding(padding, padding, padding, padding)
-        }
-        val scroll = ScrollView(this).apply { addView(content) }
-        AlertDialog.Builder(this).setTitle("Kairo98 Privacy Policy")
-            .setView(scroll).setPositiveButton("Done", null).showStyled()
-    }
-
-    private fun showThirdPartyNotices() {
-        val notice = assets.open("THIRD_PARTY_NOTICES.txt").bufferedReader().use { it.readText() }
-        val padding = (20 * resources.displayMetrics.density).toInt()
-        val content = TextView(this).apply {
-            text = notice
-            textSize = Ui.LABEL
-            setTextColor(Ui.TEXT)
-            setPadding(padding, padding, padding, padding)
-        }
-        val scroll = ScrollView(this).apply { addView(content) }
-        AlertDialog.Builder(this).setTitle("Third-party licenses")
-            .setView(scroll).setPositiveButton("Done", null).showStyled()
+        AboutDocuments.show(this, "Kairo98",
+            "Open the menu with a controller Mode/Home button when Android delivers it, Back, Menu, or a swipe from the left edge. Swipe inward from the right edge to open the PC-98 keyboard. Android reserves the system Home key.\n\nPhysical keyboard input goes to the PC-98 while the menu is closed.\n\nKairo98 uses Neko Project 21/W and ymfm. Source and provenance: github.com/MrJackSpade/Kairo98.",
+            "PRIVACY_POLICY.txt", "THIRD_PARTY_NOTICES.txt")
     }
 
     private fun effectiveControllerBindings(game: GameCatalog.Game?): List<ControllerBinding> {
