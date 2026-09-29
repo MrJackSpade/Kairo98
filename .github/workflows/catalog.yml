@@ -83,16 +83,7 @@ jobs:
       - run: python tools/build_catalog.py docs/fixtures/catalog/source-v1.json /tmp/kairo98-assets-2/catalog
       - run: python tools/import_art.py docs/fixtures/art-source/source-v1.json /tmp/kairo98-assets-2
       - run: diff -r /tmp/kairo98-assets /tmp/kairo98-assets-2
-      - uses: actions/setup-java@v6
-        with:
-          distribution: temurin
-          java-version: '17'
-      - uses: android-actions/setup-android@v4
-        with:
-          packages: 'platform-tools platforms;android-36 build-tools;36.0.0 ndk;28.2.13676358 cmake;3.22.1'
-      - uses: gradle/actions/setup-gradle@v6
-        with:
-          cache-provider: basic
+      - uses: ./shared/.github/actions/setup-android
       - run: ./gradlew --no-daemon :kairo98:compileWithImagesDebugKotlin :kairo98:compileWithoutImagesDebugKotlin
       - uses: actions/upload-artifact@v4
         with:

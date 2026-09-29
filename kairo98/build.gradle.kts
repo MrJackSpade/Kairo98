@@ -3,15 +3,13 @@ plugins {
     id("org.jetbrains.kotlin.android")
 }
 
+apply(from = rootProject.file("shared/gradle/android-module.gradle"))
+
 android {
     namespace = "com.mrjackspade.kairo98"
-    compileSdk = 36
-    ndkVersion = "28.2.13676358"
 
     defaultConfig {
         applicationId = providers.gradleProperty("kairo98ApplicationId").orNull ?: "com.loxifi.kairo98"
-        minSdk = 26
-        targetSdk = 36
         versionCode = providers.gradleProperty("kairo98VersionCode").orNull?.toInt() ?: 700
         versionName = providers.gradleProperty("kairo98VersionName").orNull ?: "0.7.0"
         ndk {
@@ -81,13 +79,8 @@ android {
     externalNativeBuild {
         cmake {
             path = file("src/main/cpp/CMakeLists.txt")
-            version = "3.22.1"
         }
     }
-}
-
-kotlin {
-    jvmToolchain(17)
 }
 
 dependencies {
