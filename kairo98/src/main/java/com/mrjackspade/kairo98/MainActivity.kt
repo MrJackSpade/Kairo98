@@ -4,6 +4,7 @@ import com.mrjackspade.kairo.frontend.SecondaryDisplayCoordinator
 import com.mrjackspade.kairo.frontend.EdgeSwipeNavigation
 import com.mrjackspade.kairo.frontend.RgDsDisplayRouter
 import com.mrjackspade.kairo.frontend.GuestKeyboardPanel
+import com.mrjackspade.kairo.frontend.GraphicsOptions
 
 import com.mrjackspade.kairo.frontend.InputRouter
 import com.mrjackspade.kairo.frontend.InputModeDecider
@@ -132,6 +133,10 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
     }
 
     private val preferences by lazy { getSharedPreferences("kairo98", MODE_PRIVATE) }
+    private val graphics by lazy {
+        GraphicsOptions(this, preferences, { builder -> builder.showStyled() },
+            { updateViewport(); refreshSettingValues() }, ::toast)
+    }
     private val controllerProfiles by lazy {
         ControllerProfileStore(preferences, ControllerBindings::parse,
             { ControllerBindings.toJson(it).toString() })
@@ -206,9 +211,6 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
     private val menuOpen: Boolean get() = sessionFlow.isOpen
     private var userPaused = false
     private var activityVisible = false
-    private var integerScaling = true
-    private var integerCrop = false
-    private var portraitNotchPadding = 0
     private var muted = false
     private var clock = 25
     private var exiting = false
@@ -285,7 +287,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
             pendingDebugGame = intent.getStringExtra("kairo98.selectGame64")
                 ?.let(::decodeDebugGameQuery) ?: intent.getStringExtra("kairo98.selectGame")
         }
-        loadGraphicsSettings()
+        graphics.load()
         muted = preferences.getBoolean("muted", false)
         clock = preferences.getInt("base_clock", 25).let { if (it == 20) 20 else 25 }
         globalInputMode = InputModeDecider.parse(preferences.getString("input_mode", "auto"))
@@ -540,7 +542,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
 
     /** One settings list, shown the same way in the game menu and the library menu. */
     private fun settingsEntries() = listOf(
-        SettingsEntry("Graphics", { scalingLabel() + if (isPortrait()) " · notch ${portraitNotchPadding} dp" else "" }) { showGraphics() },
+        SettingsEntry("Graphics", graphics::settingsLabel, graphics::show),
         SettingsEntry("Touch input", ::touchInputLabel) { showInputMode() },
         SettingsEntry("Machine", { "${if (clock == 25) "2.5" else "2"} MHz · BIOS ${if (biosFile().isFile) "imported" else "none"}" }) { showMachine() },
         SettingsEntry("Controller", { "Gamepad and on-screen controls" }) { showControllerScope() },
@@ -580,23 +582,16 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
         if (!::root.isInitialized || root.width <= 0 || root.height <= 0) return
         val keyboardHeight = if (::keyboardPanel.isInitialized &&
             keyboardPanel.visibility == View.VISIBLE) keyboardPanel.layoutParams.height else 0
-        val portrait = root.height * 4L >= root.width * 5L
-        val topPadding = if (portrait) dp(portraitNotchPadding) else 0
-        val availableHeight = (root.height - keyboardHeight - topPadding).coerceAtLeast(1)
-        val fit = minOf(root.width / 640f, availableHeight / 400f)
-        if (fit <= 0f) return
-        val scale = if (integerScaling && fit >= 1f) {
-            if (integerCrop) ceil(fit) else floor(fit)
-        } else fit
-        val width = (640 * scale).roundToInt().coerceAtLeast(1)
-        val height = (400 * scale).roundToInt().coerceAtLeast(1)
+        val viewport = graphics.viewport(root.width, root.height, keyboardHeight,
+            640, 400, 640.0 / 400.0) ?: return
         val params = screen.layoutParams as FrameLayout.LayoutParams
-        val top = if (portrait) topPadding
-            else ((availableHeight - height) / 2).coerceAtLeast(0)
-        if (params.width != width || params.height != height || params.topMargin != top ||
+        if (params.width != viewport.width || params.height != viewport.height ||
+            params.topMargin != viewport.topMargin ||
             params.gravity != (Gravity.TOP or Gravity.CENTER_HORIZONTAL)) {
-            screen.layoutParams = FrameLayout.LayoutParams(width, height,
-                Gravity.TOP or Gravity.CENTER_HORIZONTAL).apply { topMargin = top }
+            screen.layoutParams = FrameLayout.LayoutParams(viewport.width, viewport.height,
+                Gravity.TOP or Gravity.CENTER_HORIZONTAL).apply {
+                topMargin = viewport.topMargin
+            }
         }
     }
 
@@ -1659,72 +1654,6 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
         }, HDI_REQUEST)
     }
 
-    private fun scalingLabel() = when {
-        !integerScaling -> "Fit display"
-        integerCrop -> "Integer crop"
-        else -> "Integer full image"
-    }
-
-    private fun showGraphics() {
-        val orientation = if (isPortrait()) "portrait" else "landscape"
-        val scaling = scalingLabel()
-        val items = if (orientation == "portrait")
-            arrayOf("Scaling  ·  $scaling", "Notch padding  ·  $portraitNotchPadding dp")
-        else arrayOf("Scaling  ·  $scaling")
-        AlertDialog.Builder(this).setTitle("Graphics · $orientation")
-            .setItems(items) { _, which ->
-                if (which == 0) showScalingChoices(orientation) else showNotchPadding()
-            }.setNegativeButton("Close", null).showStyled()
-    }
-
-    private fun isPortrait() = resources.configuration.orientation == Configuration.ORIENTATION_PORTRAIT
-
-    private fun loadGraphicsSettings() {
-        val suffix = if (isPortrait()) "portrait" else "landscape"
-        integerScaling = preferences.getBoolean("integer_scaling_$suffix",
-            preferences.getBoolean("integer_scaling", true))
-        integerCrop = preferences.getBoolean("integer_crop_$suffix",
-            preferences.getBoolean("integer_crop", false))
-        portraitNotchPadding = preferences.getInt("portrait_notch_padding", 0).coerceIn(0, 240)
-    }
-
-    private fun showScalingChoices(orientation: String) {
-        val options = arrayOf(
-            "Integer  ·  full image (default)",
-            "Integer  ·  crop edges",
-            "Fit display  ·  fractional scale"
-        )
-        AlertDialog.Builder(this).setTitle("Scaling · $orientation")
-            .setSingleChoiceItems(options, if (!integerScaling) 2 else if (integerCrop) 1 else 0) { dialog, which ->
-                integerScaling = which != 2
-                integerCrop = which == 1
-                preferences.edit()
-                    .putBoolean("integer_scaling_$orientation", integerScaling)
-                    .putBoolean("integer_crop_$orientation", integerCrop)
-                    .apply()
-                updateViewport()
-                dialog.dismiss()
-            }.setNegativeButton("Cancel", null).showStyled()
-    }
-
-    private fun showNotchPadding() {
-        val input = EditText(this).apply {
-            inputType = android.text.InputType.TYPE_CLASS_NUMBER
-            setSingleLine(true)
-            setText(portraitNotchPadding.toString())
-            selectAll()
-        }
-        AlertDialog.Builder(this).setTitle("Portrait notch padding (dp)")
-            .setView(input)
-            .setPositiveButton("Save") { _, _ ->
-                val value = input.text.toString().toIntOrNull()?.coerceIn(0, 240)
-                if (value == null) { toast("Enter a number from 0 to 240"); return@setPositiveButton }
-                portraitNotchPadding = value
-                preferences.edit().putInt("portrait_notch_padding", value).apply()
-                updateViewport()
-            }.setNegativeButton("Cancel", null).showStyled()
-    }
-
     private fun showMachine() {
         val bios = biosFile()
         val font = fontBitmapFile()
@@ -2336,7 +2265,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
     override fun onConfigurationChanged(newConfig: Configuration) {
         super.onConfigurationChanged(newConfig)
         if (relocating) return
-        loadGraphicsSettings()
+        graphics.load()
         root.post { updateViewport() }
     }
 
