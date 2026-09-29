@@ -1,6 +1,7 @@
 package com.mrjackspade.kairo98
 
 import com.mrjackspade.kairo.frontend.SecondaryDisplayCoordinator
+import com.mrjackspade.kairo.frontend.EdgeSwipeNavigation
 import com.mrjackspade.kairo.frontend.RgDsDisplayRouter
 import com.mrjackspade.kairo.frontend.GuestKeyboardPanel
 
@@ -211,15 +212,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
     private var clock = 25
     private var exiting = false
     private var relocating = false
-    private var edgeSwipeX: Float? = null
-    private var edgeSwipeY = 0f
-    private var edgeSwipeConsumed = false
-    private var keyboardSwipeX: Float? = null
-    private var keyboardSwipeY = 0f
-    private var keyboardSwipeConsumed = false
-    private var menuSwipeX: Float? = null
-    private var menuSwipeY = 0f
-    private var menuSwipeConsumed = false
+    private val edgeSwipes by lazy { EdgeSwipeNavigation(resources.displayMetrics.density) }
     private val inputModeDecider = InputModeDecider()
     private var globalInputMode = InputModeDecider.Mode.AUTO
     private var mouseTouchActive = false
@@ -872,6 +865,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
     }
 
     private fun showLibrary() {
+        edgeSwipes.reset()
         if (sessionFromFrontend) {
             exitApp()
             return
@@ -2322,6 +2316,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
 
     override fun onStop() {
         if (!relocating) {
+            edgeSwipes.reset()
             commandCancelled.set(true)
             releaseInputs()
             activityVisible = false
@@ -2712,103 +2707,34 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
         return super.dispatchGenericMotionEvent(event)
     }
 
+    private fun dispatchGuestTouch(event: MotionEvent) = super.dispatchTouchEvent(event)
+
     override fun dispatchTouchEvent(event: MotionEvent): Boolean {
-        if (::firstRunSetup.isInitialized && firstRunSetup.isOpen)
+        if (!::firstRunSetup.isInitialized || firstRunSetup.isOpen ||
+            !::onScreenControls.isInitialized || onScreenControls.isOpen ||
+            !::controllerEditor.isInitialized || controllerEditor.isOpen ||
+            !::sessionFlow.isInitialized || !::keyboardPanel.isInitialized || libraryVisible)
             return super.dispatchTouchEvent(event)
-        if (::onScreenControls.isInitialized && onScreenControls.isOpen)
-            return super.dispatchTouchEvent(event)
-        if (::controllerEditor.isInitialized && controllerEditor.isOpen)
-            return super.dispatchTouchEvent(event)
-        if (!event.isFromSource(InputDevice.SOURCE_TOUCHSCREEN)) {
-            return super.dispatchTouchEvent(event)
-        }
-        if (event.actionMasked == MotionEvent.ACTION_DOWN) {
-            menuSwipeConsumed = false
-            keyboardSwipeConsumed = false
-        }
-        if (keyboardSwipeConsumed) {
-            if (event.actionMasked == MotionEvent.ACTION_UP ||
-                event.actionMasked == MotionEvent.ACTION_CANCEL) keyboardSwipeConsumed = false
-            return true
-        }
-        if (menuSwipeConsumed) {
-            if (event.actionMasked == MotionEvent.ACTION_UP ||
-                event.actionMasked == MotionEvent.ACTION_CANCEL) menuSwipeConsumed = false
-            return true
-        }
-        when (event.actionMasked) {
-            MotionEvent.ACTION_DOWN -> {
-                edgeSwipeConsumed = false
-                if (menuOpen) {
-                    menuSwipeX = event.x
-                    menuSwipeY = event.y
-                }
-                if (!menuOpen && event.x <= dp(28) &&
-                    !onScreenControls.hitTest(event.x, event.y)) {
-                    edgeSwipeX = event.x
-                    edgeSwipeY = event.y
-                    return true
-                }
-                if (!menuOpen && !libraryVisible && event.x >= root.width - dp(28) &&
-                    !onScreenControls.hitTest(event.x, event.y)) {
-                    keyboardSwipeX = event.x
-                    keyboardSwipeY = event.y
-                    return true
-                }
-            }
-            MotionEvent.ACTION_MOVE -> {
-                val menuStart = menuSwipeX
-                if (menuOpen && menuStart != null) {
-                    val horizontal = event.x - menuStart
-                    if (horizontal <= -dp(72) &&
-                        -horizontal > abs(event.y - menuSwipeY) * 1.3f) {
-                        menuSwipeX = null
-                        menuSwipeConsumed = true
-                        val cancel = MotionEvent.obtain(event)
-                        cancel.action = MotionEvent.ACTION_CANCEL
-                        super.dispatchTouchEvent(cancel)
-                        cancel.recycle()
-                        closeMenu()
-                        return true
-                    }
-                }
-                val start = edgeSwipeX
-                if (start != null) {
-                    val horizontal = event.x - start
-                    if (horizontal >= dp(72) && horizontal > abs(event.y - edgeSwipeY) * 1.3f) {
-                        edgeSwipeX = null
-                        edgeSwipeConsumed = true
-                        openMenu()
-                    }
-                    return true
-                }
-                val keyboardStart = keyboardSwipeX
-                if (keyboardStart != null) {
-                    val horizontal = event.x - keyboardStart
-                    if (horizontal <= -dp(72) &&
-                        -horizontal > abs(event.y - keyboardSwipeY) * 1.3f) {
-                        keyboardSwipeX = null
-                        keyboardSwipeConsumed = true
-                        showKeyboard()
-                    }
-                    return true
-                }
-            }
-            MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
-                menuSwipeX = null
-                if (keyboardSwipeX != null || keyboardSwipeConsumed) {
-                    keyboardSwipeX = null
-                    keyboardSwipeConsumed = false
-                    return true
-                }
-                if (edgeSwipeX != null || edgeSwipeConsumed) {
-                    edgeSwipeX = null
-                    edgeSwipeConsumed = false
-                    return true
-                }
+        return when (edgeSwipes.handle(event, root.width, menuOpen,
+            canOpenMenu = true,
+            canOpenKeyboard = keyboardPanel.visibility != View.VISIBLE &&
+                (!::secondaryKeyboard.isInitialized || !secondaryKeyboard.isKeyboardVisible),
+            controlsHit = onScreenControls.hitTest(event.x, event.y))) {
+            EdgeSwipeNavigation.Result.PASS -> super.dispatchTouchEvent(event)
+            EdgeSwipeNavigation.Result.CONSUME -> true
+            EdgeSwipeNavigation.Result.REPLAY_GUEST ->
+                edgeSwipes.replay(event, ::dispatchGuestTouch)
+            EdgeSwipeNavigation.Result.OPEN_MENU -> { openMenu(); true }
+            EdgeSwipeNavigation.Result.OPEN_KEYBOARD -> { showKeyboard(); true }
+            EdgeSwipeNavigation.Result.CLOSE_MENU -> {
+                val cancel = MotionEvent.obtain(event)
+                cancel.action = MotionEvent.ACTION_CANCEL
+                super.dispatchTouchEvent(cancel)
+                cancel.recycle()
+                closeMenu()
+                true
             }
         }
-        return super.dispatchTouchEvent(event)
     }
 
     @Deprecated("Legacy Back path; API 33+ also uses OnBackInvokedDispatcher")
