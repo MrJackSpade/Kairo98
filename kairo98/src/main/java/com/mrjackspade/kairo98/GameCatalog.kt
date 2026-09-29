@@ -65,7 +65,7 @@ class GameCatalog(private val context: Context) : LibraryCatalog {
     private val additionsFile = File(context.filesDir, "user-catalog-v1.json")
     private val overridesFile = File(context.filesDir, "overrides-v1.json")
     private val snapshot = CatalogSnapshotStore(context, "catalog-update-v1.json",
-        UPDATE_URL, MAX_LOCAL_JSON) { file ->
+        UPDATE_URL, METADATA_URL, MAX_LOCAL_JSON) { file ->
         require(parseUpdate(file.readBytes()) != null) { "Invalid catalog update" }
     }
     private var update = readUpdate()
@@ -593,6 +593,7 @@ class GameCatalog(private val context: Context) : LibraryCatalog {
         private const val MAX_ASSET_JSON = 64 * 1024 * 1024
         private const val MAX_LOCAL_JSON = 8L * 1024 * 1024
         private const val UPDATE_URL = "https://raw.githubusercontent.com/MrJackSpade/Kairo98/main/catalog/online-v1.json"
+        private const val METADATA_URL = "https://raw.githubusercontent.com/MrJackSpade/Kairo98/main/catalog/online-v1.meta.json"
         private val FIELDS = setOf("title", "description", "aliases", "artwork", "machine", "controller", "input", "media", "launch", "startupChoices", "diskSwaps", "heart", "hidden")
         private val INPUT_MODES = setOf("auto", "keyboard", "mouse")
         private val INPUT_TOUCH = setOf("touchpad", "direct")

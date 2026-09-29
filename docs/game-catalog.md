@@ -14,7 +14,7 @@ User catalog additions and explicit overrides live in app-private storage. Overr
 
 ## Updating the catalog
 
-The bundled catalog is sharded by content ID. Kairo98 also checks [the online metadata snapshot](../catalog/online-v1.json) and offers **Update game catalog** in the library menu. An invalid or unavailable update leaves the existing catalog in place. Artwork downloads are separate. Lookup order is bundled catalog, downloaded catalog, user additions, then explicit overrides.
+The bundled catalog is sharded by content ID. Kairo98 checks the small [revision file](../catalog/online-v1.meta.json) before fetching [the online metadata snapshot](../catalog/online-v1.json), and offers **Update game catalog** in the library menu. An unchanged SHA-256 skips the catalog download. An invalid or unavailable update leaves the existing catalog in place. Artwork downloads are separate. Lookup order is bundled catalog, downloaded catalog, user additions, then explicit overrides.
 
 The source records are in [catalog research](../catalog/research/README.md). To generate the Android shards and online metadata snapshot after reviewing a source change:
 

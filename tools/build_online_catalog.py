@@ -2,6 +2,7 @@
 """Build the separately downloadable catalog from the reviewed source and name index."""
 
 import argparse
+import hashlib
 import json
 from pathlib import Path
 
@@ -37,6 +38,10 @@ def main():
     result = compact(build_pack(source, names))
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_bytes(result)
+    metadata = {"schemaVersion": 1, "archive": args.output.name,
+                "sha256": hashlib.sha256(result).hexdigest(), "size": len(result)}
+    args.output.with_suffix(".meta.json").write_text(
+        json.dumps(metadata, separators=(",", ":")) + "\n", encoding="utf-8")
     print(f"{len(result)} bytes, {len(json.loads(result)['games'])} content IDs")
 
 
