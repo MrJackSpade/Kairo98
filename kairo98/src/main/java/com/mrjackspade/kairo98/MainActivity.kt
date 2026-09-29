@@ -18,6 +18,7 @@ import com.mrjackspade.kairo.frontend.ControllerProfileStore
 import com.mrjackspade.kairo.frontend.ControllerBinding
 import com.mrjackspade.kairo.frontend.SettingsEntry
 import com.mrjackspade.kairo.frontend.TouchInputSettingsDialog
+import com.mrjackspade.kairo.frontend.ArtworkOverrideEditor
 
 import com.mrjackspade.kairo.frontend.MouseInputRouter
 import com.mrjackspade.kairo.frontend.PhysicalControllerBinding
@@ -1528,24 +1529,21 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
     }
 
     private fun editGameArt(entry: LibraryEntry, kind: String, current: String) {
-        val input = EditText(this).apply {
-            setSingleLine(true)
-            setText(current)
-            setSelection(text.length)
-            hint = "art/example.webp"
-        }
-        AlertDialog.Builder(this).setTitle(if (kind == "preview") "Preview art" else "Box art")
-            .setMessage("Use a packaged art path. Missing art falls back to the game title.")
-            .setView(input)
-            .setPositiveButton("Save") { _, _ -> saveGameSetting(entry) {
-                val path = input.text.toString().trim()
-                if (path.isEmpty()) romLibrary.catalog.resetArtworkOverride(entry.contentId!!, kind)
+        ArtworkOverrideEditor.show(this, ArtworkOverrideEditor.Options(
+            title = if (kind == "preview") "Preview art" else "Box art",
+            currentPath = current,
+            hint = "art/example.webp",
+            explanation = "Use a packaged art path. Missing art falls back to the game title.",
+            resetLabel = "Reset ${if (kind == "preview") "preview" else "box art"}",
+            onSave = { path -> saveGameSetting(entry) {
+                if (path == null) romLibrary.catalog.resetArtworkOverride(entry.contentId!!, kind)
                 else romLibrary.catalog.setArtworkOverride(entry.contentId!!, kind, path)
-            } }.setNeutralButton("Reset ${if (kind == "preview") "preview" else "box art"}") { _, _ -> saveGameSetting(entry) {
+            } },
+            onReset = { saveGameSetting(entry) {
                 romLibrary.catalog.resetArtworkOverride(entry.contentId!!, kind)
-            } }.setNegativeButton("Cancel") { _, _ -> showGameDetails(entry) }.showStyled()
+            } },
+            onCancel = { showGameDetails(entry) }))
     }
-
     private fun restartMachine() {
         commandCancelled.set(true)
         releaseInputs()

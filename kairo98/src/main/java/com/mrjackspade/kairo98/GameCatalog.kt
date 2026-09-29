@@ -1,6 +1,7 @@
 package com.mrjackspade.kairo98
 
 import com.mrjackspade.kairo.frontend.CatalogArtworkStore
+import com.mrjackspade.kairo.frontend.ArtworkOverridePath
 import com.mrjackspade.kairo.frontend.CatalogSnapshotStore
 import com.mrjackspade.kairo.frontend.LibraryCatalog
 import com.mrjackspade.kairo.frontend.LibraryGame
@@ -628,9 +629,7 @@ class GameCatalog(private val context: Context) : LibraryCatalog {
             if (value == null) emptySet() else (0 until value.length()).map {
                 java.lang.Long.parseUnsignedLong(value.getString(it), 16)
             }.toSet()
-        private fun validArtPath(value: String) = value.length in 1..256 &&
-            value.startsWith("art/") && !value.contains("..") && !value.contains('\\') &&
-            !value.startsWith("/")
+        private fun validArtPath(value: String) = ArtworkOverridePath.valid(value, "art/")
         fun validImageUrl(value: String): Boolean = try {
             if (value.length !in 1..512) false else URI(value).let { uri ->
                 uri.scheme == "https" && uri.host in setOf("images.launchbox-app.com", "gamesdb-images.launchbox.gg") &&
