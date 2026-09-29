@@ -30,6 +30,7 @@ import com.mrjackspade.kairo.frontend.Ui
 import com.mrjackspade.kairo.frontend.LibraryScreen
 import com.mrjackspade.kairo.frontend.LibraryFlow
 import com.mrjackspade.kairo.frontend.ExternalGameIntent
+import com.mrjackspade.kairo.frontend.ExternalGameDispatcher
 import com.mrjackspade.kairo.frontend.FrontendNavigation
 import com.mrjackspade.kairo.frontend.SessionFlow
 import com.mrjackspade.kairo.frontend.LibraryStrings
@@ -170,7 +171,15 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
     private var currentEntry: LibraryEntry? = null
     private var sessionFromFrontend = false
     private var externalEntries: List<LibraryEntry> = emptyList()
-    private var externalLaunchGeneration = 0
+    private val externalDispatcher by lazy {
+        ExternalGameDispatcher(this, contentResolver, { libraryEntries },
+            { entry: LibraryEntry -> Uri.parse(entry.uri) },
+            { file, cancelled -> romLibrary.inspectExternal(file, cancelled) },
+            { entries, inspected ->
+                if (inspected) externalEntries = entries
+                chooseExternalGame(entries)
+            }, libraryScreen::showStatus, "Kairo98-external-game")
+    }
     private var currentDisk: File? = null
     private var currentIsFloppy = false
     private val mountedFloppies = arrayOfNulls<String>(2)
@@ -404,7 +413,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
             libraryFlow.restore()
             val setupStep = preferences.getInt("onboarding_step_v1", if (romTree == null) 0 else 2)
             val externallyRequested = savedInstanceState == null &&
-                (intent.data != null || intent.hasExtra("ROM"))
+                ExternalGameIntent.hasRequest(intent)
             if (externallyRequested) dispatchExternalGame(intent)
             else if (romTree != null && hasRomGrant(romTree!!) && setupStep >= 2 &&
                 !selectPendingDebugGame()) refreshLibrary(false)
@@ -421,36 +430,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
         dispatchExternalGame(intent)
     }
 
-    private fun dispatchExternalGame(intent: Intent) {
-        val request = try { ExternalGameIntent.file(intent, contentResolver) }
-        catch (failure: Exception) {
-            libraryScreen.showStatus(failure.message ?: "Invalid game file")
-            return
-        } ?: return
-        val matching = libraryEntries.filter {
-            ExternalGameIntent.sameDocument(Uri.parse(it.uri), request.uri)
-        }
-        if (matching.isNotEmpty()) {
-            chooseExternalGame(matching)
-            return
-        }
-        val generation = ++externalLaunchGeneration
-        libraryScreen.showStatus("Opening ${request.name}…")
-        Thread {
-            val inspected = runCatching {
-                romLibrary.inspectExternal(request, AtomicBoolean(false))
-            }
-            runOnUiThread {
-                if (generation != externalLaunchGeneration || isDestroyed) return@runOnUiThread
-                inspected.onSuccess { entries ->
-                    externalEntries = entries
-                    chooseExternalGame(entries)
-                }.onFailure { failure ->
-                    libraryScreen.showStatus("Could not open ${request.name}: ${failure.message}")
-                }
-            }
-        }.apply { name = "Kairo98-external-game"; start() }
-    }
+    private fun dispatchExternalGame(intent: Intent) = externalDispatcher.dispatch(intent)
 
     private fun chooseExternalGame(entries: List<LibraryEntry>) {
         val playable = entries.filter { it.playable }
@@ -2264,6 +2244,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
         if (relocating) { super.onDestroy(); return }
         startGeneration++
         libraryFlow.cancel()
+        externalDispatcher.cancel()
         if (::libraryFlow.isInitialized) artworkDownloads.cancel()
         releaseInputs()
         secondaryKeyboard.stop()
