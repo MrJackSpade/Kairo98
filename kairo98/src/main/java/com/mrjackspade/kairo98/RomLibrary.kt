@@ -1,9 +1,10 @@
-﻿package com.mrjackspade.kairo98
+package com.mrjackspade.kairo98
 
 import com.mrjackspade.kairo.frontend.LibraryItem
 import com.mrjackspade.kairo.frontend.DocumentTreeWalker
 import com.mrjackspade.kairo.frontend.ExternalGameFile
 import com.mrjackspade.kairo.frontend.VersionedLibraryCache
+import com.mrjackspade.kairo.frontend.LibraryScanPipeline
 
 import android.content.Context
 import android.net.Uri
@@ -88,7 +89,15 @@ class RomLibrary(private val context: Context) {
     private val store = File(context.filesDir, "library-v1.json")
     private val storeCache = VersionedLibraryCache(store, 1, "entries", MAX_STORE_BYTES,
         MAX_DOCUMENTS, ::decodeCacheEntry, ::encodeCacheEntry)
-    private val scanLock = Any()
+    private val scanPipeline by lazy {
+        LibraryScanPipeline(storeCache, LibraryEntry::id, ::planScan, ::inspectSource,
+            ::failedSource,
+            { source, index, total -> "Scanning ${index + 1}/$total: ${source.path}" },
+            displayOrder = { entries -> entries.sortedWith(
+                compareBy(String.CASE_INSENSITIVE_ORDER) { it.path + (it.zipEntry ?: "") }) },
+            metadata = { JSONObject().put("mediaFormatsVersion", MEDIA_FORMATS_VERSION) },
+            afterCommit = { plan -> pruneArchives(plan.work) })
+    }
     private val archiveCache = File(context.cacheDir, "rom-archives").apply { mkdirs() }
     private val imageStore = File(context.filesDir, "media").apply {
         mkdirs()
@@ -96,8 +105,7 @@ class RomLibrary(private val context: Context) {
     }
     val catalog = GameCatalog(context)
 
-    @Volatile var hashCount = 0
-        private set
+    val hashCount: Int get() = scanPipeline.hashCount
 
     fun cached(treeUri: Uri): List<LibraryEntry> =
         storeCache.readForTree(treeUri.toString())?.entries.orEmpty()
@@ -161,102 +169,93 @@ class RomLibrary(private val context: Context) {
     }
 
     fun scan(treeUri: Uri, forceHash: Boolean, cancelled: AtomicBoolean,
-             progress: (String) -> Unit): List<LibraryEntry> = synchronized(scanLock) {
-        checkCancelled(cancelled)
-        val snapshot = storeCache.readForTree(treeUri.toString())
-        val prior = snapshot?.entries?.associateBy(LibraryEntry::id).orEmpty()
-        val formatsCurrent = (snapshot?.root?.optInt("mediaFormatsVersion", 1) ?: 0) >=
-            MEDIA_FORMATS_VERSION
-        val result = ArrayList<LibraryEntry>()
-        val (files, folderErrors) = enumerate(treeUri, cancelled, progress)
-        result.addAll(folderErrors)
-        hashCount = 0
-        for ((index, source) in files.withIndex()) {
-            checkCancelled(cancelled)
-            progress("Scanning ${index + 1}/${files.size}: ${source.path}")
-            if (source.path.endsWith(".zip", ignoreCase = true)) {
-                val oldEntries = prior.values.filter { it.uri == source.uri.toString() }
-                if (!forceHash && formatsCurrent && trusted(source) && oldEntries.isNotEmpty() &&
-                    oldEntries.all { sameSource(it, source) && it.error == null }) {
-                    result.addAll(oldEntries)
-                    continue
+             progress: (String) -> Unit): List<LibraryEntry> =
+        scanPipeline.scan(treeUri, forceHash, cancelled, progress)
+
+    private fun planScan(tree: Uri, cancelled: AtomicBoolean,
+                         progress: (String) -> Unit): LibraryScanPipeline.Plan<Source, LibraryEntry> {
+        val (files, folderErrors) = enumerate(tree, cancelled, progress)
+        return LibraryScanPipeline.Plan(files, initialEntries = folderErrors)
+    }
+
+    private fun inspectSource(source: Source,
+                              scan: LibraryScanPipeline.ScanContext<LibraryEntry>): List<LibraryEntry> {
+        if (source.path.endsWith(".zip", ignoreCase = true)) {
+            val oldEntries = scan.prior.values.filter { it.uri == source.uri.toString() }
+            val formatsCurrent = (scan.previous?.root?.optInt("mediaFormatsVersion", 1) ?: 0) >=
+                MEDIA_FORMATS_VERSION
+            if (!scan.forceHash && formatsCurrent && trusted(source) && oldEntries.isNotEmpty() &&
+                oldEntries.all { sameSource(it, source) && it.error == null }) return oldEntries
+            val found = ArrayList<LibraryEntry>()
+            val zipFile = cachedZip(source, scan.forceHash, scan.cancelled)
+            ZipFile(zipFile).use { zip ->
+                val names = HashSet<String>()
+                val playable = ArrayList<java.util.zip.ZipEntry>()
+                val entries = zip.entries()
+                var inspected = 0
+                while (entries.hasMoreElements()) {
+                    scan.checkCancelled()
+                    require(++inspected <= MAX_ZIP_ENTRIES) { "ZIP has too many entries" }
+                    val item = entries.nextElement()
+                    val normalized = safeEntryName(item.name)
+                    require(names.add(normalized.lowercase(Locale.ROOT))) { "Duplicate ZIP entry" }
+                    if (!item.isDirectory && DiskFormat.supported(normalized)) {
+                        require(playable.size < MAX_ZIP_IMAGES) { "ZIP has too many disk images" }
+                        require(item.size in 1..imageLimit(normalized)) { "Disk image exceeds size limit" }
+                        require(item.compressedSize > 0 &&
+                            item.size / item.compressedSize <= MAX_EXPANSION_RATIO) {
+                            "Disk image expansion ratio is too large"
+                        }
+                        playable.add(item)
+                    }
                 }
-                try {
-                    val zipFile = cachedZip(source, forceHash, cancelled)
-                    ZipFile(zipFile).use { zip ->
-                        val names = HashSet<String>()
-                        val playable = ArrayList<java.util.zip.ZipEntry>()
-                        val entries = zip.entries()
-                        var inspected = 0
-                        while (entries.hasMoreElements()) {
-                            checkCancelled(cancelled)
-                            require(++inspected <= MAX_ZIP_ENTRIES) { "ZIP has too many entries" }
-                            val item = entries.nextElement()
-                            val normalized = safeEntryName(item.name)
-                            require(names.add(normalized.lowercase(Locale.ROOT))) { "Duplicate ZIP entry" }
-                            if (!item.isDirectory && DiskFormat.supported(normalized)) {
-                                require(playable.size < MAX_ZIP_IMAGES) { "ZIP has too many disk images" }
-                                require(item.size in 1..imageLimit(normalized)) { "Disk image exceeds size limit" }
-                                require(item.compressedSize > 0 &&
-                                    item.size / item.compressedSize <= MAX_EXPANSION_RATIO) {
-                                    "Disk image expansion ratio is too large"
-                                }
-                                playable.add(item)
+                require(playable.isNotEmpty()) { "No supported disk image in ZIP" }
+                for (item in playable) {
+                    scan.checkCancelled()
+                    val candidate = entry(source, item.name, item.size, item.crc, null)
+                    val old = scan.prior[candidate.id]
+                    try {
+                        val id = if (!scan.forceHash && trusted(source) && old != null &&
+                            sameFingerprint(old, candidate) && GameCatalog.validId(old.contentId ?: "")) {
+                            old.contentId
+                        } else {
+                            scan.progress("Hashing ${item.name}")
+                            scan.hashStarted()
+                            zip.getInputStream(item).use {
+                                contentId(it, item.size, item.crc, scan.cancelled, item.name)
                             }
                         }
-                        require(playable.isNotEmpty()) { "No supported disk image in ZIP" }
-                        for (item in playable) {
-                            checkCancelled(cancelled)
-                            val candidate = entry(source, item.name, item.size, item.crc, null)
-                            val old = prior[candidate.id]
-                            try {
-                                val id = if (!forceHash && trusted(source) && old != null &&
-                                    sameFingerprint(old, candidate) && GameCatalog.validId(old.contentId ?: "")) {
-                                    old.contentId
-                                } else {
-                                    progress("Hashing ${item.name}")
-                                    hashCount++
-                                    zip.getInputStream(item).use {
-                                        contentId(it, item.size, item.crc, cancelled, item.name)
-                                    }
-                                }
-                                result.add(candidate.copy(contentId = id))
-                            } catch (cancel: CancellationException) { throw cancel }
-                            catch (error: Exception) {
-                                result.add(candidate.copy(error = error.message ?: "Disk image unreadable"))
-                            }
-                        }
+                        found.add(candidate.copy(contentId = id))
+                    } catch (cancel: CancellationException) { throw cancel }
+                    catch (error: Exception) {
+                        scan.checkCancelled()
+                        found.add(candidate.copy(error = error.message ?: "Disk image unreadable"))
                     }
-                } catch (cancel: CancellationException) { throw cancel }
-                catch (error: Exception) {
-                    result.add(entry(source, null, source.size, -1, null, error.message ?: "ZIP unreadable"))
-                }
-            } else {
-                val candidate = entry(source, null, source.size, -1, null)
-                val old = prior[candidate.id]
-                try {
-                    val id = if (!forceHash && trusted(source) && old != null &&
-                        sameFingerprint(old, candidate) && GameCatalog.validId(old.contentId ?: "")) {
-                        old.contentId
-                    } else {
-                        progress("Hashing ${source.path}")
-                        hashCount++
-                        context.contentResolver.openInputStream(source.uri)?.use {
-                            contentId(it, source.size, -1, cancelled, source.path)
-                        } ?: error("Unable to open disk image")
-                    }
-                    result.add(candidate.copy(contentId = id))
-                } catch (cancel: CancellationException) { throw cancel }
-                catch (error: Exception) {
-                    result.add(candidate.copy(error = error.message ?: "Disk image unreadable"))
                 }
             }
+            return found
         }
-        checkCancelled(cancelled)
-        saveStore(treeUri, result)
-        pruneArchives(files)
-        result.sortedWith(compareBy(String.CASE_INSENSITIVE_ORDER) { it.path + (it.zipEntry ?: "") })
+        val candidate = entry(source, null, source.size, -1, null)
+        val old = scan.prior[candidate.id]
+        val id = if (!scan.forceHash && trusted(source) && old != null &&
+            sameFingerprint(old, candidate) && GameCatalog.validId(old.contentId ?: "")) old.contentId
+        else {
+            scan.progress("Hashing ${source.path}")
+            scan.hashStarted()
+            context.contentResolver.openInputStream(source.uri)?.use {
+                contentId(it, source.size, -1, scan.cancelled, source.path)
+            } ?: error("Unable to open disk image")
+        }
+        return listOf(candidate.copy(contentId = id))
     }
+
+    private fun failedSource(source: Source,
+                             scan: LibraryScanPipeline.ScanContext<LibraryEntry>,
+                             error: Exception): List<LibraryEntry> = listOf(
+        entry(source, null, source.size, -1, null,
+            error.message ?: if (source.path.endsWith(".zip", ignoreCase = true))
+                "ZIP unreadable" else "Disk image unreadable")
+    )
 
     /** Return an app-private writable working image for this source and content version. */
     @Synchronized fun prepare(entry: LibraryEntry, cancelled: AtomicBoolean,
@@ -443,11 +442,6 @@ class RomLibrary(private val context: Context) {
         .put("sourceSize", entry.sourceSize).put("sourceModified", entry.sourceModified)
         .put("imageSize", entry.imageSize).put("imageCrc", entry.imageCrc)
         .put("contentId", entry.contentId ?: "").put("error", entry.error ?: "")
-
-    private fun saveStore(tree: Uri, entries: List<LibraryEntry>) {
-        storeCache.write(tree.toString(), entries,
-            JSONObject().put("mediaFormatsVersion", MEDIA_FORMATS_VERSION))
-    }
 
     companion object {
         private const val MEDIA_FORMATS_VERSION = 3
