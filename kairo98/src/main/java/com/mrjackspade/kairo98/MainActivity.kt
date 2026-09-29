@@ -26,7 +26,8 @@ import com.mrjackspade.kairo.frontend.TouchInputSelection
 import com.mrjackspade.kairo.frontend.TouchSettingsCoordinator
 import com.mrjackspade.kairo.frontend.TouchSettingsStore
 import com.mrjackspade.kairo.frontend.TouchUiCoordinator
-import com.mrjackspade.kairo.frontend.ArtworkOverrideEditor
+import com.mrjackspade.kairo.frontend.ArtworkCoordinator
+import com.mrjackspade.kairo.frontend.ArtworkOverridePath
 
 import com.mrjackspade.kairo.frontend.MouseInputRouter
 import com.mrjackspade.kairo.frontend.PixelTextView
@@ -92,9 +93,6 @@ import android.widget.TextView
 import android.widget.Toast
 import org.json.JSONObject
 import java.io.File
-import java.io.ByteArrayOutputStream
-import java.net.HttpURLConnection
-import java.net.URL
 import java.nio.file.Files
 import java.nio.file.StandardCopyOption
 import java.util.concurrent.atomic.AtomicBoolean
@@ -231,6 +229,26 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
     }
     private lateinit var firstRunSetup: FirstRunSetup
     private lateinit var romLibrary: RomLibrary
+    private val artwork by lazy {
+        ArtworkCoordinator(this, romLibrary.catalog.artworkStore,
+            { entry: LibraryEntry -> entry.contentId },
+            { entry, kind ->
+                val catalog = romLibrary.catalog
+                val game = catalog.resolve(entry.contentId ?: "", entry.displayName)
+                val urlKind = if (kind == "preview") "previewUrl" else "boxArtUrl"
+                val url = (if (kind == "preview") game.previewUrl else game.boxArtUrl)
+                    ?.takeIf { entry.contentId?.let { id ->
+                        catalog.sourceOf(id, "artwork", kind) ==
+                            catalog.sourceOf(id, "artwork", urlKind)
+                    } == true }
+                ArtworkCoordinator.Record(if (kind == "preview") game.preview else game.boxArt, url)
+            }, { ArtworkOverridePath.valid(it, "art/") },
+            { id, kind, path ->
+                if (path == null) romLibrary.catalog.resetArtworkOverride(id, kind)
+                else romLibrary.catalog.setArtworkOverride(id, kind, path)
+            }, "art/example.webp", { libraryScreen.showEntries(libraryEntries) },
+            ::showGameDetails, ::toast, GameCatalog::validImageUrl)
+    }
     private lateinit var controllerEditor: ControllerEditor<LibraryEntry>
     private val controllerEditorFlow by lazy {
         ControllerEditorFlow(controllerEditor, LibraryEntry::contentId, ::closeMenu,
@@ -1314,8 +1332,8 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
                 editTouch = { showInputModeChoices(entry) },
                 editController = { showControllerBindings(entry) },
                 editTitle = { editGameTitle(entry, game.title) },
-                editBoxArt = { editGameArt(entry, "boxArt", game.boxArt ?: "") },
-                editScreenshot = { editGameArt(entry, "preview", game.preview ?: "") },
+                editBoxArt = { artwork.edit(entry, "boxArt") },
+                editScreenshot = { artwork.edit(entry, "preview") },
                 viewScreenshot = { showGamePreview(entry) },
                 delete = if (common.deleteKind == null) null else {{ confirmDeleteGame(entry) }},
                 reset = id?.let { { saveGameSetting(entry,
@@ -1362,100 +1380,10 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
             { refreshLibrary(false) }, ::toast)
     }
 
-    private fun showGamePreview(entry: LibraryEntry) = showGameArt(entry, "preview", true)
+    private fun showGamePreview(entry: LibraryEntry) =
+        artwork.view(entry, returnToSettings = true)
 
-    private fun showDetailPreview(entry: LibraryEntry) = showGameArt(entry, "preview", false)
-
-    private fun showGameArt(entry: LibraryEntry, kind: String, returnToSettings: Boolean) {
-        val game = romLibrary.catalog.resolve(entry.contentId ?: "", entry.displayName)
-        val path = (if (kind == "preview") game.preview else game.boxArt)
-            ?: run { toast("No ${if (kind == "preview") "screenshot" else "box art"} available"); return }
-        val urlKind = if (kind == "preview") "previewUrl" else "boxArtUrl"
-        val url = (if (kind == "preview") game.previewUrl else game.boxArtUrl)
-            ?.takeIf { entry.contentId?.let { id ->
-                romLibrary.catalog.sourceOf(id, "artwork", kind) ==
-                    romLibrary.catalog.sourceOf(id, "artwork", urlKind)
-            } == true }
-        val bitmap = try {
-            romLibrary.catalog.openArtwork(path).use { BitmapFactory.decodeStream(it, null,
-                BitmapFactory.Options()) }
-        } catch (_: Exception) { null }
-        if (bitmap == null) {
-            toast("Image unavailable")
-            return
-        }
-        val view = ImageView(this).apply {
-            setImageBitmap(bitmap)
-            adjustViewBounds = true
-            setPadding(dp(16), dp(8), dp(16), dp(8))
-        }
-        val content = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
-        content.addView(view)
-        val hint = TextView(this).apply {
-            text = if (url == null) "" else "Tap image to load a larger version"
-            setPadding(dp(16), 0, dp(16), dp(12))
-        }
-        content.addView(hint)
-        val dialog = AlertDialog.Builder(this).setView(content)
-            .setPositiveButton("Done") { _, _ -> if (returnToSettings) showGameDetails(entry) }
-            .showStyled()
-        if (url != null) view.setOnClickListener {
-            view.isEnabled = false
-            hint.text = "Loading larger image…"
-            Thread {
-                val larger = try { fetchLargerArt(url) } catch (_: Exception) { null }
-                runOnUiThread {
-                    if (dialog.isShowing) {
-                        if (larger == null) {
-                            hint.text = "Could not load larger image"
-                            view.isEnabled = true
-                        }
-                        else {
-                            view.setImageBitmap(larger)
-                            hint.text = "Larger image loaded"
-                        }
-                    }
-                }
-            }.start()
-        }
-    }
-
-    private fun fetchLargerArt(url: String): android.graphics.Bitmap? {
-        if (!GameCatalog.validImageUrl(url)) return null
-        val connection = URL(url).openConnection() as HttpURLConnection
-        connection.instanceFollowRedirects = false
-        connection.connectTimeout = 10000
-        connection.readTimeout = 20000
-        try {
-            if (connection.responseCode != HttpURLConnection.HTTP_OK ||
-                connection.contentLengthLong > 16L * 1024 * 1024) {
-                return null
-            }
-            val bytes = ByteArrayOutputStream()
-            connection.inputStream.use { input ->
-                val buffer = ByteArray(8192)
-                while (true) {
-                    val count = input.read(buffer)
-                    if (count < 0) break
-                    if (bytes.size() + count > 16 * 1024 * 1024) {
-                        return null
-                    }
-                    bytes.write(buffer, 0, count)
-                }
-            }
-            val data = bytes.toByteArray()
-            val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
-            BitmapFactory.decodeByteArray(data, 0, data.size, bounds)
-            if (bounds.outWidth < 1 || bounds.outHeight < 1 ||
-                bounds.outWidth.toLong() * bounds.outHeight > 32_000_000L) {
-                return null
-            }
-            val options = BitmapFactory.Options().apply { inSampleSize = 1 }
-            while (bounds.outWidth / options.inSampleSize > 2048 ||
-                bounds.outHeight / options.inSampleSize > 2048) options.inSampleSize *= 2
-            return BitmapFactory.decodeByteArray(data, 0, data.size, options)
-        } finally { connection.disconnect() }
-    }
+    private fun showDetailPreview(entry: LibraryEntry) = artwork.view(entry)
 
     private fun saveGameSetting(entry: LibraryEntry,
                                 message: String = "Saved. Machine changes apply on next launch or restart.",
@@ -1555,22 +1483,6 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
             }.setNegativeButton("Cancel") { _, _ -> showGameDetails(entry) }.showStyled()
     }
 
-    private fun editGameArt(entry: LibraryEntry, kind: String, current: String) {
-        ArtworkOverrideEditor.show(this, ArtworkOverrideEditor.Options(
-            title = if (kind == "preview") "Preview art" else "Box art",
-            currentPath = current,
-            hint = "art/example.webp",
-            explanation = "Use a packaged art path. Missing art falls back to the game title.",
-            resetLabel = "Reset ${if (kind == "preview") "preview" else "box art"}",
-            onSave = { path -> saveGameSetting(entry) {
-                if (path == null) romLibrary.catalog.resetArtworkOverride(entry.contentId!!, kind)
-                else romLibrary.catalog.setArtworkOverride(entry.contentId!!, kind, path)
-            } },
-            onReset = { saveGameSetting(entry) {
-                romLibrary.catalog.resetArtworkOverride(entry.contentId!!, kind)
-            } },
-            onCancel = { showGameDetails(entry) }))
-    }
     private fun restartMachine() {
         commandCancelled.set(true)
         releaseInputs()
@@ -2229,6 +2141,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
     @Deprecated("Android activity result callback")
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
+        if (artwork.handleActivityResult(requestCode, resultCode, data)) return
         if (libraryFlow.handleActivityResult(requestCode, resultCode, data)) return
         if (requestCode == BIOS_REQUEST) {
             if (resultCode == RESULT_OK && data?.data != null) importBiosRom(data.data!!)

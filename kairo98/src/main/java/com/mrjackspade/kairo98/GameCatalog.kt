@@ -25,7 +25,7 @@ class GameCatalog(private val context: Context) : LibraryCatalog {
                              val options: List<StartupOption>)
     data class DiskSwap(val id: String, val drive: Int, val contentId: String,
                         val screenHashes: Set<Long>, val key: String, val enter: Boolean)
-    private val artworkStore = CatalogArtworkStore(context, ::validImageUrl)
+    val artworkStore = CatalogArtworkStore(context, ::validImageUrl)
     data class ArtworkSource(val path: String, val url: String)
     data class Game(
         val contentId: String,
