@@ -15,3 +15,9 @@
 - The existing Kairo98 update keystore is `C:\Users\Service Account\Kairo98\.downloads\ci-signing\kairo98-beta.p12`. Its password source is the adjacent `password.txt`. Both are local, ignored files. Load the file into `KAIRO98_BETA_PASSWORD` without printing the value, and set `KAIRO98_BETA_KEYSTORE` to the absolute `.p12` path. Do not commit either file or the password. The keystore alias is `kairo98-beta` and its SHA-256 certificate fingerprint is `C3:21:EC:6B:35:E2:50:97:41:36:2F:CC:3F:ED:E8:16:C8:15:10:AA:81:33:D7:91:EA:55:CE:0E:15:94:A5:1C`.
 - `kairo98/build.gradle.kts` uses those environment variables for its `beta` signing config, including debug builds. Build `:kairo98:assembleWithImagesDebug` with the variables set, then install `kairo98/build/outputs/apk/withImages/debug/kairo98-withImages-debug.apk` with `adb install -r`. An ordinary debug APK is signed by a different key and cannot update the installed app.
 - When shared controller code changes, pin `shared/` to the same first-party Kairo commit used by KairoDos, build both apps, and update both the Retroid Pocket Classic and RGDS.
+
+# Generated catalog guard
+
+- Edit catalog inputs under `catalog/research/` and `catalog/startup-profiles-v1.json`. Do not hand-edit `catalog/source-v1.json`, `catalog/online-v1.json`, or `kairo98/src/main/assets/catalog/`.
+- Regenerate catalog outputs only for an intentional catalog input change, and review the resulting diff before committing.
+- Keep this checkout's versioned pre-commit hook active with `git config core.hooksPath .githooks`. It regenerates the catalog from staged inputs in a temporary directory and rejects mismatched generated files before a direct commit to `main`.
