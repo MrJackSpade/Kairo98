@@ -5,6 +5,7 @@ import com.mrjackspade.kairo.frontend.EdgeSwipeNavigation
 import com.mrjackspade.kairo.frontend.RgDsDisplayRouter
 import com.mrjackspade.kairo.frontend.GuestKeyboardPanel
 import com.mrjackspade.kairo.frontend.GraphicsOptions
+import com.mrjackspade.kairo.frontend.GameDeletionFlow
 
 import com.mrjackspade.kairo.frontend.InputRouter
 import com.mrjackspade.kairo.frontend.InputModeDecider
@@ -1303,30 +1304,10 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
         }
         val related = libraryEntries.count { it.uri == entry.uri }
         val sourceEntries = libraryEntries
-        val otherEntries = if (related > 1)
-            "\n\nThis ZIP contains $related library entries. All of them will be removed."
-            else ""
-        val dialog = AlertDialog.Builder(this).setTitle("Permanently delete game file?")
-            .setMessage("Delete ${entry.path} from device storage?\n\n" +
-                "This cannot be undone. Game settings and saves are kept." + otherEntries)
-            .setNegativeButton("Cancel", null)
-            .setPositiveButton("Delete") { _, _ ->
-                libraryScreen.showStatus("Deleting ${entry.path}…")
-                Thread {
-                    val result = runCatching { romLibrary.deleteSource(entry, sourceEntries) }
-                    runOnUiThread {
-                        result.onSuccess {
-                            libraryScreen.closeDetail()
-                            refreshLibrary(false)
-                        }.onFailure { failure ->
-                            toast(failure.message ?: "Could not delete game file")
-                        }
-                    }
-                }.apply { name = "Kairo98-delete-game"; start() }
-            }.create()
-        dialog.show()
-        Ui.styleDialog(dialog)
-        dialog.getButton(AlertDialog.BUTTON_POSITIVE).setTextColor(Ui.DANGER)
+        GameDeletionFlow.show(this, libraryScreen,
+            GameDeletionFlow.Prompt(entry.path, "file", affectedEntries = related),
+            "Kairo98-delete-game", { romLibrary.deleteSource(entry, sourceEntries) },
+            { refreshLibrary(false) }, ::toast)
     }
 
     private fun showGamePreview(entry: LibraryEntry) = showGameArt(entry, "preview", true)
