@@ -44,6 +44,9 @@ import com.mrjackspade.kairo.frontend.ExternalGameIntent
 import com.mrjackspade.kairo.frontend.ExternalGameDispatcher
 import com.mrjackspade.kairo.frontend.FrontendNavigation
 import com.mrjackspade.kairo.frontend.SessionFlow
+import com.mrjackspade.kairo.frontend.SessionNavigationCoordinator
+import com.mrjackspade.kairo.frontend.SessionNavigationState
+import com.mrjackspade.kairo.frontend.FrontendBackCoordinator
 import com.mrjackspade.kairo.frontend.LibraryStrings
 import com.mrjackspade.kairo.frontend.SessionAction
 import com.mrjackspade.kairo.frontend.SessionDrawer
@@ -86,7 +89,6 @@ import android.view.View
 import android.view.ViewGroup
 import android.view.WindowInsets
 import android.view.WindowManager
-import android.window.OnBackInvokedDispatcher
 import android.widget.FrameLayout
 import android.widget.EditText
 import android.widget.SeekBar
@@ -136,7 +138,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
     private val mouseRouter = MouseInputRouter(::nativeMouseMove, ::nativeMouseButton)
     private val gamepadMapper = GamepadMapper(inputRouter, joystickRouter, mouseRouter,
         ::controllerAction, ::controllerActionReleased, ControllerBindings.defaults())
-    private val inputDispatch by lazy {
+    private val inputDispatch: InputDispatchCoordinator by lazy {
         InputDispatchCoordinator(FrontendInputScreens(
             { if (::firstRunSetup.isInitialized) firstRunSetup else null },
             { if (::onScreenControls.isInitialized) onScreenControls else null },
@@ -156,7 +158,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
             }, setOf("guest-command", "disk-swap", "debug-auto-space"))
     }
     private val controllerDevices by lazy { ControllerDeviceMonitor(this, inputDispatch::releaseDevice) }
-    private val guestLifecycle by lazy {
+    private val guestLifecycle: GuestLifecycleCoordinator by lazy {
         GuestLifecycleCoordinator({ releaseInputs() }, ::applyPauseState, {}, {},
             initiallyVisible = false,
             companionActive = { ::secondaryKeyboard.isInitialized && secondaryKeyboard.isCompanionActive },
@@ -279,7 +281,30 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
         ControllerEditorFlow(controllerEditor, LibraryEntry::contentId, ::closeMenu,
             ::releaseInputs, ::hideKeyboard, { onScreenControls.show() }, ::toast)
     }
-    private var libraryVisible = true
+    private val sessionState = SessionNavigationState()
+    private val libraryVisible: Boolean get() = sessionState.libraryVisible
+    private val sessionNavigation: SessionNavigationCoordinator by lazy {
+        SessionNavigationCoordinator(sessionState, libraryScreen,
+            { if (::sessionFlow.isInitialized) sessionFlow else null },
+            { currentDisk != null }, { sessionFromFrontend }, ::exitApp, edgeSwipes::reset,
+            {
+                commandCancelled.set(true)
+                releaseInputs()
+                hideKeyboard()
+            }, {}, {
+                libraryScreen.showEntries(libraryEntries)
+                libraryScreen.showFolder(romTree?.let(::folderLabel))
+                libraryScreen.showStatus("${libraryEntries.count { it.playable }} games ready")
+            }, ::applyPauseState, { screen.requestFocus() })
+    }
+    private val backCoordinator: FrontendBackCoordinator by lazy {
+        FrontendBackCoordinator(this, firstRunSetup,
+            { if (::onScreenControls.isInitialized) onScreenControls else null },
+            controllerEditor, libraryScreen,
+            { if (!sessionNavigation.resumeGame()) finish() },
+            { if (::sessionFlow.isInitialized) sessionFlow else null }, ::closeMenu,
+            { if (::keyboardPanel.isInitialized) keyboardPanel else null }, ::openMenu, ::hideKeyboard)
+    }
     private var romTree: Uri?
         get() = libraryFlow.tree
         set(value) { libraryFlow.tree = value }
@@ -343,7 +368,9 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
     private lateinit var sessionDrawer: SessionDrawer
     private lateinit var sessionFlow: SessionFlow
     private val menuOpen: Boolean get() = sessionFlow.isOpen
-    private var userPaused = false
+    private var userPaused: Boolean
+        get() = sessionState.userPaused
+        set(value) { sessionState.userPaused = value }
     private val activityVisible: Boolean get() = guestLifecycle.isVisible
     private var muted = false
     private var clock = 25
@@ -425,10 +452,6 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
         if (RgDsDisplayRouter.routeToUpper(this)) {
             relocating = true
             return
-        }
-        if (Build.VERSION.SDK_INT >= 33) {
-            onBackInvokedDispatcher.registerOnBackInvokedCallback(
-                OnBackInvokedDispatcher.PRIORITY_DEFAULT) { handleBack() }
         }
         if (applicationInfo.flags and android.content.pm.ApplicationInfo.FLAG_DEBUGGABLE != 0) {
             traceScreenHashes = intent.getBooleanExtra("kairo98.traceScreenHashes", false)
@@ -551,6 +574,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
             ::chooseBiosFile, ::chooseFontFile, ::chooseRhythmFile, ::finishFirstRun,
             { biosFile().isFile }, { fontBitmapFile().isFile }, { rhythmRomFile().isFile })
         root.addView(firstRunSetup, FrameLayout.LayoutParams(-1, -1))
+        backCoordinator.register()
         handler.post(updateStatus)
         root.post {
             libraryFlow.restore()
@@ -762,9 +786,9 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
             secondaryKeyboard.setLibraryInfo(null)
         }
         val editingControls = ::onScreenControls.isInitialized && onScreenControls.isOpen
-        val showingGuest = activityVisible && !libraryVisible && !menuOpen &&
-            !editingControls && !preparingFont &&
-            !(::controllerEditor.isInitialized && controllerEditor.isOpen)
+        val presentation = sessionState.presentation(activityVisible, menuOpen,
+            editingControls || (::controllerEditor.isInitialized && controllerEditor.isOpen), preparingFont)
+        val showingGuest = presentation.showGuest
         if (::swappedKeyboardPanel.isInitialized) {
             if (::secondaryKeyboard.isInitialized && secondaryKeyboard.swapped && showingGuest &&
                 swappedKeyboardPanel.visibility != View.VISIBLE)
@@ -776,14 +800,10 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
             showingGuest,
             if (::firstRunSetup.isInitialized && firstRunSetup.isOpen) Ui.BG
                 else Color.BLACK)
-        nativePause(userPaused || menuOpen || libraryVisible || !activityVisible || preparingFont ||
-            (::controllerEditor.isInitialized && controllerEditor.isOpen) || editingControls)
+        nativePause(presentation.pauseGuest)
         if (::onScreenControls.isInitialized) {
-            val controlsPlaying = !libraryVisible && !menuOpen && !editingControls &&
-                activityVisible && !preparingFont &&
-                !(::controllerEditor.isInitialized && controllerEditor.isOpen)
             if (::libraryFlow.isInitialized) touchUi.refreshControls(onScreenControls,
-                controlsPlaying, ::secondaryKeyboard.isInitialized && secondaryKeyboard.swapped)
+                showingGuest, ::secondaryKeyboard.isInitialized && secondaryKeyboard.swapped)
             else onScreenControls.refreshVisibility(false)
         }
     }
@@ -965,10 +985,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
                         gamepadMapper.bindings = effectiveControllerBindings(game)
                         userPaused = false
                         sessionFlow.reset()
-                        libraryScreen.dismissSystemKeyboard()
-                        libraryVisible = false
-                        libraryScreen.visibility = View.GONE
-                        screen.requestFocus()
+                        sessionNavigation.enterGame(notify = false)
                         scheduleStartupQueue(game, choices)
                         scheduleDiskSwaps(game.diskSwaps, result.swapSources)
                     }
@@ -988,25 +1005,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
         return "Machine startup timed out"
     }
 
-    private fun showLibrary() {
-        edgeSwipes.reset()
-        if (sessionFromFrontend) {
-            exitApp()
-            return
-        }
-        commandCancelled.set(true)
-        releaseInputs()
-        hideKeyboard()
-        libraryScreen.closeActions()
-        libraryScreen.closeDetail()
-        libraryVisible = true
-        closeMenu()
-        libraryScreen.visibility = View.VISIBLE
-        libraryScreen.showEntries(libraryEntries)
-        libraryScreen.showFolder(romTree?.let(::folderLabel))
-        libraryScreen.showStatus("${libraryEntries.count { it.playable }} games ready")
-        applyPauseState()
-    }
+    private fun showLibrary() = sessionNavigation.showLibrary()
 
     private fun touchSelection(game: GameCatalog.Game? = currentGame) =
         TouchInputPolicy.resolve(TouchInputSelection(globalInputMode, globalTouchDirect),
@@ -1982,6 +1981,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
 
     override fun onDestroy() {
         if (relocating) { super.onDestroy(); return }
+        backCoordinator.unregister()
         startGeneration++
         libraryFlow.cancel()
         externalDispatcher.cancel()
@@ -2078,9 +2078,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
                     setSecondaryInitialMode(false)
                     inputModeDecider.reset()
                     gamepadMapper.bindings = controllerFlow.global()
-                    libraryVisible = false
-                    libraryScreen.visibility = View.GONE
-                    screen.requestFocus()
+                    sessionNavigation.enterGame(notify = false)
                 }
                 applyPauseState()
                 toast(result)
@@ -2324,31 +2322,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
     @Deprecated("Legacy Back path; API 33+ also uses OnBackInvokedDispatcher")
     override fun onBackPressed() = handleBack()
 
-    private fun handleBack() {
-        if (::firstRunSetup.isInitialized && firstRunSetup.isOpen) {
-            firstRunSetup.back()
-            return
-        }
-        if (::onScreenControls.isInitialized && onScreenControls.isOpen) {
-            onScreenControls.back()
-            return
-        }
-        if (::controllerEditor.isInitialized && controllerEditor.isOpen) {
-            controllerEditor.back()
-            return
-        }
-        if (libraryVisible) {
-            if (libraryScreen.closeDetail()) return
-            if (libraryScreen.closeActions()) return
-            if (currentDisk != null) {
-                libraryVisible = false
-                libraryScreen.visibility = View.GONE
-                applyPauseState()
-            } else finish()
-        } else if (menuOpen) closeMenu()
-        else if (keyboardPanel.visibility == View.VISIBLE) hideKeyboard()
-        else openMenu()
-    }
+    private fun handleBack() = backCoordinator.handle()
 
     override fun onKeyDown(keyCode: Int, event: KeyEvent): Boolean =
         inputDispatch.physicalKey(event) || super.onKeyDown(keyCode, event)
