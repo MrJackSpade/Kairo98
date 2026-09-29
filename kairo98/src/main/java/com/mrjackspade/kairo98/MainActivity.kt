@@ -17,14 +17,14 @@ import com.mrjackspade.kairo.frontend.ControllerGuestSpec
 import com.mrjackspade.kairo.frontend.CatalogArtworkDownloadController
 import com.mrjackspade.kairo.frontend.CatalogUpdateController
 import com.mrjackspade.kairo.frontend.ControllerProfileStore
+import com.mrjackspade.kairo.frontend.ControllerProfileCoordinator
+import com.mrjackspade.kairo.frontend.ControllerEditorFlow
 import com.mrjackspade.kairo.frontend.ControllerBinding
 import com.mrjackspade.kairo.frontend.SettingsEntry
 import com.mrjackspade.kairo.frontend.TouchInputSettingsDialog
 import com.mrjackspade.kairo.frontend.ArtworkOverrideEditor
 
 import com.mrjackspade.kairo.frontend.MouseInputRouter
-import com.mrjackspade.kairo.frontend.PhysicalControllerBinding
-import com.mrjackspade.kairo.frontend.PhysicalControllerBindings
 import com.mrjackspade.kairo.frontend.PixelTextView
 import com.mrjackspade.kairo.frontend.Ui
 import com.mrjackspade.kairo.frontend.LibraryScreen
@@ -143,6 +143,19 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
         ControllerProfileStore(preferences, ControllerBindings::parse,
             { ControllerBindings.toJson(it).toString() })
     }
+    private val controllerFlow by lazy {
+        ControllerProfileCoordinator(controllerProfiles, gamepadMapper,
+            LibraryEntry::contentId,
+            { entry: LibraryEntry -> effectiveControllerBindings(
+                romLibrary.catalog.resolve(entry.contentId!!, entry.displayName)) },
+            { id, bindings -> romLibrary.catalog.setOverrideSubfield(id, "controller", "bindings",
+                ControllerBindings.toJson(bindings)) },
+            { id -> romLibrary.catalog.updateOverrideSubfields(id, "controller",
+                mapOf("bindings" to null, "profile" to null)) },
+            { currentEntry },
+            { currentEntry?.let { currentGame = romLibrary.catalog.resolve(
+                it.contentId!!, it.displayName) } })
+    }
     private val handler = Handler(Looper.getMainLooper())
     private lateinit var root: FrameLayout
     private lateinit var screen: SurfaceView
@@ -155,6 +168,10 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
     private lateinit var firstRunSetup: FirstRunSetup
     private lateinit var romLibrary: RomLibrary
     private lateinit var controllerEditor: ControllerEditor<LibraryEntry>
+    private val controllerEditorFlow by lazy {
+        ControllerEditorFlow(controllerEditor, LibraryEntry::contentId, ::closeMenu,
+            ::releaseInputs, ::hideKeyboard, { onScreenControls.show() }, ::toast)
+    }
     private var libraryVisible = true
     private var romTree: Uri?
         get() = libraryFlow.tree
@@ -308,9 +325,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
             nativeSetScreenHashSampling(true)
             handler.post(traceHashes)
         }
-        gamepadMapper.physicalBindings = physicalControllerBindings()
-        gamepadMapper.bindings = globalControllerBindings()
-        gamepadMapper.deadZone = controllerProfiles.deadZone
+        controllerFlow.initialize()
         inputManager = getSystemService(INPUT_SERVICE) as InputManager
         inputManager.registerInputDeviceListener(inputDeviceListener, handler)
         window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
@@ -348,13 +363,11 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
             ::onSecondarySwapChanged)
         romLibrary = RomLibrary(this)
         controllerEditor = ControllerEditor(this, root,
-            ::loadControllerBindings, ::saveControllerBindings, ::resetControllerBindings,
-            ::physicalControllerBindings, ::savePhysicalControllerBindings,
-            ::resetPhysicalControllerBindings,
-            { gamepadMapper.deadZone }, { value ->
-                gamepadMapper.deadZone = value
-                controllerProfiles.deadZone = value
-            }, ::applyPauseState, ::showOnScreenControls,
+            controllerFlow::load, controllerFlow::save, controllerFlow::reset,
+            controllerFlow::physical, controllerFlow::savePhysical,
+            controllerFlow::resetPhysical,
+            { controllerFlow.deadZone }, { controllerFlow.deadZone = it },
+            ::applyPauseState, ::showOnScreenControls,
             { onScreenControls.eightWayDpad }, { onScreenControls.eightWayDpad = it },
             LibraryEntry::id, ControllerGuestSpec("PC-98", (0..127).toList(),
                 Pc98KeyNames::label, setOf(0x70, 0x71, 0x72, 0x73, 0x74, 0x7d),
@@ -1836,26 +1849,12 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
             .setView(scroll).setPositiveButton("Done", null).showStyled()
     }
 
-    private fun globalControllerBindings() = controllerProfiles.global()
-
-    private fun physicalControllerBindings() = controllerProfiles.physical()
-
-    private fun savePhysicalControllerBindings(bindings: List<PhysicalControllerBinding>) {
-        controllerProfiles.savePhysical(bindings)
-        gamepadMapper.physicalBindings = bindings
-    }
-
-    private fun resetPhysicalControllerBindings() {
-        controllerProfiles.resetPhysical()
-        gamepadMapper.physicalBindings = physicalControllerBindings()
-    }
-
     private fun effectiveControllerBindings(game: GameCatalog.Game?): List<ControllerBinding> {
         val configured = game?.controllerBindings
         return if (game?.overriddenFields?.contains("controller") == true ||
             (configured != null && (configured != "[]" || game.controllerProfile == "custom-v1")))
             ControllerBindings.parse(configured)
-        else globalControllerBindings()
+        else controllerFlow.global()
     }
 
     private fun releaseInputs(preserveAutomation: Boolean = false) {
@@ -1897,47 +1896,16 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
     }
 
     private fun showControllerScope() {
-        closeMenu()
-        releaseInputs()
-        hideKeyboard()
-        controllerEditor.show(currentEntry?.takeIf { !libraryVisible && it.contentId != null })
+        controllerEditorFlow.showScope(currentEntry?.takeIf {
+            !libraryVisible && it.contentId != null })
     }
 
     private fun showOnScreenControls() {
-        if (menuOpen) closeMenu()
-        releaseInputs()
-        hideKeyboard()
-        onScreenControls.show()
+        controllerEditorFlow.showOnScreenControls()
     }
 
     private fun showControllerBindings(entry: LibraryEntry) {
-        if (entry.contentId == null) { toast("Hash this game before editing its controls"); return }
-        releaseInputs()
-        controllerEditor.show(entry)
-    }
-
-    private fun loadControllerBindings(entry: LibraryEntry?): List<ControllerBinding> =
-        if (entry == null) globalControllerBindings()
-        else effectiveControllerBindings(romLibrary.catalog.resolve(entry.contentId!!, entry.displayName))
-
-    private fun saveControllerBindings(entry: LibraryEntry?, bindings: List<ControllerBinding>) {
-        val json = ControllerBindings.toJson(bindings)
-        if (entry == null) controllerProfiles.saveGlobal(bindings)
-        else romLibrary.catalog.setOverrideSubfield(entry.contentId!!, "controller", "bindings", json)
-        refreshControllerBindings(entry)
-    }
-
-    private fun resetControllerBindings(entry: LibraryEntry?) {
-        if (entry == null) controllerProfiles.resetGlobal()
-        else romLibrary.catalog.updateOverrideSubfields(entry.contentId!!, "controller",
-            mapOf("bindings" to null, "profile" to null))
-        refreshControllerBindings(entry)
-    }
-
-    private fun refreshControllerBindings(entry: LibraryEntry?) {
-        if (entry != null && currentEntry?.contentId != entry.contentId) return
-        currentEntry?.let { currentGame = romLibrary.catalog.resolve(it.contentId!!, it.displayName) }
-        gamepadMapper.bindings = effectiveControllerBindings(currentGame)
+        controllerEditorFlow.showGame(entry)
     }
 
     private fun AlertDialog.Builder.showStyled(): AlertDialog {
@@ -2336,7 +2304,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
                     currentGame = null
                     setSecondaryInitialMode(false)
                     inputModeDecider.reset()
-                    gamepadMapper.bindings = globalControllerBindings()
+                    gamepadMapper.bindings = controllerFlow.global()
                     libraryVisible = false
                     libraryScreen.visibility = View.GONE
                     screen.requestFocus()
