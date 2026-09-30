@@ -33,6 +33,7 @@ import com.mrjackspade.kairo.frontend.TouchInputSelection
 import com.mrjackspade.kairo.frontend.TouchSettingsCoordinator
 import com.mrjackspade.kairo.frontend.TouchSettingsStore
 import com.mrjackspade.kairo.frontend.TouchUiCoordinator
+import com.mrjackspade.kairo.frontend.DocumentPicker
 import com.mrjackspade.kairo.frontend.ArtworkCoordinator
 import com.mrjackspade.kairo.frontend.ArtworkOverridePath
 
@@ -274,7 +275,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
             { id, kind, path ->
                 if (path == null) romLibrary.catalog.resetArtworkOverride(id, kind)
                 else romLibrary.catalog.setArtworkOverride(id, kind, path)
-            }, "art/example.webp", { libraryScreen.showEntries(libraryEntries) },
+            }, { libraryScreen.showEntries(libraryEntries) },
             ::showGameDetails, ::toast, GameCatalog::validImageUrl)
     }
     private lateinit var controllerEditor: ControllerEditor<LibraryEntry>
@@ -515,6 +516,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
             { event, width, height -> handleScreenTouch(event, width, height) },
             ::onSecondarySwapChanged)
         romLibrary = RomLibrary(this)
+        artwork.restoreInstanceState(savedInstanceState)
         controllerEditor = ControllerEditor(this, root,
             controllerFlow::load, controllerFlow::save, controllerFlow::reset,
             controllerFlow::physical, controllerFlow::savePhysical,
@@ -590,6 +592,11 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
             applyPauseState()
             updateGameCatalog(true)
         }
+    }
+
+    override fun onSaveInstanceState(outState: Bundle) {
+        artwork.saveInstanceState(outState)
+        super.onSaveInstanceState(outState)
     }
 
     override fun onNewIntent(intent: Intent) {
@@ -1630,18 +1637,12 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
     }
 
     private fun chooseFloppyFile(drive: Int) {
-        startActivityForResult(Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
-            addCategory(Intent.CATEGORY_OPENABLE)
-            type = "*/*"
-        }, if (drive == 0) FLOPPY_A_REQUEST else FLOPPY_B_REQUEST)
+        DocumentPicker.open(this, if (drive == 0) FLOPPY_A_REQUEST else FLOPPY_B_REQUEST, failed = ::toast)
     }
 
     private fun chooseHdi() {
         closeMenu()
-        startActivityForResult(Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
-            addCategory(Intent.CATEGORY_OPENABLE)
-            type = "*/*"
-        }, HDI_REQUEST)
+        DocumentPicker.open(this, HDI_REQUEST, failed = ::toast)
     }
 
     private fun showMachine() {
@@ -1709,17 +1710,11 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
     }
 
     private fun chooseBiosFile() {
-        startActivityForResult(Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
-            addCategory(Intent.CATEGORY_OPENABLE)
-            type = "*/*"
-        }, BIOS_REQUEST)
+        DocumentPicker.open(this, BIOS_REQUEST, failed = ::toast)
     }
 
     private fun chooseFontFile() {
-        startActivityForResult(Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
-            addCategory(Intent.CATEGORY_OPENABLE)
-            type = "*/*"
-        }, FONT_REQUEST)
+        DocumentPicker.open(this, FONT_REQUEST, failed = ::toast)
     }
 
     private fun showRhythmRom() {
@@ -1737,10 +1732,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
     }
 
     private fun chooseRhythmFile() {
-        startActivityForResult(Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
-            addCategory(Intent.CATEGORY_OPENABLE)
-            type = "*/*"
-        }, RHYTHM_REQUEST)
+        DocumentPicker.open(this, RHYTHM_REQUEST, failed = ::toast)
     }
 
     private fun showInputMode() {
@@ -1986,8 +1978,13 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
         if (requestCode !in listOf(HDI_REQUEST, FLOPPY_A_REQUEST, FLOPPY_B_REQUEST) ||
             resultCode != RESULT_OK || data?.data == null) return
         val uri = data.data ?: return
-        val name = contentResolver.query(uri, arrayOf(OpenableColumns.DISPLAY_NAME), null, null, null)
-            ?.use { if (it.moveToFirst()) it.getString(0) else null }
+        val name = try {
+            contentResolver.query(uri, arrayOf(OpenableColumns.DISPLAY_NAME), null, null, null)
+                ?.use { if (it.moveToFirst()) it.getString(0) else null }
+        } catch (error: Exception) {
+            toast(error.message ?: "Could not read selected file")
+            return
+        }
         val isSwap = requestCode != HDI_REQUEST
         if (name == null || !DiskFormat.supported(name) || (isSwap && !DiskFormat.isFloppy(name))) {
             toast(if (isSwap) "Select a supported floppy image" else "Select a supported disk image")
