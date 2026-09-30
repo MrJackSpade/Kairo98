@@ -12,6 +12,7 @@
 
 #pragma once
 
+#include "kairo/egl_context.h"
 #include <EGL/egl.h>
 #include <GLES3/gl3.h>
 #include <android/log.h>
@@ -30,7 +31,6 @@ public:
     bool attach(ANativeWindow *window) {
         detach();
         if (!window) return false;
-        ANativeWindow_acquire(window);
         window_ = window;
         if (!init()) {
             detach();
@@ -40,23 +40,14 @@ public:
     }
 
     void detach() {
-        if (display_ != EGL_NO_DISPLAY) {
-            eglMakeCurrent(display_, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
-            if (surface_ != EGL_NO_SURFACE) eglDestroySurface(display_, surface_);
-            if (context_ != EGL_NO_CONTEXT) eglDestroyContext(display_, context_);
-            eglTerminate(display_);
-        }
+        egl_.destroy();
         display_ = EGL_NO_DISPLAY;
         surface_ = EGL_NO_SURFACE;
-        context_ = EGL_NO_CONTEXT;
         program_ = 0;
-        if (window_) {
-            ANativeWindow_release(window_);
-            window_ = nullptr;
-        }
+        window_ = nullptr;
     }
 
-    bool ready() const { return context_ != EGL_NO_CONTEXT; }
+    bool ready() const { return egl_.ready(); }
 
     // Merges a frame packet into the mirror and uploads what changed.
     void apply(const kairo98_gpu_frame_t &frame) {
@@ -141,36 +132,10 @@ public:
 
 private:
     bool init() {
-        display_ = eglGetDisplay(EGL_DEFAULT_DISPLAY);
-        if (display_ == EGL_NO_DISPLAY || !eglInitialize(display_, nullptr, nullptr)) {
-            display_ = EGL_NO_DISPLAY;
-            return fail("eglInitialize");
-        }
-        EGLConfig config = nullptr;
-        EGLint count = 0;
-        // Prefer a 5-6-5 surface so the palette's RGB565 values land unchanged.
-        const EGLint attribs565[] = {EGL_RENDERABLE_TYPE, EGL_OPENGL_ES3_BIT,
-                                     EGL_SURFACE_TYPE, EGL_WINDOW_BIT,
-                                     EGL_RED_SIZE, 5, EGL_GREEN_SIZE, 6, EGL_BLUE_SIZE, 5,
-                                     EGL_ALPHA_SIZE, 0, EGL_DEPTH_SIZE, 0, EGL_NONE};
-        const EGLint attribs888[] = {EGL_RENDERABLE_TYPE, EGL_OPENGL_ES3_BIT,
-                                     EGL_SURFACE_TYPE, EGL_WINDOW_BIT,
-                                     EGL_RED_SIZE, 8, EGL_GREEN_SIZE, 8, EGL_BLUE_SIZE, 8,
-                                     EGL_DEPTH_SIZE, 0, EGL_NONE};
-        if (!eglChooseConfig(display_, attribs565, &config, 1, &count) || count == 0) {
-            if (!eglChooseConfig(display_, attribs888, &config, 1, &count) || count == 0) {
-                return fail("eglChooseConfig");
-            }
-        }
-        EGLint format = 0;
-        eglGetConfigAttrib(display_, config, EGL_NATIVE_VISUAL_ID, &format);
-        ANativeWindow_setBuffersGeometry(window_, 0, 0, format);
-        const EGLint context_attribs[] = {EGL_CONTEXT_CLIENT_VERSION, 3, EGL_NONE};
-        context_ = eglCreateContext(display_, config, EGL_NO_CONTEXT, context_attribs);
-        if (context_ == EGL_NO_CONTEXT) return fail("eglCreateContext");
-        surface_ = eglCreateWindowSurface(display_, config, window_, nullptr);
-        if (surface_ == EGL_NO_SURFACE) return fail("eglCreateWindowSurface");
-        if (!eglMakeCurrent(display_, surface_, surface_, context_)) return fail("eglMakeCurrent");
+        if (!egl_.create(3, 0, EGL_NO_CONTEXT, true) || !egl_.attach(window_))
+            return fail("EGL context/surface");
+        display_ = egl_.display();
+        surface_ = egl_.surface();
         if (!build_program()) return false;
         create_textures();
         upload_all();
@@ -346,7 +311,7 @@ private:
     ANativeWindow *window_ = nullptr;
     EGLDisplay display_ = EGL_NO_DISPLAY;
     EGLSurface surface_ = EGL_NO_SURFACE;
-    EGLContext context_ = EGL_NO_CONTEXT;
+    kairo::EglContext egl_;
     GLuint program_ = 0;
     GLuint textures_[5] = {0, 0, 0, 0, 0};
     GLint mode_location_ = -1, base_location_ = -1, surface_location_ = -1;

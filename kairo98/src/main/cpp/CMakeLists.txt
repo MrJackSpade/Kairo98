@@ -101,3 +101,6 @@ if(KAIRO98_PGO_FLAGS)
     target_compile_options(kairo98 PRIVATE ${KAIRO98_PGO_FLAGS})
     target_link_options(kairo98 PRIVATE ${KAIRO98_PGO_FLAGS})
 endif()
+
+# Common EGL lifecycle; guest palette composition stays in Kairo98.
+target_include_directories(kairo98 PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../../../../shared/frontend/src/main/cpp)
