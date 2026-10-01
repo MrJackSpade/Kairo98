@@ -15,6 +15,10 @@ object ControllerBindings {
     fun parse(text: String?) = codec.parse(text)
     fun toJson(bindings: List<ControllerBinding>) = codec.toJson(bindings)
 
+    fun defaults(layout: com.mrjackspade.kairo.frontend.ControllerLayout) =
+        if (layout == com.mrjackspade.kairo.frontend.ControllerLayout.WITH_STICKS) defaults()
+        else defaults().filterNot { it.input.startsWith("virtual:ls") || it.input.startsWith("virtual:rs") }
+
     fun defaults() = listOf(
         ControllerBinding("virtual:a", listOf(0x29)),
         ControllerBinding("virtual:b", listOf(0x2a)),

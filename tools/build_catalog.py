@@ -188,10 +188,15 @@ def validate_record(record):
             type(machine.get("cpuMultiple", 20)) is int and
             1 <= machine.get("cpuMultiple", 20) <= 20, "invalid machine")
     controller = record.get("controller", {})
-    require(isinstance(controller, dict) and set(controller) <= {"profile", "bindings"} and
+    require(isinstance(controller, dict) and set(controller) <= {"profile", "bindings", "defaults"} and
             isinstance(controller.get("profile", ""), str) and
             ("profile" not in controller or 1 <= len(controller["profile"]) <= 64) and
-            valid_bindings(controller.get("bindings", [])), "invalid controller")
+            valid_bindings(controller.get("bindings", [])) and
+            ("defaults" not in controller or
+             (isinstance(controller["defaults"], dict) and "withoutSticks" in controller["defaults"] and
+              set(controller["defaults"]) <= {"withoutSticks", "withSticks"} and
+              all(valid_bindings(bindings) for bindings in controller["defaults"].values()))),
+            "invalid controller")
     input_mode = record.get("input", {"mode": "auto"})
     require(isinstance(input_mode, dict) and "mode" in input_mode and
             set(input_mode) <= {"mode", "touch", "secondary"} and

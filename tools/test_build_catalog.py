@@ -164,6 +164,20 @@ class CatalogBuildTests(unittest.TestCase):
             with self.subTest(bindings=bindings), self.assertRaisesRegex(ValueError, "invalid controller"):
                 validate_record({**record, "controller": {"bindings": bindings}})
 
+    def test_controller_default_variants_and_explicit_empty(self):
+        record = self.source["datasets"][0]["games"][0]
+        without = [{"input": "virtual:a", "keys": [28]}]
+        for defaults in ({"withoutSticks": without},
+                         {"withoutSticks": without, "withSticks": []},
+                         {"withoutSticks": [], "withSticks": [{"input": "virtual:lsright", "mouse": "moveRight"}]}):
+            result = validate_record({**record, "controller": {"defaults": defaults}})
+            self.assertEqual(result["controller"]["defaults"], defaults)
+        for defaults in ({"withSticks": []}, {"withoutSticks": None},
+                         {"withoutSticks": [], "other": []},
+                         {"withoutSticks": [], "withSticks": [{"input": "virtual:a", "keys": [999]}]}):
+            with self.subTest(defaults=defaults), self.assertRaisesRegex(ValueError, "invalid controller"):
+                validate_record({**record, "controller": {"defaults": defaults}})
+
     def test_input_mode(self):
         record = {"contentIds": ["sha256-hdi-v1:" + "0" * 64], "title": "Test"}
         for mode in ("auto", "keyboard", "mouse"):

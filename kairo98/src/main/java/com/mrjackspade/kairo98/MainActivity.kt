@@ -159,7 +159,12 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
                 debugAutoAdvance = null
             }, setOf("guest-command", "disk-swap", "debug-auto-space"))
     }
-    private val controllerDevices by lazy { ControllerDeviceMonitor(this, inputDispatch::releaseDevice) }
+    private val controllerDevices by lazy { ControllerDeviceMonitor(this, inputDispatch::releaseDevice) {
+        controllerProfiles.configuration.devicesChanged()
+        if (currentDisk == null) gamepadMapper.bindings = controllerFlow.global()
+    } }
+    private var controllerSetupPending = false
+    private var pendingControllerExternalRequest = false
     private val guestLifecycle: GuestLifecycleCoordinator by lazy {
         GuestLifecycleCoordinator({ releaseInputs() }, ::applyPauseState, {}, {},
             initiallyVisible = false,
@@ -176,7 +181,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
     }
     private val controllerProfiles by lazy {
         ControllerProfileStore(preferences, ControllerBindings::parse,
-            { ControllerBindings.toJson(it).toString() })
+            { ControllerBindings.toJson(it).toString() }, { ControllerBindings.defaults(it) })
     }
     private val controllerFlow by lazy {
         ControllerProfileCoordinator(controllerProfiles, gamepadMapper,
@@ -532,7 +537,8 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
                 listOf("menu" to "Open menu", "pause" to "Pause or resume",
                     "fastForward" to "Fast forward while held", "restart" to "Restart",
                     "exit" to "Exit")),
-            { ControllerBindings.toJson(it) })
+            { ControllerBindings.toJson(it) }, controllerProfiles.configuration,
+            { releaseInputs(); controllerFlow.refresh(null) }, { entry -> controllerMappingStatus(entry) })
         val libraryPage = LibraryScreen(this, romLibrary.catalog, LibraryStrings("KAIRO98"),
             ::chooseRomFolder, { refreshLibrary(false) }, { refreshLibrary(true) },
             { updateGameCatalog(false) },
@@ -579,22 +585,37 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
         root.addView(firstRunSetup, FrameLayout.LayoutParams(-1, -1))
         backCoordinator.register()
         handler.post(updateStatus)
+        controllerSetupPending = controllerProfiles.configuration.needsSetup
         root.post {
-            libraryFlow.restore()
-            val setupStep = preferences.getInt("onboarding_step_v1", if (romTree == null) 0 else 2)
-            val externallyRequested = savedInstanceState == null &&
-                ExternalGameIntent.hasRequest(intent)
-            if (externallyRequested) dispatchExternalGame(intent)
-            else if (romTree != null && hasRomGrant(romTree!!) && setupStep >= 2 &&
-                !selectPendingDebugGame()) refreshLibrary(false)
-            if (setupStep < 2 && !externallyRequested) firstRunSetup.show(if (setupStep == 0)
-                FirstRunSetup.Step.ROM_FOLDER else FirstRunSetup.Step.FIRMWARE)
-            applyPauseState()
-            updateGameCatalog(true)
+            if (isFinishing || isDestroyed) return@post
+            if (controllerSetupPending) {
+                controllerSetupPending = true
+                controllerProfiles.configuration.show(this, required = true) {
+                    controllerSetupPending = false
+                    controllerFlow.initialize()
+                    continueStartup(savedInstanceState)
+                }
+            } else continueStartup(savedInstanceState)
         }
     }
 
+    private fun continueStartup(savedInstanceState: Bundle?) {
+        libraryFlow.restore()
+        val setupStep = preferences.getInt("onboarding_step_v1", if (romTree == null) 0 else 2)
+        val externallyRequested = (savedInstanceState == null || pendingControllerExternalRequest ||
+            savedInstanceState.getBoolean("controller_setup_external_v1")) &&
+            ExternalGameIntent.hasRequest(intent)
+        if (externallyRequested) dispatchExternalGame(intent)
+        else if (romTree != null && hasRomGrant(romTree!!) && setupStep >= 2 &&
+            !selectPendingDebugGame()) refreshLibrary(false)
+        if (setupStep < 2 && !externallyRequested) firstRunSetup.show(if (setupStep == 0)
+            FirstRunSetup.Step.ROM_FOLDER else FirstRunSetup.Step.FIRMWARE)
+        applyPauseState()
+        updateGameCatalog(true)
+    }
+
     override fun onSaveInstanceState(outState: Bundle) {
+        outState.putBoolean("controller_setup_external_v1", controllerSetupPending && ExternalGameIntent.hasRequest(intent))
         artwork.saveInstanceState(outState)
         super.onSaveInstanceState(outState)
     }
@@ -602,6 +623,10 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         setIntent(intent)
+        if (controllerSetupPending) {
+            pendingControllerExternalRequest = true
+            return
+        }
         dispatchExternalGame(intent)
     }
 
@@ -977,6 +1002,8 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
                 if (generation == startGeneration) {
                     preparingFont = false
                     if (result != null) {
+                        controllerProfiles.configuration.endSession()
+                        controllerProfiles.configuration.beginSession()
                         currentEntry = entry
                         sessionFromFrontend = fromFrontend
                         preferences.edit().putString("last_played_entry", entry.id).apply()
@@ -1773,10 +1800,28 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
 
     private fun effectiveControllerBindings(game: GameCatalog.Game?): List<ControllerBinding> {
         val configured = game?.controllerBindings
+        if (game != null && !game.overriddenFields.contains("controller") &&
+            game.controllerDefaultBindings != null) {
+            val defaults = org.json.JSONObject(game.controllerDefaultBindings)
+            val bindings = defaults.optJSONArray(controllerProfiles.configuration.layout.key)
+                ?: defaults.optJSONArray("withoutSticks")
+            if (bindings != null) return ControllerBindings.parse(bindings.toString())
+        }
         return if (game?.overriddenFields?.contains("controller") == true ||
             (configured != null && (configured != "[]" || game.controllerProfile == "custom-v1")))
             ControllerBindings.parse(configured)
         else controllerFlow.global()
+    }
+
+    private fun controllerMappingStatus(entry: LibraryEntry?): String? {
+        if (controllerProfiles.configuration.layout != com.mrjackspade.kairo.frontend.ControllerLayout.WITH_STICKS)
+            return null
+        val game = entry?.contentId?.let { romLibrary.catalog.resolve(it, entry.displayName) }
+        if (game == null) return null
+        if (game.overriddenFields.contains("controller") || game.controllerProfile == "custom-v1") return null
+        return if (game.controllerDefaultBindings != null &&
+            org.json.JSONObject(game.controllerDefaultBindings).optJSONArray("withSticks") == null)
+            "Using Without Sticks fallback" else null
     }
 
     private fun releaseInputs(preserveAutomation: Boolean = false) =
@@ -1874,6 +1919,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
         releaseInputs()
         if (exiting) return
         exiting = true
+        controllerProfiles.configuration.endSession()
         startGeneration++
         menuStatus.text = "Stopping machine…"
         Thread {
@@ -2035,6 +2081,8 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
                 preparingFont = false
                 if (result.startsWith("Starting ")) {
                     preferences.edit().putString("disk_name", name).apply()
+                    controllerProfiles.configuration.endSession()
+                    controllerProfiles.configuration.beginSession()
                     currentEntry = null
                     currentDisk = disk
                     currentIsFloppy = DiskFormat.isFloppy(name)

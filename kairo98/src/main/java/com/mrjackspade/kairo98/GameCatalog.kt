@@ -54,7 +54,8 @@ class GameCatalog(private val context: Context) : LibraryCatalog {
         val startupChoices: List<StartupChoice>,
         val diskSwaps: List<DiskSwap>,
         val launchTimeoutMs: Int,
-        val overriddenFields: Set<String>
+        val overriddenFields: Set<String>,
+        val controllerDefaultBindings: String? = null
     ) : LibraryGame {
         override val tags: List<String> get() = if (heart == true) listOf("♥") else emptyList()
     }
@@ -227,8 +228,11 @@ class GameCatalog(private val context: Context) : LibraryCatalog {
             choices,
             diskSwaps,
             launch?.optInt("timeoutMs", 30000)?.coerceIn(1000, 120000) ?: 30000,
-            user?.keys()?.asSequence()?.toSet() ?: emptySet()
-        )
+            user?.keys()?.asSequence()?.toSet() ?: emptySet(),
+            controllerDefaultBindings = (controller?.optJSONObject("defaults")
+                ?: controller?.optJSONArray("bindings")?.takeIf {
+                    it.length() > 0 || controller.optString("profile") == "custom-v1"
+                }?.let { JSONObject().put("withoutSticks", it) })?.toString())
     }
 
     override fun openArtwork(path: String): InputStream = artworkStore.open(path)
@@ -345,7 +349,13 @@ class GameCatalog(private val context: Context) : LibraryCatalog {
             value.keys().asSequence().all { it in OBJECT_FIELDS.getValue("controller") } &&
             (!value.has("profile") ||
             (value.opt("profile") is String && value.optString("profile").length in 1..64)) &&
-            (!value.has("bindings") || value.optJSONArray("bindings")?.let(ControllerBindings::valid) == true)
+            (!value.has("bindings") || value.optJSONArray("bindings")?.let(ControllerBindings::valid) == true) &&
+            (!value.has("defaults") || value.optJSONObject("defaults")?.let { defaults ->
+                defaults.has("withoutSticks") && defaults.keys().asSequence().all {
+                    it in setOf("withoutSticks", "withSticks") &&
+                        defaults.optJSONArray(it)?.let(ControllerBindings::valid) == true
+                }
+            } == true)
         "input" -> value is JSONObject && value.length() > 0 &&
             value.keys().asSequence().all { it in INPUT_FIELDS } &&
             (!value.has("mode") || value.optString("mode") in INPUT_MODES) &&
@@ -543,7 +553,7 @@ class GameCatalog(private val context: Context) : LibraryCatalog {
         private val OBJECT_FIELDS = mapOf(
             "artwork" to ART_FIELDS,
             "machine" to setOf("baseClockTenthsMHz", "gdcClockTenthsMHz", "cpuMultiple"),
-            "controller" to setOf("profile", "bindings"),
+            "controller" to setOf("profile", "bindings", "defaults"),
             "input" to INPUT_FIELDS,
             "launch" to setOf("type", "text", "commands", "ready", "timeoutMs", "screenHashes")
         )

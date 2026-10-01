@@ -15912,7 +15912,7 @@
         "sha256-hdi-v1:33bc95398aeb8538410d364795ab1590f92586186054b286b023d1e508e4da8f"
       ],
       "description": "",
-      "controller": {"profile": "alice-no-yakata-v1", "bindings": [{"input": "virtual:a", "keys": [28]}, {"input": "virtual:b", "keys": [42]}, {"input": "virtual:x", "keys": [43]}, {"input": "virtual:y", "keys": [52]}, {"input": "virtual:start", "keys": [28]}, {"input": "virtual:select", "keys": [0]}, {"input": "virtual:menu", "action": "menu"}, {"input": "virtual:up", "keys": [58]}, {"input": "virtual:down", "keys": [61]}, {"input": "virtual:left", "keys": [59]}, {"input": "virtual:right", "keys": [60]}, {"input": "virtual:lsup", "mouse": "moveUp"}, {"input": "virtual:lsdown", "mouse": "moveDown"}, {"input": "virtual:lsleft", "mouse": "moveLeft"}, {"input": "virtual:lsright", "mouse": "moveRight"}, {"input": "virtual:rsup", "keys": [67]}, {"input": "virtual:rsdown", "keys": [75]}, {"input": "virtual:rsleft", "keys": [70]}, {"input": "virtual:rsright", "keys": [72]}]},
+      "controller": {"profile": "alice-no-yakata-v1", "bindings": [{"input": "virtual:a", "keys": [28]}, {"input": "virtual:b", "keys": [42]}, {"input": "virtual:x", "keys": [43]}, {"input": "virtual:y", "keys": [52]}, {"input": "virtual:start", "keys": [28]}, {"input": "virtual:select", "keys": [0]}, {"input": "virtual:menu", "action": "menu"}, {"input": "virtual:up", "keys": [58]}, {"input": "virtual:down", "keys": [61]}, {"input": "virtual:left", "keys": [59]}, {"input": "virtual:right", "keys": [60]}, {"input": "virtual:lsup", "mouse": "moveUp"}, {"input": "virtual:lsdown", "mouse": "moveDown"}, {"input": "virtual:lsleft", "mouse": "moveLeft"}, {"input": "virtual:lsright", "mouse": "moveRight"}, {"input": "virtual:rsup", "keys": [67]}, {"input": "virtual:rsdown", "keys": [75]}, {"input": "virtual:rsleft", "keys": [70]}, {"input": "virtual:rsright", "keys": [72]}], "defaults": {"withoutSticks": [{"input": "virtual:a", "keys": [28]}, {"input": "virtual:b", "keys": [42]}, {"input": "virtual:x", "keys": [43]}, {"input": "virtual:y", "keys": [52]}, {"input": "virtual:start", "keys": [28]}, {"input": "virtual:select", "keys": [0]}, {"input": "virtual:menu", "action": "menu"}, {"input": "virtual:up", "keys": [58]}, {"input": "virtual:down", "keys": [61]}, {"input": "virtual:left", "keys": [59]}, {"input": "virtual:right", "keys": [60]}, {"input": "virtual:lsup", "mouse": "moveUp"}, {"input": "virtual:lsdown", "mouse": "moveDown"}, {"input": "virtual:lsleft", "mouse": "moveLeft"}, {"input": "virtual:lsright", "mouse": "moveRight"}, {"input": "virtual:rsup", "keys": [67]}, {"input": "virtual:rsdown", "keys": [75]}, {"input": "virtual:rsleft", "keys": [70]}, {"input": "virtual:rsright", "keys": [72]}]}},
       "pageUrl": "https://gamesdb.launchbox-app.com/games/details/139332-alice-no-yakata",
       "boxArtUrl": "https://images.launchbox-app.com/4954edb9-4757-48d2-857a-198110b84a2a.jpg",
       "screenshotUrl": "https://images.launchbox-app.com/795898b6-c08b-4982-8f0b-0ba2f50b8358.png"
@@ -15934,7 +15934,7 @@
         "sha256-hdi-v1:b1102e4213a5f1c5746c1d85b0ae8dac9be4881c13dcb60289f236e8564ebe1b"
       ],
       "description": "",
-      "controller": {"profile": "alice-no-yakata-v1", "bindings": [{"input": "virtual:a", "keys": [28]}, {"input": "virtual:b", "keys": [42]}, {"input": "virtual:x", "keys": [43]}, {"input": "virtual:y", "keys": [52]}, {"input": "virtual:start", "keys": [28]}, {"input": "virtual:select", "keys": [0]}, {"input": "virtual:menu", "action": "menu"}, {"input": "virtual:up", "keys": [58]}, {"input": "virtual:down", "keys": [61]}, {"input": "virtual:left", "keys": [59]}, {"input": "virtual:right", "keys": [60]}, {"input": "virtual:lsup", "mouse": "moveUp"}, {"input": "virtual:lsdown", "mouse": "moveDown"}, {"input": "virtual:lsleft", "mouse": "moveLeft"}, {"input": "virtual:lsright", "mouse": "moveRight"}, {"input": "virtual:rsup", "keys": [67]}, {"input": "virtual:rsdown", "keys": [75]}, {"input": "virtual:rsleft", "keys": [70]}, {"input": "virtual:rsright", "keys": [72]}]},
+      "controller": {"profile": "alice-no-yakata-v1", "bindings": [{"input": "virtual:a", "keys": [28]}, {"input": "virtual:b", "keys": [42]}, {"input": "virtual:x", "keys": [43]}, {"input": "virtual:y", "keys": [52]}, {"input": "virtual:start", "keys": [28]}, {"input": "virtual:select", "keys": [0]}, {"input": "virtual:menu", "action": "menu"}, {"input": "virtual:up", "keys": [58]}, {"input": "virtual:down", "keys": [61]}, {"input": "virtual:left", "keys": [59]}, {"input": "virtual:right", "keys": [60]}, {"input": "virtual:lsup", "mouse": "moveUp"}, {"input": "virtual:lsdown", "mouse": "moveDown"}, {"input": "virtual:lsleft", "mouse": "moveLeft"}, {"input": "virtual:lsright", "mouse": "moveRight"}, {"input": "virtual:rsup", "keys": [67]}, {"input": "virtual:rsdown", "keys": [75]}, {"input": "virtual:rsleft", "keys": [70]}, {"input": "virtual:rsright", "keys": [72]}], "defaults": {"withoutSticks": [{"input": "virtual:a", "keys": [28]}, {"input": "virtual:b", "keys": [42]}, {"input": "virtual:x", "keys": [43]}, {"input": "virtual:y", "keys": [52]}, {"input": "virtual:start", "keys": [28]}, {"input": "virtual:select", "keys": [0]}, {"input": "virtual:menu", "action": "menu"}, {"input": "virtual:up", "keys": [58]}, {"input": "virtual:down", "keys": [61]}, {"input": "virtual:left", "keys": [59]}, {"input": "virtual:right", "keys": [60]}, {"input": "virtual:lsup", "mouse": "moveUp"}, {"input": "virtual:lsdown", "mouse": "moveDown"}, {"input": "virtual:lsleft", "mouse": "moveLeft"}, {"input": "virtual:lsright", "mouse": "moveRight"}, {"input": "virtual:rsup", "keys": [67]}, {"input": "virtual:rsdown", "keys": [75]}, {"input": "virtual:rsleft", "keys": [70]}, {"input": "virtual:rsright", "keys": [72]}]}},
       "pageUrl": "https://gamesdb.launchbox-app.com/games/details/139333-alice-no-yakata-ii",
       "boxArtUrl": "https://images.launchbox-app.com/8123e02e-6271-4806-aafb-a0c765d384f0.png",
       "screenshotUrl": "https://images.launchbox-app.com/4c0db754-27fc-47c7-ae50-25f30deb1d26.png"
@@ -15949,7 +15949,7 @@
       ],
       "contentIds": [],
       "description": "",
-      "controller": {"profile": "alice-no-yakata-v1", "bindings": [{"input": "virtual:a", "keys": [28]}, {"input": "virtual:b", "keys": [42]}, {"input": "virtual:x", "keys": [43]}, {"input": "virtual:y", "keys": [52]}, {"input": "virtual:start", "keys": [28]}, {"input": "virtual:select", "keys": [0]}, {"input": "virtual:menu", "action": "menu"}, {"input": "virtual:up", "keys": [58]}, {"input": "virtual:down", "keys": [61]}, {"input": "virtual:left", "keys": [59]}, {"input": "virtual:right", "keys": [60]}, {"input": "virtual:lsup", "mouse": "moveUp"}, {"input": "virtual:lsdown", "mouse": "moveDown"}, {"input": "virtual:lsleft", "mouse": "moveLeft"}, {"input": "virtual:lsright", "mouse": "moveRight"}, {"input": "virtual:rsup", "keys": [67]}, {"input": "virtual:rsdown", "keys": [75]}, {"input": "virtual:rsleft", "keys": [70]}, {"input": "virtual:rsright", "keys": [72]}]},
+      "controller": {"profile": "alice-no-yakata-v1", "bindings": [{"input": "virtual:a", "keys": [28]}, {"input": "virtual:b", "keys": [42]}, {"input": "virtual:x", "keys": [43]}, {"input": "virtual:y", "keys": [52]}, {"input": "virtual:start", "keys": [28]}, {"input": "virtual:select", "keys": [0]}, {"input": "virtual:menu", "action": "menu"}, {"input": "virtual:up", "keys": [58]}, {"input": "virtual:down", "keys": [61]}, {"input": "virtual:left", "keys": [59]}, {"input": "virtual:right", "keys": [60]}, {"input": "virtual:lsup", "mouse": "moveUp"}, {"input": "virtual:lsdown", "mouse": "moveDown"}, {"input": "virtual:lsleft", "mouse": "moveLeft"}, {"input": "virtual:lsright", "mouse": "moveRight"}, {"input": "virtual:rsup", "keys": [67]}, {"input": "virtual:rsdown", "keys": [75]}, {"input": "virtual:rsleft", "keys": [70]}, {"input": "virtual:rsright", "keys": [72]}], "defaults": {"withoutSticks": [{"input": "virtual:a", "keys": [28]}, {"input": "virtual:b", "keys": [42]}, {"input": "virtual:x", "keys": [43]}, {"input": "virtual:y", "keys": [52]}, {"input": "virtual:start", "keys": [28]}, {"input": "virtual:select", "keys": [0]}, {"input": "virtual:menu", "action": "menu"}, {"input": "virtual:up", "keys": [58]}, {"input": "virtual:down", "keys": [61]}, {"input": "virtual:left", "keys": [59]}, {"input": "virtual:right", "keys": [60]}, {"input": "virtual:lsup", "mouse": "moveUp"}, {"input": "virtual:lsdown", "mouse": "moveDown"}, {"input": "virtual:lsleft", "mouse": "moveLeft"}, {"input": "virtual:lsright", "mouse": "moveRight"}, {"input": "virtual:rsup", "keys": [67]}, {"input": "virtual:rsdown", "keys": [75]}, {"input": "virtual:rsleft", "keys": [70]}, {"input": "virtual:rsright", "keys": [72]}]}},
       "pageUrl": "https://gamesdb.launchbox-app.com/games/details/139334-alice-no-yakata-iii",
       "boxArtUrl": "https://images.launchbox-app.com/06e27eb3-8599-468f-824b-709d02da12c6.jpg",
       "screenshotUrl": "https://images.launchbox-app.com/c0be105c-c422-42a8-8ba2-f7b46f1eecd0.png"
@@ -23132,20 +23132,7 @@
       ],
       "description": "",
       "machine": {"cpuMultiple": 1},
-      "controller": {"profile": "dragoon-armor-v2", "bindings": [
-        {"input": "virtual:a", "keys": [100]},
-        {"input": "virtual:b", "keys": [78]},
-        {"input": "virtual:x", "keys": [99]},
-        {"input": "virtual:y", "keys": [98]},
-        {"input": "virtual:l1", "keys": [57]},
-        {"input": "virtual:r1", "keys": [56]},
-        {"input": "virtual:start", "keys": [28]},
-        {"input": "virtual:select", "keys": [0]},
-        {"input": "virtual:up", "keys": [67]},
-        {"input": "virtual:down", "keys": [75]},
-        {"input": "virtual:left", "keys": [70]},
-        {"input": "virtual:right", "keys": [72]}
-      ]},
+      "controller": {"profile": "dragoon-armor-v2", "bindings": [{"input": "virtual:a", "keys": [100]}, {"input": "virtual:b", "keys": [78]}, {"input": "virtual:x", "keys": [99]}, {"input": "virtual:y", "keys": [98]}, {"input": "virtual:l1", "keys": [57]}, {"input": "virtual:r1", "keys": [56]}, {"input": "virtual:start", "keys": [28]}, {"input": "virtual:select", "keys": [0]}, {"input": "virtual:up", "keys": [67]}, {"input": "virtual:down", "keys": [75]}, {"input": "virtual:left", "keys": [70]}, {"input": "virtual:right", "keys": [72]}], "defaults": {"withoutSticks": [{"input": "virtual:a", "keys": [100]}, {"input": "virtual:b", "keys": [78]}, {"input": "virtual:x", "keys": [99]}, {"input": "virtual:y", "keys": [98]}, {"input": "virtual:l1", "keys": [57]}, {"input": "virtual:r1", "keys": [56]}, {"input": "virtual:start", "keys": [28]}, {"input": "virtual:select", "keys": [0]}, {"input": "virtual:up", "keys": [67]}, {"input": "virtual:down", "keys": [75]}, {"input": "virtual:left", "keys": [70]}, {"input": "virtual:right", "keys": [72]}]}},
       "pageUrl": "https://gamesdb.launchbox-app.com/games/details/137132-dragoon-armor-for-adult",
       "boxArtUrl": "https://images.launchbox-app.com/af1a6ad0-60e6-4de0-8d82-00d93ef985a6.jpg",
       "screenshotUrl": "https://images.launchbox-app.com/0ec8ffce-9656-45ed-8506-11c362529e32.png"
@@ -32064,30 +32051,7 @@
         "pc98:ChampionSoft.zip:Little Vampire",
         "translated:littlevampire"
       ],
-      "controller": {
-        "profile": "little-vampire-v1",
-        "bindings": [
-          {"input": "virtual:a", "keys": [28]},
-          {"input": "virtual:b", "keys": [42]},
-          {"input": "virtual:x", "keys": [43]},
-          {"input": "virtual:y", "keys": [52]},
-          {"input": "virtual:start", "keys": [28]},
-          {"input": "virtual:select", "keys": [0]},
-          {"input": "virtual:menu", "action": "menu"},
-          {"input": "virtual:up", "keys": [58]},
-          {"input": "virtual:down", "keys": [61]},
-          {"input": "virtual:left", "keys": [59]},
-          {"input": "virtual:right", "keys": [60]},
-          {"input": "virtual:lsup", "mouse": "moveUp"},
-          {"input": "virtual:lsdown", "mouse": "moveDown"},
-          {"input": "virtual:lsleft", "mouse": "moveLeft"},
-          {"input": "virtual:lsright", "mouse": "moveRight"},
-          {"input": "virtual:rsup", "keys": [67]},
-          {"input": "virtual:rsdown", "keys": [75]},
-          {"input": "virtual:rsleft", "keys": [70]},
-          {"input": "virtual:rsright", "keys": [72]}
-        ]
-      },
+      "controller": {"profile": "little-vampire-v1", "bindings": [{"input": "virtual:a", "keys": [28]}, {"input": "virtual:b", "keys": [42]}, {"input": "virtual:x", "keys": [43]}, {"input": "virtual:y", "keys": [52]}, {"input": "virtual:start", "keys": [28]}, {"input": "virtual:select", "keys": [0]}, {"input": "virtual:menu", "action": "menu"}, {"input": "virtual:up", "keys": [58]}, {"input": "virtual:down", "keys": [61]}, {"input": "virtual:left", "keys": [59]}, {"input": "virtual:right", "keys": [60]}, {"input": "virtual:lsup", "mouse": "moveUp"}, {"input": "virtual:lsdown", "mouse": "moveDown"}, {"input": "virtual:lsleft", "mouse": "moveLeft"}, {"input": "virtual:lsright", "mouse": "moveRight"}, {"input": "virtual:rsup", "keys": [67]}, {"input": "virtual:rsdown", "keys": [75]}, {"input": "virtual:rsleft", "keys": [70]}, {"input": "virtual:rsright", "keys": [72]}], "defaults": {"withoutSticks": [{"input": "virtual:a", "keys": [28]}, {"input": "virtual:b", "keys": [42]}, {"input": "virtual:x", "keys": [43]}, {"input": "virtual:y", "keys": [52]}, {"input": "virtual:start", "keys": [28]}, {"input": "virtual:select", "keys": [0]}, {"input": "virtual:menu", "action": "menu"}, {"input": "virtual:up", "keys": [58]}, {"input": "virtual:down", "keys": [61]}, {"input": "virtual:left", "keys": [59]}, {"input": "virtual:right", "keys": [60]}, {"input": "virtual:lsup", "mouse": "moveUp"}, {"input": "virtual:lsdown", "mouse": "moveDown"}, {"input": "virtual:lsleft", "mouse": "moveLeft"}, {"input": "virtual:lsright", "mouse": "moveRight"}, {"input": "virtual:rsup", "keys": [67]}, {"input": "virtual:rsdown", "keys": [75]}, {"input": "virtual:rsleft", "keys": [70]}, {"input": "virtual:rsright", "keys": [72]}]}},
       "contentIds": [
         "sha256-hdi-v1:e017fca45eabaf3a025efe04d639b82d1b068de142086e85412ce4be9948d280",
         "sha256-hdi-v1:e2e6976ad88cf4426524c8342dc1ac2e403360bab4e698a8d16c794c0972a43f"
@@ -35800,18 +35764,7 @@
       ],
       "description": "An action game about a pilot sent to attack the Slave Dog terrorist base in an armed suit.",
       "machine": {"gdcClockTenthsMHz": 25},
-      "controller": {"profile": "night-slave-v2", "bindings": [
-        {"input": "virtual:a", "keys": [52]},
-        {"input": "virtual:b", "keys": [42]},
-        {"input": "virtual:x", "keys": [43]},
-        {"input": "virtual:y", "keys": [41]},
-        {"input": "virtual:start", "keys": [28]},
-        {"input": "virtual:select", "keys": [0]},
-        {"input": "virtual:up", "keys": [58]},
-        {"input": "virtual:down", "keys": [61]},
-        {"input": "virtual:left", "keys": [59]},
-        {"input": "virtual:right", "keys": [60]}
-      ]},
+      "controller": {"profile": "night-slave-v2", "bindings": [{"input": "virtual:a", "keys": [52]}, {"input": "virtual:b", "keys": [42]}, {"input": "virtual:x", "keys": [43]}, {"input": "virtual:y", "keys": [41]}, {"input": "virtual:start", "keys": [28]}, {"input": "virtual:select", "keys": [0]}, {"input": "virtual:up", "keys": [58]}, {"input": "virtual:down", "keys": [61]}, {"input": "virtual:left", "keys": [59]}, {"input": "virtual:right", "keys": [60]}], "defaults": {"withoutSticks": [{"input": "virtual:a", "keys": [52]}, {"input": "virtual:b", "keys": [42]}, {"input": "virtual:x", "keys": [43]}, {"input": "virtual:y", "keys": [41]}, {"input": "virtual:start", "keys": [28]}, {"input": "virtual:select", "keys": [0]}, {"input": "virtual:up", "keys": [58]}, {"input": "virtual:down", "keys": [61]}, {"input": "virtual:left", "keys": [59]}, {"input": "virtual:right", "keys": [60]}]}},
       "pageUrl": "https://gamesdb.launchbox-app.com/games/details/106056-night-slave",
       "boxArtUrl": "https://images.launchbox-app.com/b92f5b54-07ad-42c0-b628-9f28894c292c.jpg",
       "screenshotUrl": "https://images.launchbox-app.com/32725030-dc63-4fcf-8b0b-43a0c7f56fd3.png"
@@ -40385,18 +40338,7 @@
       ],
       "description": "Rusty Springcul explores a monster-filled castle to rescue abducted villagers in a side-scrolling action game.",
       "machine": {"gdcClockTenthsMHz": 25},
-      "controller": {"profile": "rusty-v2", "bindings": [
-        {"input": "virtual:a", "keys": [41]},
-        {"input": "virtual:b", "keys": [42]},
-        {"input": "virtual:x", "keys": [43]},
-        {"input": "virtual:y", "keys": [52]},
-        {"input": "virtual:start", "keys": [28]},
-        {"input": "virtual:select", "keys": [0]},
-        {"input": "virtual:up", "keys": [67]},
-        {"input": "virtual:down", "keys": [75]},
-        {"input": "virtual:left", "keys": [70]},
-        {"input": "virtual:right", "keys": [72]}
-      ]},
+      "controller": {"profile": "rusty-v2", "bindings": [{"input": "virtual:a", "keys": [41]}, {"input": "virtual:b", "keys": [42]}, {"input": "virtual:x", "keys": [43]}, {"input": "virtual:y", "keys": [52]}, {"input": "virtual:start", "keys": [28]}, {"input": "virtual:select", "keys": [0]}, {"input": "virtual:up", "keys": [67]}, {"input": "virtual:down", "keys": [75]}, {"input": "virtual:left", "keys": [70]}, {"input": "virtual:right", "keys": [72]}], "defaults": {"withoutSticks": [{"input": "virtual:a", "keys": [41]}, {"input": "virtual:b", "keys": [42]}, {"input": "virtual:x", "keys": [43]}, {"input": "virtual:y", "keys": [52]}, {"input": "virtual:start", "keys": [28]}, {"input": "virtual:select", "keys": [0]}, {"input": "virtual:up", "keys": [67]}, {"input": "virtual:down", "keys": [75]}, {"input": "virtual:left", "keys": [70]}, {"input": "virtual:right", "keys": [72]}]}},
       "pageUrl": "https://gamesdb.launchbox-app.com/games/details/92443-rusty",
       "boxArtUrl": "https://images.launchbox-app.com/b6a79e03-3182-48bd-a533-d8d82f3b0c6f.jpg",
       "screenshotUrl": "https://images.launchbox-app.com/71bea99f-29d2-4f85-a8dd-8f40b758bd5a.png"
@@ -43318,27 +43260,7 @@
         "sha256-hdi-v1:b173100f12e9483e86992f3fa678ab0bfa90a1eae0843712e2f0fb7f9425f671"
       ],
       "description": "Pilot a fighter against the war machines of virus-stricken rulers in a scrolling shooter with an adult story.",
-      "controller": {"profile": "steam-hearts-v2", "bindings": [
-        {"input": "virtual:a", "keys": [41]},
-        {"input": "virtual:b", "keys": [42]},
-        {"input": "virtual:x", "keys": [43]},
-        {"input": "virtual:y", "keys": [52]},
-        {"input": "virtual:start", "keys": [28]},
-        {"input": "virtual:select", "keys": [0]},
-        {"input": "virtual:menu", "action": "menu"},
-        {"input": "virtual:up", "mouse": "moveUp"},
-        {"input": "virtual:down", "mouse": "moveDown"},
-        {"input": "virtual:left", "mouse": "moveLeft"},
-        {"input": "virtual:right", "mouse": "moveRight"},
-        {"input": "virtual:lsup", "mouse": "moveUp"},
-        {"input": "virtual:lsdown", "mouse": "moveDown"},
-        {"input": "virtual:lsleft", "mouse": "moveLeft"},
-        {"input": "virtual:lsright", "mouse": "moveRight"},
-        {"input": "virtual:rsup", "keys": [67]},
-        {"input": "virtual:rsdown", "keys": [75]},
-        {"input": "virtual:rsleft", "keys": [70]},
-        {"input": "virtual:rsright", "keys": [72]}
-      ]},
+      "controller": {"profile": "steam-hearts-v2", "bindings": [{"input": "virtual:a", "keys": [41]}, {"input": "virtual:b", "keys": [42]}, {"input": "virtual:x", "keys": [43]}, {"input": "virtual:y", "keys": [52]}, {"input": "virtual:start", "keys": [28]}, {"input": "virtual:select", "keys": [0]}, {"input": "virtual:menu", "action": "menu"}, {"input": "virtual:up", "mouse": "moveUp"}, {"input": "virtual:down", "mouse": "moveDown"}, {"input": "virtual:left", "mouse": "moveLeft"}, {"input": "virtual:right", "mouse": "moveRight"}, {"input": "virtual:lsup", "mouse": "moveUp"}, {"input": "virtual:lsdown", "mouse": "moveDown"}, {"input": "virtual:lsleft", "mouse": "moveLeft"}, {"input": "virtual:lsright", "mouse": "moveRight"}, {"input": "virtual:rsup", "keys": [67]}, {"input": "virtual:rsdown", "keys": [75]}, {"input": "virtual:rsleft", "keys": [70]}, {"input": "virtual:rsright", "keys": [72]}], "defaults": {"withoutSticks": [{"input": "virtual:a", "keys": [41]}, {"input": "virtual:b", "keys": [42]}, {"input": "virtual:x", "keys": [43]}, {"input": "virtual:y", "keys": [52]}, {"input": "virtual:start", "keys": [28]}, {"input": "virtual:select", "keys": [0]}, {"input": "virtual:menu", "action": "menu"}, {"input": "virtual:up", "mouse": "moveUp"}, {"input": "virtual:down", "mouse": "moveDown"}, {"input": "virtual:left", "mouse": "moveLeft"}, {"input": "virtual:right", "mouse": "moveRight"}, {"input": "virtual:lsup", "mouse": "moveUp"}, {"input": "virtual:lsdown", "mouse": "moveDown"}, {"input": "virtual:lsleft", "mouse": "moveLeft"}, {"input": "virtual:lsright", "mouse": "moveRight"}, {"input": "virtual:rsup", "keys": [67]}, {"input": "virtual:rsdown", "keys": [75]}, {"input": "virtual:rsleft", "keys": [70]}, {"input": "virtual:rsright", "keys": [72]}]}},
       "machine": {"gdcClockTenthsMHz": 25},
       "pageUrl": "https://gamesdb.launchbox-app.com/games/details/106060-steam-hearts",
       "boxArtUrl": "https://images.launchbox-app.com/4f64729e-3f0b-4efd-9a9a-3aa815c7a4bb.jpg",
@@ -47576,18 +47498,7 @@
       ],
       "description": "",
       "machine": {"gdcClockTenthsMHz": 25},
-      "controller": {"profile": "variable-geo-v1", "bindings": [
-        {"input": "virtual:a", "keys": [41]},
-        {"input": "virtual:b", "keys": [42]},
-        {"input": "virtual:x", "keys": [41]},
-        {"input": "virtual:y", "keys": [42]},
-        {"input": "virtual:start", "keys": [28]},
-        {"input": "virtual:select", "keys": [0]},
-        {"input": "virtual:up", "keys": [20]},
-        {"input": "virtual:down", "keys": [45]},
-        {"input": "virtual:left", "keys": [32]},
-        {"input": "virtual:right", "keys": [34]}
-      ]},
+      "controller": {"profile": "variable-geo-v1", "bindings": [{"input": "virtual:a", "keys": [41]}, {"input": "virtual:b", "keys": [42]}, {"input": "virtual:x", "keys": [41]}, {"input": "virtual:y", "keys": [42]}, {"input": "virtual:start", "keys": [28]}, {"input": "virtual:select", "keys": [0]}, {"input": "virtual:up", "keys": [20]}, {"input": "virtual:down", "keys": [45]}, {"input": "virtual:left", "keys": [32]}, {"input": "virtual:right", "keys": [34]}], "defaults": {"withoutSticks": [{"input": "virtual:a", "keys": [41]}, {"input": "virtual:b", "keys": [42]}, {"input": "virtual:x", "keys": [41]}, {"input": "virtual:y", "keys": [42]}, {"input": "virtual:start", "keys": [28]}, {"input": "virtual:select", "keys": [0]}, {"input": "virtual:up", "keys": [20]}, {"input": "virtual:down", "keys": [45]}, {"input": "virtual:left", "keys": [32]}, {"input": "virtual:right", "keys": [34]}]}},
       "pageUrl": "https://gamesdb.launchbox-app.com/games/details/106033-vg-variable-geo",
       "boxArtUrl": "https://images.launchbox-app.com/e0763b8d-c856-4034-881a-984356563024.jpg",
       "screenshotUrl": "https://images.launchbox-app.com/b19eada3-bdb7-4b82-99a8-569745a70268.png"
