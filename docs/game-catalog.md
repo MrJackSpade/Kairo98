@@ -24,3 +24,23 @@ python tools/build_online_catalog.py catalog/source-v1.json kairo98/src/main/ass
 ```
 
 The builder validates identifiers, field bounds, paths, and collisions. Catalog source links and art provenance do not grant redistribution rights; see [licensing](licensing.md) and [artwork rights](art-rights.md).
+
+## Reviewed display language
+
+`catalog/research/display-text-v1.json` supplies reviewed title and alias spellings
+using `♥` within explicit words. The builder applies these only to display fields;
+the name index retains original names and also recognizes the edited spellings.
+Content IDs, disk names, launch settings, artwork, and user overrides are unchanged.
+The existing adult-content review still controls the separate heart tag. A missing
+heart is not an age rating. Existing descriptions were reviewed for graphic wording
+and retained where they already describe the premise and gameplay in restrained terms.
+
+Regenerate after changing review inputs:
+
+```sh
+python tools/build_review_catalog.py --reuse-art
+python tools/build_online_catalog.py catalog/source-v1.json kairo98/src/main/assets/catalog/name-index-v1.json catalog/online-v1.json
+```
+
+The generated-catalog hook includes the display review input, preventing a later
+regeneration from restoring the original display wording.

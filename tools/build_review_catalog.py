@@ -21,6 +21,19 @@ def lookup_name(value):
                    if char.isalnum())
 
 
+def reviewed_display(metadata, review, key):
+    item = review.get(key)
+    if item is None:
+        return metadata
+    if metadata["title"] != item["sourceTitle"]:
+        raise ValueError(f"Display review title no longer matches: {key}")
+    fields = item["fields"]
+    if not fields or fields.keys() - {"title", "description", "aliases"}:
+        raise ValueError(f"Invalid display review fields: {key}")
+    # build() / validate_record() validate the final field values as usual.
+    return {**metadata, **fields}
+
+
 def generate(matches_path, gallery, assets, art_assets, ffmpeg, quality, reuse_art=False):
     """reuse_art keeps the committed artwork and provenance instead of re-encoding the
     gallery, for metadata-only changes on a machine without the gallery or ffmpeg."""
@@ -30,6 +43,12 @@ def generate(matches_path, gallery, assets, art_assets, ffmpeg, quality, reuse_a
     description_notes = json.loads(descriptions_path.read_text(encoding="utf-8"))
     descriptions = description_notes["descriptions"]
     known_keys = {f'{entry["platform"]}:{entry["databaseId"]}' for entry in matches}
+    display_notes = json.loads((matches_path.parent / "display-text-v1.json").read_text(encoding="utf-8"))
+    if display_notes.get("schemaVersion") != 1:
+        raise ValueError("Unsupported display text review schema")
+    display_review = display_notes["games"]
+    if display_review.keys() - known_keys:
+        raise ValueError("Display text reviews without catalog matches")
     unknown = (descriptions.keys() | description_notes.get("additionalSources", {}).keys()) - known_keys
     if unknown:
         raise ValueError(f"Descriptions without catalog matches: {sorted(unknown)[:5]}")
@@ -65,6 +84,7 @@ def generate(matches_path, gallery, assets, art_assets, ffmpeg, quality, reuse_a
             metadata["description"] = description
         if entry.get("aliases"):
             metadata["aliases"] = entry["aliases"]
+        metadata = reviewed_display(metadata, display_review, key)
         adult_status = adult_review.get(key, {}).get("status", "unreviewed")
         if adult_status == "eroge":
             metadata["heart"] = True
@@ -122,6 +142,7 @@ def generate(matches_path, gallery, assets, art_assets, ffmpeg, quality, reuse_a
                 source_games.append({"contentIds": entry["contentIds"], **metadata})
         if entry["platform"] == "pc98":
             candidates = [entry["title"], *entry.get("aliases", []),
+                          metadata["title"], *metadata.get("aliases", []),
                           *(group.rsplit(":", 1)[-1] for group in entry.get("sourceGroups", []))]
             for candidate in candidates:
                 normalized = lookup_name(candidate)

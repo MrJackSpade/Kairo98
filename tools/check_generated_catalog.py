@@ -12,6 +12,7 @@ SOURCE_FILES = (
     "catalog/research/matches-v1.json",
     "catalog/research/adult-content-v1.json",
     "catalog/research/descriptions-v1.json",
+    "catalog/research/display-text-v1.json",
     "catalog/startup-profiles-v1.json",
 )
 GENERATED_FILES = (
