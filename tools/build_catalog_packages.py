@@ -9,7 +9,8 @@ from pathlib import Path
 ROOT=Path(__file__).resolve().parents[1]
 sys.path.insert(0,str(ROOT/'shared/tools'))
 from catalog_package import build_package,image_paths
-from artwork_references import expand
+from artwork_references import expand, compact as compact_art
+from catalog_parts import generate_parts
 
 
 def generate():
@@ -36,6 +37,14 @@ def generate():
     provenance=json.loads((art_root/'art/catalog-provenance-v1.json').read_text('utf8'))
     provenance['assets']=[v for v in provenance['assets'] if v['asset'] in policy['approvedArtwork']]
     (ROOT/'kairo98/src/withImages/assets/art/catalog-provenance-v1.json').write_text(json.dumps(provenance,separators=(',',':')),'utf8')
+    full = json.loads((ROOT/'catalog/optional/full-v1.json').read_text('utf8'))
+    assets = ROOT/'kairo98/src/main/assets/catalog'
+    documents = {p.relative_to(assets).as_posix():json.loads(p.read_text('utf8')) for p in assets.rglob('*.json')}
+    documents['name-index-v1.json'] = full['nameIndex']
+    for name, document in documents.items():
+        if name.startswith('shards/'):
+            document['games'] = {k:full['games'][k] for k in document['games']}
+    generate_parts(ROOT,'kairo98',documents,full,expand,compact_art)
     print('PC98:' ,len(policy['excluded']),'excluded entries;',len(policy['approvedArtwork']),'reviewed core images')
 
 

@@ -48,6 +48,7 @@ def main():
     changed = {name.decode("utf-8") for name in
                git("diff", "--cached", "--name-only", "-z").split(b"\0") if name}
     watched = set(SOURCE_FILES) | set(GENERATED_FILES) | BUILDERS
+    watched.update(name.decode("utf-8") for name in git("ls-files", "--cached", "-z", "--", "catalog/parts/", "catalog/artwork-exclusions-v1.json", "catalog/optional/kairo98-art.nsfw.meta.json").split(b"\0") if name)
     if "--all" not in sys.argv[1:] and not any(
             path in watched or path.startswith(SHARDS) for path in changed):
         return 0

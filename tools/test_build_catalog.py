@@ -102,12 +102,6 @@ class CatalogBuildTests(unittest.TestCase):
         hashed = {content_id: game for dataset in source["datasets"] for game in dataset["games"]
                   for content_id in game["contentIds"]}
         self.assertEqual(len(matches), len(review))
-        optional = json.loads(Path("catalog/optional/data-v1.json").read_text("utf8"))
-        self.assertFalse(set(names) & set(optional["nameIndex"]["games"]))
-        self.assertFalse(set(hashed) & set(optional["games"]))
-        self.assertTrue(all(not x.get("heart") for x in names.values()))
-        names.update(optional["nameIndex"]["games"])
-        hashed.update(optional["games"])
         self.assertEqual(len(matches), len(names))
         for entry in matches:
             key = f'{entry["platform"]}:{entry["databaseId"]}'

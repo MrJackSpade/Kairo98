@@ -6,12 +6,13 @@ plugins {
 apply(from = rootProject.file("shared/gradle/android-module.gradle"))
 
 android {
+    androidResources { noCompress += listOf("json", "idx") }
     namespace = "com.mrjackspade.kairo98"
 
     defaultConfig {
         applicationId = providers.gradleProperty("kairo98ApplicationId").orNull ?: "com.loxifi.kairo98"
-        versionCode = providers.gradleProperty("kairo98VersionCode").orNull?.toInt() ?: 906
-        versionName = providers.gradleProperty("kairo98VersionName").orNull ?: "0.9.6"
+        versionCode = providers.gradleProperty("kairo98VersionCode").orNull?.toInt() ?: 907
+        versionName = providers.gradleProperty("kairo98VersionName").orNull ?: "0.9.7"
         ndk {
             abiFilters += "arm64-v8a"
         }
@@ -82,6 +83,18 @@ android {
         }
     }
 }
+
+android.sourceSets.getByName("main").assets.setSrcDirs(listOf(layout.buildDirectory.dir("generated/catalog-assets")))
+android.sourceSets.getByName("withImages").assets.setSrcDirs(listOf(rootProject.file("catalog/artwork")))
+val catalogAssets by tasks.registering(Sync::class) {
+    from("src/main/assets") { exclude("catalog/**") }
+    from(rootProject.file("catalog/parts")) {
+        into("catalog")
+        if (providers.gradleProperty("kairoDistribution").orNull == "play") exclude("art.nsfw.*")
+    }
+    into(layout.buildDirectory.dir("generated/catalog-assets"))
+}
+tasks.named("preBuild") { dependsOn(catalogAssets) }
 
 dependencies {
     implementation(project(":frontend"))

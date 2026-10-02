@@ -73,6 +73,7 @@ class GameCatalog(private val context: Context) : LibraryCatalog {
             images
         }) { synchronized(this) { fallbackRecords.clear(); updatedFallbackIds.clear() } }
     }
+    private val parts = com.mrjackspade.kairo.frontend.CatalogParts(context)
     private val base = readAsset("catalog/base-v1.json")
     // Hash matches and downloaded name matches do not need the bundled fallback index.
     private val nameIndex by lazy { readAsset("catalog/name-index-v1.json") }
@@ -132,6 +133,7 @@ class GameCatalog(private val context: Context) : LibraryCatalog {
             CatalogFieldLayers.Source(if (contentId in updatedFallbackIds) "Updated catalog"
                 else "Shipped catalog", fallback),
             CatalogFieldLayers.Source("Updated catalog", updateRecord),
+            CatalogFieldLayers.Source("Shipped catalog", bundledAdditional(contentId, fileName ?: knownFileNames[contentId])),
             *installedSources(contentId, fileName ?: knownFileNames[contentId]).toTypedArray(),
             CatalogFieldLayers.Source("User catalog", additions.optJSONObject("games")?.optJSONObject(contentId)),
             CatalogFieldLayers.Source("User override", overrides.record(contentId))
@@ -469,13 +471,7 @@ class GameCatalog(private val context: Context) : LibraryCatalog {
         else -> false
     }
 
-    private fun readAsset(path: String): JSONObject = try {
-        context.assets.open(path).use { input ->
-            val bytes = input.readBytes()
-            require(bytes.size <= MAX_ASSET_JSON) { "Catalog is too large" }
-            parse(bytes.toString(Charsets.UTF_8))
-        }
-    } catch (_: Exception) { empty() }
+    private fun readAsset(path: String): JSONObject = parts.read(path.removePrefix("catalog/"))
 
     private fun normalizedName(fileName: String): String {
         val simple = fileName.substringAfterLast('/').substringAfterLast('\\')
@@ -486,6 +482,13 @@ class GameCatalog(private val context: Context) : LibraryCatalog {
         val key = Normalizer.normalize(simple, Normalizer.Form.NFKC).lowercase()
             .filter(Char::isLetterOrDigit)
         return key
+    }
+    private fun bundledAdditional(contentId: String, fileName: String?): JSONObject? {
+        parts.additional("shards/${contentId.substringAfter(':').take(2)}.json")
+            .optJSONObject("games")?.optJSONObject(contentId)?.let { return it }
+        val key = fileName?.let(::normalizedName) ?: return null
+        val nameId = nameIndex.optJSONObject("names")?.optString(key) ?: return null
+        return parts.additional("name-index-v1.json").optJSONObject("games")?.optJSONObject(nameId)
     }
     private fun installedSources(contentId: String, fileName: String?): List<CatalogFieldLayers.Source> =
         installedCatalogs.catalogs().flatMap { catalog ->
@@ -507,11 +510,7 @@ class GameCatalog(private val context: Context) : LibraryCatalog {
     }
 
     private fun readShardNames(): Set<String> = try {
-        val manifest = context.assets.open("catalog/manifest-v1.json").use { input ->
-            val bytes = input.readBytes()
-            require(bytes.size <= 1024 * 1024)
-            JSONObject(bytes.toString(Charsets.UTF_8))
-        }
+        val manifest = readAsset("catalog/manifest-v1.json")
         require(manifest.optInt("schemaVersion") == 1)
         val names = manifest.getJSONArray("shards")
         (0 until names.length()).map { names.getString(it) }.filter { it.matches(Regex("[0-9a-f]{2}")) }.toSet()
@@ -546,10 +545,6 @@ class GameCatalog(private val context: Context) : LibraryCatalog {
         val nameKeys = names.optJSONObject("names") ?: return null
         if (!validRecords(games, { validId(it) }) ||
             !validRecords(nameGames, { it.matches(Regex("[a-z0-9]+:[0-9]+")) })) return null
-        if (core && listOf(games, nameGames).any { records -> records.keys().asSequence().any { key ->
-            val record = records.getJSONObject(key)
-            record.optBoolean("heart") || record.optString("title").contains('♥')
-        } }) return null
         for (key in nameKeys.keys()) {
             if (!key.matches(Regex("[\\p{L}\\p{N}]{4,128}"))) return null
             val id = nameKeys.opt(key) as? String ?: return null

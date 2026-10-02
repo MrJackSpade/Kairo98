@@ -64,7 +64,7 @@ def main() -> None:
     apk, bundle = (pathlib.Path(argument) for argument in sys.argv[1:3])
     apk_assets = inspect(apk, False)
     bundle_assets = inspect(bundle, True)
-    assert apk_assets == bundle_assets, "APK and AAB assets differ"
+    assert {n:v for n,v in apk_assets.items() if not n.startswith("assets/catalog/art.nsfw.")} == bundle_assets, "APK and AAB core assets differ"
     print("Non-artwork APK and AAB have matching assets and required notices")
     if len(sys.argv) == 4:
         with_images = pathlib.Path(sys.argv[3])

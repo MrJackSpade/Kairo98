@@ -194,16 +194,17 @@ def generate(matches_path, gallery, assets, art_assets, ffmpeg, quality, reuse_a
     (optional_dir / "data-v1.json").write_bytes(compact(optional))
     (matches_path.parent.parent / "excluded-ids-v1.json").write_bytes(compact({"schemaVersion": 1,
         "ids": sorted(excluded | excluded_ids), "artwork": sorted(image_paths(optional, expand_artwork))}))
+    # Preserve the complete reviewed metadata and artwork for partition generation.
+    (optional_dir / "full-v1.json").write_bytes(compact(full))
     approved = policy["approvedArtwork"]
     for dataset in source["datasets"]:
         kept = []
         for record in dataset["games"]:
-            ids = [key for key in record["contentIds"] if key not in excluded_ids]
+            ids = record["contentIds"]
             if ids: kept.append({**record, "contentIds": ids})
         dataset["games"] = filter_artwork(kept, approved, expand_artwork, compact_artwork)
-    all_games = filter_artwork({key:value for key,value in all_games.items() if key not in excluded},
+    all_games = filter_artwork(all_games,
                               approved, expand_artwork, compact_artwork)
-    unique_names = {key:value for key,value in unique_names.items() if value not in excluded}
     manifest, shards = build(source)
     catalog = assets / "catalog"
     shards_dir = catalog / "shards"
