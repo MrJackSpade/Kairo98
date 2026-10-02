@@ -25,6 +25,7 @@ SHARDS = "kairo98/src/main/assets/catalog/shards/"
 BUILDERS = {
     "tools/build_review_catalog.py",
     "tools/build_catalog.py",
+    "tools/artwork_references.py",
     "tools/build_online_catalog.py",
 }
 

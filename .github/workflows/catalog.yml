@@ -3,6 +3,8 @@ on:
   push:
     paths:
       - 'tools/build_catalog.py'
+      - 'tools/artwork_references.py'
+      - 'tools/test_artwork_references.py'
       - 'tools/build_review_catalog.py'
       - 'tools/audit_vndb_adult_content.py'
       - 'tools/build_online_catalog.py'
@@ -30,6 +32,8 @@ on:
   pull_request:
     paths:
       - 'tools/build_catalog.py'
+      - 'tools/artwork_references.py'
+      - 'tools/test_artwork_references.py'
       - 'tools/build_review_catalog.py'
       - 'tools/audit_vndb_adult_content.py'
       - 'tools/build_online_catalog.py'

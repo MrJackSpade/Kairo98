@@ -44,3 +44,22 @@ python tools/build_online_catalog.py catalog/source-v1.json kairo98/src/main/ass
 
 The generated-catalog hook includes the display review input, preventing a later
 regeneration from restoring the original display wording.
+
+## Compact artwork references (0.9.5)
+
+Distributed artwork objects contain numeric `platform` (88 or 98) and `game`
+asset-group identifiers. Optional `boxArt` and `preview` objects each hold an
+image UUID (`id`), `format` (0 for JPG, 1 for PNG), and `revision` (0 for the
+ordinary image path, 2 for its r2 variant). No artwork URL or file path is stored
+in these records. Empty artwork remains empty, and absent image kinds stay absent.
+
+The URL template lives in `Pc98ArtworkReferences`. Existing local paths are
+reconstructed from the asset group and the first twelve hex characters of the
+URL's SHA-256, preserving bundled artwork and previously downloaded files. Both
+paths and URLs are expanded before field layering, so user overrides and source
+tracking keep the same behavior. Legacy paths and approved URLs remain readable.
+The generator requires exact round-trip equality and fails on unrepresentable
+source data instead of discarding it. Old app versions reject the new snapshot
+and keep their current catalog until updated; 0.9.5 reads both representations.
+Source research and artwork provenance remain available separately; this format
+does not change image-server access permissions.

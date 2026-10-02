@@ -11,6 +11,7 @@ import unicodedata
 from pathlib import Path
 
 from build_catalog import build, compact
+from artwork_references import compact as compact_artwork
 
 
 def lookup_name(value):
@@ -131,7 +132,7 @@ def generate(matches_path, gallery, assets, art_assets, ffmpeg, quality, reuse_a
             provenance.append({"game": key, "kind": gallery_kind, "sourceUrl": image["url"],
                                "asset": asset_path, "sha256": hashlib.sha256(destination.read_bytes()).hexdigest()})
         if artwork:
-            metadata["artwork"] = artwork
+            metadata["artwork"] = compact_artwork(artwork)
         all_games[key] = metadata
         if entry.get("contentIds"):
             if any(content_id in profiles for content_id in entry["contentIds"]):

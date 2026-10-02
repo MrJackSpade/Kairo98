@@ -7,6 +7,7 @@ import json
 import re
 from pathlib import Path
 from urllib.parse import urlsplit
+from artwork_references import expand as expand_artwork
 
 CONTENT_ID = re.compile(r"sha256-(?:hdi|fd)-v1:[0-9a-f]{64}\Z")
 ART_PATH = re.compile(r"art/(?!.*\.\.)[A-Za-z0-9_./-]{1,252}\Z")
@@ -171,7 +172,7 @@ def validate_record(record):
     aliases = record.get("aliases", [])
     require(isinstance(aliases, list) and len(aliases) <= 64 and
             all(isinstance(x, str) and 0 < len(x.strip()) <= 256 for x in aliases), "invalid aliases")
-    artwork = record.get("artwork", {})
+    artwork = expand_artwork(record.get("artwork", {}))
     require(isinstance(artwork, dict) and set(artwork) <=
             {"boxArt", "preview", "boxArtUrl", "previewUrl"} and
             all(isinstance(x, str) and ART_PATH.fullmatch(x)

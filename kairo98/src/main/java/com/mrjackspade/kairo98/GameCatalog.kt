@@ -119,7 +119,9 @@ class GameCatalog(private val context: Context) : LibraryCatalog {
             CatalogFieldLayers.Source("Updated catalog", updateRecord),
             CatalogFieldLayers.Source("User catalog", additions.optJSONObject("games")?.optJSONObject(contentId)),
             CatalogFieldLayers.Source("User override", overrides.record(contentId))
-        ), { path -> path.size == 1 && path[0] in OBJECT_FIELDS },
+        ).map { source -> source.copy(record = runCatching {
+            Pc98ArtworkReferences.record(source.record)
+        }.getOrNull()) }, { path -> path.size == 1 && path[0] in OBJECT_FIELDS },
             { path, value -> when (path.size) {
                 1 -> validField(path[0], value)
                 2 -> path[1] in (OBJECT_FIELDS[path[0]] ?: emptySet()) &&
@@ -334,10 +336,12 @@ class GameCatalog(private val context: Context) : LibraryCatalog {
             (0 until value.length()).all { index ->
                 (value.opt(index) as? String)?.let(::validTitle) == true
             }
-        "artwork" -> value is JSONObject &&
-            value.keys().asSequence().all { it in ART_FIELDS } && ART_PATH_FIELDS.all {
-            !value.has(it) || validArtPath(value.optString(it))
-        } && ART_URL_FIELDS.all { !value.has(it) || validImageUrl(value.optString(it)) }
+        "artwork" -> value is JSONObject && runCatching {
+            val art = Pc98ArtworkReferences.expand(value)
+            art.keys().asSequence().all { it in ART_FIELDS } && ART_PATH_FIELDS.all {
+                !art.has(it) || validArtPath(art.optString(it))
+            } && ART_URL_FIELDS.all { !art.has(it) || validImageUrl(art.optString(it)) }
+        }.getOrDefault(false)
         "machine" -> value is JSONObject &&
             value.keys().asSequence().all { it in OBJECT_FIELDS.getValue("machine") } &&
             (!value.has("baseClockTenthsMHz") ||
