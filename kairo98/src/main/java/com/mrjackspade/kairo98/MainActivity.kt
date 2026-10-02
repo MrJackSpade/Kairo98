@@ -285,7 +285,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
     private lateinit var controllerEditor: ControllerEditor<LibraryEntry>
     private val controllerEditorFlow by lazy {
         ControllerEditorFlow(controllerEditor, LibraryEntry::contentId, ::closeMenu,
-            ::releaseInputs, ::hideKeyboard, { onScreenControls.show() }, ::toast)
+            ::releaseInputs, ::hideKeyboard, { onReturn -> onScreenControls.show(onReturn) }, ::toast)
     }
     private val sessionState = SessionNavigationState()
     private val libraryVisible: Boolean get() = sessionState.libraryVisible
