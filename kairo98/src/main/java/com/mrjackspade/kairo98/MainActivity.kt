@@ -301,7 +301,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
                 libraryScreen.showEntries(libraryEntries)
                 libraryScreen.showFolder(romTree?.let(::folderLabel))
                 libraryScreen.showStatus("${libraryEntries.count { it.playable }} games ready")
-            }, ::applyPauseState, { screen.requestFocus() })
+            }, ::applyPauseState, { screen.requestFocus() }, ::endSessionForLibrary)
     }
     private val backCoordinator: FrontendBackCoordinator by lazy {
         FrontendBackCoordinator(this, firstRunSetup,
@@ -678,7 +678,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
             SessionAction("Save", R.drawable.ic_save) { showStateSlots(saving = true) },
             SessionAction("Load", R.drawable.ic_load) { showStateSlots(saving = false) },
             SessionAction("Restart", R.drawable.ic_restart) { confirmRestart() },
-            SessionAction("Library", R.drawable.ic_library) { showLibrary() }
+            SessionAction("Library", R.drawable.ic_library) { sessionNavigation.requestLibrary() }
         ), listOf(
             SettingsEntry("Pause", { if (userPaused) "On · tap to let the game run again"
                 else "Close the menu with the game stopped" }) {
@@ -1021,6 +1021,37 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
             Thread.sleep(50)
         }
         return "Machine startup timed out"
+    }
+
+    private fun endSessionForLibrary(done: () -> Unit) {
+        commandCancelled.set(true)
+        startGeneration++
+        preparingFont = true
+        releaseInputs()
+        hideKeyboard()
+        applyPauseState()
+        Thread {
+            nativeStop()
+            runOnUiThread {
+                currentDisk = null
+                currentEntry = null
+                currentGame = null
+                currentTitle = null
+                currentIsFloppy = false
+                mountedFloppies.fill(null)
+                manualFloppies.fill(null)
+                selectedStartup = emptyList()
+                sessionFromFrontend = false
+                userPaused = false
+                controllerProfiles.configuration.endSession()
+                gamepadMapper.bindings = controllerFlow.global()
+                onScreenControls.close()
+                onScreenControls.refreshVisibility(false)
+                sessionFlow.reset()
+                preparingFont = false
+                done()
+            }
+        }.apply { name = "Kairo98-end-session"; start() }
     }
 
     private fun showLibrary() = sessionNavigation.showLibrary()
