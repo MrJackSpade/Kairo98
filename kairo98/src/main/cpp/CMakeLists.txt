@@ -4,6 +4,7 @@ project(kairo98 LANGUAGES C CXX)
 get_filename_component(NP21W_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/../../../../third_party/np21w" ABSOLUTE)
 get_filename_component(YMFM_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/../../../../third_party/ymfm" ABSOLUTE)
 include(np21w-sources.cmake)
+include("${CMAKE_CURRENT_SOURCE_DIR}/../../../../shared/cmake/KairoNativeDefaults.cmake")
 
 add_library(np21w_core OBJECT
     ${NP21W_CORE_SOURCES}
@@ -42,8 +43,8 @@ target_compile_definitions(np21w_core PRIVATE SUPPORT_LARGE_HDD SUPPORT_KAI_IMAG
     USE_CPU_EIPMASK USE_CPU_DIRECTREG)
 # Thin LTO lets the interpreter's memory, paging, and dispatch helpers inline
 # across files; without it every guest memory access is a chain of calls.
-target_compile_options(np21w_core PRIVATE -fsigned-char -fno-strict-aliasing -flto=thin
-    $<$<CONFIG:Debug>:-O2>)
+target_compile_options(np21w_core PRIVATE -fsigned-char -fno-strict-aliasing -flto=thin)
+kairo_native_debug_defaults(np21w_core)
 
 add_library(kairo98 SHARED
     native_bridge.cpp
@@ -54,7 +55,8 @@ add_library(kairo98 SHARED
     $<TARGET_OBJECTS:np21w_core>)
 target_include_directories(kairo98 PRIVATE ${YMFM_ROOT}/src)
 target_compile_features(kairo98 PRIVATE cxx_std_17)
-target_compile_options(kairo98 PRIVATE -flto=thin $<$<CONFIG:Debug>:-O2>)
+target_compile_options(kairo98 PRIVATE -flto=thin)
+kairo_native_debug_defaults(kairo98)
 target_link_libraries(kairo98 PRIVATE log android aaudio EGL GLESv3)
 # Core calls stay inside this shared library. Bind them locally to avoid the
 # measured PLT cost in the interpreter's instruction-fetch path.
