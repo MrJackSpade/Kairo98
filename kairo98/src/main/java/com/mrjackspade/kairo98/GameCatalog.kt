@@ -61,7 +61,8 @@ class GameCatalog(private val context: Context) : LibraryCatalog {
     }
 
     private val base = readAsset("catalog/base-v1.json")
-    private val nameIndex = readAsset("catalog/name-index-v1.json")
+    // Hash matches and downloaded name matches do not need the bundled fallback index.
+    private val nameIndex by lazy { readAsset("catalog/name-index-v1.json") }
     private val shardNames = readShardNames()
     private val shardCache = object : android.util.LruCache<String, JSONObject>(8) {}
     private val fallbackRecords = HashMap<String, JSONObject>()
@@ -495,7 +496,9 @@ class GameCatalog(private val context: Context) : LibraryCatalog {
         LocalCatalogFile.read(file, MAX_LOCAL_JSON.toInt(), ::validLocalRecord) ?: empty()
 
     private fun readUpdate(): JSONObject = try {
-        snapshot.activeFile()?.let { parseUpdate(it.readBytes()) } ?: empty()
+        // activeFile is checksum-verified and schema-validated for this APK by the shared store.
+        // Repeating full validation here blocks every startup on the UI thread.
+        snapshot.activeFile()?.let { JSONObject(it.readText(Charsets.UTF_8)) } ?: empty()
     } catch (_: Exception) { empty() }
 
     private fun parseUpdate(bytes: ByteArray): JSONObject? {
