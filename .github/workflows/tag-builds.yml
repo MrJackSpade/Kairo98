@@ -108,8 +108,12 @@ jobs:
             echo "Unexpected release signing certificate for $apk: $actual" >&2
             exit 1
           fi
-          "$ANDROID_HOME/build-tools/$KAIRO_BUILD_TOOLS/aapt" dump badging "$apk" |
-            grep -F "package: name='com.loxifi.kairo98'"
+          badging=$("$ANDROID_HOME/build-tools/$KAIRO_BUILD_TOOLS/aapt" dump badging "$apk")
+          grep -F "package: name='com.loxifi.kairo98' versionCode='$KAIRO98_VERSION_CODE' versionName='$KAIRO98_VERSION_NAME'" <<< "$badging"
+          if grep -q '^application-debuggable' <<< "$badging"; then
+            echo "Release APK must not be debuggable" >&2
+            exit 1
+          fi
           jarsigner -verify "$bundle" | grep -F "jar verified"
           bundle_signer=$(keytool -printcert -jarfile "$bundle" |
             awk '/SHA256:/ {print $2}' | tr -d ':' | tr '[:upper:]' '[:lower:]')
@@ -117,6 +121,10 @@ jobs:
             echo "Unexpected Play bundle signing certificate: $bundle_signer" >&2
             exit 1
           fi
+      - name: Verify native alignment and matching distribution payloads
+        run: |
+          python3 shared/tools/audit_android_release.py kairo98/build/outputs/apk/withoutImages/release/kairo98-withoutImages-release.apk kairo98/build/outputs/bundle/withoutImagesRelease/kairo98-withoutImages-release.aab
+          "$ANDROID_HOME/build-tools/${{ steps.android-toolchain.outputs.build-tools }}/zipalign" -c -P 16 -v 4 kairo98/build/outputs/apk/withoutImages/release/kairo98-withoutImages-release.apk
       - name: Audit distribution contents
         run: >-
           python3 tools/audit_play_release.py
