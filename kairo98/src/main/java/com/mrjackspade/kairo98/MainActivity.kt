@@ -791,13 +791,13 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
             secondaryKeyboard.setLibraryInfo(null)
             return
         }
-        val game = romLibrary.catalog.resolve(entry.contentId ?: "", entry.displayName)
+        val game = libraryScreen.metadata(entry)
         val media = entry.zipEntry ?: entry.path
         val tags = listOf(if (DiskFormat.isFloppy(media)) "Floppy disk" else "Hard disk") +
             ((variantLabel(entry.path) ?: entry.zipEntry?.let(::variantLabel))?.split("  ·  ") ?: emptyList())
         val info = SecondaryDisplayCoordinator.LibraryInfo(game.title,
             listOf(fileLabel(entry)) + tags + game.tags,
-            game.description ?: "No description available yet.", null)
+            game.description ?: "No description available yet.", null, hasArtwork = game.preview != null)
         secondaryKeyboard.setLibraryInfo(info)
         val art = game.preview ?: return
         libraryArtExecutor.execute {
