@@ -47,6 +47,8 @@ jobs:
       - uses: actions/checkout@v4
       - name: Check out pinned Kairo frontend
         run: bash tools/checkout_shared.sh
+      - name: Verify clean core and optional catalog integrity
+        run: python3 shared/tools/audit_core_catalog.py pc98
       - uses: ./shared/.github/actions/setup-android
       - name: Prepare persistent beta signing key
         if: inputs.signed_device_test

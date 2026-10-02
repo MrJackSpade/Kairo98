@@ -14,6 +14,8 @@ SOURCE_FILES = (
     "catalog/research/descriptions-v1.json",
     "catalog/research/display-text-v1.json",
     "catalog/startup-profiles-v1.json",
+    "catalog/core-review-v1.json",
+    "catalog/research/artwork-index-v1.json",
 )
 GENERATED_FILES = (
     "catalog/source-v1.json",
@@ -26,6 +28,7 @@ BUILDERS = {
     "tools/build_review_catalog.py",
     "tools/build_catalog.py",
     "tools/artwork_references.py",
+    "tools/build_catalog_packages.py",
     "tools/build_online_catalog.py",
 }
 
@@ -78,7 +81,7 @@ def main():
                         str(work / GENERATED_FILES[1])), cwd=ROOT, check=True,
                        stdout=subprocess.DEVNULL)
 
-        expected = set(GENERATED_FILES)
+        expected = set(GENERATED_FILES) | {"catalog/optional/data-v1.json", "catalog/excluded-ids-v1.json"}
         expected.update(path.relative_to(work).as_posix()
                         for path in (work / SHARDS).glob("*.json"))
         tracked_shards = {name.decode("utf-8") for name in
@@ -92,6 +95,7 @@ def main():
                 print(f"  {path}", file=sys.stderr)
             print("Regenerate and stage the catalog before committing.", file=sys.stderr)
             return 1
+    subprocess.run((sys.executable, str(ROOT / "shared/tools/audit_core_catalog.py"), "pc98"), cwd=ROOT, check=True)
     return 0
 
 

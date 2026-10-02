@@ -60,16 +60,30 @@ class GameCatalog(private val context: Context) : LibraryCatalog {
         override val tags: List<String> get() = if (heart == true) listOf("♥") else emptyList()
     }
 
+    override val installedCatalogs by lazy {
+        com.mrjackspade.kairo.frontend.InstalledCatalogs(context, "pc98", { root ->
+            require(parseUpdate(root.toString().toByteArray(Charsets.UTF_8), false) != null)
+            val images = HashSet<String>()
+            for (games in listOf(root.getJSONObject("games"), root.getJSONObject("nameIndex").getJSONObject("games"))) {
+                for (key in games.keys()) {
+                    val art = Pc98ArtworkReferences.record(games.getJSONObject(key))?.optJSONObject("artwork")
+                    for (kind in ART_PATH_FIELDS) art?.optString(kind)?.takeIf { it.isNotEmpty() }?.let(images::add)
+                }
+            }
+            images
+        }) { synchronized(this) { fallbackRecords.clear(); updatedFallbackIds.clear() } }
+    }
     private val base = readAsset("catalog/base-v1.json")
     // Hash matches and downloaded name matches do not need the bundled fallback index.
     private val nameIndex by lazy { readAsset("catalog/name-index-v1.json") }
     private val shardNames = readShardNames()
     private val shardCache = object : android.util.LruCache<String, JSONObject>(8) {}
     private val fallbackRecords = HashMap<String, JSONObject>()
+    private val knownFileNames = HashMap<String, String>()
     private val updatedFallbackIds = HashSet<String>()
     private val additionsFile = File(context.filesDir, "user-catalog-v1.json")
     private val overridesFile = File(context.filesDir, "overrides-v1.json")
-    private val snapshot = CatalogSnapshotStore(context, "catalog-update-v1.json",
+    private val snapshot = CatalogSnapshotStore(context, "core-update-v2.json",
         UPDATE_URL, METADATA_URL, MAX_LOCAL_JSON) { file ->
         require(parseUpdate(file.readBytes()) != null) { "Invalid catalog update" }
     }
@@ -98,6 +112,7 @@ class GameCatalog(private val context: Context) : LibraryCatalog {
     }
 
     private fun layered(contentId: String, fileName: String? = null): CatalogFieldLayers.Result {
+        if (fileName != null && validId(contentId)) knownFileNames[contentId] = fileName
         val baseRecord = base.optJSONObject("games")?.optJSONObject(contentId)
         val shardRecord = shardFor(contentId)?.optJSONObject("games")?.optJSONObject(contentId)
         val updateRecord = update.optJSONObject("games")?.optJSONObject(contentId)
@@ -117,6 +132,7 @@ class GameCatalog(private val context: Context) : LibraryCatalog {
             CatalogFieldLayers.Source(if (contentId in updatedFallbackIds) "Updated catalog"
                 else "Shipped catalog", fallback),
             CatalogFieldLayers.Source("Updated catalog", updateRecord),
+            *installedSources(contentId, fileName ?: knownFileNames[contentId]).toTypedArray(),
             CatalogFieldLayers.Source("User catalog", additions.optJSONObject("games")?.optJSONObject(contentId)),
             CatalogFieldLayers.Source("User override", overrides.record(contentId))
         ).map { source -> source.copy(record = runCatching {
@@ -204,8 +220,8 @@ class GameCatalog(private val context: Context) : LibraryCatalog {
             contentId, title.ifBlank { fileName },
             merged.optString("description").takeIf(::validDescription),
             merged.opt("heart") as? Boolean,
-            artworkStore.availablePath(boxArtPath),
-            artworkStore.availablePath(previewPath),
+            installedCatalogs.artwork(boxArtPath) ?: artworkStore.availablePath(boxArtPath),
+            installedCatalogs.artwork(previewPath) ?: artworkStore.availablePath(previewPath),
             boxArtUrl, previewUrl, boxArtPath, previewPath,
             machine?.optInt("baseClockTenthsMHz")?.takeIf { it == 20 || it == 25 },
             machine?.optInt("gdcClockTenthsMHz")?.takeIf { it == 25 || it == 50 },
@@ -238,7 +254,7 @@ class GameCatalog(private val context: Context) : LibraryCatalog {
                 }?.let { JSONObject().put("withoutSticks", it) })?.toString())
     }
 
-    override fun openArtwork(path: String): InputStream = artworkStore.open(path)
+    override fun openArtwork(path: String): InputStream = installedCatalogs.openArtwork(path) ?: artworkStore.open(path)
 
     fun missingArtworkFor(entries: List<LibraryEntry>): List<ArtworkSource> {
         return entries.asSequence().filter { it.playable }
@@ -256,7 +272,7 @@ class GameCatalog(private val context: Context) : LibraryCatalog {
                         ?.let { ArtworkSource(it, game.previewUrl!!) }).asSequence()
             }
             .distinctBy { it.path }
-            .filter { artworkStore.availablePath(it.path) == null }
+            .filter { installedCatalogs.artwork(it.path) == null && artworkStore.availablePath(it.path) == null }
             .toList()
     }
 
@@ -277,7 +293,8 @@ class GameCatalog(private val context: Context) : LibraryCatalog {
         fun hidden(source: JSONObject?): Boolean? = source?.optJSONObject("games")
             ?.optJSONObject(contentId)?.opt("hidden") as? Boolean
         return CatalogFieldLayers.hidden(hidden(base), hidden(shardFor(contentId)),
-            hidden(update), hidden(additions), overrides.record(contentId)?.opt("hidden"))
+            hidden(update), *installedCatalogs.sources(contentId).map { it.record?.opt("hidden") }.toTypedArray(),
+            hidden(additions), overrides.record(contentId)?.opt("hidden"))
     }
 
     @Synchronized fun updateOverrideSubfields(contentId: String, field: String,
@@ -460,7 +477,7 @@ class GameCatalog(private val context: Context) : LibraryCatalog {
         }
     } catch (_: Exception) { empty() }
 
-    private fun lookupByName(fileName: String): Pair<JSONObject, Boolean>? {
+    private fun normalizedName(fileName: String): String {
         val simple = fileName.substringAfterLast('/').substringAfterLast('\\')
             .replace(Regex("\\[[^]]*]"), "")
             .replace(Regex("\\((?:disk|disc|fd)\\s*\\d+[^)]*\\)", RegexOption.IGNORE_CASE), "")
@@ -468,6 +485,18 @@ class GameCatalog(private val context: Context) : LibraryCatalog {
                 RegexOption.IGNORE_CASE), "")
         val key = Normalizer.normalize(simple, Normalizer.Form.NFKC).lowercase()
             .filter(Char::isLetterOrDigit)
+        return key
+    }
+    private fun installedSources(contentId: String, fileName: String?): List<CatalogFieldLayers.Source> =
+        installedCatalogs.catalogs().flatMap { catalog ->
+            val names = catalog.data.getJSONObject("nameIndex")
+            val key = fileName?.let(::normalizedName)
+            val nameId = key?.let { names.getJSONObject("names").optString(it) }
+            listOf(CatalogFieldLayers.Source(catalog.name, nameId?.let { names.getJSONObject("games").optJSONObject(it) }),
+                CatalogFieldLayers.Source(catalog.name, catalog.data.getJSONObject("games").optJSONObject(contentId)))
+        }
+    private fun lookupByName(fileName: String): Pair<JSONObject, Boolean>? {
+        val key = normalizedName(fileName)
         if (key.length < 4) return null
         val updatedNames = update.optJSONObject("nameIndex")
         val updatedId = updatedNames?.optJSONObject("names")?.optString(key)
@@ -505,10 +534,11 @@ class GameCatalog(private val context: Context) : LibraryCatalog {
         snapshot.activeFile()?.let { JSONObject(it.readText(Charsets.UTF_8)) } ?: empty()
     } catch (_: Exception) { empty() }
 
-    private fun parseUpdate(bytes: ByteArray): JSONObject? {
+    private fun parseUpdate(bytes: ByteArray, core: Boolean = true): JSONObject? {
         return try {
         val root = JSONObject(bytes.toString(Charsets.UTF_8))
-        if (root.optInt("schemaVersion") != 1 || root.length() != 3) return null
+        if (root.optInt("schemaVersion") != 1 || root.length() != (if (core) 4 else 3)) return null
+        if (core && root.optInt("coreVersion") != 2) return null
         val games = root.optJSONObject("games") ?: return null
         val names = root.optJSONObject("nameIndex") ?: return null
         if (names.optInt("schemaVersion") != 1 || names.length() != 3) return null
@@ -516,6 +546,10 @@ class GameCatalog(private val context: Context) : LibraryCatalog {
         val nameKeys = names.optJSONObject("names") ?: return null
         if (!validRecords(games, { validId(it) }) ||
             !validRecords(nameGames, { it.matches(Regex("[a-z0-9]+:[0-9]+")) })) return null
+        if (core && listOf(games, nameGames).any { records -> records.keys().asSequence().any { key ->
+            val record = records.getJSONObject(key)
+            record.optBoolean("heart") || record.optString("title").contains('♥')
+        } }) return null
         for (key in nameKeys.keys()) {
             if (!key.matches(Regex("[\\p{L}\\p{N}]{4,128}"))) return null
             val id = nameKeys.opt(key) as? String ?: return null
@@ -545,8 +579,8 @@ class GameCatalog(private val context: Context) : LibraryCatalog {
     companion object {
         private const val MAX_ASSET_JSON = 64 * 1024 * 1024
         private const val MAX_LOCAL_JSON = 8L * 1024 * 1024
-        private const val UPDATE_URL = "https://raw.githubusercontent.com/MrJackSpade/Kairo98/main/catalog/online-v1.json"
-        private const val METADATA_URL = "https://raw.githubusercontent.com/MrJackSpade/Kairo98/main/catalog/online-v1.meta.json"
+        private const val UPDATE_URL = "https://raw.githubusercontent.com/MrJackSpade/Kairo98/main/catalog/core-v2.json"
+        private const val METADATA_URL = "https://raw.githubusercontent.com/MrJackSpade/Kairo98/main/catalog/core-v2.meta.json"
         private val FIELDS = setOf("title", "description", "aliases", "artwork", "machine", "controller", "input", "media", "launch", "startupChoices", "diskSwaps", "heart", "hidden")
         private val INPUT_MODES = setOf("auto", "keyboard", "mouse")
         private val INPUT_TOUCH = setOf("touchpad", "direct")

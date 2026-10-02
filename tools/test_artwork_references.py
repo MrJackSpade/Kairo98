@@ -36,6 +36,7 @@ class ArtworkReferenceTests(unittest.TestCase):
         root = Path(__file__).resolve().parents[1]
         index = json.loads((root / 'kairo98/src/main/assets/catalog/name-index-v1.json').read_text(encoding='utf-8'))
         urls = set()
+        paths = set()
         for record in index['games'].values():
             art = record.get('artwork', {})
             self.assertEqual(compact(art), art)
@@ -43,5 +44,6 @@ class ArtworkReferenceTests(unittest.TestCase):
                 if key.endswith('Url'):
                     urls.add(value)
                 else:
+                    paths.add(value)
                     self.assertTrue((root / 'kairo98/src/withImages/assets' / value).is_file(), value)
-        self.assertGreater(len(urls), 6000)
+        self.assertEqual(paths, set(json.loads((root / "catalog/core-review-v1.json").read_text("utf8"))["approvedArtwork"]))

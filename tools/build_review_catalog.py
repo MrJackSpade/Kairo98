@@ -11,7 +11,10 @@ import unicodedata
 from pathlib import Path
 
 from build_catalog import build, compact
-from artwork_references import compact as compact_artwork
+from artwork_references import compact as compact_artwork, expand as expand_artwork
+import sys
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "shared/tools"))
+from catalog_package import build_package, image_paths, filter_artwork
 
 
 def lookup_name(value):
@@ -60,8 +63,11 @@ def generate(matches_path, gallery, assets, art_assets, ffmpeg, quality, reuse_a
         raise ValueError(f"Translated games missing descriptions: {incomplete[:5]}")
     profiles_path = matches_path.parent.parent / "startup-profiles-v1.json"
     profiles = json.loads(profiles_path.read_text(encoding="utf-8"))["games"] if profiles_path.is_file() else {}
+    policy = json.loads((matches_path.parent.parent / "core-review-v1.json").read_text(encoding="utf-8"))
+    excluded = set(policy["excluded"])
     if reuse_art:
-        committed = json.loads((assets / "catalog" / "name-index-v1.json").read_text(encoding="utf-8"))["games"]
+        art_index = json.loads((matches_path.parent / "artwork-index-v1.json").read_text(encoding="utf-8"))
+        committed = {key: {"artwork": value} for key, value in art_index.items()}
         gallery_index = {}
     else:
         gallery_entries = json.loads((gallery / "manifest.json").read_text(encoding="utf-8-sig"))["entries"]
@@ -161,6 +167,43 @@ def generate(matches_path, gallery, assets, art_assets, ffmpeg, quality, reuse_a
                        "license": "VNDB-derived metadata: ODbL 1.0; artwork redistribution rights audit pending",
                        "attribution": "LaunchBox Games Database contributors; VNDB contributors; Kairo98 original descriptions"},
         "games": source_games}]}
+    # Separate every marked game, associated hashes and dependent media before generating indexes.
+    for key, record in all_games.items():
+        if record.get("heart"):
+            assert key in excluded, f"Adult record missing from reviewed exclusions: {key}"
+    excluded_ids = {content_id for entry in matches
+                    if f'{entry["platform"]}:{entry["databaseId"]}' in excluded
+                    for content_id in entry.get("contentIds", [])}
+    from build_online_catalog import build_pack
+    full = build_pack(source, {"schemaVersion": 1, "games": all_games, "names": unique_names})
+    changed = True
+    while changed:
+        previous = set(excluded_ids)
+        for content_id, record in full["games"].items():
+            refs = {item["contentId"] for field in ("media", "diskSwaps") for item in record.get(field, [])}
+            if content_id in excluded_ids: excluded_ids.update(refs)
+            if refs & excluded_ids: excluded_ids.add(content_id)
+        changed = previous != excluded_ids
+    optional = {"schemaVersion": 1,
+        "games": {key:value for key,value in full["games"].items() if key in excluded_ids},
+        "nameIndex": {"schemaVersion": 1,
+            "games": {key:value for key,value in all_games.items() if key in excluded},
+            "names": {key:value for key,value in unique_names.items() if value in excluded}}}
+    optional_dir = matches_path.parent.parent / "optional"
+    optional_dir.mkdir(parents=True, exist_ok=True)
+    (optional_dir / "data-v1.json").write_bytes(compact(optional))
+    (matches_path.parent.parent / "excluded-ids-v1.json").write_bytes(compact({"schemaVersion": 1,
+        "ids": sorted(excluded | excluded_ids), "artwork": sorted(image_paths(optional, expand_artwork))}))
+    approved = policy["approvedArtwork"]
+    for dataset in source["datasets"]:
+        kept = []
+        for record in dataset["games"]:
+            ids = [key for key in record["contentIds"] if key not in excluded_ids]
+            if ids: kept.append({**record, "contentIds": ids})
+        dataset["games"] = filter_artwork(kept, approved, expand_artwork, compact_artwork)
+    all_games = filter_artwork({key:value for key,value in all_games.items() if key not in excluded},
+                              approved, expand_artwork, compact_artwork)
+    unique_names = {key:value for key,value in unique_names.items() if value not in excluded}
     manifest, shards = build(source)
     catalog = assets / "catalog"
     shards_dir = catalog / "shards"

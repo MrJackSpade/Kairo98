@@ -81,3 +81,9 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
+
+# Inspect actual signed distribution assets with the same exclusion ledger as generation.
+import subprocess
+subprocess.run([sys.executable, str(pathlib.Path(__file__).resolve().parents[1] /
+    "shared/tools/audit_core_catalog.py"), "pc98", *sys.argv[1:]], check=True,
+    cwd=pathlib.Path(__file__).resolve().parents[1])

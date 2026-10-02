@@ -10,8 +10,8 @@ android {
 
     defaultConfig {
         applicationId = providers.gradleProperty("kairo98ApplicationId").orNull ?: "com.loxifi.kairo98"
-        versionCode = providers.gradleProperty("kairo98VersionCode").orNull?.toInt() ?: 905
-        versionName = providers.gradleProperty("kairo98VersionName").orNull ?: "0.9.5"
+        versionCode = providers.gradleProperty("kairo98VersionCode").orNull?.toInt() ?: 906
+        versionName = providers.gradleProperty("kairo98VersionName").orNull ?: "0.9.6"
         ndk {
             abiFilters += "arm64-v8a"
         }

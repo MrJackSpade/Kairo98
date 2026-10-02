@@ -35,7 +35,7 @@ def main():
     args = parser.parse_args()
     source = json.loads(args.source.read_text(encoding="utf-8"))
     names = json.loads(args.name_index.read_text(encoding="utf-8"))
-    result = compact(build_pack(source, names))
+    result = compact({**build_pack(source, names), "coreVersion": 2})
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_bytes(result)
     metadata = {"schemaVersion": 1, "archive": args.output.name,

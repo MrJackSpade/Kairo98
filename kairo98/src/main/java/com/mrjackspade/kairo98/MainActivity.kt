@@ -2021,6 +2021,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
     override fun onDestroy() {
         if (relocating) { super.onDestroy(); return }
         catalogUpdates.cancel()
+        romLibrary.catalog.installedCatalogs.close()
         backCoordinator.unregister()
         startGeneration++
         libraryFlow.cancel()
@@ -2039,6 +2040,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
     @Deprecated("Android activity result callback")
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
+        if (libraryScreen.handleCatalogResult(requestCode, resultCode, data)) return
         if (artwork.handleActivityResult(requestCode, resultCode, data)) return
         if (libraryFlow.handleActivityResult(requestCode, resultCode, data)) return
         if (requestCode == BIOS_REQUEST) {
