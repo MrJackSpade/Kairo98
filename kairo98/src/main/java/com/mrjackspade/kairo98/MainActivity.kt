@@ -319,9 +319,9 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
             romLibrary.catalog::missingArtworkFor, romLibrary.catalog::downloadArtwork)
     }
     private val catalogUpdates by lazy {
-        CatalogUpdateController(this, { romLibrary.catalog.downloadUpdate() },
+        CatalogUpdateController(this, { task -> romLibrary.catalog.downloadUpdate(task) },
             libraryScreen::showStatus, { libraryScreen.showEntries(libraryEntries) },
-            { if (libraryVisible) toast("Game catalog updated") })
+            { if (libraryVisible) toast("Game catalog updated") }, libraryScreen::showCatalogUpdate)
     }
     private var currentEntry: LibraryEntry? = null
     private var sessionFromFrontend = false
@@ -2012,6 +2012,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
 
     override fun onDestroy() {
         if (relocating) { super.onDestroy(); return }
+        catalogUpdates.cancel()
         backCoordinator.unregister()
         startGeneration++
         libraryFlow.cancel()

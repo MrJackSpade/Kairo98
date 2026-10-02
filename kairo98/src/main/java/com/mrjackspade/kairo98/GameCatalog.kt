@@ -80,8 +80,8 @@ class GameCatalog(private val context: Context) : LibraryCatalog {
     @Synchronized fun reloadAdditions() { additions = readLocal(additionsFile) }
 
     /** Call from a worker thread. An invalid or interrupted download leaves the current catalog intact. */
-    fun downloadUpdate(): Boolean {
-        if (!snapshot.download()) return false
+    fun downloadUpdate(task: com.mrjackspade.kairo.frontend.CatalogUpdateTask = com.mrjackspade.kairo.frontend.CatalogUpdateTask()): Boolean {
+        if (!snapshot.download(task)) return false
         synchronized(this) {
             update = readUpdate()
             fallbackRecords.clear()
