@@ -67,7 +67,6 @@ import android.app.AlertDialog
 import android.content.Intent
 import android.content.res.Configuration
 import android.graphics.Color
-import android.graphics.BitmapFactory
 import android.graphics.drawable.ColorDrawable
 import android.graphics.drawable.GradientDrawable
 import android.graphics.drawable.StateListDrawable
@@ -780,13 +779,10 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
 
     private fun closeMenu() = sessionFlow.close()
 
-    private val libraryArtExecutor = java.util.concurrent.Executors.newSingleThreadExecutor()
-    private var librarySelectionGeneration = 0
 
     /** Shows the selected library game on the second screen, if there is one. */
     private fun showLibrarySelection(entry: LibraryEntry?) {
         if (!::secondaryKeyboard.isInitialized) return
-        val generation = ++librarySelectionGeneration
         if (entry == null) {
             secondaryKeyboard.setLibraryInfo(null)
             return
@@ -798,24 +794,11 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
         val info = SecondaryDisplayCoordinator.LibraryInfo(game.title,
             listOf(fileLabel(entry)) + tags + game.tags,
             game.description ?: "No description available yet.", null, hasArtwork = game.preview != null)
-        secondaryKeyboard.setLibraryInfo(info)
-        val art = game.preview ?: return
-        libraryArtExecutor.execute {
-            val bitmap = try {
-                romLibrary.catalog.openArtwork(art).use {
-                    BitmapFactory.decodeStream(it, null, BitmapFactory.Options().apply { inSampleSize = 2 })
-                }
-            } catch (_: Exception) { null } ?: return@execute
-            runOnUiThread {
-                if (generation == librarySelectionGeneration && libraryVisible)
-                    secondaryKeyboard.setLibraryInfo(info.copy(art = bitmap))
-            }
-        }
+        secondaryKeyboard.setLibraryInfo(info, game.preview, romLibrary.catalog::openArtwork)
     }
 
     private fun applyPauseState() {
         if (!libraryVisible && ::secondaryKeyboard.isInitialized) {
-            librarySelectionGeneration++
             secondaryKeyboard.setLibraryInfo(null)
         }
         val editingControls = ::onScreenControls.isInitialized && onScreenControls.isOpen
