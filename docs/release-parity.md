@@ -26,3 +26,11 @@ checks. Packaging checks do not establish runtime compatibility on a 16 KB
 Android system or complete the license audit and Play listing requirements.
 See [Android app signing](https://developer.android.com/studio/publish/app-signing)
 and [16 KB support](https://developer.android.com/guide/practices/page-sizes).
+
+## Image-inclusive download
+
+From v0.9.1, each tagged release also publishes `Kairo98-<tag>-with-images.apk`.
+It includes the bundled artwork and uses the same package, release signer,
+version, and non-artwork payload as the smaller APK. CI builds and audits all
+three outputs and verifies both APK signatures. The Play AAB remains the
+variant without bundled artwork.
