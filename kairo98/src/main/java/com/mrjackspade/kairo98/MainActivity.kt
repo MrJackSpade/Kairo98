@@ -655,6 +655,11 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
             contentDescription = "PC-98 display"
             setOnTouchListener { view, event -> handleScreenTouch(event, view.width, view.height) }
         }
+        root.setOnTouchListener { _, event ->
+            !libraryVisible && !menuOpen && !onScreenControls.isOpen && !controllerEditor.isOpen &&
+                touchUi.handleKeyboardTouch(event,
+                    inputModeDecider.resolve(configuredInputMode()) == InputModeDecider.Mode.KEYBOARD)
+        }
         root.addView(screen, FrameLayout.LayoutParams(640, 400, Gravity.CENTER))
         root.addOnLayoutChangeListener { _, _, _, _, _, _, _, _, _ -> updateViewport() }
         onScreenControls = OnScreenControls(this, root, gamepadMapper, preferences, ::applyPauseState)
@@ -1104,6 +1109,9 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
 
     private fun handleScreenTouch(event: MotionEvent, width: Int, height: Int): Boolean {
         if (libraryVisible || menuOpen) return false
+        if (touchUi.handleKeyboardTouch(event,
+                inputModeDecider.resolve(configuredInputMode()) == InputModeDecider.Mode.KEYBOARD))
+            return true
         when (event.actionMasked) {
             MotionEvent.ACTION_DOWN -> {
                 // With the keyboard on the second screen, the main screen touch is always the mouse.
