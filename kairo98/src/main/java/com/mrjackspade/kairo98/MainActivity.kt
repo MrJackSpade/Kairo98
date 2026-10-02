@@ -1655,15 +1655,18 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
         DocumentPicker.open(this, HDI_REQUEST, failed = ::toast)
     }
 
+    // Firmware selection requires no machine session. A session paused behind
+    // the library still owns its firmware. Native loading is unchanged.
+    private val firmwareConfigurable get() = currentDisk == null && !preparingFont
+
     private fun showMachine() {
-        val bios = biosFile()
-        val font = fontBitmapFile()
-        val rhythm = rhythmRomFile()
+        val options = mutableListOf("Base clock  ·  ${if (clock == 25) "2.5" else "2"} MHz")
+        if (firmwareConfigurable) options += listOf(
+            "BIOS ROM  ·  ${if (biosFile().isFile) "Imported" else "None"}",
+            "Font BMP  ·  ${if (fontBitmapFile().isFile) "Imported" else "Built-in"}",
+            "YM2608 rhythm ROM  ·  ${if (rhythmRomFile().isFile) "Imported" else "None"}")
         AlertDialog.Builder(this).setTitle("Machine")
-            .setItems(arrayOf("Base clock  ·  ${if (clock == 25) "2.5" else "2"} MHz",
-                "BIOS ROM  ·  ${if (bios.isFile) "Imported" else "None"}",
-                "Font BMP  ·  ${if (font.isFile) "Imported" else "Built-in"}",
-                "YM2608 rhythm ROM  ·  ${if (rhythm.isFile) "Imported" else "None"}")) { _, which ->
+            .setItems(options.toTypedArray()) { _, which ->
                 when (which) {
                     0 -> showMachineClock()
                     1 -> showBiosRom()
@@ -1691,12 +1694,13 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
     }
 
     private fun showBiosRom() {
+        if (!firmwareConfigurable) return
         val installed = biosFile().isFile
         val dialog = AlertDialog.Builder(this).setTitle("BIOS ROM")
             .setPositiveButton("Choose file") { _, _ -> chooseBiosFile() }
             .setNegativeButton("Close", null)
         if (installed) dialog.setNeutralButton("Remove") { _, _ ->
-            if (!biosBusy) {
+            if (firmwareConfigurable && !biosBusy) {
                 if (biosFile().delete()) toast("BIOS ROM removed" +
                     if (currentDisk != null) ". Restart the game to apply." else ".")
                 else toast("Could not remove BIOS ROM")
@@ -1706,11 +1710,12 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
     }
 
     private fun showFontBitmap() {
+        if (!firmwareConfigurable) return
         val dialog = AlertDialog.Builder(this).setTitle("Font BMP")
             .setPositiveButton("Choose file") { _, _ -> chooseFontFile() }
             .setNegativeButton("Close", null)
         if (fontBitmapFile().isFile) dialog.setNeutralButton("Remove") { _, _ ->
-            if (!fontBusy) {
+            if (firmwareConfigurable && !fontBusy) {
                 if (fontBitmapFile().delete()) toast("Font BMP removed" +
                     if (currentDisk != null) ". Restart the game to apply." else ".")
                 else toast("Could not remove Font BMP")
@@ -1720,19 +1725,22 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
     }
 
     private fun chooseBiosFile() {
+        if (!firmwareConfigurable) return
         DocumentPicker.open(this, BIOS_REQUEST, failed = ::toast)
     }
 
     private fun chooseFontFile() {
+        if (!firmwareConfigurable) return
         DocumentPicker.open(this, FONT_REQUEST, failed = ::toast)
     }
 
     private fun showRhythmRom() {
+        if (!firmwareConfigurable) return
         val dialog = AlertDialog.Builder(this).setTitle("YM2608 rhythm ROM")
             .setPositiveButton("Choose file") { _, _ -> chooseRhythmFile() }
             .setNegativeButton("Close", null)
         if (rhythmRomFile().isFile) dialog.setNeutralButton("Remove") { _, _ ->
-            if (!rhythmBusy) {
+            if (firmwareConfigurable && !rhythmBusy) {
                 if (rhythmRomFile().delete()) toast("Rhythm ROM removed" +
                     if (currentDisk != null) ". Restart the game to apply." else ".")
                 else toast("Could not remove rhythm ROM")
@@ -1742,6 +1750,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
     }
 
     private fun chooseRhythmFile() {
+        if (!firmwareConfigurable) return
         DocumentPicker.open(this, RHYTHM_REQUEST, failed = ::toast)
     }
 
@@ -2124,7 +2133,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
     }
 
     private fun importBiosRom(uri: Uri) {
-        if (biosBusy) return
+        if (!firmwareConfigurable || biosBusy) return
         biosBusy = true
         val restartNeeded = currentDisk != null
         if (firstRunSetup.isOpen) firstRunSetup.setBusy("Importing BIOS ROM…")
@@ -2168,7 +2177,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
     }
 
     private fun importFontBitmap(uri: Uri) {
-        if (fontBusy) return
+        if (!firmwareConfigurable || fontBusy) return
         fontBusy = true
         val restartNeeded = currentDisk != null
         if (firstRunSetup.isOpen) firstRunSetup.setBusy("Importing Font BMP…")
@@ -2212,7 +2221,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
     }
 
     private fun importRhythmRom(uri: Uri) {
-        if (rhythmBusy) return
+        if (!firmwareConfigurable || rhythmBusy) return
         rhythmBusy = true
         val restartNeeded = currentDisk != null
         if (firstRunSetup.isOpen) firstRunSetup.setBusy("Importing rhythm ROM…")
