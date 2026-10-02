@@ -49,6 +49,8 @@ jobs:
         run: bash tools/checkout_shared.sh
       - name: Verify clean core and optional catalog integrity
         run: python3 shared/tools/audit_core_catalog.py pc98
+      - name: Verify portable catalog archive generation
+        run: python3 -m unittest discover -s shared/tools -p test_catalog_package.py
       - uses: ./shared/.github/actions/setup-android
       - name: Prepare persistent beta signing key
         if: inputs.signed_device_test
