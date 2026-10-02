@@ -726,7 +726,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
         SettingsEntry("Touch input", ::touchInputLabel) { showInputMode() },
         SettingsEntry("Machine", { "${if (clock == 25) "2.5" else "2"} MHz · BIOS ${if (biosFile().isFile) "imported" else "none"}" }) { showMachine() },
         SettingsEntry("Controller", { "Gamepad and on-screen controls" }) { showControllerScope() },
-        SettingsEntry("Sound", { if (muted) "Muted · tap to turn on" else "On · tap to mute" }) { toggleMute() },
+        SettingsEntry.sound({ muted }, ::toggleMute),
         SettingsEntry("About", { "Version, shortcuts, and licenses" }) { showAbout() })
 
     private var showMachineDetails = false
