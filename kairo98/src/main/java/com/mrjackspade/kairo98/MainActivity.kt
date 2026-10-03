@@ -662,7 +662,8 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
         }
         root.addView(screen, FrameLayout.LayoutParams(640, 400, Gravity.CENTER))
         root.addOnLayoutChangeListener { _, _, _, _, _, _, _, _, _ -> updateViewport() }
-        onScreenControls = OnScreenControls(this, root, gamepadMapper, preferences, ::applyPauseState)
+        onScreenControls = OnScreenControls(this, root, gamepadMapper, preferences, ::applyPauseState,
+            { controllerProfiles.configuration.layout })
 
         keyboardPanel = GuestKeyboardPanel(this, inputRouter, Pc98KeyboardLayout.value, ::hideKeyboard)
         root.addView(keyboardPanel, FrameLayout.LayoutParams(-1, dp(260), Gravity.BOTTOM))
