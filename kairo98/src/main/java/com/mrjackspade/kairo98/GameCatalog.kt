@@ -62,15 +62,7 @@ class GameCatalog(private val context: Context) : LibraryCatalog {
 
     override val installedCatalogs by lazy {
         com.mrjackspade.kairo.frontend.InstalledCatalogs(context, "pc98", { root ->
-            require(parseUpdate(root.toString().toByteArray(Charsets.UTF_8), false) != null)
-            val images = HashSet<String>()
-            for (games in listOf(root.getJSONObject("games"), root.getJSONObject("nameIndex").getJSONObject("games"))) {
-                for (key in games.keys()) {
-                    val art = Pc98ArtworkReferences.record(games.getJSONObject(key))?.optJSONObject("artwork")
-                    for (kind in ART_PATH_FIELDS) art?.optString(kind)?.takeIf { it.isNotEmpty() }?.let(images::add)
-                }
-            }
-            images
+            requireUpdateFormat(root, false)
         }) { synchronized(this) { fallbackRecords.clear(); updatedFallbackIds.clear() } }
     }
     private val parts = com.mrjackspade.kairo.frontend.CatalogParts(context)
@@ -86,7 +78,7 @@ class GameCatalog(private val context: Context) : LibraryCatalog {
     private val overridesFile = File(context.filesDir, "overrides-v1.json")
     private val snapshot = CatalogSnapshotStore(context, "core-update-v2.json",
         UPDATE_URL, METADATA_URL, MAX_LOCAL_JSON) { file ->
-        require(parseUpdate(file.readBytes()) != null) { "Invalid catalog update" }
+        requireUpdateFormat(JSONObject(file.readText()))
     }
     private var update = readUpdate()
     private var additions = readLocal(additionsFile)
@@ -533,37 +525,15 @@ class GameCatalog(private val context: Context) : LibraryCatalog {
         snapshot.activeFile()?.let { JSONObject(it.readText(Charsets.UTF_8)) } ?: empty()
     } catch (_: Exception) { empty() }
 
-    private fun parseUpdate(bytes: ByteArray, core: Boolean = true): JSONObject? {
-        return try {
-        val root = JSONObject(bytes.toString(Charsets.UTF_8))
-        if (root.optInt("schemaVersion") != 1 || root.length() != (if (core) 4 else 3)) return null
-        if (core && root.optInt("coreVersion") != 2) return null
-        val games = root.optJSONObject("games") ?: return null
-        val names = root.optJSONObject("nameIndex") ?: return null
-        if (names.optInt("schemaVersion") != 1 || names.length() != 3) return null
-        val nameGames = names.optJSONObject("games") ?: return null
-        val nameKeys = names.optJSONObject("names") ?: return null
-        if (!validRecords(games, { validId(it) }) ||
-            !validRecords(nameGames, { it.matches(Regex("[a-z0-9]+:[0-9]+")) })) return null
-        for (key in nameKeys.keys()) {
-            if (!key.matches(Regex("[\\p{L}\\p{N}]{4,128}"))) return null
-            val id = nameKeys.opt(key) as? String ?: return null
-            if (!nameGames.has(id)) return null
-        }
-        root
-        } catch (_: Exception) { null }
-    }
-
-    private fun validRecords(records: JSONObject, validKey: (String) -> Boolean): Boolean {
-        for (key in records.keys()) {
-            if (!validKey(key)) return false
-            val record = records.optJSONObject(key) ?: return false
-            for (field in record.keys()) {
-                if (field !in FIELDS || !validField(field, record.opt(field) ?: return false))
-                    return false
-            }
-        }
-        return true
+    private fun requireUpdateFormat(root: JSONObject, core: Boolean = true) {
+        require(root.optInt("schemaVersion") == 1)
+        if (core) require(root.optInt("coreVersion") == 2)
+        root.getJSONObject("games")
+        val names = root.getJSONObject("nameIndex")
+        require(names.optInt("schemaVersion") == 1)
+        names.getJSONObject("games")
+        names.getJSONObject("names")
+        // Publishing audits all records. Resolution handles fields only as used.
     }
 
     private fun parse(text: String): JSONObject = try {
