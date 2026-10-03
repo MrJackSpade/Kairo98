@@ -320,8 +320,8 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
     }
     private val catalogUpdates by lazy {
         CatalogUpdateController(this, { task -> romLibrary.catalog.downloadUpdate(task) },
-            libraryScreen::showStatus, { libraryScreen.showEntries(libraryEntries) },
-            { if (libraryVisible) toast("Game catalog updated") }, libraryScreen::showCatalogUpdate)
+            libraryScreen::showStatus, { libraryScreen.refreshCatalog() },
+            { if (libraryVisible) toast("Catalogs updated") }, libraryScreen::showCatalogUpdate, romLibrary.catalog.installedCatalogs::update)
     }
     private var currentEntry: LibraryEntry? = null
     private var sessionFromFrontend = false
