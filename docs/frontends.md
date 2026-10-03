@@ -38,3 +38,5 @@ In the PC-98 system's custom `es_systems.xml` configuration, add this command an
 ```
 
 See the [ES-DE Android configuration guide](https://gitlab.com/es-de/emulationstation-de/-/blob/master/INSTALL.md) for custom file locations and system override syntax. Pass the original disk image or ZIP to Kairo98.
+
+The app does not register a generic Android “Open with” file handler. Select games inside the app or use the explicit component configured above; APKs and unrelated documents should not offer the emulator as a handler.
