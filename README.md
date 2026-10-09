@@ -34,6 +34,8 @@ Use the [external frontend setup guide](docs/frontends.md) to launch Kairo98 gam
 
 - [LaunchBox for Android](docs/frontends.md#launchbox-for-android)
 - [ES-DE](docs/frontends.md#es-de)
+- [iiSU](docs/frontends.md#iisu)
+- [Beacon](docs/frontends.md#beacon)
 
 ## Controls
 
