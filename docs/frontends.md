@@ -79,15 +79,21 @@ Put your games in the `pc98` folder of your iiSU ROM folder. Select the NEC PC-9
 
 ## Beacon
 
-Add a platform for your PC-98 folder and set its player app to a custom emulator with these values:
+Open **Settings** and add a platform:
 
 | Setting | Value |
 | --- | --- |
-| Package | `com.loxifi.kairo98` |
-| Activity | `com.loxifi.kairo98.Launch` |
-| Action | `android.intent.action.VIEW` |
-| Data | The game file's URI |
+| Platform type | **Custom** |
+| Name / Short name | Any, for example `PC-98` / `PC98` |
+| Player app | **Kairo98** |
+| ROMs folder | Your PC-98 game folder |
 
-If you use **Custom Launch** instead, start the same component with the `VIEW` action and pass Beacon's game-file URI placeholder as the data (`-d`) value. Do not pass the file's contents or a game ID.
+Scroll down, open **Advanced**, turn on **Use custom launch**, accept the warning, and enter this **am start command**:
+
+```text
+am start -n com.loxifi.kairo98/com.loxifi.kairo98.Launch -a android.intent.action.VIEW -d {file_uri}
+```
+
+Leave **File handling** at **Default** and save. Without the custom launch command, Beacon opens Kairo98's library instead of the game.
 
 The app does not register a generic Android “Open with” file handler. Select games inside the app or use the explicit component configured above; APKs and unrelated documents should not offer the emulator as a handler.
