@@ -1,5 +1,7 @@
 # Licensing and third-party credits
 
+The shared frontend bundles three individually reviewed RetroArch presets: CRT EasyMode (version-unspecified GPL, used under GPLv3), Sharp Bilinear (public domain), and Sharp Bilinear + Scanlines (public domain). Their pinned source and per-file notices are in [shared/third_party/slang-shaders](../shared/third_party/slang-shaders/README.md). About -> Licenses includes their attribution. Other upstream shaders are not covered by this review.
+
 Kairo98 first-party code is [GPL-2.0-or-later](../LICENSE.md). The pinned [Kairo frontend](https://github.com/MrJackSpade/Kairo) is also GPL-2.0-or-later. The GPL covers first-party source; third-party components retain their own notices.
 
 The PC-98 emulator is based on a pinned BSD-only Neko Project 21/W rev104 source package. The app uses a pinned [ymfm](https://github.com/aaronsgiles/ymfm) snapshot under BSD-3-Clause for sound emulation. The build excludes fmgen, GPL MAME sound files, and DOSBox FPU sources. The Spleen UI font is BSD-2-Clause; the Shinonome Japanese font is public domain. See [source provenance](source-import.md) for the imported source and build boundaries. Distributed binaries include third-party notices in **About → Licenses**.

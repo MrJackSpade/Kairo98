@@ -44,7 +44,7 @@ The original PNG is preserved as `kairo98/src/main/res/drawable-nodpi/kairo98_ic
 
 Future upstream changes are not merged automatically. Changes needed for this project are reviewed and implemented in this repository with their provenance recorded.
 
-The first-party `shared/` commit supplies the RetroArch Slang runtime. Its pinned librashader v0.11.0 snapshot, Cargo.lock, and 129 checked Rust source archives are recorded in [shared source provenance](../shared/docs/source-import.md). Kairo98 builds that runtime from source through the shared frontend module; no preset packs are included.
+The first-party `shared/` commit supplies the RetroArch Slang runtime. Its pinned librashader v0.11.0 snapshot, Cargo.lock, and 129 checked Rust source archives are recorded in [shared source provenance](../shared/docs/source-import.md). Kairo98 builds that runtime from source through the shared frontend module. The shared frontend also packages three individually reviewed presets from `libretro/slang-shaders` commit `e1d75632a205c70f14a4cc947c46d5abb7b3f7f1`; [the pinned shader snapshot](../shared/third_party/slang-shaders/README.md) lists their exact files, hashes, and licenses.
 
 ## Local input observation patch
 
