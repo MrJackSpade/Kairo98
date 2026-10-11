@@ -44,6 +44,8 @@ The original PNG is preserved as `kairo98/src/main/res/drawable-nodpi/kairo98_ic
 
 Future upstream changes are not merged automatically. Changes needed for this project are reviewed and implemented in this repository with their provenance recorded.
 
+The first-party `shared/` commit supplies the RetroArch Slang runtime. Its pinned librashader v0.11.0 snapshot, Cargo.lock, and 129 checked Rust source archives are recorded in [shared source provenance](../shared/docs/source-import.md). Kairo98 builds that runtime from source through the shared frontend module; no preset packs are included.
+
 ## Local input observation patch
 
 The vendored rev104 snapshot has two Kairo98-only, additive observation hooks. `bios/bios18.c` records BIOS keyboard waits, completed reads, and polls; `io/mouseif.c` records reads of the PC-98 bus mouse data port. The hooks call project-owned `android_host/input_telemetry.c` and do not branch on telemetry values or change guest-visible results. The Android build replaces the imported SDL2 mouse stub with project-owned `android_host/mousemng.c` to accept guest mouse movement and buttons. These changes are local to this repository; the original archive and its provenance above remain the reference snapshot.

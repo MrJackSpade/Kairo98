@@ -134,6 +134,9 @@ uint64_t hash_guest_frame() {
 std::mutex window_mutex;
 ANativeWindow *window = nullptr;
 std::atomic<unsigned int> surface_generation{0};
+std::mutex shader_mutex;
+std::string shader_preset;
+std::atomic<unsigned int> shader_generation{0};
 
 // Presentation runs on its own thread with a GPU renderer (gl_presenter.h).
 //
@@ -157,6 +160,7 @@ unsigned int present_dropped = 0;
 void present_loop() {
     GlPresenter renderer;
     unsigned int attached_generation = ~0u;
+    unsigned int applied_shader_generation = ~0u;
     for (;;) {
         std::unique_ptr<PresentFrame> frame;
         {
@@ -164,10 +168,12 @@ void present_loop() {
             for (;;) {
                 present_ready.wait(guard, [&] {
                     return !present_queue.empty() || present_stop ||
-                           surface_generation.load(std::memory_order_relaxed) != attached_generation;
+                           surface_generation.load(std::memory_order_relaxed) != attached_generation ||
+                           shader_generation.load(std::memory_order_relaxed) != applied_shader_generation;
                 });
                 if (present_stop) return;
-                if (surface_generation.load(std::memory_order_relaxed) != attached_generation) break;
+                if (surface_generation.load(std::memory_order_relaxed) != attached_generation ||
+                    shader_generation.load(std::memory_order_relaxed) != applied_shader_generation) break;
                 const auto due = present_queue.front()->due;
                 if (present_ready.wait_until(guard, due, [] { return present_stop; })) return;
                 // Past due. If the following frame is due as well, skip this one.
@@ -187,6 +193,17 @@ void present_loop() {
                 frame = std::move(present_queue.front());
                 present_queue.pop_front();
             }
+        }
+        const unsigned int selected_shader_generation = shader_generation.load(std::memory_order_relaxed);
+        if (selected_shader_generation != applied_shader_generation) {
+            std::string path;
+            {
+                std::lock_guard<std::mutex> guard(shader_mutex);
+                path = shader_preset;
+            }
+            renderer.setShaderPreset(std::move(path));
+            applied_shader_generation = selected_shader_generation;
+            if (renderer.ready()) renderer.draw();
         }
         const unsigned int generation = surface_generation.load(std::memory_order_relaxed);
         if (generation != attached_generation) {
@@ -906,6 +923,24 @@ Java_com_mrjackspade_kairo98_MainActivity_nativeSetSurface(JNIEnv *env, jobject,
     present_ready.notify_one();
     // The presenter holds its own reference while it renders to a window.
     if (previous) ANativeWindow_release(previous);
+}
+
+extern "C" JNIEXPORT void JNICALL
+Java_com_mrjackspade_kairo98_MainActivity_nativeSetShaderPreset(JNIEnv *env, jobject,
+                                                                jstring preset) {
+    std::string path;
+    if (preset) {
+        const char* chars = env->GetStringUTFChars(preset, nullptr);
+        if (!chars) return;
+        path = chars;
+        env->ReleaseStringUTFChars(preset, chars);
+    }
+    {
+        std::lock_guard<std::mutex> guard(shader_mutex);
+        shader_preset = std::move(path);
+        shader_generation.fetch_add(1, std::memory_order_relaxed);
+    }
+    present_ready.notify_one();
 }
 
 extern "C" JNIEXPORT void JNICALL

@@ -7,6 +7,7 @@ import com.mrjackspade.kairo.frontend.GuestKeyboardPanel
 import com.mrjackspade.kairo.frontend.StateSlotCoordinator
 import com.mrjackspade.kairo.frontend.StateSlotStore
 import com.mrjackspade.kairo.frontend.GraphicsOptions
+import com.mrjackspade.kairo.frontend.ShaderOptions
 import com.mrjackspade.kairo.frontend.GameDeletionFlow
 
 import com.mrjackspade.kairo.frontend.InputRouter
@@ -131,6 +132,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
     private external fun nativeSetScreenHashSampling(enabled: Boolean)
     private external fun nativeScreenHashSnapshot(): LongArray
     private external fun nativeSetSurface(surface: Surface?, width: Int, height: Int)
+    private external fun nativeSetShaderPreset(path: String?)
     private external fun nativeSetMuted(muted: Boolean)
     private external fun nativeSetFastForward(enabled: Boolean)
 
@@ -177,6 +179,10 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
     private val graphics by lazy {
         GraphicsOptions(this, preferences, { builder -> builder.showStyled() },
             { updateViewport(); refreshSettingValues() }, ::toast)
+    }
+    private val shaderOptions by lazy {
+        ShaderOptions(this, preferences, { builder -> builder.showStyled() },
+            { path -> nativeSetShaderPreset(path); refreshSettingValues() }, ::toast)
     }
     private val controllerProfiles by lazy {
         ControllerProfileStore(preferences, ControllerBindings::parse,
@@ -474,6 +480,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
                 ?.let(::decodeDebugGameQuery) ?: intent.getStringExtra("kairo98.selectGame")
         }
         graphics.load()
+        nativeSetShaderPreset(shaderOptions.selectedPath())
         muted = preferences.getBoolean("muted", false)
         clock = preferences.getInt("base_clock", 25).let { if (it == 20) 20 else 25 }
         globalInputMode = InputModeDecider.parse(preferences.getString("input_mode", "auto"))
@@ -728,7 +735,8 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
 
     /** One settings list, shown the same way in the game menu and the library menu. */
     private fun settingsEntries() = listOf(
-        SettingsEntry("Graphics", graphics::settingsLabel, graphics::show),
+        SettingsEntry("Graphics", graphics::settingsLabel,
+            { graphics.show(listOf(shaderOptions.entry())) }),
         SettingsEntry("Touch input", ::touchInputLabel) { showInputMode() },
         SettingsEntry("Machine", { "${if (clock == 25) "2.5" else "2"} MHz · BIOS ${if (biosFile().isFile) "imported" else "none"}" }) { showMachine() },
         SettingsEntry("Controller", { "Gamepad and on-screen controls" }) { showControllerScope() },
@@ -2041,6 +2049,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
     @Deprecated("Android activity result callback")
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
+        if (shaderOptions.handleActivityResult(requestCode, resultCode, data)) return
         if (libraryScreen.handleCatalogResult(requestCode, resultCode, data)) return
         if (artwork.handleActivityResult(requestCode, resultCode, data)) return
         if (libraryFlow.handleActivityResult(requestCode, resultCode, data)) return

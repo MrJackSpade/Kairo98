@@ -6,6 +6,8 @@ The PC-98 emulator is based on a pinned BSD-only Neko Project 21/W rev104 source
 
 Kairo98 does not include BIOS ROMs, game files, operating systems, or commercial font ROM data. Users supply any firmware and games they need.
 
+The shared RetroArch Slang integration uses librashader 0.11.0 under its GPL-3.0-only option. This shader-enabled combined build therefore uses GPLv3 terms. The source snapshot, locked Rust crate archives, and license record are in [shared licensing](../shared/docs/licensing.md). The app appends the shared runtime notice to **About → Licenses**. The NDK `libc++_shared.so` is packaged because the runtime needs it; the existing NDK notices cover that library. Review the exact combined binary and transitive notices before claiming a release is license-audited.
+
 ## Catalog metadata and artwork
 
 Some catalog metadata derives from the [VNDB database dump](https://vndb.org/d14). The derived review data is attributed to VNDB contributors under ODbL 1.0 and DbCL; its source checksum is recorded with the research data. The app does not bundle the VNDB dump.

@@ -57,7 +57,7 @@ target_include_directories(kairo98 PRIVATE ${YMFM_ROOT}/src)
 target_compile_features(kairo98 PRIVATE cxx_std_17)
 target_compile_options(kairo98 PRIVATE -flto=thin)
 kairo_native_debug_defaults(kairo98)
-target_link_libraries(kairo98 PRIVATE log android aaudio EGL GLESv3)
+target_link_libraries(kairo98 PRIVATE log android aaudio EGL GLESv3 dl)
 # Core calls stay inside this shared library. Bind them locally to avoid the
 # measured PLT cost in the interpreter's instruction-fetch path.
 target_link_options(kairo98 PRIVATE "-Wl,-Bsymbolic" -flto=thin)
@@ -106,3 +106,4 @@ endif()
 
 # Common EGL lifecycle; guest palette composition stays in Kairo98.
 target_include_directories(kairo98 PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../../../../shared/frontend/src/main/cpp)
+target_include_directories(kairo98 PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../../../../shared/third_party/librashader/include)

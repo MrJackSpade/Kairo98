@@ -13,12 +13,14 @@
 #pragma once
 
 #include "kairo/egl_context.h"
+#include "kairo/slang_filter.h"
 #include <EGL/egl.h>
 #include <GLES3/gl3.h>
 #include <android/log.h>
 #include <android/native_window.h>
 #include <array>
 #include <cstring>
+#include <string>
 #include <vector>
 
 #include "android_host/gpudraw.h"
@@ -40,11 +42,28 @@ public:
     }
 
     void detach() {
+        if (egl_.ready() && egl_.makeCurrent()) {
+            filter_.reset();
+            if (composed_framebuffer_) glDeleteFramebuffers(1, &composed_framebuffer_);
+            if (composed_texture_) glDeleteTextures(1, &composed_texture_);
+            if (program_) glDeleteProgram(program_);
+            glDeleteTextures(5, textures_);
+        }
         egl_.destroy();
         display_ = EGL_NO_DISPLAY;
         surface_ = EGL_NO_SURFACE;
         program_ = 0;
+        composed_framebuffer_ = composed_texture_ = 0;
+        std::memset(textures_, 0, sizeof(textures_));
         window_ = nullptr;
+    }
+
+    void setShaderPreset(std::string path) {
+        if (shader_path_ == path) return;
+        shader_path_ = std::move(path);
+        if (!ready()) return;
+        filter_.reset();
+        if (!shader_path_.empty() && create_composed_texture()) filter_.load(shader_path_);
     }
 
     bool ready() const { return egl_.ready(); }
@@ -116,12 +135,12 @@ public:
         eglQuerySurface(display_, surface_, EGL_WIDTH, &width);
         eglQuerySurface(display_, surface_, EGL_HEIGHT, &height);
         if (width <= 0 || height <= 0) return false;
-        glViewport(0, 0, width, height);
-        glUseProgram(program_);
-        glUniform1i(mode_location_, mirror_mode_);
-        glUniform1i(base_location_, mirror_base_);
-        glUniform2i(surface_location_, width, height);
-        glDrawArrays(GL_TRIANGLES, 0, 3);
+        if (filter_.active()) {
+            compose(KAIRO98_GPU_COLS, KAIRO98_GPU_ROWS, composed_framebuffer_);
+            glBindFramebuffer(GL_FRAMEBUFFER, 0);
+            if (!filter_.draw(composed_texture_, KAIRO98_GPU_COLS, KAIRO98_GPU_ROWS,
+                              width, height)) compose(width, height, 0);
+        } else compose(width, height, 0);
         if (!eglSwapBuffers(display_, surface_)) {
             __android_log_print(ANDROID_LOG_WARN, "Kairo98Perf", "eglSwapBuffers failed: 0x%x",
                                 eglGetError());
@@ -139,7 +158,47 @@ private:
         if (!build_program()) return false;
         create_textures();
         upload_all();
+        if (!shader_path_.empty() && create_composed_texture()) filter_.load(shader_path_);
         return true;
+    }
+
+    bool create_composed_texture() {
+        if (composed_framebuffer_) return true;
+        glGenTextures(1, &composed_texture_);
+        glBindTexture(GL_TEXTURE_2D, composed_texture_);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, KAIRO98_GPU_COLS, KAIRO98_GPU_ROWS,
+                     0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
+        nearest();
+        glGenFramebuffers(1, &composed_framebuffer_);
+        glBindFramebuffer(GL_FRAMEBUFFER, composed_framebuffer_);
+        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D,
+                               composed_texture_, 0);
+        const bool complete = glCheckFramebufferStatus(GL_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE;
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
+        if (!complete) {
+            glDeleteFramebuffers(1, &composed_framebuffer_);
+            glDeleteTextures(1, &composed_texture_);
+            composed_framebuffer_ = composed_texture_ = 0;
+        }
+        return complete;
+    }
+
+    void compose(int width, int height, GLuint framebuffer) {
+        glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
+        glViewport(0, 0, width, height);
+        glDisable(GL_BLEND);
+        glDisable(GL_DEPTH_TEST);
+        glDisable(GL_SCISSOR_TEST);
+        glBindVertexArray(0);
+        glUseProgram(program_);
+        glUniform1i(mode_location_, mirror_mode_);
+        glUniform1i(base_location_, mirror_base_);
+        glUniform2i(surface_location_, width, height);
+        for (int unit = 0; unit < 5; ++unit) {
+            glActiveTexture(GL_TEXTURE0 + unit);
+            glBindTexture(GL_TEXTURE_2D, textures_[unit]);
+        }
+        glDrawArrays(GL_TRIANGLES, 0, 3);
     }
 
     bool fail(const char *what) {
@@ -313,6 +372,9 @@ private:
     EGLSurface surface_ = EGL_NO_SURFACE;
     kairo::EglContext egl_;
     GLuint program_ = 0;
+    GLuint composed_texture_ = 0, composed_framebuffer_ = 0;
+    kairo::SlangFilter filter_;
+    std::string shader_path_;
     GLuint textures_[5] = {0, 0, 0, 0, 0};
     GLint mode_location_ = -1, base_location_ = -1, surface_location_ = -1;
 

@@ -11,6 +11,8 @@
 
 # Local Windows signing and device updates
 
+- GitHub CLI is installed and already authenticated on this workstation. A sandboxed `gh` call may fail to read `C:\Users\Service Account\AppData\Roaming\GitHub CLI\config.yml` with `Access is denied`; pointing `GH_CONFIG_DIR` at a new directory then reports a misleading login failure. For a read-only GitHub lookup, retry `gh` with the existing config through an escalated command before concluding that authentication is unavailable or asking the user for an issue link.
+
 - Android toolchain versions, Gradle conventions, wrapper distribution and CI setup live in pinned `shared/` (see `shared/docs/android-build.md`). Initialize that submodule before building. Product wrappers delegate to it; do not restore duplicate plugin versions or CI setup in either app.
 
 - Installed app ID is `com.loxifi.kairo98`; the launch activity retains the `com.mrjackspade.kairo98.MainActivity` namespace. Always update it with `adb install -r` and verify the installed package before testing. Do not install a second application ID. The obsolete `com.mrjackspade.kairo98` package was removed from the Retroid on September 29, 2026; both devices now have only `com.loxifi.kairo98`.

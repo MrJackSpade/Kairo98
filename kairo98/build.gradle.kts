@@ -18,7 +18,7 @@ android {
         }
         externalNativeBuild {
             cmake {
-                arguments += "-DANDROID_STL=c++_static"
+                arguments += "-DANDROID_STL=c++_shared"
                 providers.gradleProperty("kairo98PgoMode").orNull?.let {
                     arguments += "-DKAIRO98_PGO_MODE=$it"
                 }
