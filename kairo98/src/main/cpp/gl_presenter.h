@@ -54,6 +54,7 @@ public:
         surface_ = EGL_NO_SURFACE;
         program_ = 0;
         composed_framebuffer_ = composed_texture_ = 0;
+        pixel_unpack_dirty_ = true;
         std::memset(textures_, 0, sizeof(textures_));
         window_ = nullptr;
     }
@@ -63,6 +64,7 @@ public:
         shader_path_ = std::move(path);
         if (!ready()) return;
         filter_.reset();
+        pixel_unpack_dirty_ = true;
         if (!shader_path_.empty() && create_composed_texture()) filter_.load(shader_path_);
     }
 
@@ -70,6 +72,10 @@ public:
 
     // Merges a frame packet into the mirror and uploads what changed.
     void apply(const kairo98_gpu_frame_t &frame) {
+        if (ready() && pixel_unpack_dirty_) {
+            prepare_uploads();
+            pixel_unpack_dirty_ = false;
+        }
         const bool mode_changed = frame.mode != mirror_mode_;
         mirror_mode_ = frame.mode;
         mirror_base_ = frame.base;
@@ -123,6 +129,8 @@ public:
     // Uploads the whole mirror; used after the context is (re)created.
     void upload_all() {
         if (!ready()) return;
+        prepare_uploads();
+        pixel_unpack_dirty_ = false;
         upload_rgb();
         for (int slot = 0; slot < KAIRO98_GPU_PALETTE_SLOTS; ++slot) upload_palette_slot(slot);
         upload_planes_all();
@@ -140,6 +148,7 @@ public:
             glBindFramebuffer(GL_FRAMEBUFFER, 0);
             if (!filter_.draw(composed_texture_, KAIRO98_GPU_COLS, KAIRO98_GPU_ROWS,
                               width, height)) compose(width, height, 0);
+            pixel_unpack_dirty_ = true;
         } else compose(width, height, 0);
         if (!eglSwapBuffers(display_, surface_)) {
             __android_log_print(ANDROID_LOG_WARN, "Kairo98Perf", "eglSwapBuffers failed: 0x%x",
@@ -189,6 +198,9 @@ private:
         glDisable(GL_BLEND);
         glDisable(GL_DEPTH_TEST);
         glDisable(GL_SCISSOR_TEST);
+        glDisable(GL_CULL_FACE);
+        glDisable(GL_STENCIL_TEST);
+        glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
         glBindVertexArray(0);
         glUseProgram(program_);
         glUniform1i(mode_location_, mirror_mode_);
@@ -196,6 +208,7 @@ private:
         glUniform2i(surface_location_, width, height);
         for (int unit = 0; unit < 5; ++unit) {
             glActiveTexture(GL_TEXTURE0 + unit);
+            glBindSampler(unit, 0);
             glBindTexture(GL_TEXTURE_2D, textures_[unit]);
         }
         glDrawArrays(GL_TRIANGLES, 0, 3);
@@ -289,6 +302,16 @@ private:
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
     }
 
+    static void prepare_uploads() {
+        // The filter chain uses the same GL context and can leave pixel-transfer
+        // state behind. Guest planes are tightly packed client-memory arrays.
+        glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
+        glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+        glPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
+        glPixelStorei(GL_UNPACK_SKIP_PIXELS, 0);
+        glPixelStorei(GL_UNPACK_SKIP_ROWS, 0);
+    }
+
     void create_textures() {
         glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
         glGenTextures(5, textures_);
@@ -374,6 +397,7 @@ private:
     GLuint program_ = 0;
     GLuint composed_texture_ = 0, composed_framebuffer_ = 0;
     kairo::SlangFilter filter_;
+    bool pixel_unpack_dirty_ = true;
     std::string shader_path_;
     GLuint textures_[5] = {0, 0, 0, 0, 0};
     GLint mode_location_ = -1, base_location_ = -1, surface_location_ = -1;
