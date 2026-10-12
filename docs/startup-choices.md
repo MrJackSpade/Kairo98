@@ -1,6 +1,6 @@
 # Startup choices and screen hashes
 
-Some cataloged games need a menu choice or a DOS command before play. Kairo98 can show a labeled choice before boot, then send the selected character through the normal PC-98 input router when the corresponding guest screen appears. **Play manually** leaves those choices to the player.
+Some cataloged games need a menu choice or a DOS command before play. Kairo98 can show a choice page before boot, then send the selected character through the normal PC-98 input router when the corresponding guest screen appears. **Play manually** leaves those choices to the player.
 
 Startup profiles are keyed by extracted disk content ID in [the profile data](../catalog/startup-profiles-v1.json). A profile can contain ordered choices, accepted screen hashes, and optional disk-swap rules. A missing or changed screen match leaves the game running and offers retry, keyboard, or restart rather than sending a key to an unknown screen.
 

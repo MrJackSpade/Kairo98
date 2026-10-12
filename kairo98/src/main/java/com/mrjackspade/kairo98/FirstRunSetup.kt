@@ -1,67 +1,97 @@
 package com.mrjackspade.kairo98
 
-import android.app.Activity
-import com.mrjackspade.kairo.frontend.FirstRunScreen
+import com.mrjackspade.kairo.frontend.ButtonTone
+import com.mrjackspade.kairo.frontend.FooterButton
+import com.mrjackspade.kairo.frontend.PageStack
+import com.mrjackspade.kairo.frontend.RowGroup
+import com.mrjackspade.kairo.frontend.SettingsRow
+import com.mrjackspade.kairo.frontend.SetupPage
+import com.mrjackspade.kairo.frontend.TrayButton
+import com.mrjackspade.kairo.frontend.TraySpec
+import com.mrjackspade.kairo.frontend.ValueTone
 
-/** PC-98 setup steps displayed by the shared first-run screen. */
+/** PC-98 setup steps on the shared setup pages: the ROM folder, then optional firmware. */
 internal class FirstRunSetup(
-    activity: Activity,
+    private val pages: PageStack,
     private val selectRomFolder: () -> Unit,
-    private val skipRomFolder: () -> Unit,
+    private val skipRomFolder: (Boolean) -> Unit,
     private val selectBios: () -> Unit,
     private val selectFont: () -> Unit,
     private val selectRhythm: () -> Unit,
     private val finish: () -> Unit,
     private val hasBios: () -> Boolean,
     private val hasFont: () -> Boolean,
-    private val hasRhythm: () -> Boolean
-) : FirstRunScreen(activity) {
+    private val hasRhythm: () -> Boolean,
+    private val biosBusy: () -> Boolean,
+    private val fontBusy: () -> Boolean,
+    private val rhythmBusy: () -> Boolean
+) {
     enum class Step { ROM_FOLDER, FIRMWARE }
 
     private var step = Step.ROM_FOLDER
-    private var busy: String? = null
+    private var page: SetupPage? = null
+    private var folder: SetupPage? = null
+    val isOpen: Boolean get() = page?.inStack == true
     val isChoosingRomFolder: Boolean get() = isOpen && step == Step.ROM_FOLDER
 
-    fun show(next: Step) {
+    /** [folderChosen] says whether step 1 picked a folder, for the library afterwards. */
+    fun show(next: Step, folderChosen: Boolean = false) {
         step = next
-        busy = null
-        render()
+        if (next == Step.ROM_FOLDER) {
+            // Back from step 2 returns to the step 1 page underneath, if there is one.
+            folder?.takeIf { it.inStack }?.let { existing ->
+                pages.popTo(existing)
+                page = existing
+                return
+            }
+            val created = folderPage()
+            folder = created
+            if (page?.inStack == true) pages.replace(created) else pages.push(created)
+            page = created
+            return
+        }
+        val created = firmwarePage()
+        page = created
+        pages.push(created)
     }
 
-    fun setBusy(message: String?) {
-        busy = message
-        if (isOpen && step == Step.FIRMWARE) render()
+    fun close() {
+        page = null
+        folder = null
+        pages.closeAll()
     }
 
     fun refreshFirmware() {
-        if (isOpen && step == Step.FIRMWARE) render()
+        if (isOpen && step == Step.FIRMWARE) pages.refresh()
     }
 
-    private fun render() {
-        val folder = step == Step.ROM_FOLDER
-        val actions = if (folder) listOf(
-            FirstRunScreen.Action("Select ROM folder", "Find games on this device", primary = true,
-                onClick = selectRomFolder),
-            FirstRunScreen.Action("Skip for now", "You can choose one from the library later",
-                onClick = skipRomFolder)
-        ) else listOf(
-            FirstRunScreen.Action("Import BIOS ROM", if (hasBios()) "Imported" else "Not set",
-                enabled = busy == null, onClick = selectBios),
-            FirstRunScreen.Action("Import Font BMP", if (hasFont()) "Imported" else "Using generated font",
-                enabled = busy == null, onClick = selectFont),
-            FirstRunScreen.Action("Import YM2608 rhythm ROM", if (hasRhythm()) "Imported" else "Not set",
-                enabled = busy == null, onClick = selectRhythm),
-            FirstRunScreen.Action(if (hasBios() || hasFont() || hasRhythm()) "Continue to library" else "Skip for now",
-                "Open the game library", primary = true, enabled = busy == null, onClick = finish)
-        )
-        super.show(FirstRunScreen.Page("KAIRO98", if (folder) "SETUP  ·  1 OF 2" else "SETUP  ·  2 OF 2",
-            if (folder) "Choose a ROM folder" else "Optional firmware and font",
-            if (folder) "Select the folder containing your PC-98 games. Kairo98 will scan its disk images and ZIP files."
-            else "Import them now, or add them later from Library → Machine.",
-            actions, busy)) {
-            if (busy == null) {
-                if (folder) skipRomFolder() else finish()
-            }
-        }
+    private fun folderPage() = SetupPage("KAIRO98", "STEP 1 OF 2", "Choose a ROM folder",
+        "Select the folder containing your PC-98 games. Kairo98 will scan its disk images and ZIP files.",
+        "You can choose or change it later in Menu › Manage library.",
+        footerButtons = {
+            listOf(FooterButton("skip", { "Skip for now" }) { skipRomFolder(false) },
+                FooterButton("choose", { "Choose ROM folder…" }, ButtonTone.PRIMARY, run = selectRomFolder))
+        }, onBack = { skipRomFolder(false) }, startFocus = "choose")
+
+    private fun firmwarePage(): SetupPage {
+        val busy = { biosBusy() || fontBusy() || rhythmBusy() }
+        fun row(id: String, label: String, installed: () -> Boolean, importing: () -> Boolean,
+                on: String, off: String, choose: () -> Unit) = SettingsRow.action(id, label,
+            value = { if (importing()) "Importing…" else if (installed()) on else off },
+            tone = { if (installed()) ValueTone.CURRENT else ValueTone.SUMMARY },
+            busy = importing, enabled = { !busy() }, disabledReason = { "Wait for the current import to finish" },
+            tray = { TraySpec(buttons = listOf(TrayButton(if (installed()) "Replace…" else "Choose file…",
+                ButtonTone.PRIMARY) { choose() })) })
+        return SetupPage("KAIRO98", "STEP 2 OF 2", "Optional firmware and font",
+            "Import them now, or add them later in Menu › Machine.", content = {
+                listOf(RowGroup("FIRMWARE", listOf(
+                    row("bios", "BIOS ROM", hasBios, biosBusy, "Installed", "Not installed", selectBios),
+                    row("font", "Font BMP", hasFont, fontBusy, "Imported", "Built-in", selectFont),
+                    row("rhythm", "YM2608 rhythm ROM", hasRhythm, rhythmBusy, "Installed", "Not installed", selectRhythm)),
+                    "The BIOS ROM must be exactly 96 KiB and the rhythm ROM exactly 8 KiB. Kairo98 works without them."))
+            }, footerButtons = {
+                listOf(FooterButton("done", { "Continue to library" }, ButtonTone.PRIMARY, { !busy() },
+                    "Wait for the current import to finish") { finish() })
+            }, onBack = { if (!busy()) show(Step.ROM_FOLDER) })
     }
 }

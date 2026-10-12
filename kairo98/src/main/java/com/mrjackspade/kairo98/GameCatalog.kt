@@ -104,7 +104,19 @@ class GameCatalog(private val context: Context) : LibraryCatalog {
             ?: if (field == "title") "Filename" else "App default"
     }
 
-    private fun layered(contentId: String, fileName: String? = null): CatalogFieldLayers.Result {
+    /** Where a setting would come from without the user's own change, for its Default option. */
+    @Synchronized fun defaultSourceOf(contentId: String, field: String, subfield: String? = null): String {
+        val path = if (subfield == null) arrayOf(field) else arrayOf(field, subfield)
+        return layered(contentId, includeUser = false).sourceOf(*path)
+            ?: if (field == "title") "Filename" else "App default"
+    }
+
+    /** The game without the user's own changes, so each Default option can show its value. */
+    @Synchronized fun resolveDefault(contentId: String, fileName: String): Game =
+        resolve(contentId, fileName, includeUser = false)
+
+    private fun layered(contentId: String, fileName: String? = null,
+                        includeUser: Boolean = true): CatalogFieldLayers.Result {
         if (fileName != null && validId(contentId)) knownFileNames[contentId] = fileName
         val baseRecord = base.optJSONObject("games")?.optJSONObject(contentId)
         val shardRecord = shardFor(contentId)?.optJSONObject("games")?.optJSONObject(contentId)
@@ -128,7 +140,7 @@ class GameCatalog(private val context: Context) : LibraryCatalog {
             CatalogFieldLayers.Source("Shipped catalog", bundledAdditional(contentId, fileName ?: knownFileNames[contentId])),
             *installedSources(contentId, fileName ?: knownFileNames[contentId]).toTypedArray(),
             CatalogFieldLayers.Source("User catalog", additions.optJSONObject("games")?.optJSONObject(contentId)),
-            CatalogFieldLayers.Source("User override", overrides.record(contentId))
+            CatalogFieldLayers.Source("User override", if (includeUser) overrides.record(contentId) else null)
         ).map { source -> source.copy(record = runCatching {
             Pc98ArtworkReferences.record(source.record)
         }.getOrNull()) }, { path -> path.size == 1 && path[0] in OBJECT_FIELDS },
@@ -146,10 +158,13 @@ class GameCatalog(private val context: Context) : LibraryCatalog {
             } else emptySet() })
     }
 
-    @Synchronized override fun resolve(contentId: String, fileName: String): Game {
-        val layers = layered(contentId, fileName)
+    @Synchronized override fun resolve(contentId: String, fileName: String): Game =
+        resolve(contentId, fileName, includeUser = true)
+
+    private fun resolve(contentId: String, fileName: String, includeUser: Boolean): Game {
+        val layers = layered(contentId, fileName, includeUser)
         val merged = layers.record
-        val user = overrides.record(contentId)
+        val user = if (includeUser) overrides.record(contentId) else null
         val title = merged.optString("title").takeIf { validTitle(it) }
             ?: fileName.substringAfterLast('/').substringAfterLast('\\').substringBeforeLast('.')
         val artwork = merged.optJSONObject("artwork")

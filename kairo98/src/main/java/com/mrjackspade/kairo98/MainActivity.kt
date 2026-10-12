@@ -22,15 +22,13 @@ import com.mrjackspade.kairo.frontend.InputModeDecider
 import com.mrjackspade.kairo.frontend.JoystickInputRouter
 import com.mrjackspade.kairo.frontend.GamepadMapper
 import com.mrjackspade.kairo.frontend.OnScreenControls
-import com.mrjackspade.kairo.frontend.ControllerEditor
+import com.mrjackspade.kairo.frontend.ControllerPages
 import com.mrjackspade.kairo.frontend.ControllerGuestSpec
 import com.mrjackspade.kairo.frontend.CatalogArtworkDownloadController
 import com.mrjackspade.kairo.frontend.CatalogUpdateController
 import com.mrjackspade.kairo.frontend.ControllerProfileStore
 import com.mrjackspade.kairo.frontend.ControllerProfileCoordinator
-import com.mrjackspade.kairo.frontend.ControllerEditorFlow
 import com.mrjackspade.kairo.frontend.ControllerBinding
-import com.mrjackspade.kairo.frontend.SettingsEntry
 import com.mrjackspade.kairo.frontend.TouchInputPolicy
 import com.mrjackspade.kairo.frontend.TouchInputSelection
 import com.mrjackspade.kairo.frontend.TouchSettingsCoordinator
@@ -41,32 +39,45 @@ import com.mrjackspade.kairo.frontend.ArtworkCoordinator
 import com.mrjackspade.kairo.frontend.ArtworkOverridePath
 
 import com.mrjackspade.kairo.frontend.MouseInputRouter
-import com.mrjackspade.kairo.frontend.PixelTextView
 import com.mrjackspade.kairo.frontend.Ui
 import com.mrjackspade.kairo.frontend.LibraryScreen
 import com.mrjackspade.kairo.frontend.LibraryFlow
+import com.mrjackspade.kairo.frontend.LibraryMenu
 import com.mrjackspade.kairo.frontend.ExternalGameIntent
 import com.mrjackspade.kairo.frontend.ExternalGameDispatcher
-import com.mrjackspade.kairo.frontend.FrontendNavigation
 import com.mrjackspade.kairo.frontend.SessionFlow
 import com.mrjackspade.kairo.frontend.SessionNavigationCoordinator
 import com.mrjackspade.kairo.frontend.SessionNavigationState
 import com.mrjackspade.kairo.frontend.FrontendBackCoordinator
 import com.mrjackspade.kairo.frontend.LibraryStrings
-import com.mrjackspade.kairo.frontend.SessionAction
-import com.mrjackspade.kairo.frontend.SessionDrawer
-import com.mrjackspade.kairo.frontend.GameSettingsRow
-import com.mrjackspade.kairo.frontend.GameSettingsCoordinator
-import com.mrjackspade.kairo.frontend.CommonGameSettings
-import com.mrjackspade.kairo.frontend.CommonGameSettingsActions
-import com.mrjackspade.kairo.frontend.GameSettingsValue
-import com.mrjackspade.kairo.frontend.GameTitleEditor
+import com.mrjackspade.kairo.frontend.PageStack
+import com.mrjackspade.kairo.frontend.GroupsPage
+import com.mrjackspade.kairo.frontend.ChoicePage
+import com.mrjackspade.kairo.frontend.SetupPage
+import com.mrjackspade.kairo.frontend.FooterButton
+import com.mrjackspade.kairo.frontend.FlyoutModel
+import com.mrjackspade.kairo.frontend.FlyoutButton
+import com.mrjackspade.kairo.frontend.SettingsRow
+import com.mrjackspade.kairo.frontend.RowGroup
+import com.mrjackspade.kairo.frontend.ChoiceSpec
+import com.mrjackspade.kairo.frontend.ChoiceGroup
+import com.mrjackspade.kairo.frontend.ChoiceOption
+import com.mrjackspade.kairo.frontend.Confirm
+import com.mrjackspade.kairo.frontend.TraySpec
+import com.mrjackspade.kairo.frontend.TrayButton
+import com.mrjackspade.kairo.frontend.ButtonTone
+import com.mrjackspade.kairo.frontend.ValueTone
+import com.mrjackspade.kairo.frontend.GameOverlay
+import com.mrjackspade.kairo.frontend.GameNotice
+import com.mrjackspade.kairo.frontend.GameValue
+import com.mrjackspade.kairo.frontend.GameSource
+import com.mrjackspade.kairo.frontend.GameSettingsRows
+import com.mrjackspade.kairo.frontend.gameSettingsPage
 import com.mrjackspade.kairo.frontend.fileLabel
 import com.mrjackspade.kairo.frontend.variantLabel
 
 import android.app.Activity
 import android.app.ActivityOptions
-import android.app.AlertDialog
 import android.content.Intent
 import android.content.res.Configuration
 import android.graphics.Color
@@ -94,12 +105,6 @@ import android.view.ViewGroup
 import android.view.WindowInsets
 import android.view.WindowManager
 import android.widget.FrameLayout
-import android.widget.EditText
-import android.widget.SeekBar
-import android.widget.LinearLayout
-import android.widget.ScrollView
-import android.widget.TextView
-import android.widget.Toast
 import org.json.JSONObject
 import java.io.File
 import java.nio.file.Files
@@ -145,12 +150,10 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
         ::controllerAction, ::controllerActionReleased, ControllerBindings.defaults())
     private val inputDispatch: InputDispatchCoordinator by lazy {
         InputDispatchCoordinator(FrontendInputScreens(
-            { if (::firstRunSetup.isInitialized) firstRunSetup else null },
-            { if (::onScreenControls.isInitialized) onScreenControls else null },
-            { if (::controllerEditor.isInitialized) controllerEditor else null },
+            { if (::pages.isInitialized) pages else null },
             { if (::libraryFlow.isInitialized) libraryScreen else null },
-            { if (::sessionDrawer.isInitialized) sessionDrawer else null },
-            { !libraryVisible }, ::handleBack, ::closeMenu),
+            { if (::overlay.isInitialized) overlay else null },
+            { !libraryVisible }, { preparingFont }, ::handleBack),
             gamepadMapper, inputRouter, ::pc98ScanCode, ::handleBack,
             { if (menuOpen) closeMenu() else openMenu() },
             {
@@ -179,11 +182,10 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
 
     private val preferences by lazy { getSharedPreferences("kairo98", MODE_PRIVATE) }
     private val graphics by lazy {
-        GraphicsOptions(this, preferences, { builder -> builder.showStyled() },
-            { updateViewport(); refreshSettingValues() }, ::toast)
+        GraphicsOptions(this, preferences) { updateViewport(); refreshSettingValues() }
     }
     private val shaderOptions by lazy {
-        ShaderOptions(this, preferences, { builder -> builder.showStyled() },
+        ShaderOptions(this, preferences, { if (::pages.isInitialized) pages else null },
             { path -> nativeSetShaderPreset(path); refreshSettingValues() }, ::toast)
     }
     private val controllerProfiles by lazy {
@@ -219,13 +221,8 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
             { if (::screen.isInitialized) screen.requestFocus() })
     }
     private val touchSettingsCoordinator by lazy {
-        TouchSettingsCoordinator(this, object : TouchSettingsStore<LibraryEntry> {
+        TouchSettingsCoordinator(object : TouchSettingsStore<LibraryEntry> {
             override fun global() = TouchInputSelection(globalInputMode, globalTouchDirect)
-            override fun game(game: LibraryEntry) = touchSelection(
-                romLibrary.catalog.resolve(game.contentId!!, game.displayName)).selection
-            override fun secondaryTouchpad(game: LibraryEntry): Boolean? =
-                romLibrary.catalog.resolve(game.contentId!!, game.displayName)
-                    .inputSecondary == "touchpad"
             override fun saveGlobal(value: TouchInputSelection) {
                 globalInputMode = value.mode
                 globalTouchDirect = value.directTouch
@@ -233,34 +230,19 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
                     .putString("input_mode", InputModeDecider.storageValue(value.mode))
                     .putString("touch_mouse", touchStorage(value.directTouch)).apply()
             }
-            override fun saveGame(game: LibraryEntry, value: TouchInputSelection,
-                                  secondaryTouchpad: Boolean?) {
-                val resolved = romLibrary.catalog.resolve(game.contentId!!, game.displayName)
-                val chosenMode = InputModeDecider.storageValue(value.mode)
-                val chosenTouch = touchStorage(value.directTouch)
-                val chosenSecondary = if (secondaryTouchpad == true) "touchpad" else "keyboard"
-                val changes = linkedMapOf<String, Any?>()
-                if (chosenMode != (resolved.inputMode ?:
-                        InputModeDecider.storageValue(globalInputMode)))
-                    changes["mode"] = chosenMode
-                if (chosenTouch != (resolved.inputTouch ?: touchStorage(globalTouchDirect)))
-                    changes["touch"] = chosenTouch
-                if (chosenSecondary != (resolved.inputSecondary ?: "keyboard"))
-                    changes["secondary"] = chosenSecondary
-                if (changes.isNotEmpty()) romLibrary.catalog.updateOverrideSubfields(
-                    game.contentId!!, "input", changes)
-            }
-            override fun resetGame(game: LibraryEntry) {
-                romLibrary.catalog.resetOverride(game.contentId!!, "input")
-            }
-        }, LibraryEntry::contentId, InputModeDecider.Mode.entries,
-            listOf("Auto (follows what the game reads)",
-                "Keyboard (tap opens the PC-98 keyboard)", "Mouse"),
-            "Touch input", { entry ->
-                "Touch input for ${romLibrary.catalog.resolve(entry.contentId!!, entry.displayName).title}"
-            }, "Direct tap lands on the touched point in games that move the " +
-                "cursor one pixel per mouse count and stop it at the screen's top-left edge.",
-            noHash = { toast("This file needs a successful hash before settings can be saved") },
+            override fun mode(game: LibraryEntry) = inputValue(game, "mode", { it.inputMode },
+                InputModeDecider::parse, InputModeDecider::storageValue) { globalInputMode }
+            override fun directTouch(game: LibraryEntry) = inputValue(game, "touch", { it.inputTouch },
+                { it == "direct" }, ::touchStorage) { globalTouchDirect }
+            override fun secondaryTouchpad(game: LibraryEntry) = inputValue(game, "secondary",
+                { it.inputSecondary }, { it == "touchpad" }, { if (it) "touchpad" else "keyboard" },
+                builtIn = true) { false }
+        }, listOf(
+            InputModeDecider.Mode.AUTO to ChoiceOption("auto", "Auto", "Follows what the game reads"),
+            InputModeDecider.Mode.KEYBOARD to ChoiceOption("keyboard", "Keyboard", "Tap opens the PC-98 keyboard"),
+            InputModeDecider.Mode.MOUSE to ChoiceOption("mouse", "Mouse")),
+            "Direct tap lands on the touched point in games that move the " +
+                "cursor one pixel per mouse count and stop it at the screen\u2019s top-left edge.",
             changed = { entry ->
                 if (entry != null && currentEntry?.contentId == entry.contentId) {
                     currentGame = romLibrary.catalog.resolve(entry.contentId!!, entry.displayName)
@@ -268,10 +250,32 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
                 }
             })
     }
+
+    /**
+     * A per-game input choice: the user's override over the catalog, which falls back to the
+     * all-games setting, or to the app for the second screen.
+     */
+    private fun <V> inputValue(game: LibraryEntry, subfield: String, read: (GameCatalog.Game) -> String?,
+                               parse: (String) -> V, store: (V) -> String, builtIn: Boolean = false,
+                               global: () -> V): GameValue<V> {
+        val id = game.contentId!!
+        val catalog = romLibrary.catalog
+        fun custom() = catalog.sourceOf(id, "input", subfield) == "User override"
+        return GameValue({ if (custom()) read(catalog.resolve(id, game.displayName))?.let(parse) else null },
+            { read(catalog.resolveDefault(id, game.displayName))?.let(parse) ?: global() },
+            { catalog.defaultSourceOf(id, "input", subfield).let { source ->
+                if (source == "App default") if (builtIn) GameSource.BUILT_IN else GameSource.ALL_GAMES
+                else GameSource.label(source)
+            } },
+            { value ->
+                if (value == null) catalog.resetOverrideSubfield(id, "input", subfield)
+                else catalog.setOverrideSubfield(id, "input", subfield, store(value))
+            })
+    }
     private lateinit var firstRunSetup: FirstRunSetup
     private lateinit var romLibrary: RomLibrary
     private val artwork by lazy {
-        ArtworkCoordinator(this, romLibrary.catalog.artworkStore,
+        ArtworkCoordinator(this, pages, romLibrary.catalog.artworkStore,
             { entry: LibraryEntry -> entry.contentId },
             { entry, kind ->
                 val catalog = romLibrary.catalog
@@ -282,19 +286,17 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
                         catalog.sourceOf(id, "artwork", kind) ==
                             catalog.sourceOf(id, "artwork", urlKind)
                     } == true }
-                ArtworkCoordinator.Record(if (kind == "preview") game.preview else game.boxArt, url)
+                ArtworkCoordinator.Record(if (kind == "preview") game.preview else game.boxArt, url,
+                    entry.contentId?.let { catalog.sourceOf(it, "artwork", kind) })
             }, { ArtworkOverridePath.valid(it, "art/") },
             { id, kind, path ->
                 if (path == null) romLibrary.catalog.resetArtworkOverride(id, kind)
                 else romLibrary.catalog.setArtworkOverride(id, kind, path)
             }, { libraryScreen.showEntries(libraryEntries) },
-            ::showGameDetails, ::toast, GameCatalog::validImageUrl)
+            { entry -> romLibrary.catalog.resolve(entry.contentId ?: "", entry.displayName).title },
+            ::toast, GameCatalog::validImageUrl)
     }
-    private lateinit var controllerEditor: ControllerEditor<LibraryEntry>
-    private val controllerEditorFlow by lazy {
-        ControllerEditorFlow(controllerEditor, LibraryEntry::contentId, ::closeMenu,
-            ::releaseInputs, ::hideKeyboard, { onReturn -> onScreenControls.show(onReturn) }, ::toast)
-    }
+    private lateinit var controllerPages: ControllerPages<LibraryEntry>
     private val sessionState = SessionNavigationState()
     private val libraryVisible: Boolean get() = sessionState.libraryVisible
     private val sessionNavigation: SessionNavigationCoordinator by lazy {
@@ -307,29 +309,28 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
                 hideKeyboard()
             }, {}, {
                 libraryScreen.showEntries(libraryEntries)
-                libraryScreen.showFolder(romTree?.let(::folderLabel))
+                libraryScreen.showFolder(romTree?.let(::folderName))
                 libraryScreen.showStatus("${libraryEntries.count { it.playable }} games ready")
             }, ::applyPauseState, { screen.requestFocus() }, ::endSessionForLibrary)
     }
     private val backCoordinator: FrontendBackCoordinator by lazy {
-        FrontendBackCoordinator(this, firstRunSetup,
-            { if (::onScreenControls.isInitialized) onScreenControls else null },
-            controllerEditor, libraryScreen,
+        FrontendBackCoordinator(this, { if (::pages.isInitialized) pages else null }, libraryScreen,
             { if (!sessionNavigation.resumeGame()) finish() },
-            { if (::sessionFlow.isInitialized) sessionFlow else null }, ::closeMenu,
-            { if (::keyboardPanel.isInitialized) keyboardPanel else null }, ::openMenu, ::hideKeyboard)
+            { if (::keyboardPanel.isInitialized) keyboardPanel else null }, { openMenu() },
+            { preparingFont }, ::hideKeyboard)
     }
     private var romTree: Uri?
         get() = libraryFlow.tree
         set(value) { libraryFlow.tree = value }
     private val artworkDownloads by lazy {
         CatalogArtworkDownloadController(this, libraryScreen, { libraryEntries },
-            romLibrary.catalog::missingArtworkFor, romLibrary.catalog::downloadArtwork)
+            romLibrary.catalog::missingArtworkFor, romLibrary.catalog::downloadArtwork) { pages.refresh() }
     }
     private val catalogUpdates by lazy {
         CatalogUpdateController(this, { task -> romLibrary.catalog.downloadUpdate(task) },
-            libraryScreen::showStatus, { libraryScreen.refreshCatalog() },
-            { if (libraryVisible) toast("Catalogs updated") }, libraryScreen::showCatalogUpdate, romLibrary.catalog.installedCatalogs::update)
+            { message -> if (!message.endsWith("\u2026")) toast(message) }, { libraryScreen.refreshCatalog() },
+            { if (libraryVisible) toast("Catalogs updated") }, { libraryMenu.showCatalogProgress(it) },
+            romLibrary.catalog.installedCatalogs::update)
     }
     private var currentEntry: LibraryEntry? = null
     private var sessionFromFrontend = false
@@ -354,7 +355,6 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
     private val samplingLock = Any()
     private var samplingUsers = 0
     private val guestSequenceLock = Any()
-    private lateinit var swapStatus: TextView
     @Volatile private var biosBusy = false
     @Volatile private var fontBusy = false
     @Volatile private var rhythmBusy = false
@@ -375,12 +375,12 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
         set(value) { libraryFlow.entries = value }
     private var pendingDebugGame: String? = null
     private var pendingDebugLaunch: String? = null
-    private lateinit var backdrop: View
-    private lateinit var drawer: ScrollView
-    private lateinit var menuStatus: TextView
-    private lateinit var mediaLabel: TextView
-    private lateinit var sessionDrawer: SessionDrawer
+    private lateinit var pages: PageStack
+    private lateinit var overlay: GameOverlay
+    private lateinit var libraryMenu: LibraryMenu<LibraryEntry>
     private lateinit var sessionFlow: SessionFlow
+    /** What the progress strip says while a machine stops or starts. */
+    private var progressText = ""
     private val menuOpen: Boolean get() = sessionFlow.isOpen
     private var userPaused: Boolean
         get() = sessionState.userPaused
@@ -410,14 +410,13 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
     @Volatile private var preparingFont = false
     private val stateBusy get() = stateFlow.isBusy
     private val stateFlow by lazy {
-        StateSlotCoordinator(this, handler,
+        StateSlotCoordinator(this, pages, handler,
             { currentEntry?.contentId?.takeIf { !libraryVisible } }, { currentTitle },
             { StateSlotStore(File(filesDir, "states"), it, "state.np2") },
             { (if (::secondaryKeyboard.isInitialized) secondaryKeyboard.activeGameSurface else null)
                 ?: screen },
             { _, scratch -> nativeSaveState(scratch.absolutePath) },
-            { nativeLoadState(it.directory.absolutePath) }, ::stateError,
-            { menuStatus.text = it }, ::toast,
+            { nativeLoadState(it.directory.absolutePath) }, ::stateError, ::toast,
             {
                 releaseInputs()
                 inputModeDecider.reset()
@@ -430,13 +429,13 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
                     closeMenu()
                     launchEntry(entry, sessionFromFrontend)
                 }
-            }, "Save states are available for games started from the library.", R.drawable.ic_save)
+            }, "Save states are available for games started from the library.")
     }
     @Volatile private var startGeneration = 0
 
     private val updateStatus = object : Runnable {
         override fun run() {
-            if (menuOpen && !preparingFont && !floppyBusy && !stateBusy) menuStatus.text = menuStatusText()
+            if (::pages.isInitialized && pages.isActive) pages.tick()
             if (!libraryVisible && !preparingFont) {
                 InputModeDecider.GuestInput.fromNative(nativeInputTelemetry())?.let {
                     inputModeDecider.observe(it, android.os.SystemClock.elapsedRealtime())
@@ -515,39 +514,37 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
             ::onSecondarySwapChanged)
         romLibrary = RomLibrary(this)
         artwork.restoreInstanceState(savedInstanceState)
-        controllerEditor = ControllerEditor(this, root,
+        controllerPages = ControllerPages(this, pages,
             controllerFlow::load, controllerFlow::save, controllerFlow::reset,
-            controllerFlow::physical, controllerFlow::savePhysical,
-            controllerFlow::resetPhysical,
+            { controllerProfiles.globalCustom },
+            controllerFlow::physical, controllerFlow::savePhysical, controllerFlow::resetPhysical,
+            { controllerProfiles.physicalCustom },
             { controllerFlow.deadZone }, { controllerFlow.deadZone = it },
-            ::applyPauseState, ::showOnScreenControls,
-            { onScreenControls.eightWayDpad }, { onScreenControls.eightWayDpad = it },
-            LibraryEntry::id, ControllerGuestSpec("PC-98", (0..127).toList(),
+            ControllerGuestSpec("PC-98", (0..127).toList(),
                 Pc98KeyNames::label, setOf(0x70, 0x71, 0x72, 0x73, 0x74, 0x7d),
                 ControllerBindings.JOYSTICK.zip(listOf("Up", "Down", "Left", "Right",
                     "Button 1", "Button 2")),
                 "Uses the joystick input on the emulated sound board. Games must support joystick 1.",
                 listOf("menu" to "Open menu", "pause" to "Pause or resume",
                     "fastForward" to "Fast forward while held", "restart" to "Restart",
-                    "exit" to "Exit")),
+                    "exit" to "Exit"), Pc98KeyboardLayout.value),
             { ControllerBindings.toJson(it) }, controllerProfiles.configuration,
-            { releaseInputs(); controllerFlow.refresh(null) }, { entry -> controllerMappingStatus(entry) })
-        val libraryPage = LibraryScreen(this, romLibrary.catalog, LibraryStrings("KAIRO98"),
-            ::chooseRomFolder, { refreshLibrary(false) }, { refreshLibrary(true) },
-            { updateGameCatalog(false) },
-            if (resources.getBoolean(R.bool.catalog_art_download_enabled))
-                ::downloadMissingImages else null, ::cancelArtworkDownload,
-            settingsEntries(), { preferences.getString("last_played_entry", null) },
+            { releaseInputs(); controllerFlow.refresh(null) }, { entry -> controllerMappingStatus(entry) },
+            { entry -> romLibrary.catalog.resolve(entry.contentId!!, entry.displayName).title },
+            onScreenControls, touchSettingsCoordinator) { releaseInputs() }
+        val strings = LibraryStrings("KAIRO98", "Kairo98")
+        val libraryPage = LibraryScreen(this, romLibrary.catalog, strings, pages,
+            ::chooseRomFolder, { preferences.getString("last_played_entry", null) },
             { launchEntry(it) }, ::showDetailPreview, ::showGameDetails, ::showLibrarySelection)
         libraryFlow = LibraryFlow(this, preferences, libraryPage, ROM_FOLDER_REQUEST,
-            romLibrary::cached, romLibrary::scan, ::folderLabel,
+            romLibrary::cached, romLibrary::scan, ::folderName,
             "Choose a ROM folder to find disk images and ZIP games",
             "Folder access expired. Select the ROM folder again.",
             { entries ->
                 val errors = entries.count { it.error != null }
                 "${entries.count { it.playable }} games" +
-                    (if (errors == 0) "" else " · $errors unreadable") +
-                    " · ${romLibrary.hashCount} hashes this scan"
+                    (if (errors == 0) "" else " \u00b7 $errors unreadable") +
+                    " \u00b7 ${romLibrary.hashCount} hashes this scan"
             },
             { _ ->
                 selectPendingDebugGame()
@@ -557,25 +554,22 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
                 }
             },
             { _ ->
-                if (firstRunSetup.isChoosingRomFolder) advanceFirstRunFirmware()
+                if (firstRunSetup.isChoosingRomFolder) advanceFirstRunFirmware(folderChosen = true)
                 else refreshLibrary(false)
             },
             { message -> if (firstRunSetup.isOpen) toast(message) })
-        root.addView(libraryScreen, FrameLayout.LayoutParams(-1, -1))
+        libraryMenu = LibraryMenu(this, pages, libraryFlow, romLibrary.catalog, strings,
+            { updateGameCatalog(false) },
+            { if (resources.getBoolean(R.bool.catalog_art_download_enabled)) artworkDownloads else null },
+            ::settingsRows, ::exitApp)
+        libraryPage.openMenuAction = libraryMenu::open
+        // Pages and the game overlay sit above the library; pages come forward when they open.
+        root.addView(libraryScreen, root.indexOfChild(overlay), FrameLayout.LayoutParams(-1, -1))
         touchUi.bind(keyboardPanel)
-        swapStatus = TextView(this).apply {
-            visibility = View.GONE
-            setTextColor(Ui.TEXT)
-            setBackgroundColor(0xe0202a36.toInt())
-            setPadding(dp(16), dp(10), dp(16), dp(10))
-            textSize = Ui.BODY
-        }
-        root.addView(swapStatus, FrameLayout.LayoutParams(-2, -2,
-            Gravity.TOP or Gravity.CENTER_HORIZONTAL).apply { topMargin = dp(20) })
-        firstRunSetup = FirstRunSetup(this, ::chooseRomFolder, ::advanceFirstRunFirmware,
+        firstRunSetup = FirstRunSetup(pages, ::chooseRomFolder, ::advanceFirstRunFirmware,
             ::chooseBiosFile, ::chooseFontFile, ::chooseRhythmFile, ::finishFirstRun,
-            { biosFile().isFile }, { fontBitmapFile().isFile }, { rhythmRomFile().isFile })
-        root.addView(firstRunSetup, FrameLayout.LayoutParams(-1, -1))
+            { biosFile().isFile }, { fontBitmapFile().isFile }, { rhythmRomFile().isFile },
+            { biosBusy }, { fontBusy }, { rhythmBusy })
         backCoordinator.register()
         handler.post(updateStatus)
         controllerSetupPending = controllerProfiles.configuration.needsSetup
@@ -583,11 +577,12 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
             if (isFinishing || isDestroyed) return@post
             if (controllerSetupPending) {
                 controllerSetupPending = true
-                controllerProfiles.configuration.show(this, required = true, product = "KAIRO98") {
+                pages.push(controllerProfiles.configuration.setupPage("KAIRO98", ::finish) {
                     controllerSetupPending = false
                     controllerFlow.initialize()
+                    pages.closeAll()
                     continueStartup(savedInstanceState)
-                }
+                })
             } else continueStartup(savedInstanceState)
         }
     }
@@ -602,7 +597,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
         else if (romTree != null && hasRomGrant(romTree!!) && setupStep >= 2 &&
             !selectPendingDebugGame()) refreshLibrary(false)
         if (setupStep < 2 && !externallyRequested) firstRunSetup.show(if (setupStep == 0)
-            FirstRunSetup.Step.ROM_FOLDER else FirstRunSetup.Step.FIRMWARE)
+            FirstRunSetup.Step.ROM_FOLDER else FirstRunSetup.Step.FIRMWARE, romTree != null)
         applyPauseState()
         updateGameCatalog(true)
     }
@@ -635,10 +630,12 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
             ?: playable.filter { !it.isFloppy }.singleOrNull()
             ?: playable.filter { it.displayName.contains("boot", true) }.singleOrNull()
         if (preferred != null) { launchEntry(preferred, true); return }
-        AlertDialog.Builder(this).setTitle("Choose boot disk")
-            .setItems(playable.map { it.displayName }.toTypedArray()) { _, which ->
-                launchEntry(playable[which], true)
-            }.setNegativeButton("Cancel", null).showStyled()
+        // Back cancels and leaves Kairo98 open.
+        pages.push(ChoicePage(ChoiceSpec("Choose boot disk", { null }, {
+            listOf(ChoiceGroup(null, playable.map { ChoiceOption(it.id, it.displayName) }))
+        }, { null }, { id ->
+            playable.firstOrNull { it.id == id }?.let { launchEntry(it, true) }
+        }, stay = true, cycles = false)))
     }
 
     private fun buildUi() {
@@ -650,7 +647,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
             setOnTouchListener { view, event -> handleScreenTouch(event, view.width, view.height) }
         }
         root.setOnTouchListener { _, event ->
-            !libraryVisible && !menuOpen && !onScreenControls.isOpen && !controllerEditor.isOpen &&
+            !libraryVisible && !menuOpen &&
                 touchUi.handleKeyboardTouch(event,
                     inputModeDecider.resolve(configuredInputMode()) == InputModeDecider.Mode.KEYBOARD)
         }
@@ -667,34 +664,13 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
             onSwap = { secondaryKeyboard.toggleSwap() }, mouse = mouseRouter)
         root.addView(swappedKeyboardPanel, FrameLayout.LayoutParams(-1, -1))
 
-        sessionDrawer = SessionDrawer(this, root, "KAIRO98", ::closeMenu, {
-            showMachineDetails = !showMachineDetails
-            menuStatus.text = menuStatusText()
-        }, listOf(
-            SessionAction("Resume", R.drawable.ic_play) {
-                userPaused = false
-                closeMenu()
-            },
-            SessionAction("Save", R.drawable.ic_save) { showStateSlots(saving = true) },
-            SessionAction("Load", R.drawable.ic_load) { showStateSlots(saving = false) },
-            SessionAction("Restart", R.drawable.ic_restart) { confirmRestart() },
-            SessionAction("Library", R.drawable.ic_library) { sessionNavigation.requestLibrary() }
-        ), listOf(
-            SettingsEntry("Pause", { if (userPaused) "On · tap to let the game run again"
-                else "Close the menu with the game stopped" }) {
-                userPaused = !userPaused
-                closeMenu()
-            },
-            SettingsEntry("Mount", { "Hard disk and floppy images" }) { showMountMenu() },
-            SettingsEntry("Exit", { "Stop the machine and close Kairo98" }) { confirmExit() }
-        ), settingsEntries())
-        backdrop = sessionDrawer.backdrop
-        drawer = sessionDrawer.drawer
-        mediaLabel = sessionDrawer.mediaLabel
-        menuStatus = sessionDrawer.status
-        sessionFlow = SessionFlow(sessionDrawer,
-            { currentTitle ?: "No disk selected" },
-            { if (preparingFont) "Preparing PC-98 font" else menuStatusText() },
+        overlay = GameOverlay(this)
+        root.addView(overlay, FrameLayout.LayoutParams(-1, -1))
+        pages = PageStack(this, root)
+        pages.menuKey = { if (libraryVisible) libraryScreen.menuKey() else closeMenu() }
+        pages.base = { if (libraryVisible && ::libraryFlow.isInitialized) libraryScreen else null }
+        onScreenControls.pages = pages
+        sessionFlow = SessionFlow(pages, ::gameFlyout, { !libraryVisible },
             {
                 commandCancelled.set(true)
                 releaseInputs()
@@ -718,36 +694,66 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
         screen.requestFocus()
     }
 
-    private fun menuHighlight() = Ui.rowBackground(this)
+    /** One settings list, shown the same way in the game flyout and the library flyout. */
+    private fun settingsRows() = listOf(
+        SettingsRow.nav("f-graphics", "Graphics") { pages.push(graphics.page(shaderOptions)) },
+        SettingsRow.nav("f-controls", "Controls") {
+            pages.push(controllerPages.controlsPage(currentEntry?.takeIf { !libraryVisible && it.contentId != null }))
+        },
+        SettingsRow.nav("f-machine", "Machine") { pages.push(machinePage()) },
+        SettingsRow.switch("f-sound", "Sound", { !muted }) { on -> if (on == muted) toggleMute() },
+        SettingsRow.nav("f-about", "About") { pages.push(aboutPage()) })
 
-    /** One settings list, shown the same way in the game menu and the library menu. */
-    private fun settingsEntries() = listOf(
-        SettingsEntry("Graphics", graphics::settingsLabel,
-            { graphics.show(listOf(shaderOptions.entry())) }),
-        SettingsEntry("Touch input", { "" }) { showInputMode() },
-        SettingsEntry("Machine", { "" }) { showMachine() },
-        SettingsEntry("Controller", { "Gamepad and on-screen controls" }) { showControllerScope() },
-        SettingsEntry.sound({ muted }, ::toggleMute),
-        SettingsEntry("About", { "Version, shortcuts, and licenses" }) { showAbout() })
+    /** The game flyout: Resume and Keep paused, the game's own pages, settings, then leaving. */
+    private fun gameFlyout() = FlyoutModel("KAIRO98", { currentTitle ?: "No disk selected" },
+        { if (preparingFont) "Preparing PC-98 font" else menuStatusText() },
+        buttons = listOf(
+            FlyoutButton("f-resume", "Resume", R.drawable.ic_play, ButtonTone.PRIMARY) {
+                userPaused = false
+                closeMenu()
+            },
+            FlyoutButton("f-pause", "Keep paused", com.mrjackspade.kairo.frontend.R.drawable.ic_pause,
+                ButtonTone.SECONDARY) {
+                userPaused = true
+                closeMenu()
+                toast("Paused")
+            })) {
+        listOf(
+            RowGroup("GAME", stateFlow.rows() + listOf(
+                SettingsRow.nav("f-disks", "Disks") { pages.push(disksPage()) },
+                SettingsRow.nav("f-game", "Game settings",
+                    enabled = { currentEntry != null },
+                    disabledReason = { "Game settings are available for games started from the library." }) {
+                    currentEntry?.let(::showGameDetails)
+                })),
+            RowGroup("SETTINGS", settingsRows()),
+            RowGroup(null, listOf(
+                SettingsRow.action("f-restart", "Restart game",
+                    confirm = Confirm("Progress since your last save is lost.", "Restart", run = ::restartMachine)),
+                sessionNavigation.returnRow("Kairo98"),
+                SettingsRow.action("f-exit", "Exit Kairo98",
+                    confirm = Confirm("The machine stops. Progress since your last save is lost.", "Exit",
+                        run = ::exitApp)))))
+    }
 
-    private var showMachineDetails = false
-
-    /** Plain session status for the menu; tapping it shows the machine's raw telemetry. */
+    /**
+     * Machine state, media, and sound for the flyout header. The menu itself pauses the
+     * machine, so it reads Paused only after Keep paused.
+     */
     private fun menuStatusText(): String {
         val raw = nativeStatus()
-        if (showMachineDetails) return raw
         val state = raw.substringBefore('|').trim().ifEmpty { "Stopped" }
+            .let { if (it == "Paused" && !userPaused) "Running" else it }
         val media = when {
             currentDisk == null -> null
             currentIsFloppy -> "Floppy disk"
             else -> "Hard disk"
         }
-        return listOfNotNull(state, media, if (muted) "Muted" else null).joinToString("  ·  ")
+        return listOfNotNull(state, media, if (muted) "Muted" else null).joinToString(" \u00b7 ")
     }
 
     private fun refreshSettingValues() {
-        sessionDrawer.refreshValues()
-        if (::libraryFlow.isInitialized) libraryScreen.refreshSettingValues()
+        if (::pages.isInitialized) pages.refresh()
     }
 
     private fun toggleMute() {
@@ -756,8 +762,6 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
         nativeSetMuted(muted)
         refreshSettingValues()
     }
-
-    private fun focusMenuItem(index: Int) = sessionDrawer.focus(index)
 
     private fun updateViewport() {
         if (!::root.isInitialized || root.width <= 0 || root.height <= 0) return
@@ -776,7 +780,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
         }
     }
 
-    private fun openMenu() = sessionFlow.open()
+    private fun openMenu(start: String? = null, confirm: Boolean = false) = sessionFlow.open(start, confirm)
 
     private fun closeMenu() = sessionFlow.close()
 
@@ -802,9 +806,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
         if (!libraryVisible && ::secondaryKeyboard.isInitialized) {
             secondaryKeyboard.setLibraryInfo(null)
         }
-        val editingControls = ::onScreenControls.isInitialized && onScreenControls.isOpen
-        val presentation = sessionState.presentation(activityVisible, menuOpen,
-            editingControls || (::controllerEditor.isInitialized && controllerEditor.isOpen), preparingFont)
+        val presentation = sessionState.presentation(activityVisible, menuOpen, false, preparingFont)
         val showingGuest = presentation.showGuest
         if (::swappedKeyboardPanel.isInitialized) {
             if (::secondaryKeyboard.isInitialized && secondaryKeyboard.swapped && showingGuest &&
@@ -818,6 +820,11 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
             if (::firstRunSetup.isInitialized && firstRunSetup.isOpen) Ui.BG
                 else Color.BLACK)
         nativePause(presentation.pauseGuest)
+        if (::overlay.isInitialized) {
+            if (preparingFont) overlay.showProgress(progressText) else overlay.hideProgress()
+            overlay.setPaused(userPaused && !libraryVisible && !menuOpen && !preparingFont)
+            if (libraryVisible) overlay.hideNotice()
+        }
         if (::onScreenControls.isInitialized) {
             if (::libraryFlow.isInitialized) touchUi.refreshControls(onScreenControls,
                 showingGuest, ::secondaryKeyboard.isInitialized && secondaryKeyboard.swapped)
@@ -827,15 +834,16 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
 
     private fun hasRomGrant(uri: Uri) = libraryFlow.hasGrant(uri)
 
-    private fun folderLabel(uri: Uri): String = try {
-        "ROM folder · " + DocumentsContract.getTreeDocumentId(uri).substringAfterLast('/')
-    } catch (_: Exception) { "ROM folder selected" }
+    private fun folderName(uri: Uri): String = try {
+        DocumentsContract.getTreeDocumentId(uri).substringAfterLast('/').substringAfterLast(':')
+            .ifEmpty { "ROM folder" }
+    } catch (_: Exception) { "ROM folder" }
 
     private fun chooseRomFolder() = libraryFlow.chooseFolder()
 
-    private fun advanceFirstRunFirmware() {
+    private fun advanceFirstRunFirmware(folderChosen: Boolean) {
         preferences.edit().putInt("onboarding_step_v1", 1).apply()
-        firstRunSetup.show(FirstRunSetup.Step.FIRMWARE)
+        firstRunSetup.show(FirstRunSetup.Step.FIRMWARE, folderChosen)
     }
 
     private fun finishFirstRun() {
@@ -844,7 +852,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
         applyPauseState()
         val tree = romTree
         if (tree != null && hasRomGrant(tree)) refreshLibrary(false)
-        else libraryScreen.showStatus("Choose a ROM folder from the library menu when you're ready")
+        else libraryScreen.showStatus("Choose a ROM folder from the library menu when you\u2019re ready")
     }
 
     private fun refreshLibrary(forceHash: Boolean) = libraryFlow.refresh(forceHash)
@@ -907,24 +915,31 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
         } else startEntry(entry, game, emptyList(), fromFrontend)
     }
 
+    /** One choice page per startup choice; Play manually starts without the rest. Back cancels. */
     private fun chooseStartupOptions(entry: LibraryEntry, game: GameCatalog.Game, index: Int,
                                      selected: List<Pair<GameCatalog.StartupChoice,
                                          GameCatalog.StartupOption>>,
-                                     fromFrontend: Boolean) {
+                                     fromFrontend: Boolean, replace: Boolean = false) {
         if (index == game.startupChoices.size) {
             startEntry(entry, game, selected, fromFrontend)
             return
         }
         val choice = game.startupChoices[index]
-        AlertDialog.Builder(this).setTitle(choice.title)
-            .setItems(choice.options.map { it.label }.toTypedArray()) { _, which ->
-                chooseStartupOptions(entry, game, index + 1,
-                    selected + (choice to choice.options[which]), fromFrontend)
-            }
-            .setNeutralButton("Play manually") { _, _ ->
-                startEntry(entry, game, selected, fromFrontend)
-            }
-            .setNegativeButton("Cancel", null).showStyled()
+        lateinit var page: ChoicePage
+        page = ChoicePage(ChoiceSpec(choice.title, { game.title }, {
+            listOf(ChoiceGroup(null, choice.options.map { ChoiceOption(it.id, it.label) },
+                "Kairo98 enters your choice when the game reaches this screen. Play manually leaves it to you."))
+        }, { null }, { id ->
+            val option = choice.options.first { it.id == id }
+            pages.postDelayed({
+                // Back during the pause cancels, as it does on the page.
+                if (pages.top === page) chooseStartupOptions(entry, game, index + 1,
+                    selected + (choice to option), fromFrontend, replace = true)
+            }, 150)
+        }, actions = {
+            listOf(SettingsRow.action("manual", "Play manually") { startEntry(entry, game, selected, fromFrontend) })
+        }, stay = true, cycles = false))
+        if (replace) pages.replace(page) else pages.push(page)
     }
 
     private fun startEntry(entry: LibraryEntry, game: GameCatalog.Game,
@@ -933,9 +948,9 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
                            fromFrontend: Boolean = false) {
         val generation = ++startGeneration
         val cancelled = AtomicBoolean(false)
+        if (::pages.isInitialized) pages.closeAll()
         preparingFont = true
-        applyPauseState()
-        libraryScreen.showStatus("Preparing ${entry.displayName}…")
+        showProgress("Preparing ${entry.displayName}\u2026")
         Thread {
             val result = try {
                 val sources = libraryEntries + externalEntries
@@ -948,16 +963,16 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
                 }
                 val primary = media?.hardDisk ?: entry
                 val disk = romLibrary.prepare(primary, cancelled) { message ->
-                    runOnUiThread { if (generation == startGeneration) libraryScreen.showStatus(message) }
+                    runOnUiThread { if (generation == startGeneration) showProgress(message) }
                 }
                 val bootFloppy = media?.bootFloppy?.let { companion ->
                     romLibrary.prepare(companion, cancelled) { message ->
-                        runOnUiThread { if (generation == startGeneration) libraryScreen.showStatus(message) }
+                        runOnUiThread { if (generation == startGeneration) showProgress(message) }
                     }
                 }
                 val secondFloppy = floppyB?.let { companion ->
                     romLibrary.prepare(companion, cancelled) { message ->
-                        runOnUiThread { if (generation == startGeneration) libraryScreen.showStatus(message) }
+                        runOnUiThread { if (generation == startGeneration) showProgress(message) }
                     }
                 }
                 val font = prepareFont()
@@ -1030,7 +1045,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
         preparingFont = true
         releaseInputs()
         hideKeyboard()
-        applyPauseState()
+        showProgress("Stopping machine\u2026")
         Thread {
             nativeStop()
             runOnUiThread {
@@ -1046,7 +1061,6 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
                 userPaused = false
                 controllerProfiles.configuration.endSession()
                 gamepadMapper.bindings = controllerFlow.global()
-                onScreenControls.close()
                 onScreenControls.refreshVisibility(false)
                 sessionFlow.reset()
                 preparingFont = false
@@ -1313,16 +1327,13 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
             if (generation != startGeneration) return
             Thread.sleep(100)
         }
+        val notice = GameNotice("Swapping Floppy ${'A' + rule.drive}: ${entry.displayName}", "")
         try {
-            runOnUiThread {
-                if (generation == startGeneration) {
-                    swapStatus.text = "Swapping Floppy ${'A' + rule.drive}: ${entry.displayName}"
-                    swapStatus.visibility = View.VISIBLE
-                }
-            }
+            runOnUiThread { if (generation == startGeneration) overlay.showNotice(notice) }
             val disk = romLibrary.prepare(entry, AtomicBoolean(false)) { message ->
                 runOnUiThread {
-                    if (generation == startGeneration) swapStatus.text = message
+                    if (generation == startGeneration && overlay.showing(notice))
+                        overlay.showNotice(GameNotice(notice.title, message).also { swapping = it })
                 }
             }
             if (generation != startGeneration) return
@@ -1341,31 +1352,41 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
             }
         } finally {
             endFloppyChange()
-            runOnUiThread { if (generation == startGeneration) swapStatus.visibility = View.GONE }
+            runOnUiThread {
+                if (overlay.showing(notice) || swapping?.let(overlay::showing) == true) overlay.hideNotice()
+                swapping = null
+            }
         }
     }
 
+    /** The information notice for a swap in progress, replaced as its progress text changes. */
+    private var swapping: GameNotice? = null
+
+    /** The game keeps running, so the prompt docks at the top instead of blocking it. */
     private fun showDiskSwapFailure(rule: GameCatalog.DiskSwap?, error: Exception,
                                     rules: List<GameCatalog.DiskSwap>,
                                     sources: Map<String, LibraryEntry>) {
-        AlertDialog.Builder(this).setTitle("Automatic disk swap failed")
-            .setMessage("${rule?.let { "Floppy ${'A' + it.drive}: " } ?: ""}" +
-                (error.message ?: "Unknown error") + ". The game is still running.")
-            .setPositiveButton("Retry") { _, _ -> scheduleDiskSwaps(rules, sources) }
-            .setNeutralButton("Choose floppy") { _, _ -> showFloppyMenu(rule?.drive ?: 0) }
-            .setNegativeButton("Continue manually", null).showStyled()
+        overlay.showNotice(GameNotice("Automatic disk swap failed",
+            "${rule?.let { "Floppy ${'A' + it.drive}: " } ?: ""}" +
+                (error.message ?: "Unknown error") + ". The game is still running.",
+            listOf(TrayButton("Continue manually"),
+                TrayButton("Choose floppy") {
+                    openMenu()
+                    pages.push(disksPage())
+                    pages.push(ChoicePage(floppyChoice(rule?.drive ?: 0), "floppy${rule?.drive ?: 0}"))
+                },
+                TrayButton("Retry", ButtonTone.PRIMARY) { scheduleDiskSwaps(rules, sources) })))
     }
 
     private fun showStartupTimeout(steps: List<StartupHashMatcher.Step>,
                                    step: StartupHashMatcher.Step) {
-        AlertDialog.Builder(this).setTitle("Startup screen not recognized")
-            .setMessage("Waiting for ${step.label}. The game is still running.")
-            .setPositiveButton("Retry") { _, _ ->
-                scheduleStartupSteps(steps.drop(steps.indexOf(step).coerceAtLeast(0)))
-            }
-            .setNeutralButton("Open keyboard") { _, _ -> showKeyboard() }
-            .setNegativeButton("Restart") { _, _ -> restartMachine() }
-            .showStyled()
+        overlay.showNotice(GameNotice("Startup screen not recognized",
+            "Waiting for ${step.label}. The game is still running.",
+            listOf(TrayButton("Restart") { openMenu("f-restart", confirm = true) },
+                TrayButton("Open keyboard") { showKeyboard() },
+                TrayButton("Retry", ButtonTone.PRIMARY) {
+                    scheduleStartupSteps(steps.drop(steps.indexOf(step).coerceAtLeast(0)))
+                })))
     }
 
     private fun guestCommandScans(character: Char): List<Int>? = when {
@@ -1386,202 +1407,121 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
             else -> null
         })?.let(::listOf)
     }
+    /** Game settings over the game page, or over the game flyout while the game runs. */
     private fun showGameDetails(entry: LibraryEntry) {
+        pages.push(gameSettingsPage({ titleOf(entry) }) { gameSettings(entry) })
+    }
+
+    private fun titleOf(entry: LibraryEntry) =
+        romLibrary.catalog.resolve(entry.contentId ?: "", entry.displayName).title
+
+    private fun gameSettings(entry: LibraryEntry): List<RowGroup> {
         val id = entry.contentId
-        val game = romLibrary.catalog.resolve(id ?: "", entry.displayName)
         val catalog = romLibrary.catalog
-        fun source(field: String, subfield: String? = null, fallback: String = "App default") =
-            id?.let { catalog.sourceOf(it, field, subfield) } ?: fallback
-        val controllerSource = if (game.controllerBindings == null ||
-            (game.controllerBindings == "[]" && !game.overriddenFields.contains("controller"))) "Global"
-            else source("controller", "bindings", fallback = "Global")
-        val inputMode = InputModeDecider.parse(game.inputMode ?: InputModeDecider.storageValue(globalInputMode))
-        val touch = game.inputTouch ?: touchStorage(globalTouchDirect)
-        val touchLabel = "${inputMode.name.lowercase().replaceFirstChar(Char::uppercase)} " +
-            "(${source("input", "mode")}) · " +
-            "${if (touch == "direct") "direct tap" else "touchpad"} " +
-            "(${source("input", "touch")}) · second screen: " +
-            "${game.inputSecondary ?: "keyboard"} (${source("input", "secondary")})"
-        val common = CommonGameSettings(
-            title = GameSettingsValue(game.title, source("title", fallback = "Filename")),
-            touch = GameSettingsValue(touchLabel),
-            controller = GameSettingsValue("${effectiveControllerBindings(game).size} bindings",
-                controllerSource),
-            boxArt = GameSettingsValue(if (game.boxArt == null) "None" else "Available",
-                source("artwork", "boxArt")),
-            screenshot = GameSettingsValue(if (game.preview == null) "None" else "Available",
-                source("artwork", "preview")),
-            filePath = entry.path,
-            zipEntry = entry.zipEntry,
-            contentId = id,
-            error = entry.error,
-            deleteKind = if (libraryEntries.any { it.uri == entry.uri }) "game file" else null)
-        val machineRows = listOf(
-            GameSettingsRow("Machine clock", "${game.baseClockTenthsMHz?.let { "${it / 10.0} MHz" } ?: "App default"} · ${source("machine", "baseClockTenthsMHz")}", true) {
-                editGameClock(entry) },
-            GameSettingsRow("GDC clock", "${game.gdcClockTenthsMHz?.let { "${it / 10.0} MHz" } ?: "5.0 MHz (app default)"} · ${source("machine", "gdcClockTenthsMHz")}", true) {
-                editGameGdcClock(entry) },
-            GameSettingsRow("CPU speed", "${cpuSpeedLabel(game)} · ${source("machine", "cpuMultiple")}", true) {
-                editGameCpuSpeed(entry) },
-            GameSettingsRow("Startup command", "${game.launchCommand ?: "None"} · ${source("launch")}", true) {
-                editGameLaunchCommand(entry, game.launchCommand ?: "") })
-        GameSettingsCoordinator.show(this, common, entry.playable, machineRows,
-            CommonGameSettingsActions(
-                play = { launchEntry(entry, sessionFromFrontend && currentEntry?.id == entry.id &&
-                    !libraryVisible) },
-                editTouch = { showInputModeChoices(entry) },
-                editController = { showControllerBindings(entry) },
-                editTitle = { editGameTitle(entry, game.title) },
-                editBoxArt = { artwork.edit(entry, "boxArt") },
-                editScreenshot = { artwork.edit(entry, "preview") },
-                viewScreenshot = { showGamePreview(entry) },
-                delete = if (common.deleteKind == null) null else {{ confirmDeleteGame(entry) }},
-                reset = id?.let { { saveGameSetting(entry,
-                    "Game settings reset. Machine changes apply on next launch or restart.") {
-                    catalog.resetOverride(it)
-                    if (currentEntry?.contentId == it) {
-                        currentGame = catalog.resolve(it, entry.displayName)
+        val hashed = { id != null }
+        val noHash = { GameSettingsRows.NO_HASH }
+        val scope = { titleOf(entry) }
+        fun game() = catalog.resolve(id ?: "", entry.displayName)
+        fun custom(field: String, subfield: String? = null) = id != null && catalog.sourceOf(id, field, subfield) == "User override"
+        fun defaultSource(field: String, subfield: String, appDefault: String) =
+            { id?.let { catalog.defaultSourceOf(it, field, subfield) }?.takeIf { it != "App default" }
+                ?.let(GameSource::label) ?: appDefault }
+        fun machine(subfield: String, read: (GameCatalog.Game) -> Int?, fallback: () -> Int, appDefault: String) =
+            GameValue({ if (custom("machine", subfield)) read(game())?.toString() else null },
+                { (id?.let { read(catalog.resolveDefault(it, entry.displayName)) } ?: fallback()).toString() },
+                defaultSource("machine", subfield, appDefault),
+                { value -> saveGameSetting(entry) {
+                    if (value == null) catalog.resetOverrideSubfield(id!!, "machine", subfield)
+                    else catalog.setOverrideSubfield(id!!, "machine", subfield, value.toInt())
+                } })
+        val controllerSource = {
+            val game = game()
+            if (game.controllerBindings == null ||
+                (game.controllerBindings == "[]" && !game.overriddenFields.contains("controller"))) GameSource.ALL_GAMES
+            else GameSource.label(id?.let { catalog.sourceOf(it, "controller", "bindings") } ?: GameSource.ALL_GAMES)
+        }
+        val base = { if ((game().baseClockTenthsMHz ?: clock) == 20) 1.9968 else 2.4576 }
+        val multiples = listOf(1, 2, 3, 4, 6, 8, 10, 12, 16, DEFAULT_CPU_MULTIPLE)
+        val cpu = machine("cpuMultiple", { it.cpuMultiple }, { DEFAULT_CPU_MULTIPLE }, GameSource.BUILT_IN)
+        val library = libraryEntries.any { it.uri == entry.uri }
+        return listOfNotNull(
+            RowGroup("CONTROLS", listOf(controllerPages.gameRow(entry, hashed, controllerSource)) +
+                (id?.let { touchSettingsCoordinator.gameRows(entry, scope, hashed) } ?: listOf(
+                    SettingsRow.choice("game-tap", "Screen tap", ChoiceSpec("Screen tap", scope, { emptyList() },
+                        { null }, select = {}), enabled = { false }, disabledReason = noHash)))),
+            RowGroup("MACHINE", listOf(
+                GameSettingsRows.choice("clock", "Machine clock", scope,
+                    listOf(ChoiceOption("20", "2 MHz"), ChoiceOption("25", "2.5 MHz")),
+                    machine("baseClockTenthsMHz", { it.baseClockTenthsMHz }, { clock }, GameSource.ALL_GAMES),
+                    hashed, noHash),
+                GameSettingsRows.choice("gdc", "GDC clock", scope,
+                    listOf(ChoiceOption("25", "2.5 MHz"), ChoiceOption("50", "5 MHz")),
+                    machine("gdcClockTenthsMHz", { it.gdcClockTenthsMHz }, { 50 }, GameSource.BUILT_IN),
+                    hashed, noHash),
+                GameSettingsRows.choice("cpu", "CPU speed", scope,
+                    multiples.map { ChoiceOption("$it", "%.1f MHz".format(base() * it), "\u00d7$it") },
+                    cpu, hashed, noHash,
+                    defaultLabel = { cpu.fallback().toInt().let { "%.1f MHz (\u00d7%d)".format(base() * it, it) } }),
+                GameSettingsRows.text("command", "Startup command", "DOS command, such as GAME",
+                    { game().launchCommand }, { custom("launch", "text") },
+                    { id?.let { catalog.sourceOf(it, "launch") }?.takeIf { it != "App default" }?.let(GameSource::label) },
+                    { value -> saveGameSetting(entry) {
+                        if (value.isEmpty()) catalog.updateOverrideSubfields(id!!, "launch",
+                            mapOf("text" to null, "commands" to null, "screenHashes" to null))
+                        else catalog.updateOverrideSubfields(id!!, "launch",
+                            mapOf("text" to value, "commands" to null, "screenHashes" to null))
+                    } }, { saveGameSetting(entry) { catalog.resetOverride(id!!, "launch") } },
+                    enabled = hashed, disabledReason = noHash)),
+                "Machine changes apply on the next launch or restart."),
+            RowGroup("LIBRARY", listOf(
+                GameSettingsRows.text("title", "Title", "Game title", { game().title }, { custom("title") },
+                    { id?.let { GameSource.label(catalog.sourceOf(it, "title")) } ?: "Filename" },
+                    { value -> saveGameSetting(entry, "Saved") { catalog.setOverride(id!!, "title", value) } },
+                    { saveGameSetting(entry, "Saved") { catalog.resetOverride(id!!, "title") } },
+                    enabled = hashed, disabledReason = noHash),
+                artwork.row(entry, "boxArt", hashed),
+                artwork.row(entry, "preview", hashed)),
+                "Chosen images are copied into your library."),
+            RowGroup("FILE", GameSettingsRows.file(entry.path, entry.zipEntry, id, entry.error) +
+                listOfNotNull(if (!library) null else GameDeletionFlow.row(this, libraryScreen,
+                    GameDeletionFlow.Prompt(entry.path, "file",
+                        affectedEntries = libraryEntries.count { it.uri == entry.uri }),
+                    "ROM folder", { romTree?.let(libraryFlow::hasWriteGrant) == true }, ::chooseRomFolder,
+                    { !libraryVisible && currentEntry?.uri == entry.uri }, "Kairo98-delete-game",
+                    { romLibrary.deleteSource(entry, libraryEntries) }, { refreshLibrary(false) }))),
+            RowGroup(null, listOf(GameSettingsRows.reset(hashed) {
+                saveGameSetting(entry, "Game settings reset. Machine changes apply on next launch or restart.",
+                    "Could not reset game settings") {
+                    catalog.resetOverride(id!!)
+                    if (currentEntry?.contentId == id) {
+                        currentGame = catalog.resolve(id, entry.displayName)
                         setSecondaryInitialMode(currentGame?.inputSecondary == "touchpad")
                         gamepadMapper.bindings = effectiveControllerBindings(currentGame)
                     }
-                } } },
-                resetFailed = { failure -> toast(failure.message ?: "Could not reset game settings") },
-                resetCancelled = { showGameDetails(entry) },
-                noHash = { toast("This file needs a successful hash before settings can be saved") }))
+                }
+            })))
     }
-
-    private fun editGameTitle(entry: LibraryEntry, current: String) {
-        val id = entry.contentId ?: return
-        GameTitleEditor.show(this, current,
-            { value -> saveGameSetting(entry) { romLibrary.catalog.setOverride(id, "title", value) } },
-            { saveGameSetting(entry) { romLibrary.catalog.resetOverride(id, "title") } },
-            { showGameDetails(entry) })
-    }
-
-    private fun confirmDeleteGame(entry: LibraryEntry) {
-        val selected = romTree
-        if (selected == null || !libraryFlow.hasWriteGrant(selected)) {
-            AlertDialog.Builder(this).setTitle("Write access required")
-                .setMessage("Select the same ROM folder again and grant write access before " +
-                    "deleting game files.")
-                .setPositiveButton("Choose ROM folder") { _, _ -> chooseRomFolder() }
-                .setNegativeButton("Cancel", null).showStyled()
-            return
-        }
-        if (!libraryVisible && currentEntry?.uri == entry.uri) {
-            toast("Exit this game before deleting its source file")
-            return
-        }
-        val related = libraryEntries.count { it.uri == entry.uri }
-        val sourceEntries = libraryEntries
-        GameDeletionFlow.show(this, libraryScreen,
-            GameDeletionFlow.Prompt(entry.path, "file", affectedEntries = related),
-            "Kairo98-delete-game", { romLibrary.deleteSource(entry, sourceEntries) },
-            { refreshLibrary(false) }, ::toast)
-    }
-
-    private fun showGamePreview(entry: LibraryEntry) =
-        artwork.view(entry, returnToSettings = true)
 
     private fun showDetailPreview(entry: LibraryEntry) = artwork.view(entry)
 
     private fun saveGameSetting(entry: LibraryEntry,
                                 message: String = "Saved. Machine changes apply on next launch or restart.",
-                                action: () -> Unit) {
+                                failure: String? = null, action: () -> Unit) {
         try {
             action()
+            if (currentEntry?.contentId == entry.contentId && entry.contentId != null)
+                currentGame = romLibrary.catalog.resolve(entry.contentId, entry.displayName)
             libraryScreen.showEntries(libraryEntries)
             toast(message)
         } catch (error: Exception) {
-            toast("Could not save: ${error.message ?: "Invalid value"}")
+            toast(failure ?: "Could not save: ${error.message ?: "Invalid value"}")
         }
-        showGameDetails(entry)
-    }
-
-    private fun editGameLaunchCommand(entry: LibraryEntry, current: String) {
-        val input = EditText(this).apply {
-            setSingleLine(true)
-            setText(current)
-            setSelection(text.length)
-            hint = "DOS command, such as GAME"
-        }
-        AlertDialog.Builder(this).setTitle("Guest command").setView(input)
-            .setPositiveButton("Save") { _, _ -> saveGameSetting(entry) {
-                val value = input.text.toString().trim()
-                if (value.isEmpty()) romLibrary.catalog.updateOverrideSubfields(
-                    entry.contentId!!, "launch", mapOf("text" to null, "commands" to null,
-                        "screenHashes" to null))
-                else romLibrary.catalog.updateOverrideSubfields(entry.contentId!!, "launch",
-                    mapOf("text" to value, "commands" to null, "screenHashes" to null))
-            } }.setNeutralButton("Reset") { _, _ -> saveGameSetting(entry) {
-                romLibrary.catalog.resetOverride(entry.contentId!!, "launch")
-            } }.setNegativeButton("Cancel") { _, _ -> showGameDetails(entry) }.showStyled()
-    }
-
-    private fun editGameClock(entry: LibraryEntry) {
-        val current = romLibrary.catalog.resolve(entry.contentId!!, entry.displayName)
-        AlertDialog.Builder(this).setTitle("Machine clock")
-            .setSingleChoiceItems(arrayOf("Use catalog default", "2 MHz", "2.5 MHz"),
-                if (romLibrary.catalog.sourceOf(entry.contentId!!, "machine", "baseClockTenthsMHz") !=
-                    "User override") 0 else when (current.baseClockTenthsMHz) {
-                    20 -> 1; 25 -> 2; else -> 0
-                }) { dialog, which ->
-                dialog.dismiss()
-                saveGameSetting(entry) {
-                    if (which == 0) romLibrary.catalog.resetOverrideSubfield(entry.contentId!!,
-                        "machine", "baseClockTenthsMHz")
-                    else romLibrary.catalog.setOverrideSubfield(entry.contentId!!, "machine",
-                        "baseClockTenthsMHz", if (which == 1) 20 else 25)
-                }
-            }.setNegativeButton("Cancel") { _, _ -> showGameDetails(entry) }.showStyled()
+        pages.refresh()
     }
 
     /** CPU MHz for a clock multiple on the game's base clock (2.4576 or 1.9968 MHz). */
     private fun cpuMhz(game: GameCatalog.Game, multiple: Int) =
         (if ((game.baseClockTenthsMHz ?: clock) == 20) 1.9968 else 2.4576) * multiple
-
-    private fun cpuSpeedLabel(game: GameCatalog.Game): String {
-        val multiple = game.cpuMultiple ?: DEFAULT_CPU_MULTIPLE
-        return "%.1f MHz (x%d)".format(cpuMhz(game, multiple), multiple) +
-            if (game.cpuMultiple == null) " · app default" else ""
-    }
-
-    private fun editGameCpuSpeed(entry: LibraryEntry) {
-        val current = romLibrary.catalog.resolve(entry.contentId!!, entry.displayName)
-        val multiples = listOf(1, 2, 3, 4, 6, 8, 10, 12, 16, DEFAULT_CPU_MULTIPLE)
-        val labels = listOf("Use catalog default") +
-            multiples.map { "%.1f MHz (x%d)".format(cpuMhz(current, it), it) }
-        val selected = if (romLibrary.catalog.sourceOf(entry.contentId!!, "machine", "cpuMultiple") ==
-            "User override") current.cpuMultiple?.let { multiples.indexOf(it) + 1 } ?: 0 else 0
-        AlertDialog.Builder(this).setTitle("CPU speed")
-            .setSingleChoiceItems(labels.toTypedArray(), selected) { dialog, which ->
-                dialog.dismiss()
-                saveGameSetting(entry) {
-                    if (which == 0) romLibrary.catalog.resetOverrideSubfield(entry.contentId!!,
-                        "machine", "cpuMultiple")
-                    else romLibrary.catalog.setOverrideSubfield(entry.contentId!!, "machine",
-                        "cpuMultiple", multiples[which - 1])
-                }
-            }.setNegativeButton("Cancel") { _, _ -> showGameDetails(entry) }.showStyled()
-    }
-
-    private fun editGameGdcClock(entry: LibraryEntry) {
-        val current = romLibrary.catalog.resolve(entry.contentId!!, entry.displayName)
-        AlertDialog.Builder(this).setTitle("GDC clock")
-            .setSingleChoiceItems(arrayOf("Use catalog default", "2.5 MHz", "5 MHz"),
-                if (romLibrary.catalog.sourceOf(entry.contentId!!, "machine", "gdcClockTenthsMHz") !=
-                    "User override") 0 else when (current.gdcClockTenthsMHz) {
-                    25 -> 1; 50 -> 2; else -> 0
-                }) { dialog, which ->
-                dialog.dismiss()
-                saveGameSetting(entry) {
-                    if (which == 0) romLibrary.catalog.resetOverrideSubfield(entry.contentId!!,
-                        "machine", "gdcClockTenthsMHz")
-                    else romLibrary.catalog.setOverrideSubfield(entry.contentId!!, "machine",
-                        "gdcClockTenthsMHz", if (which == 1) 25 else 50)
-                }
-            }.setNegativeButton("Cancel") { _, _ -> showGameDetails(entry) }.showStyled()
-    }
 
     private fun restartMachine() {
         commandCancelled.set(true)
@@ -1611,61 +1551,62 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
         }
     }
 
-    private fun showFloppyMenu(drive: Int) {
-        if (currentDisk == null || !(nativeStatus().startsWith("Running") ||
-                nativeStatus().startsWith("Paused"))) {
-            toast("Start a game before inserting a floppy")
-            return
-        }
-        if (floppyBusy) return
-        val current = currentEntry
-        val candidates = libraryEntries.filter { entry ->
-            entry.playable && entry.isFloppy && current != null &&
-                (if (current.zipEntry != null) entry.uri == current.uri
-                else entry.path.substringBeforeLast('/', "") ==
-                    current.path.substringBeforeLast('/', ""))
-        }
-        val labels = ArrayList<String>().apply {
-            add("Eject")
-            addAll(candidates.map { it.displayName })
-            add("Choose floppy file…")
-        }
-        AlertDialog.Builder(this).setTitle("Floppy ${'A' + drive}" +
-            (mountedFloppies[drive]?.let { " · $it" } ?: " · empty"))
-            .setItems(labels.toTypedArray()) { _, which ->
-                when (which) {
-                    0 -> changeFloppy(drive, null)
-                    labels.lastIndex -> chooseFloppyFile(drive)
-                    else -> changeFloppy(drive, candidates[which - 1])
-                }
-            }.setNegativeButton("Cancel", null).showStyled()
-    }
+    private val machineRunning get() = currentDisk != null &&
+        nativeStatus().let { it.startsWith("Running") || it.startsWith("Paused") }
 
-    private fun showMountMenu() {
-        val hardDisk = currentEntry?.displayName ?: currentTitle ?: "Empty"
-        AlertDialog.Builder(this).setTitle("Mount")
-            .setItems(arrayOf(
-                "Hard disk  ·  $hardDisk",
-                "Floppy A  ·  ${mountedFloppies[0] ?: "Empty"}",
-                "Floppy B  ·  ${mountedFloppies[1] ?: "Empty"}"
-            )) { _, which ->
-                when (which) {
-                    0 -> chooseHdi()
-                    1 -> showFloppyMenu(0)
-                    2 -> showFloppyMenu(1)
-                }
-            }.setNegativeButton("Close", null).showStyled()
+    /** Disks: the hard disk, which asks first because it ends the game, and both floppy drives. */
+    private fun disksPage() = GroupsPage("Disks", { currentTitle }, {
+        listOf(RowGroup("DRIVES", listOf(
+            SettingsRow.action("hdd", "Hard disk",
+                value = { if (currentIsFloppy) "Empty" else currentEntry?.displayName ?: currentTitle ?: "Empty" },
+                tone = { if (currentDisk == null || currentIsFloppy) ValueTone.EMPTY else ValueTone.CURRENT },
+                tray = {
+                    if (currentDisk == null) TraySpec(buttons = listOf(TrayButton("Choose file\u2026", ButtonTone.PRIMARY) { chooseHdi() }))
+                    else TraySpec("Starting another disk image ends this game. Progress since your last save is lost.",
+                        listOf(TrayButton("Cancel"), TrayButton("Choose file\u2026", ButtonTone.PRIMARY) { chooseHdi() }), focus = 0)
+                }),
+            floppyRow(0), floppyRow(1))))
+    })
+
+    private fun floppyRow(drive: Int) = SettingsRow.choice("floppy$drive", "Floppy ${'A' + drive}", floppyChoice(drive),
+        value = { mountedFloppies[drive] ?: "Empty" },
+        tone = { if (mountedFloppies[drive] == null) ValueTone.EMPTY else ValueTone.CURRENT },
+        enabled = { machineRunning && !floppyBusy },
+        disabledReason = { if (floppyBusy) "Wait for the floppy change to finish" else "Start a game before inserting a floppy" })
+
+    /** Empty ejects; other disks from the same ZIP or folder; or a file from the device. */
+    private fun floppyChoice(drive: Int): ChoiceSpec {
+        fun candidates(): List<LibraryEntry> {
+            val current = currentEntry ?: return emptyList()
+            return libraryEntries.filter { entry ->
+                entry.playable && entry.isFloppy &&
+                    (if (current.zipEntry != null) entry.uri == current.uri
+                    else entry.path.substringBeforeLast('/', "") == current.path.substringBeforeLast('/', ""))
+            }
+        }
+        return ChoiceSpec("Floppy ${'A' + drive}", { currentTitle }, {
+            val found = candidates()
+            listOfNotNull(ChoiceGroup(null, listOf(ChoiceOption("empty", "Empty")),
+                if (found.isEmpty()) "No other disk images in this game\u2019s folder." else null),
+                found.takeIf { it.isNotEmpty() }?.let { items ->
+                    ChoiceGroup("IN THIS GAME\u2019S FOLDER", items.map { ChoiceOption(it.id, it.displayName) })
+                })
+        }, { candidates().firstOrNull { it.displayName == mountedFloppies[drive] }?.id
+            ?: if (mountedFloppies[drive] == null) "empty" else null }, { id ->
+            if (id == "empty") changeFloppy(drive, null)
+            else candidates().firstOrNull { it.id == id }?.let { changeFloppy(drive, it) }
+        }, actions = {
+            listOf(SettingsRow.action("choose", "Choose file\u2026") { chooseFloppyFile(drive) })
+        }, cycles = false)
     }
 
     private fun changeFloppy(drive: Int, entry: LibraryEntry?) {
         if (!beginFloppyChange()) return
-        menuStatus.text = if (entry == null) "Ejecting floppy ${'A' + drive}…"
-            else "Preparing ${entry.displayName}…"
+        toast(if (entry == null) "Ejecting floppy ${'A' + drive}\u2026" else "Preparing ${entry.displayName}\u2026")
+        pages.refresh()
         Thread {
             val result = try {
-                val disk = entry?.let { romLibrary.prepare(it, AtomicBoolean(false)) { message ->
-                    runOnUiThread { menuStatus.text = message }
-                } }
+                val disk = entry?.let { romLibrary.prepare(it, AtomicBoolean(false)) { } }
                 if (!nativeFloppy(drive, disk?.absolutePath)) error("Floppy could not be mounted")
                 null
             } catch (error: Exception) { error.message ?: "Floppy change failed" }
@@ -1676,8 +1617,8 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
                     manualFloppies[drive] = null
                     mountedFloppies[drive] = entry?.displayName
                 }
-                menuStatus.text = result ?: "Floppy ${'A' + drive}: ${entry?.displayName ?: "empty"}"
-                if (result != null) toast(result)
+                toast(result ?: "Floppy ${'A' + drive}: ${entry?.displayName ?: "Empty"}")
+                pages.refresh()
             }
         }.start()
     }
@@ -1695,69 +1636,59 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
     // the library still owns its firmware. Native loading is unchanged.
     private val firmwareConfigurable get() = currentDisk == null && !preparingFont
 
-    private fun showMachine() {
-        val options = mutableListOf("Base clock  ·  ${if (clock == 25) "2.5" else "2"} MHz")
-        if (firmwareConfigurable) options += listOf(
-            "BIOS ROM  ·  ${if (biosFile().isFile) "Imported" else "None"}",
-            "Font BMP  ·  ${if (fontBitmapFile().isFile) "Imported" else "Built-in"}",
-            "YM2608 rhythm ROM  ·  ${if (rhythmRomFile().isFile) "Imported" else "None"}")
-        AlertDialog.Builder(this).setTitle("Machine")
-            .setItems(options.toTypedArray()) { _, which ->
-                when (which) {
-                    0 -> showMachineClock()
-                    1 -> showBiosRom()
-                    2 -> showFontBitmap()
-                    else -> showRhythmRom()
-                }
-            }.setNegativeButton("Close", null).showStyled()
-    }
+    /** Machine: the base clock, then firmware, which only changes with no game running. */
+    private fun machinePage() = GroupsPage("Machine", { GameSource.ALL_GAMES }, {
+        val inGame = !firmwareConfigurable
+        val reason = { "Return to the library to change firmware" }
+        listOf(
+            RowGroup("CLOCK", listOf(SettingsRow.choice("base-clock", "Base clock", ChoiceSpec("Base clock",
+                { GameSource.ALL_GAMES }, { listOf(ChoiceGroup(null, listOf(
+                    ChoiceOption("25", "2.5 MHz"), ChoiceOption("20", "2 MHz")))) },
+                { clock.toString() }, select = { value -> setBaseClock(value.toInt()) }))),
+                "Changing the base clock restarts a running game. Games with their own clock keep it."),
+            RowGroup("FIRMWARE", listOf(
+                firmwareRow("bios", "BIOS ROM", { biosFile().isFile }, { biosBusy }, "Installed", "Not installed",
+                    "Remove", ::chooseBiosFile) { removeFirmware(biosFile(), "BIOS ROM") },
+                firmwareRow("font", "Font BMP", { fontBitmapFile().isFile }, { fontBusy }, "Imported", "Built-in",
+                    "Use built-in", ::chooseFontFile) { removeFirmware(fontBitmapFile(), "Font BMP") },
+                firmwareRow("rhythm", "YM2608 rhythm ROM", { rhythmRomFile().isFile }, { rhythmBusy }, "Installed",
+                    "Not installed", "Remove", ::chooseRhythmFile) { removeFirmware(rhythmRomFile(), "YM2608 rhythm ROM") })
+                .map { row -> if (inGame) SettingsRow.action(row.id, row.label, row.value, { ValueTone.SUMMARY },
+                    enabled = { false }, disabledReason = reason) else row },
+                if (inGame) "Return to the library to change firmware."
+                else "The BIOS ROM must be exactly 96 KiB and the rhythm ROM exactly 8 KiB."))
+    })
 
-    private fun showMachineClock() {
-        val options = arrayOf("2.5 MHz base clock", "2 MHz base clock")
-        AlertDialog.Builder(this).setTitle("Machine")
-            .setSingleChoiceItems(options, if (clock == 25) 0 else 1) { dialog, which ->
-                val selected = if (which == 0) 25 else 20
-                if (clock != selected) {
-                    clock = selected
-                    preferences.edit().putInt("base_clock", clock).apply()
-                    if (currentGame?.baseClockTenthsMHz == null) {
-                        nativeClock(clock)
-                        toast("Clock change resets the machine")
-                    } else toast("Global clock saved; this game uses its own clock")
-                }
-                dialog.dismiss()
-            }.setNegativeButton("Cancel", null).showStyled()
-    }
+    /** A firmware file with its state, and a tray to choose, replace, or remove it. */
+    private fun firmwareRow(id: String, label: String, installed: () -> Boolean, busy: () -> Boolean,
+                            on: String, off: String, removeLabel: String, choose: () -> Unit,
+                            remove: () -> Unit) = SettingsRow.action(id, label,
+        value = { if (busy()) "Importing\u2026" else if (installed()) on else off },
+        tone = { if (installed()) ValueTone.CURRENT else ValueTone.SUMMARY },
+        busy = busy, enabled = { !busy() }, disabledReason = { "Wait for the current import to finish" },
+        tray = {
+            TraySpec(buttons = if (installed()) listOf(TrayButton(removeLabel) { remove() },
+                TrayButton("Replace\u2026", ButtonTone.PRIMARY) { choose() })
+                else listOf(TrayButton("Choose file\u2026", ButtonTone.PRIMARY) { choose() }))
+        })
 
-    private fun showBiosRom() {
+    private fun removeFirmware(file: File, label: String) {
         if (!firmwareConfigurable) return
-        val installed = biosFile().isFile
-        val dialog = AlertDialog.Builder(this).setTitle("BIOS ROM")
-            .setPositiveButton("Choose file") { _, _ -> chooseBiosFile() }
-            .setNegativeButton("Close", null)
-        if (installed) dialog.setNeutralButton("Remove") { _, _ ->
-            if (firmwareConfigurable && !biosBusy) {
-                if (biosFile().delete()) toast("BIOS ROM removed" +
-                    if (currentDisk != null) ". Restart the game to apply." else ".")
-                else toast("Could not remove BIOS ROM")
-            }
-        }
-        dialog.showStyled()
+        toast(if (file.delete()) if (file == fontBitmapFile()) "Using the built-in font" else "$label removed."
+            else "Could not remove $label")
+        firstRunSetup.refreshFirmware()
+        pages.refresh()
     }
 
-    private fun showFontBitmap() {
-        if (!firmwareConfigurable) return
-        val dialog = AlertDialog.Builder(this).setTitle("Font BMP")
-            .setPositiveButton("Choose file") { _, _ -> chooseFontFile() }
-            .setNegativeButton("Close", null)
-        if (fontBitmapFile().isFile) dialog.setNeutralButton("Remove") { _, _ ->
-            if (firmwareConfigurable && !fontBusy) {
-                if (fontBitmapFile().delete()) toast("Font BMP removed" +
-                    if (currentDisk != null) ". Restart the game to apply." else ".")
-                else toast("Could not remove Font BMP")
-            }
-        }
-        dialog.showStyled()
+    private fun setBaseClock(selected: Int) {
+        if (clock == selected) return
+        clock = selected
+        preferences.edit().putInt("base_clock", clock).apply()
+        if (currentDisk == null) return
+        if (currentGame?.baseClockTenthsMHz == null) {
+            nativeClock(clock)
+            toast("Clock change resets the machine")
+        } else toast("Global clock saved; this game uses its own clock")
     }
 
     private fun chooseBiosFile() {
@@ -1770,29 +1701,9 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
         DocumentPicker.open(this, FONT_REQUEST, failed = ::toast)
     }
 
-    private fun showRhythmRom() {
-        if (!firmwareConfigurable) return
-        val dialog = AlertDialog.Builder(this).setTitle("YM2608 rhythm ROM")
-            .setPositiveButton("Choose file") { _, _ -> chooseRhythmFile() }
-            .setNegativeButton("Close", null)
-        if (rhythmRomFile().isFile) dialog.setNeutralButton("Remove") { _, _ ->
-            if (firmwareConfigurable && !rhythmBusy) {
-                if (rhythmRomFile().delete()) toast("Rhythm ROM removed" +
-                    if (currentDisk != null) ". Restart the game to apply." else ".")
-                else toast("Could not remove rhythm ROM")
-            }
-        }
-        dialog.showStyled()
-    }
-
     private fun chooseRhythmFile() {
         if (!firmwareConfigurable) return
         DocumentPicker.open(this, RHYTHM_REQUEST, failed = ::toast)
-    }
-
-    private fun showInputMode() {
-        val entry = currentEntry?.takeIf { it.contentId != null && !libraryVisible }
-        showInputModeChoices(entry)
     }
 
     private fun touchStorage(direct: Boolean) = if (direct) "direct" else "touchpad"
@@ -1804,14 +1715,31 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
 
     private fun directTapActive(): Boolean = touchSelection().selection.directTouch
 
-    private fun showInputModeChoices(entry: LibraryEntry?) {
-        touchSettingsCoordinator.builder(entry)?.showStyled()
-    }
+    private fun aboutPage() = AboutDocuments.page(this, pages, listOf(
+        "Open the menu" to "Mode or Home button, Back, Menu, or a swipe from the left edge",
+        "Open the keyboard" to "Swipe in from the right edge",
+        "Physical keyboard" to "Types into the PC-98 while the menu is closed"),
+        "Android reserves the system Home key.",
+        "Kairo98 uses Neko Project 21/W and ymfm. Source and provenance: github.com/MrJackSpade/Kairo98.",
+        "PRIVACY_POLICY.txt", "THIRD_PARTY_NOTICES.txt", ::diagnosticsPage)
 
-    private fun showAbout() {
-        AboutDocuments.show(this, "Kairo98",
-            "Open the menu with a controller Mode/Home button when Android delivers it, Back, Menu, or a swipe from the left edge. Swipe inward from the right edge to open the PC-98 keyboard. Android reserves the system Home key.\n\nPhysical keyboard input goes to the PC-98 while the menu is closed.\n\nKairo98 uses Neko Project 21/W and ymfm. Source and provenance: github.com/MrJackSpade/Kairo98.",
-            "PRIVACY_POLICY.txt", "THIRD_PARTY_NOTICES.txt")
+    /** Live machine values, updated four times a second. */
+    private fun diagnosticsPage() = object : GroupsPage("Diagnostics", { currentTitle }, {
+        val parts = nativeStatus().split(" | ")
+        fun part(index: Int, prefix: String = "") = parts.getOrNull(index)?.removePrefix(prefix)?.trim() ?: ""
+        val running = currentDisk != null
+        listOf(RowGroup("MACHINE STATUS", if (!running) listOf(SettingsRow.info("state", "State") { "Stopped" })
+            else listOf(
+                SettingsRow.info("state", "State") { part(0) },
+                SettingsRow.info("frames", "Frames") { part(1, "frames") },
+                SettingsRow.info("csip", "CS:IP") { part(2, "CS:IP") },
+                SettingsRow.info("audio", "Audio") { part(3, "audio") },
+                SettingsRow.info("xruns", "Xruns") { part(4, "xruns") },
+                SettingsRow.info("audio-config", "Audio config") { part(5) },
+                SettingsRow.info("audio-profile", "Audio profile") { part(6) }),
+            if (running) "Live values from the emulator, updated four times a second." else "Start a game to see live values."))
+    }) {
+        override fun tick() = refresh()
     }
 
     private fun effectiveControllerBindings(game: GameCatalog.Game?): List<ControllerBinding> {
@@ -1864,8 +1792,8 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
                 applyPauseState()
                 toast(if (userPaused) "Paused" else "Resumed")
             }
-            "restart" -> confirmRestart()
-            "exit" -> confirmExit()
+            "restart" -> if (!menuOpen) openMenu("f-restart", confirm = true)
+            "exit" -> if (!menuOpen) openMenu("f-exit", confirm = true)
             "fastForward" -> nativeSetFastForward(true)
         }
     }
@@ -1873,52 +1801,6 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
     private fun controllerActionReleased(action: String) {
         if (action == "fastForward") nativeSetFastForward(false)
     }
-
-    private fun showControllerScope() {
-        controllerEditorFlow.showScope(currentEntry?.takeIf {
-            !libraryVisible && it.contentId != null })
-    }
-
-    private fun showOnScreenControls() {
-        controllerEditorFlow.showOnScreenControls()
-    }
-
-    private fun showControllerBindings(entry: LibraryEntry) {
-        controllerEditorFlow.showGame(entry)
-    }
-
-    private fun AlertDialog.Builder.showStyled(): AlertDialog {
-        val dialog = create()
-        dialog.setOnDismissListener { refreshSettingValues() }
-        dialog.show()
-        Ui.styleDialog(dialog)
-        // A new window can open in touch mode even while a controller is in use, and then the
-        // first D-pad press only leaves touch mode. Match the main window instead.
-        if (::root.isInitialized && !root.isInTouchMode) dialog.window?.decorView?.post {
-            val decor = dialog.window?.decorView as? ViewGroup ?: return@post
-            val target = decor.findFocus()
-                ?: android.view.FocusFinder.getInstance().findNextFocus(decor, null, View.FOCUS_DOWN)
-            target?.requestFocusFromTouch()
-        }
-        return dialog
-    }
-
-    private fun confirmRestart() {
-        val title = currentTitle ?: "the machine"
-        AlertDialog.Builder(this).setTitle("Restart $title?")
-            .setMessage("Progress since your last save state or in-game save is lost.")
-            .setPositiveButton("Restart") { _, _ -> restartMachine() }
-            .setNegativeButton("Cancel", null).showStyled()
-    }
-
-    private fun confirmExit() {
-        AlertDialog.Builder(this).setTitle("Exit Kairo98?")
-            .setMessage("The machine stops. Progress since your last save state or in-game save is lost.")
-            .setPositiveButton("Exit") { _, _ -> exitApp() }
-            .setNegativeButton("Cancel", null).showStyled()
-    }
-
-    private fun showStateSlots(saving: Boolean) = stateFlow.show(saving)
 
     private fun stateError(code: Int) = when (code) {
         1 -> "machine not running"
@@ -1937,7 +1819,11 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
         exiting = true
         controllerProfiles.configuration.endSession()
         startGeneration++
-        menuStatus.text = "Stopping machine…"
+        if (currentDisk != null) {
+            sessionFlow.close()
+            preparingFont = true
+            showProgress("Stopping machine\u2026")
+        }
         Thread {
             nativeStop()
             runOnUiThread { finish() }
@@ -1946,6 +1832,11 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
 
     private fun toast(message: String) =
         Ui.message(this, message)
+
+    private fun showProgress(text: String) {
+        progressText = text
+        applyPauseState()
+    }
 
     private fun onSecondarySwapChanged(swapped: Boolean) {
         keyboardPanel.close()
@@ -2034,7 +1925,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
         if (shaderOptions.handleActivityResult(requestCode, resultCode, data)) return
-        if (libraryScreen.handleCatalogResult(requestCode, resultCode, data)) return
+        if (libraryMenu.handleActivityResult(requestCode, resultCode, data)) return
         if (artwork.handleActivityResult(requestCode, resultCode, data)) return
         if (libraryFlow.handleActivityResult(requestCode, resultCode, data)) return
         if (requestCode == BIOS_REQUEST) {
@@ -2069,9 +1960,9 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
             return
         }
         val generation = ++startGeneration
+        sessionFlow.close()
         preparingFont = true
-        applyPauseState()
-        toast("Importing disk image")
+        showProgress("Preparing $name\u2026")
         Thread {
             val disk = File(filesDir, "boot${DiskFormat.suffix(name)}")
             val partial = File(filesDir, "${disk.name}.part")
@@ -2108,7 +1999,6 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
                 if (generation != startGeneration) return@runOnUiThread
                 preparingFont = false
                 if (result.startsWith("Starting ")) {
-                    preferences.edit().putString("disk_name", name).apply()
                     controllerProfiles.configuration.endSession()
                     controllerProfiles.configuration.beginSession()
                     currentEntry = null
@@ -2132,7 +2022,8 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
 
     private fun importFloppyFile(drive: Int, uri: Uri, name: String) {
         if (!beginFloppyChange()) return
-        menuStatus.text = "Importing $name…"
+        toast("Importing $name\u2026")
+        pages.refresh()
         Thread {
             val disk = File(cacheDir, "manual-floppy-$drive-${System.nanoTime()}${DiskFormat.suffix(name)}")
             val result = try {
@@ -2160,11 +2051,9 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
                     manualFloppies[drive]?.delete()
                     manualFloppies[drive] = disk
                     mountedFloppies[drive] = name
-                } else {
-                    disk.delete()
-                    toast(result)
-                }
-                menuStatus.text = result ?: "Floppy ${'A' + drive}: $name"
+                } else disk.delete()
+                toast(result ?: "Floppy ${'A' + drive}: $name")
+                pages.refresh()
             }
         }.start()
     }
@@ -2173,9 +2062,8 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
         if (!firmwareConfigurable || biosBusy) return
         biosBusy = true
         val restartNeeded = currentDisk != null
-        if (firstRunSetup.isOpen) firstRunSetup.setBusy("Importing BIOS ROM…")
-        if (menuOpen) menuStatus.text = "Importing BIOS ROM…"
-        toast("Importing BIOS ROM")
+        firstRunSetup.refreshFirmware()
+        pages.refresh()
         Thread {
             val directory = firmwareDir()
             val partial = File(directory, "bios.rom.part")
@@ -2205,9 +2093,8 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
             } finally { partial.delete() }
             runOnUiThread {
                 biosBusy = false
-                firstRunSetup.setBusy(null)
                 firstRunSetup.refreshFirmware()
-                if (menuOpen) menuStatus.text = result
+                pages.refresh()
                 toast(result)
             }
         }.start()
@@ -2217,9 +2104,8 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
         if (!firmwareConfigurable || fontBusy) return
         fontBusy = true
         val restartNeeded = currentDisk != null
-        if (firstRunSetup.isOpen) firstRunSetup.setBusy("Importing Font BMP…")
-        if (menuOpen) menuStatus.text = "Importing Font BMP…"
-        toast("Importing Font BMP")
+        firstRunSetup.refreshFirmware()
+        pages.refresh()
         Thread {
             val directory = firmwareDir()
             val partial = File(directory, "font.bmp.part")
@@ -2249,9 +2135,8 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
             } finally { partial.delete() }
             runOnUiThread {
                 fontBusy = false
-                firstRunSetup.setBusy(null)
                 firstRunSetup.refreshFirmware()
-                if (menuOpen) menuStatus.text = result
+                pages.refresh()
                 toast(result)
             }
         }.start()
@@ -2261,9 +2146,8 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
         if (!firmwareConfigurable || rhythmBusy) return
         rhythmBusy = true
         val restartNeeded = currentDisk != null
-        if (firstRunSetup.isOpen) firstRunSetup.setBusy("Importing rhythm ROM…")
-        if (menuOpen) menuStatus.text = "Importing rhythm ROM…"
-        toast("Importing rhythm ROM")
+        firstRunSetup.refreshFirmware()
+        pages.refresh()
         Thread {
             val directory = firmwareDir()
             val partial = File(directory, "ym2608_adpcm_rom.bin.part")
@@ -2278,24 +2162,23 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
                             val count = input.read(buffer)
                             if (count < 0) break
                             size += count
-                            require(size <= RHYTHM_ROM_BYTES) { "Rhythm ROM must be exactly 8 KiB" }
+                            require(size <= RHYTHM_ROM_BYTES) { "YM2608 rhythm ROM must be exactly 8 KiB" }
                             output.write(buffer, 0, count)
                         }
-                        require(size == RHYTHM_ROM_BYTES) { "Rhythm ROM must be exactly 8 KiB" }
+                        require(size == RHYTHM_ROM_BYTES) { "YM2608 rhythm ROM must be exactly 8 KiB" }
                     }
                 }
                 Files.move(partial.toPath(), rhythmRomFile().toPath(),
                     StandardCopyOption.REPLACE_EXISTING)
-                if (restartNeeded) "Rhythm ROM imported. Restart the game to apply."
-                else "Rhythm ROM imported."
+                if (restartNeeded) "YM2608 rhythm ROM imported. Restart the game to apply."
+                else "YM2608 rhythm ROM imported."
             } catch (error: Exception) {
-                "Rhythm ROM import failed: ${error.message ?: "Unknown error"}"
+                "YM2608 rhythm ROM import failed: ${error.message ?: "Unknown error"}"
             } finally { partial.delete() }
             runOnUiThread {
                 rhythmBusy = false
-                firstRunSetup.setBusy(null)
                 firstRunSetup.refreshFirmware()
-                if (menuOpen) menuStatus.text = result
+                pages.refresh()
                 toast(result)
             }
         }.start()
@@ -2305,8 +2188,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
         if (preparingFont) return
         val generation = ++startGeneration
         preparingFont = true
-        applyPauseState()
-        toast("Preparing PC-98 font")
+        showProgress("Preparing PC-98 font")
         Thread {
             val result = try {
                 val font = prepareFont()
@@ -2336,10 +2218,9 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
     private fun dispatchGuestTouch(event: MotionEvent) = super.dispatchTouchEvent(event)
 
     override fun dispatchTouchEvent(event: MotionEvent): Boolean {
-        if (!::firstRunSetup.isInitialized || firstRunSetup.isOpen ||
-            !::onScreenControls.isInitialized || onScreenControls.isOpen ||
-            !::controllerEditor.isInitialized || controllerEditor.isOpen ||
-            !::sessionFlow.isInitialized || !::keyboardPanel.isInitialized || libraryVisible)
+        // Edge gestures work over the game and its flyout, not over pages above the flyout.
+        if (!::firstRunSetup.isInitialized || !::sessionFlow.isInitialized || !::keyboardPanel.isInitialized ||
+            libraryVisible || (pages.isActive && pages.top?.isFlyout != true))
             return super.dispatchTouchEvent(event)
         return when (edgeSwipes.handle(event, root.width, menuOpen,
             canOpenMenu = true,

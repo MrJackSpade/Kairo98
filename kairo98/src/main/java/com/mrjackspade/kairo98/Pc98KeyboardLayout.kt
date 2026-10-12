@@ -10,7 +10,7 @@ internal object Pc98KeyboardLayout {
         brand = "KAIRO98",
         pages = listOf(
             GuestKeyboardPage("ABC", alphabetRows()),
-            GuestKeyboardPage("?123", symbolRows()),
+            GuestKeyboardPage("?123", symbolRows(), pickerLabel = "Symbols"),
             GuestKeyboardPage("PC-98", pc98Rows())
         ),
         modifiers = setOf(0x70, 0x7d, 0x71, 0x72, 0x73, 0x74),
