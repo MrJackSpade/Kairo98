@@ -34,7 +34,12 @@ def inspect(path: pathlib.Path, bundle: bool, allow_art: bool = False) -> dict[s
                 f"Bundled game artwork in {path}"
             )
         native = {name for name in files if name.startswith(prefix + "lib/")}
-        assert native == {prefix + "lib/arm64-v8a/libkairo98.so"}, (
+        expected_native = {
+            prefix + "lib/arm64-v8a/libkairo98.so",
+            prefix + "lib/arm64-v8a/liblibrashader_capi.so",
+            prefix + "lib/arm64-v8a/libc++_shared.so",
+        }
+        assert native == expected_native, (
             f"Unexpected native libraries in {path}: {native}"
         )
         for asset in REQUIRED:
