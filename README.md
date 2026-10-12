@@ -28,6 +28,8 @@ To remove a source file from device storage, open its **Game settings** and choo
 
 Menu › Manage library can download missing artwork for games it recognizes. The free GitHub and paid Google Play editions have the same features and behavior.
 
+Save states are kept in private app storage. To keep them in a folder of your choice, choose Menu › Configurations › Save folder › Custom folder. Changing the folder moves your save states there; if a slot is saved in both places, you choose which copy to keep.
+
 ## External frontends
 
 Use the [external frontend setup guide](docs/frontends.md) to launch Kairo98 games from other apps:

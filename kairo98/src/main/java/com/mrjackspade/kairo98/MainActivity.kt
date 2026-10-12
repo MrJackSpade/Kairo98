@@ -8,6 +8,9 @@ import com.mrjackspade.kairo.frontend.RgDsDisplayRouter
 import com.mrjackspade.kairo.frontend.GuestKeyboardPanel
 import com.mrjackspade.kairo.frontend.StateSlotCoordinator
 import com.mrjackspade.kairo.frontend.StateSlotStore
+import com.mrjackspade.kairo.frontend.AppSaveLocation
+import com.mrjackspade.kairo.frontend.SaveFolderSettings
+import com.mrjackspade.kairo.frontend.SaveLocation
 import com.mrjackspade.kairo.frontend.GraphicsOptions
 import com.mrjackspade.kairo.frontend.ShaderOptions
 import com.mrjackspade.kairo.frontend.GameDeletionFlow
@@ -181,6 +184,11 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
     }
 
     private val preferences by lazy { getSharedPreferences("kairo98", MODE_PRIVATE) }
+    private val saveFolder by lazy {
+        SaveFolderSettings(this, pages, preferences, AppSaveLocation(File(filesDir, "states")), FolderStateSlots.UNITS,
+            ::saveTitle, { "Slot ${it.removePrefix("slot")}" },
+            { if (currentDisk != null) "Return to the library to change the save folder." else null })
+    }
     private val graphics by lazy {
         GraphicsOptions(this, preferences) { updateViewport(); refreshSettingValues() }
     }
@@ -412,11 +420,14 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
     private val stateFlow by lazy {
         StateSlotCoordinator(this, pages, handler,
             { currentEntry?.contentId?.takeIf { !libraryVisible } }, { currentTitle },
-            { StateSlotStore(File(filesDir, "states"), it, "state.np2") },
+            { id ->
+                saveFolder.folder?.let { FolderStateSlots(it, id, "state.np2", File(cacheDir, "state-staging")) }
+                    ?: StateSlotStore(saveFolder.app.root, id, "state.np2")
+            },
             { (if (::secondaryKeyboard.isInitialized) secondaryKeyboard.activeGameSurface else null)
                 ?: screen },
-            { _, scratch -> nativeSaveState(scratch.absolutePath) },
-            { nativeLoadState(it.directory.absolutePath) }, ::stateError, ::toast,
+            { scratch -> nativeSaveState(scratch.absolutePath) },
+            { directory -> nativeLoadState(directory.absolutePath) }, ::stateError, ::toast,
             {
                 releaseInputs()
                 inputModeDecider.reset()
@@ -701,8 +712,19 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
             pages.push(controllerPages.controlsPage(currentEntry?.takeIf { !libraryVisible && it.contentId != null }))
         },
         SettingsRow.nav("f-machine", "Machine") { pages.push(machinePage()) },
+        SettingsRow.nav("f-configurations", "Configurations") { pages.push(configurationsPage()) },
         SettingsRow.switch("f-sound", "Sound", { !muted }) { on -> if (on == muted) toggleMute() },
         SettingsRow.nav("f-about", "About") { pages.push(aboutPage()) })
+
+    /** Configurations: where Kairo98 keeps the user's files, for all games. */
+    private fun configurationsPage() = GroupsPage("Configurations", { GameSource.ALL_GAMES }, {
+        listOf(RowGroup("SAVE STATES", listOf(saveFolder.row())))
+    })
+
+    /** A save folder's game name, as a library title when the game is still in the library. */
+    private fun saveTitle(game: String): String = libraryEntries.firstOrNull {
+        it.contentId?.let(SaveLocation::gameName) == game
+    }?.let { romLibrary.catalog.resolve(it.contentId!!, it.displayName).title } ?: game
 
     /** The game flyout: Resume and Keep paused, the game's own pages, settings, then leaving. */
     private fun gameFlyout() = FlyoutModel("KAIRO98", { currentTitle ?: "No disk selected" },
@@ -889,6 +911,10 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
     private fun launchEntry(entry: LibraryEntry, fromFrontend: Boolean = false) {
         commandCancelled.set(true)
         releaseInputs()
+        if (saveFolder.busy) {
+            toast("Wait for the saves to finish moving.")
+            return
+        }
         if (!entry.playable) {
             toast(entry.error ?: "Refresh this entry before playing")
             return
@@ -1928,6 +1954,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
         if (libraryMenu.handleActivityResult(requestCode, resultCode, data)) return
         if (artwork.handleActivityResult(requestCode, resultCode, data)) return
         if (libraryFlow.handleActivityResult(requestCode, resultCode, data)) return
+        if (saveFolder.handleActivityResult(requestCode, resultCode, data)) return
         if (requestCode == BIOS_REQUEST) {
             if (resultCode == RESULT_OK && data?.data != null) importBiosRom(data.data!!)
             return
