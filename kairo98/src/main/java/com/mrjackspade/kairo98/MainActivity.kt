@@ -2,6 +2,7 @@ package com.mrjackspade.kairo98
 
 import com.mrjackspade.kairo.frontend.SecondaryDisplayCoordinator
 import com.mrjackspade.kairo.frontend.EdgeSwipeNavigation
+import com.mrjackspade.kairo.frontend.ImmersiveWindow
 import com.mrjackspade.kairo.frontend.RgDsDisplayRouter
 import com.mrjackspade.kairo.frontend.GuestKeyboardPanel
 import com.mrjackspade.kairo.frontend.StateSlotCoordinator
@@ -66,6 +67,7 @@ import android.app.Activity
 import android.app.ActivityOptions
 import android.app.AlertDialog
 import android.content.Intent
+import android.content.pm.ActivityInfo
 import android.content.res.Configuration
 import android.graphics.Color
 import android.graphics.drawable.ColorDrawable
@@ -388,6 +390,8 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
     private var clock = 25
     private var exiting = false
     private var relocating = false
+    /** Configuration whose density and font settings sized the views. */
+    private lateinit var builtConfiguration: Configuration
     private val edgeSwipes by lazy { EdgeSwipeNavigation(resources.displayMetrics.density) }
     private val inputModeDecider = InputModeDecider()
     private var globalInputMode = InputModeDecider.Mode.AUTO
@@ -494,24 +498,8 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
         controllerFlow.initialize()
         controllerDevices.register(handler)
         window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
-        window.addFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN)
-        window.addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS)
-        window.decorView.setBackgroundColor(Color.BLACK)
-        window.statusBarColor = Color.BLACK
-        window.navigationBarColor = Color.BLACK
-        if (Build.VERSION.SDK_INT >= 29) {
-            window.isStatusBarContrastEnforced = false
-            window.isNavigationBarContrastEnforced = false
-        }
-        @Suppress("DEPRECATION")
-        window.decorView.systemUiVisibility =
-            View.SYSTEM_UI_FLAG_FULLSCREEN or View.SYSTEM_UI_FLAG_HIDE_NAVIGATION or
-            View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY or View.SYSTEM_UI_FLAG_LAYOUT_STABLE or
-            View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN or View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
-        if (Build.VERSION.SDK_INT >= 30) {
-            window.insetsController?.hide(WindowInsets.Type.statusBars() or
-                WindowInsets.Type.navigationBars())
-        }
+        ImmersiveWindow.apply(this)
+        builtConfiguration = Configuration(resources.configuration)
         buildUi()
         secondaryKeyboard = SecondaryDisplayCoordinator(this, inputRouter, mouseRouter,
             Pc98KeyboardLayout.value, "Kairo98",
@@ -1022,6 +1010,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
                         scheduleDiskSwaps(game.diskSwaps, result.swapSources)
                     }
                     applyPauseState()
+                    rebuildIfRescaled()
                 }
             }
         }.start()
@@ -1064,6 +1053,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
                 sessionFlow.reset()
                 preparingFont = false
                 done()
+                rebuildIfRescaled()
             }
         }.apply { name = "Kairo98-end-session"; start() }
     }
@@ -2004,9 +1994,21 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
 
     override fun onConfigurationChanged(newConfig: Configuration) {
         super.onConfigurationChanged(newConfig)
-        if (relocating) return
+        if (relocating || rebuildIfRescaled()) return
+        ImmersiveWindow.apply(this)
         graphics.load()
         root.post { updateViewport() }
+    }
+
+    /**
+     * Views take pixel and text sizes from density and font settings when they are built.
+     * Rebuild them for new settings once no machine is running or starting.
+     */
+    private fun rebuildIfRescaled(): Boolean {
+        if (exiting || isFinishing || currentDisk != null || preparingFont ||
+            (builtConfiguration.diff(resources.configuration) and RESCALE_CHANGES) == 0) return false
+        recreate()
+        return true
     }
 
     override fun onWindowFocusChanged(hasFocus: Boolean) {
@@ -2129,6 +2131,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
                 }
                 applyPauseState()
                 toast(result)
+                rebuildIfRescaled()
             }
         }.start()
     }
@@ -2450,6 +2453,8 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
         private const val RHYTHM_REQUEST = 104
         private const val BIOS_ROM_BYTES = 0x18000L
         private const val RHYTHM_ROM_BYTES = 0x2000L
+        private const val RESCALE_CHANGES = ActivityInfo.CONFIG_DENSITY or
+            ActivityInfo.CONFIG_FONT_SCALE or ActivityInfo.CONFIG_FONT_WEIGHT_ADJUSTMENT
         init { System.loadLibrary("kairo98") }
     }
 }
