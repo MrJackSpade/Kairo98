@@ -3,6 +3,7 @@ package com.mrjackspade.kairo98
 import com.mrjackspade.kairo.frontend.SecondaryDisplayCoordinator
 import com.mrjackspade.kairo.frontend.EdgeSwipeNavigation
 import com.mrjackspade.kairo.frontend.ImmersiveWindow
+import com.mrjackspade.kairo.frontend.ViewScale
 import com.mrjackspade.kairo.frontend.RgDsDisplayRouter
 import com.mrjackspade.kairo.frontend.GuestKeyboardPanel
 import com.mrjackspade.kairo.frontend.StateSlotCoordinator
@@ -67,7 +68,6 @@ import android.app.Activity
 import android.app.ActivityOptions
 import android.app.AlertDialog
 import android.content.Intent
-import android.content.pm.ActivityInfo
 import android.content.res.Configuration
 import android.graphics.Color
 import android.graphics.drawable.ColorDrawable
@@ -390,8 +390,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
     private var clock = 25
     private var exiting = false
     private var relocating = false
-    /** Configuration whose density and font settings sized the views. */
-    private lateinit var builtConfiguration: Configuration
+    private lateinit var viewScale: ViewScale
     private val edgeSwipes by lazy { EdgeSwipeNavigation(resources.displayMetrics.density) }
     private val inputModeDecider = InputModeDecider()
     private var globalInputMode = InputModeDecider.Mode.AUTO
@@ -499,7 +498,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
         controllerDevices.register(handler)
         window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
         ImmersiveWindow.apply(this)
-        builtConfiguration = Configuration(resources.configuration)
+        viewScale = ViewScale(this)
         buildUi()
         secondaryKeyboard = SecondaryDisplayCoordinator(this, inputRouter, mouseRouter,
             Pc98KeyboardLayout.value, "Kairo98",
@@ -2000,13 +1999,9 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
         root.post { updateViewport() }
     }
 
-    /**
-     * Views take pixel and text sizes from density and font settings when they are built.
-     * Rebuild them for new settings once no machine is running or starting.
-     */
+    /** Rebuilds views sized for earlier density or font settings once no machine is running or starting. */
     private fun rebuildIfRescaled(): Boolean {
-        if (exiting || isFinishing || currentDisk != null || preparingFont ||
-            (builtConfiguration.diff(resources.configuration) and RESCALE_CHANGES) == 0) return false
+        if (exiting || isFinishing || currentDisk != null || preparingFont || !viewScale.changed) return false
         recreate()
         return true
     }
@@ -2453,8 +2448,6 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
         private const val RHYTHM_REQUEST = 104
         private const val BIOS_ROM_BYTES = 0x18000L
         private const val RHYTHM_ROM_BYTES = 0x2000L
-        private const val RESCALE_CHANGES = ActivityInfo.CONFIG_DENSITY or
-            ActivityInfo.CONFIG_FONT_SCALE or ActivityInfo.CONFIG_FONT_WEIGHT_ADJUSTMENT
         init { System.loadLibrary("kairo98") }
     }
 }
