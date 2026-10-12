@@ -1009,7 +1009,6 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
                         scheduleDiskSwaps(game.diskSwaps, result.swapSources)
                     }
                     applyPauseState()
-                    rebuildIfRescaled()
                 }
             }
         }.start()
