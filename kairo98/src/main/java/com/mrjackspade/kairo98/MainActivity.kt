@@ -737,8 +737,8 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
     private fun settingsEntries() = listOf(
         SettingsEntry("Graphics", graphics::settingsLabel,
             { graphics.show(listOf(shaderOptions.entry())) }),
-        SettingsEntry("Touch input", ::touchInputLabel) { showInputMode() },
-        SettingsEntry("Machine", { "${if (clock == 25) "2.5" else "2"} MHz · BIOS ${if (biosFile().isFile) "imported" else "none"}" }) { showMachine() },
+        SettingsEntry("Touch input", { "" }) { showInputMode() },
+        SettingsEntry("Machine", { "" }) { showMachine() },
         SettingsEntry("Controller", { "Gamepad and on-screen controls" }) { showControllerScope() },
         SettingsEntry.sound({ muted }, ::toggleMute),
         SettingsEntry("About", { "Version, shortcuts, and licenses" }) { showAbout() })
@@ -1815,18 +1815,6 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
     }
 
     private fun directTapActive(): Boolean = touchSelection().selection.directTouch
-
-    private fun touchInputLabel(): String {
-        val game = currentGame.takeIf { !libraryVisible }
-        val selection = touchSelection(game).selection
-        val modeLabel = when (selection.mode) {
-            InputModeDecider.Mode.AUTO -> "Auto"
-            InputModeDecider.Mode.KEYBOARD -> "Keyboard"
-            InputModeDecider.Mode.MOUSE -> "Mouse"
-        }
-        return "$modeLabel · ${if (selection.directTouch) "direct tap" else "touchpad"}" +
-            if (game != null && game.overriddenFields.contains("input")) " · this game" else ""
-    }
 
     private fun showInputModeChoices(entry: LibraryEntry?) {
         touchSettingsCoordinator.builder(entry)?.showStyled()
