@@ -50,6 +50,7 @@ import com.mrjackspade.kairo.frontend.ExternalGameIntent
 import com.mrjackspade.kairo.frontend.ExternalGameDispatcher
 import com.mrjackspade.kairo.frontend.SessionFlow
 import com.mrjackspade.kairo.frontend.SessionNavigationCoordinator
+import com.mrjackspade.kairo.frontend.GameOrientation
 import com.mrjackspade.kairo.frontend.SessionNavigationState
 import com.mrjackspade.kairo.frontend.FrontendBackCoordinator
 import com.mrjackspade.kairo.frontend.LibraryStrings
@@ -306,6 +307,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
     private lateinit var controllerPages: ControllerPages<LibraryEntry>
     private val sessionState = SessionNavigationState()
     private val libraryVisible: Boolean get() = sessionState.libraryVisible
+    private val gameOrientation by lazy { GameOrientation(this, preferences) }
     private val sessionNavigation: SessionNavigationCoordinator by lazy {
         SessionNavigationCoordinator(sessionState, libraryScreen,
             { if (::sessionFlow.isInitialized) sessionFlow else null },
@@ -318,7 +320,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
                 libraryScreen.showEntries(libraryEntries)
                 libraryScreen.showFolder(romTree?.let(::folderName))
                 libraryScreen.showStatus("${libraryEntries.count { it.playable }} games ready")
-            }, ::applyPauseState, { screen.requestFocus() }, ::endSessionForLibrary)
+            }, ::applyPauseState, { screen.requestFocus() }, ::endSessionForLibrary, gameOrientation)
     }
     private val backCoordinator: FrontendBackCoordinator by lazy {
         FrontendBackCoordinator(this, { if (::pages.isInitialized) pages else null }, libraryScreen,
@@ -719,9 +721,10 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
         SettingsRow.switch("f-sound", "Sound", { !muted }) { on -> if (on == muted) toggleMute() },
         SettingsRow.nav("f-about", "About") { pages.push(aboutPage()) })
 
-    /** Configurations: where Kairo98 keeps the user's files, for all games. */
+    /** Configurations: settings for all games, such as screen orientation and where saves go. */
     private fun configurationsPage() = GroupsPage("Configurations", { GameSource.ALL_GAMES }, {
-        listOf(RowGroup("SAVE STATES", listOf(saveFolder.row())))
+        listOf(RowGroup("DISPLAY", listOf(gameOrientation.row())),
+            RowGroup("SAVE STATES", listOf(saveFolder.row())))
     })
 
     /** A save folder's game name, as a library title when the game is still in the library. */
