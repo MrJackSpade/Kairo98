@@ -15,3 +15,8 @@ for role in AUTHOR COMMITTER; do
             ;;
     esac
 done
+
+# The identities above are not the only credit GitHub shows: it also lists every
+# Co-authored-by trailer. A -m or -F message is already in place here, and unlike
+# commit-msg this hook is not skipped by --no-verify.
+"$(dirname "$0")/check-commit-message" "$1" 'Commit message'
