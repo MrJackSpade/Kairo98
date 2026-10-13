@@ -2,6 +2,8 @@
 
 Kairo98 is an Android PC-98 emulator for phones and handhelds. It combines a game library, controller and touch mapping, an on-screen PC-98 keyboard, and per-game settings with a pinned Neko Project 21/W emulator core and [ymfm](https://github.com/aaronsgiles/ymfm) sound emulation. It is an independent project, not an official release of either core.
 
+[![Join the Kairo Discord](https://img.shields.io/badge/Discord-Join%20the%20server-5865F2?logo=discord&logoColor=white)](https://discord.gg/ZkYQ3bPTTq)
+
 [![KairoDos: the companion DOS emulator for Android](docs/kairodos-banner.svg)](https://github.com/MrJackSpade/KairoDos)
 
 [KairoDos](https://github.com/MrJackSpade/KairoDos) is the companion Android DOS emulator. Both apps use the [Kairo shared frontend](https://github.com/MrJackSpade/Kairo) for their library and controls. The [Kairo98 translation project](https://github.com/MrJackSpade/Kairo98-Patches) provides separate English patch work for PC-98 games.
