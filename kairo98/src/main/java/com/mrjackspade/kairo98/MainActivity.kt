@@ -59,7 +59,6 @@ import com.mrjackspade.kairo.frontend.ChoicePage
 import com.mrjackspade.kairo.frontend.SetupPage
 import com.mrjackspade.kairo.frontend.FooterButton
 import com.mrjackspade.kairo.frontend.FlyoutModel
-import com.mrjackspade.kairo.frontend.FlyoutButton
 import com.mrjackspade.kairo.frontend.SettingsRow
 import com.mrjackspade.kairo.frontend.RowGroup
 import com.mrjackspade.kairo.frontend.ChoiceSpec
@@ -726,20 +725,9 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
         it.contentId?.let(SaveLocation::gameName) == game
     }?.let { romLibrary.catalog.resolve(it.contentId!!, it.displayName).title } ?: game
 
-    /** The game flyout: Resume and Keep paused, the game's own pages, settings, then leaving. */
+    /** The game flyout: the game's own pages, settings, then leaving. */
     private fun gameFlyout() = FlyoutModel("KAIRO98", { currentTitle ?: "No disk selected" },
-        { if (preparingFont) "Preparing PC-98 font" else menuStatusText() },
-        buttons = listOf(
-            FlyoutButton("f-resume", "Resume", R.drawable.ic_play, ButtonTone.PRIMARY) {
-                userPaused = false
-                closeMenu()
-            },
-            FlyoutButton("f-pause", "Keep paused", com.mrjackspade.kairo.frontend.R.drawable.ic_pause,
-                ButtonTone.SECONDARY) {
-                userPaused = true
-                closeMenu()
-                toast("Paused")
-            })) {
+        { if (preparingFont) "Preparing PC-98 font" else menuStatusText() }) {
         listOf(
             RowGroup("GAME", stateFlow.rows() + listOf(
                 SettingsRow.nav("f-disks", "Disks") { pages.push(disksPage()) },
@@ -760,7 +748,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
 
     /**
      * Machine state, media, and sound for the flyout header. The menu itself pauses the
-     * machine, so it reads Paused only after Keep paused.
+     * machine, so it reads Paused only when the player paused the game.
      */
     private fun menuStatusText(): String {
         val raw = nativeStatus()
