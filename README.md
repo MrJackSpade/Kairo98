@@ -47,6 +47,6 @@ Import your own BIOS, font bitmap, or YM2608 rhythm ROM from **Machine** setting
 
 ## Project information
 
-Report game problems in [Issues](https://github.com/MrJackSpade/Kairo98/issues), including the title, disk format, and what happened. See [catalog behavior](docs/game-catalog.md), [architecture](docs/architecture.md), [source provenance](docs/source-import.md), and [licensing](docs/licensing.md).
+Report game problems in [Issues](https://github.com/MrJackSpade/Kairo98/issues), including the title, disk format, and what happened. See [catalog behavior](docs/game-catalog.md), [source provenance](docs/source-import.md), and [licensing](docs/licensing.md).
 
 First-party code is [GPL-2.0-or-later](LICENSE.md). Clone with `git clone --recurse-submodules` to obtain the pinned shared frontend source.

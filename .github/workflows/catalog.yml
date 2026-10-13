@@ -13,8 +13,8 @@ on:
       - 'tools/import_art.py'
       - 'tools/test_import_art.py'
       - 'tools/make_synthetic_catalog.py'
-      - 'docs/fixtures/catalog/**'
-      - 'docs/fixtures/art-source/**'
+      - 'tools/fixtures/catalog/**'
+      - 'tools/fixtures/art-source/**'
       - 'kairo98/src/withImages/assets/art/**'
       - 'kairo98/src/main/assets/catalog/**'
       - 'catalog/source-v1.json'
@@ -42,8 +42,8 @@ on:
       - 'tools/import_art.py'
       - 'tools/test_import_art.py'
       - 'tools/make_synthetic_catalog.py'
-      - 'docs/fixtures/catalog/**'
-      - 'docs/fixtures/art-source/**'
+      - 'tools/fixtures/catalog/**'
+      - 'tools/fixtures/art-source/**'
       - 'kairo98/src/withImages/assets/art/**'
       - 'kairo98/src/main/assets/catalog/**'
       - 'catalog/source-v1.json'
@@ -78,16 +78,16 @@ jobs:
       - run: python tools/build_catalog.py catalog/source-v1.json /tmp/reviewed-catalog
       - run: diff -r /tmp/reviewed-catalog/shards kairo98/src/main/assets/catalog/shards
       - run: cmp /tmp/reviewed-catalog/manifest-v1.json kairo98/src/main/assets/catalog/manifest-v1.json
-      - run: python tools/build_catalog.py docs/fixtures/catalog/source-v1.json /tmp/kairo98-catalog
-      - run: python tools/build_catalog.py docs/fixtures/catalog/source-v1.json /tmp/kairo98-catalog-2
+      - run: python tools/build_catalog.py tools/fixtures/catalog/source-v1.json /tmp/kairo98-catalog
+      - run: python tools/build_catalog.py tools/fixtures/catalog/source-v1.json /tmp/kairo98-catalog-2
       - run: diff -r /tmp/kairo98-catalog /tmp/kairo98-catalog-2
       - run: python tools/make_synthetic_catalog.py /tmp/kairo98-synthetic-source.json --games 10000
       - run: python tools/build_catalog.py /tmp/kairo98-synthetic-source.json /tmp/kairo98-large-catalog
       - run: du -sh /tmp/kairo98-large-catalog
-      - run: python tools/build_catalog.py docs/fixtures/catalog/source-v1.json /tmp/kairo98-assets/catalog
-      - run: python tools/import_art.py docs/fixtures/art-source/source-v1.json /tmp/kairo98-assets
-      - run: python tools/build_catalog.py docs/fixtures/catalog/source-v1.json /tmp/kairo98-assets-2/catalog
-      - run: python tools/import_art.py docs/fixtures/art-source/source-v1.json /tmp/kairo98-assets-2
+      - run: python tools/build_catalog.py tools/fixtures/catalog/source-v1.json /tmp/kairo98-assets/catalog
+      - run: python tools/import_art.py tools/fixtures/art-source/source-v1.json /tmp/kairo98-assets
+      - run: python tools/build_catalog.py tools/fixtures/catalog/source-v1.json /tmp/kairo98-assets-2/catalog
+      - run: python tools/import_art.py tools/fixtures/art-source/source-v1.json /tmp/kairo98-assets-2
       - run: diff -r /tmp/kairo98-assets /tmp/kairo98-assets-2
       - uses: ./shared/.github/actions/setup-android
       - run: ./gradlew --no-daemon :kairo98:compileWithImagesDebugKotlin :kairo98:compileWithoutImagesDebugKotlin

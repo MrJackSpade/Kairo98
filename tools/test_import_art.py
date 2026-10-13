@@ -18,15 +18,15 @@ class ArtImportTests(unittest.TestCase):
         self.assets = self.root / "assets"
         catalog = self.assets / "catalog"
         (catalog / "shards").mkdir(parents=True)
-        source = json.loads(Path("docs/fixtures/catalog/source-v1.json").read_text(encoding="utf-8"))
+        source = json.loads(Path("tools/fixtures/catalog/source-v1.json").read_text(encoding="utf-8"))
         manifest, shards = build(source)
         (catalog / "manifest-v1.json").write_bytes(compact(manifest))
         for prefix, games in shards.items():
             (catalog / "shards" / f"{prefix}.json").write_bytes(
                 compact({"schemaVersion": 1, "games": games}))
-        self.art_source = json.loads(Path("docs/fixtures/art-source/source-v1.json").read_text(encoding="utf-8"))
+        self.art_source = json.loads(Path("tools/fixtures/art-source/source-v1.json").read_text(encoding="utf-8"))
         for item in self.art_source["assets"]:
-            shutil.copy2(Path("docs/fixtures/art-source") / item["file"], self.root / item["file"])
+            shutil.copy2(Path("tools/fixtures/art-source") / item["file"], self.root / item["file"])
         self.manifest_path = self.root / "art-source.json"
         self.save_manifest()
 

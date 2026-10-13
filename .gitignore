@@ -42,3 +42,18 @@ FONT.BMP
 Thumbs.db
 __pycache__/
 *.pyc
+
+# Agent instructions and developer notes stay local; docs/ holds only user-facing pages.
+/AGENTS.md
+/docs/*
+!/docs/.nojekyll
+!/docs/privacy-policy.html
+!/docs/releases/
+!/docs/screenshots/
+!/docs/kairodos-banner.svg
+!/docs/frontends.md
+!/docs/game-catalog.md
+!/docs/licensing.md
+!/docs/source-import.md
+!/docs/art-rights.md
+!/docs/startup-choices.md

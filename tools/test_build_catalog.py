@@ -12,7 +12,7 @@ from make_synthetic_catalog import synthetic_source
 
 class CatalogBuildTests(unittest.TestCase):
     def setUp(self):
-        self.source = json.loads(Path("docs/fixtures/catalog/source-v1.json").read_text(encoding="utf-8"))
+        self.source = json.loads(Path("tools/fixtures/catalog/source-v1.json").read_text(encoding="utf-8"))
 
     def test_fixture_and_stable_output(self):
         first = build(self.source)
