@@ -972,6 +972,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
         if (::pages.isInitialized) pages.closeAll()
         preparingFont = true
         showProgress("Preparing ${entry.displayName}\u2026")
+        gameOrientation.launching()
         val fontTree = if (entry in externalEntries) null else romTree
         Thread {
             val result = try {
@@ -1045,9 +1046,10 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
                         userPaused = false
                         sessionFlow.reset()
                         sessionNavigation.enterGame(notify = false)
+                        gameOrientation.launched()
                         scheduleStartupQueue(game, choices)
                         scheduleDiskSwaps(game.diskSwaps, result.swapSources)
-                    }
+                    } else gameOrientation.launchFailed()
                     applyPauseState()
                 }
             }
@@ -1914,8 +1916,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
         ImmersiveWindow.apply(this)
         graphics.load()
         root.post { updateViewport() }
-        // Rows such as Game orientation show state that depends on the new configuration.
-        if (::pages.isInitialized) pages.refresh()
+        gameOrientation.configurationChanged()
     }
 
     /** Rebuilds views sized for earlier density or font settings once no machine is running or starting. */
@@ -1993,6 +1994,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
         sessionFlow.close()
         preparingFont = true
         showProgress("Preparing $name\u2026")
+        gameOrientation.launching()
         Thread {
             val disk = File(filesDir, "boot${DiskFormat.suffix(name)}")
             val partial = File(filesDir, "${disk.name}.part")
@@ -2043,7 +2045,8 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
                     inputModeDecider.reset()
                     gamepadMapper.bindings = controllerFlow.global()
                     sessionNavigation.enterGame(notify = false)
-                }
+                    gameOrientation.launched()
+                } else gameOrientation.launchFailed()
                 applyPauseState()
                 toast(result)
                 rebuildIfRescaled()
