@@ -755,7 +755,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
                 sessionNavigation.returnRow("Kairo98"),
                 SettingsRow.action("f-exit", "Exit Kairo98",
                     confirm = Confirm("The machine stops. Progress since your last save is lost.", "Exit",
-                        run = ::exitApp)))))
+                        title = "Exit Kairo98?", run = ::exitApp)))))
     }
 
     /**
