@@ -27,5 +27,6 @@
 - Edit catalog inputs under `catalog/research/` and `catalog/startup-profiles-v1.json`. Do not hand-edit `catalog/source-v1.json`, `catalog/online-v1.json`, or `kairo98/src/main/assets/catalog/`.
 - Regenerate catalog outputs only for an intentional catalog input change, and review the resulting diff before committing.
 - Keep this checkout's versioned pre-commit hook active with `git config core.hooksPath .githooks`. It regenerates the catalog from staged inputs in a temporary directory and rejects mismatched generated files before a direct commit to `main`.
+- Keep the versioned `prepare-commit-msg` identity guard active too. Commits in this repository must have author and committer `MrJackSpade <loffredo.ap@gmail.com>`; check Git's effective identity before committing, including environment overrides. Do not create commits through tools that assign a Codex author or committer.
 
 - Every tagged release must publish both signed APK variants (with and without bundled images) plus the Play AAB. Do not drop the image-inclusive output when changing release signing or workflows.
