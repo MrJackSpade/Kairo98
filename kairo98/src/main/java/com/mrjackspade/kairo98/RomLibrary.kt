@@ -283,8 +283,7 @@ class RomLibrary(private val context: Context) {
                     }
                 } ?: error("Unable to open disk image")
             } else {
-                val archive = cachedZip(source, false, cancelled)
-                ZipFile(archive).use { zip ->
+                ZipFile(archive(entry, cancelled)).use { zip ->
                     val image = zip.getEntry(entry.zipEntry) ?: error("Disk image missing from ZIP")
                     require(safeEntryName(image.name) == safeEntryName(entry.zipEntry))
                     require(image.size in 1..imageLimit(image.name) && image.compressedSize > 0 &&
@@ -308,6 +307,13 @@ class RomLibrary(private val context: Context) {
             partial.delete()
             throw error
         }
+    }
+
+    /** The local copy of the ZIP that holds [entry]. */
+    fun archive(entry: LibraryEntry, cancelled: AtomicBoolean): File {
+        require(entry.zipEntry != null) { "${entry.displayName} is not in a ZIP" }
+        return cachedZip(Source(Uri.parse(entry.uri), entry.path, entry.sourceSize, entry.sourceModified),
+            false, cancelled)
     }
 
     private data class Source(val uri: Uri, val path: String, val size: Long, val modified: Long)

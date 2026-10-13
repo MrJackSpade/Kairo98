@@ -45,7 +45,7 @@ Use the [external frontend setup guide](docs/frontends.md) to launch Kairo98 gam
 
 Map a physical controller to PC-98 keys, joystick and mouse input, or app actions. The same per-game layout also works with on-screen controls. Swipe from the right edge for the PC-98 keyboard. Open the game menu with Android Back, a left-edge swipe, or a controller Menu/Mode button when Android delivers it. The menu offers save states, disk changes, game and app settings, restart, and return to the library. A second Android display can show the keyboard or touchpad during play.
 
-Import your own BIOS, font bitmap, or YM2608 rhythm ROM from **Machine** settings if a game needs them.
+Import your own BIOS, font bitmap, or YM2608 rhythm ROM from **Machine** settings if a game needs them. A `FONT.BMP` in a game's ZIP or library folder overrides the imported font for that game; the one nearest the disk image wins.
 
 ## Project information
 

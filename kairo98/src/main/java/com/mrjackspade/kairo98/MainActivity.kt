@@ -357,7 +357,11 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
     private val manualFloppies = arrayOfNulls<File>(2)
     private data class PreparedLaunch(val disk: File, val bootFloppy: LibraryEntry?,
                                       val floppyB: LibraryEntry?,
-                                      val swapSources: Map<String, LibraryEntry>)
+                                      val swapSources: Map<String, LibraryEntry>,
+                                      val gameFont: Boolean)
+    /** The running game uses a FONT.BMP from its own folder instead of the global one. */
+    private var gameFontActive = false
+    private val gameFonts by lazy { GameFontLocator(contentResolver, File(filesDir, "game-font.bmp")) }
     @Volatile private var floppyBusy = false
     private val samplingLock = Any()
     private var samplingUsers = 0
@@ -965,6 +969,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
         if (::pages.isInitialized) pages.closeAll()
         preparingFont = true
         showProgress("Preparing ${entry.displayName}\u2026")
+        val fontTree = if (entry in externalEntries) null else romTree
         Thread {
             val result = try {
                 val sources = libraryEntries + externalEntries
@@ -989,7 +994,9 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
                         runOnUiThread { if (generation == startGeneration) showProgress(message) }
                     }
                 }
-                val font = prepareFont()
+                val gameFont = gameFonts.prepare(primary, fontTree,
+                    primary.zipEntry?.let { romLibrary.archive(primary, cancelled) }, cancelled)
+                val font = gameFont?.absolutePath ?: prepareFont()
                 if (generation != startGeneration) null
                 else {
                     nativeStop()
@@ -1000,7 +1007,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
                             primary.isFloppy,
                             bootFloppy?.absolutePath, secondFloppy?.absolutePath)) {
                         awaitMachineReady()?.let(::error)
-                        PreparedLaunch(disk, media?.bootFloppy, floppyB, swapSources)
+                        PreparedLaunch(disk, media?.bootFloppy, floppyB, swapSources, gameFont != null)
                     }
                     else error("Unable to start machine")
                 }
@@ -1021,6 +1028,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
                         sessionFromFrontend = fromFrontend
                         preferences.edit().putString("last_played_entry", entry.id).apply()
                         currentDisk = result.disk
+                        gameFontActive = result.gameFont
                         currentIsFloppy = result.bootFloppy == null && entry.isFloppy
                         mountedFloppies[0] = result.bootFloppy?.displayName
                             ?: if (entry.isFloppy) entry.displayName else null
@@ -1064,6 +1072,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
             nativeStop()
             runOnUiThread {
                 currentDisk = null
+                gameFontActive = false
                 currentEntry = null
                 currentGame = null
                 currentTitle = null
@@ -1661,11 +1670,12 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
                 { clock.toString() }, select = { value -> setBaseClock(value.toInt()) }))),
                 "Changing the base clock restarts a running game. Games with their own clock keep it."),
             RowGroup("FIRMWARE", listOf(
-                firmwareRow("bios", "BIOS ROM", { biosFile().isFile }, { biosBusy }, "Installed", "Not installed",
+                firmwareRow("bios", "BIOS ROM", { biosFile().isFile }, { biosBusy }, { "Installed" }, "Not installed",
                     "Remove", ::chooseBiosFile) { removeFirmware(biosFile(), "BIOS ROM") },
-                firmwareRow("font", "Font BMP", { fontBitmapFile().isFile }, { fontBusy }, "Imported", "Built-in",
+                firmwareRow("font", "Font BMP", { gameFontActive || fontBitmapFile().isFile }, { fontBusy },
+                    { if (gameFontActive) "Game folder" else "Imported" }, "Built-in",
                     "Use built-in", ::chooseFontFile) { removeFirmware(fontBitmapFile(), "Font BMP") },
-                firmwareRow("rhythm", "YM2608 rhythm ROM", { rhythmRomFile().isFile }, { rhythmBusy }, "Installed",
+                firmwareRow("rhythm", "YM2608 rhythm ROM", { rhythmRomFile().isFile }, { rhythmBusy }, { "Installed" },
                     "Not installed", "Remove", ::chooseRhythmFile) { removeFirmware(rhythmRomFile(), "YM2608 rhythm ROM") })
                 .map { row -> if (inGame) SettingsRow.action(row.id, row.label, row.value, { ValueTone.SUMMARY },
                     enabled = { false }, disabledReason = reason) else row },
@@ -1675,9 +1685,9 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
 
     /** A firmware file with its state, and a tray to choose, replace, or remove it. */
     private fun firmwareRow(id: String, label: String, installed: () -> Boolean, busy: () -> Boolean,
-                            on: String, off: String, removeLabel: String, choose: () -> Unit,
+                            on: () -> String, off: String, removeLabel: String, choose: () -> Unit,
                             remove: () -> Unit) = SettingsRow.action(id, label,
-        value = { if (busy()) "Importing\u2026" else if (installed()) on else off },
+        value = { if (busy()) "Importing\u2026" else if (installed()) on() else off },
         tone = { if (installed()) ValueTone.CURRENT else ValueTone.SUMMARY },
         busy = busy, enabled = { !busy() }, disabledReason = { "Wait for the current import to finish" },
         tray = {
@@ -2018,6 +2028,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
                     controllerProfiles.configuration.beginSession()
                     currentEntry = null
                     currentDisk = disk
+                    gameFontActive = false
                     currentIsFloppy = DiskFormat.isFloppy(name)
                     mountedFloppies[0] = if (currentIsFloppy) name else null
                     mountedFloppies[1] = null
