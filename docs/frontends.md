@@ -1,5 +1,7 @@
 # External frontend setup for Kairo98
 
+[← Kairo98](../README.md) · [All documentation](../README.md#documentation)
+
 Kairo98 can open a PC-98 disk image or ZIP sent by another Android frontend. You do not need to select a library folder in Kairo98 first. Keep archive extraction off in the frontend; Kairo98 reads disk images inside ZIPs. Choosing **Library** from a frontend-launched game closes Kairo98 and returns to the frontend.
 
 ## Setup guides

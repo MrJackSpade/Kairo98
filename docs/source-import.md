@@ -1,5 +1,7 @@
 ﻿# Source import policy
 
+[← Kairo98](../README.md) · [All documentation](../README.md#documentation)
+
 This repository is independent. Its only Git remote is `origin`, pointing to this project's repository. The first-party Kairo frontend is pinned at `shared/` as a submodule. Do not add an `upstream` remote, fork relationship, other submodule, subtree sync, or automated upstream merge.
 
 ## 21/W snapshot

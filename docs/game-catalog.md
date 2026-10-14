@@ -1,5 +1,19 @@
 # Kairo98 game catalog
 
+[← Kairo98](../README.md) · [All documentation](../README.md#documentation)
+
+**In short:** Kairo98 recognizes your games by the contents of their disks and fills in the title, description, artwork, and launch settings from its catalog. Unrecognized games still appear and can still be played. **Menu › Manage library › Update catalogs** fetches the latest catalog without an app update, and any title or setting you change yourself always wins over the catalog.
+
+The rest of this page describes matching, the catalog format, and how the catalog is generated.
+
+- [Disk identity and formats](#disk-identity-and-formats)
+- [Metadata and overrides](#metadata-and-overrides)
+- [Updating the catalog](#updating-the-catalog)
+- [Reviewed display language](#reviewed-display-language)
+- [Compact artwork references (0.9.5)](#compact-artwork-references-095)
+
+## Disk identity and formats
+
 Kairo98 identifies HDI files with `sha256-hdi-v1:` and supported floppy images with `sha256-fd-v1:`, followed by the lowercase SHA-256 digest of the extracted disk bytes. ZIP compression, member order, and sidecar files do not change a disk's identity. A ZIP with multiple disks produces separate library entries. Hash matches take priority over fallback title matches.
 
 The library reads HDI and supported FDI, D88, NFD, FDD, DCP/DCU, HDM, and XDF floppies. A game can require a boot floppy or disk in drive B. The app checks required media before play and offers manual disk changes during a session. Working copies remain in app-private storage so guest writes do not change the source disk.

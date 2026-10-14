@@ -1,5 +1,7 @@
 # Licensing and third-party credits
 
+[← Kairo98](../README.md) · [All documentation](../README.md#documentation)
+
 The shared frontend bundles two individually reviewed RetroArch presets: Sharp Bilinear and Sharp Bilinear + Scanlines (both public domain). Their pinned source and per-file notices are in [shared/third_party/slang-shaders](../shared/third_party/slang-shaders/README.md). About -> Licenses includes their attribution. Other upstream shaders are not covered by this review.
 
 Kairo98 first-party code is [GPL-2.0-or-later](../LICENSE.md). The pinned [Kairo frontend](https://github.com/MrJackSpade/Kairo) is also GPL-2.0-or-later. The GPL covers first-party source; third-party components retain their own notices.
