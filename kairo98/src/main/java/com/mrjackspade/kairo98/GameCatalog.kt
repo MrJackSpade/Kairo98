@@ -48,22 +48,65 @@ class GameCatalog(private val context: Context) : LibraryCatalog {
         val inputSecondary: String?,
         val requiredBootFloppyId: String?,
         val initialFloppyBId: String?,
-        val launchCommand: String?,
-        val launchCommands: List<String>,
-        val launchScreenHashes: List<Set<Long>>,
-        val startupChoices: List<StartupChoice>,
-        val diskSwaps: List<DiskSwap>,
+        /** Launch data stays as stored until a launch reads it; malformed data fails that launch. */
+        private val launch: JSONObject?,
+        private val launchHashesCurrent: Boolean,
+        private val startupChoiceData: org.json.JSONArray?,
+        private val diskSwapData: org.json.JSONArray?,
         val launchTimeoutMs: Int,
         val overriddenFields: Set<String>,
         val controllerDefaultBindings: String? = null
     ) : LibraryGame {
         override val tags: List<String> get() = if (heart == true) listOf("♥") else emptyList()
+
+        val launchCommands: List<String> by lazy {
+            launch?.optJSONArray("commands")?.let { array -> (0 until array.length()).map(array::getString) }
+                ?: launch?.optString("text")?.takeIf { it.isNotEmpty() }?.let(::listOf) ?: emptyList()
+        }
+        val launchCommand: String? get() = launchCommands.joinToString("; ").takeIf { launchCommands.isNotEmpty() }
+        /** Screen hashes apply only when they were stored with these commands, one group per command. */
+        val launchScreenHashes: List<Set<Long>> by lazy {
+            launch?.optJSONArray("screenHashes")?.takeIf { launchHashesCurrent && it.length() == launchCommands.size }
+                ?.let { groups -> (0 until groups.length()).map { parseHashes(groups.getJSONArray(it)) } }
+                ?: emptyList()
+        }
+        val startupChoices: List<StartupChoice> by lazy {
+            val array = startupChoiceData ?: return@lazy emptyList()
+            (0 until array.length()).map { index ->
+                val item = array.getJSONObject(index)
+                val options = item.getJSONArray("options")
+                StartupChoice(item.getString("id"), item.getString("title"),
+                    parseHashes(item.getJSONArray("screenHashes")),
+                    (0 until options.length()).map { optionIndex ->
+                        val option = options.getJSONObject(optionIndex)
+                        val steps = option.optJSONArray("steps")
+                        val inputs = if (steps == null) listOf(StartupInput(
+                            option.getString("key")[0], option.getBoolean("enter"),
+                            parseHashes(item.getJSONArray("screenHashes"))))
+                        else (0 until steps.length()).map { stepIndex ->
+                            val step = steps.getJSONObject(stepIndex)
+                            StartupInput(step.getString("key")[0], step.getBoolean("enter"),
+                                parseHashes(step.getJSONArray("screenHashes")))
+                        }
+                        StartupOption(option.getString("id"), option.getString("label"), inputs)
+                    })
+            }
+        }
+        val diskSwaps: List<DiskSwap> by lazy {
+            val array = diskSwapData ?: return@lazy emptyList()
+            (0 until array.length()).map { index ->
+                val item = array.getJSONObject(index)
+                DiskSwap(item.getString("id"), item.getInt("drive"),
+                    item.getString("contentId"), parseHashes(item.getJSONArray("screenHashes")),
+                    item.getString("key"), item.getBoolean("enter"))
+            }
+        }
     }
 
     override val installedCatalogs by lazy {
         com.mrjackspade.kairo.frontend.InstalledCatalogs(context, "pc98", { root ->
             requireUpdateFormat(root, false)
-        }) { synchronized(this) { fallbackRecords.clear(); updatedFallbackIds.clear() } }
+        }) { synchronized(this) { fallbackRecords.clear(); updatedFallbackIds.clear(); invalidate() } }
     }
     private val parts = com.mrjackspade.kairo.frontend.CatalogParts(context)
     private val base = readAsset("catalog/base-v1.json")
@@ -72,6 +115,21 @@ class GameCatalog(private val context: Context) : LibraryCatalog {
     private val shardNames = readShardNames()
     private val shardCache = object : android.util.LruCache<String, JSONObject>(8) {}
     private val fallbackRecords = HashMap<String, JSONObject>()
+    // A game's merged record and resolved metadata are reused until a catalog, override or
+    // artwork change; settings pages read them for every row and every focus move.
+    private data class MemoKey(val contentId: String, val fileName: String?, val includeUser: Boolean)
+    private val layeredMemo = HashMap<MemoKey, CatalogFieldLayers.Result>()
+    private val resolvedMemo = HashMap<MemoKey, Game>()
+    private fun invalidate() {
+        layeredMemo.clear()
+        resolvedMemo.clear()
+    }
+
+    /** Only this game's overrides changed. */
+    private fun invalidate(contentId: String) {
+        layeredMemo.keys.removeAll { it.contentId == contentId }
+        resolvedMemo.keys.removeAll { it.contentId == contentId }
+    }
     private val knownFileNames = HashMap<String, String>()
     private val updatedFallbackIds = HashSet<String>()
     private val additionsFile = File(context.filesDir, "user-catalog-v1.json")
@@ -83,9 +141,12 @@ class GameCatalog(private val context: Context) : LibraryCatalog {
     private var update = readUpdate()
     private var additions = readLocal(additionsFile)
     private val overrides = GameMetadataOverrides(overridesFile, MAX_LOCAL_JSON.toInt(),
-        schemaEnvelope = true, validRecord = ::validLocalRecord)
+        schemaEnvelope = true)
 
-    @Synchronized fun reloadAdditions() { additions = readLocal(additionsFile) }
+    @Synchronized fun reloadAdditions() {
+        additions = readLocal(additionsFile)
+        invalidate()
+    }
 
     /** Call from a worker thread. An invalid or interrupted download leaves the current catalog intact. */
     fun downloadUpdate(task: com.mrjackspade.kairo.frontend.CatalogUpdateTask = com.mrjackspade.kairo.frontend.CatalogUpdateTask()): Boolean {
@@ -94,6 +155,7 @@ class GameCatalog(private val context: Context) : LibraryCatalog {
             update = readUpdate()
             fallbackRecords.clear()
             updatedFallbackIds.clear()
+            invalidate()
         }
         return true
     }
@@ -117,7 +179,14 @@ class GameCatalog(private val context: Context) : LibraryCatalog {
 
     private fun layered(contentId: String, fileName: String? = null,
                         includeUser: Boolean = true): CatalogFieldLayers.Result {
-        if (fileName != null && validId(contentId)) knownFileNames[contentId] = fileName
+        if (fileName != null && contentId.isNotEmpty()) knownFileNames[contentId] = fileName
+        return layeredMemo.getOrPut(MemoKey(contentId, fileName ?: knownFileNames[contentId], includeUser)) {
+            layeredUncached(contentId, fileName, includeUser)
+        }
+    }
+
+    private fun layeredUncached(contentId: String, fileName: String?,
+                                includeUser: Boolean): CatalogFieldLayers.Result {
         val baseRecord = base.optJSONObject("games")?.optJSONObject(contentId)
         val shardRecord = shardFor(contentId)?.optJSONObject("games")?.optJSONObject(contentId)
         val updateRecord = update.optJSONObject("games")?.optJSONObject(contentId)
@@ -125,7 +194,7 @@ class GameCatalog(private val context: Context) : LibraryCatalog {
         if (baseRecord == null && shardRecord == null && updateRecord == null && fileName != null) {
             lookupByName(fileName)?.let { (record, fromUpdate) ->
                 fallback = record
-                if (validId(contentId)) {
+                if (contentId.isNotEmpty()) {
                     fallbackRecords[contentId] = record
                     if (fromUpdate) updatedFallbackIds.add(contentId) else updatedFallbackIds.remove(contentId)
                 }
@@ -141,16 +210,8 @@ class GameCatalog(private val context: Context) : LibraryCatalog {
             *installedSources(contentId, fileName ?: knownFileNames[contentId]).toTypedArray(),
             CatalogFieldLayers.Source("User catalog", additions.optJSONObject("games")?.optJSONObject(contentId)),
             CatalogFieldLayers.Source("User override", if (includeUser) overrides.record(contentId) else null)
-        ).map { source -> source.copy(record = runCatching {
-            Pc98ArtworkReferences.record(source.record)
-        }.getOrNull()) }, { path -> path.size == 1 && path[0] in OBJECT_FIELDS },
-            { path, value -> when (path.size) {
-                1 -> validField(path[0], value)
-                2 -> path[1] in (OBJECT_FIELDS[path[0]] ?: emptySet()) &&
-                    validField(path[0], JSONObject().put(path[1], value))
-                else -> false
-            } },
-            { path, record -> path.size == 1 && validField(path[0], record) },
+        ).map { source -> source.copy(record = Pc98ArtworkReferences.record(source.record)) },
+            { path -> path.size == 1 && path[0] in OBJECT_FIELDS },
             { path, record -> if (path == listOf("launch")) when {
                 record.has("text") -> setOf("commands")
                 record.has("commands") -> setOf("text")
@@ -161,11 +222,16 @@ class GameCatalog(private val context: Context) : LibraryCatalog {
     @Synchronized override fun resolve(contentId: String, fileName: String): Game =
         resolve(contentId, fileName, includeUser = true)
 
-    private fun resolve(contentId: String, fileName: String, includeUser: Boolean): Game {
+    private fun resolve(contentId: String, fileName: String, includeUser: Boolean): Game =
+        resolvedMemo.getOrPut(MemoKey(contentId, fileName, includeUser)) {
+            resolveUncached(contentId, fileName, includeUser)
+        }
+
+    private fun resolveUncached(contentId: String, fileName: String, includeUser: Boolean): Game {
         val layers = layered(contentId, fileName, includeUser)
         val merged = layers.record
         val user = if (includeUser) overrides.record(contentId) else null
-        val title = merged.optString("title").takeIf { validTitle(it) }
+        val title = merged.optString("title").takeIf { it.isNotBlank() }
             ?: fileName.substringAfterLast('/').substringAfterLast('\\').substringBeforeLast('.')
         val artwork = merged.optJSONObject("artwork")
         val machine = merged.optJSONObject("machine")
@@ -173,65 +239,19 @@ class GameCatalog(private val context: Context) : LibraryCatalog {
         val input = merged.optJSONObject("input")
         val media = merged.optJSONArray("media")
         val launch = merged.optJSONObject("launch")
-        val commands = launch?.takeIf { validField("launch", it) &&
-            (it.has("commands") || it.has("text")) }?.let { value ->
-            value.optJSONArray("commands")?.let { array ->
-                (0 until array.length()).map(array::getString)
-            } ?: listOf(value.getString("text"))
-        } ?: emptyList()
         val commandSource = maxOf(layers.sourceIndexOf("launch", "text") ?: -1,
             layers.sourceIndexOf("launch", "commands") ?: -1)
         val hashSource = layers.sourceIndexOf("launch", "screenHashes") ?: -1
-        val commandHashes = launch?.optJSONArray("screenHashes")?.takeIf { groups ->
-            commands.isNotEmpty() && hashSource >= commandSource &&
-                groups.length() == commands.size
-        }?.let { groups ->
-            (0 until groups.length()).map { index -> parseHashes(groups.optJSONArray(index)) }
-        } ?: emptyList()
-        val choices = merged.optJSONArray("startupChoices")?.takeIf {
-            validField("startupChoices", it)
-        }?.let { array ->
-            (0 until array.length()).map { index ->
-                val item = array.getJSONObject(index)
-                val options = item.getJSONArray("options")
-                StartupChoice(item.getString("id"), item.getString("title"),
-                    parseHashes(item.getJSONArray("screenHashes")),
-                    (0 until options.length()).map { optionIndex ->
-                        val option = options.getJSONObject(optionIndex)
-                        val steps = option.optJSONArray("steps")
-                        val inputs = if (steps == null) listOf(StartupInput(
-                            option.getString("key")[0], option.getBoolean("enter"),
-                            parseHashes(item.getJSONArray("screenHashes"))))
-                        else (0 until steps.length()).map { stepIndex ->
-                            val step = steps.getJSONObject(stepIndex)
-                            StartupInput(step.getString("key")[0], step.getBoolean("enter"),
-                                parseHashes(step.getJSONArray("screenHashes")))
-                        }
-                        StartupOption(option.getString("id"), option.getString("label"), inputs)
-                    })
-            }
-        } ?: emptyList()
-        val diskSwaps = merged.optJSONArray("diskSwaps")?.takeIf {
-            validField("diskSwaps", it)
-        }?.let { array ->
-            (0 until array.length()).map { index ->
-                val item = array.getJSONObject(index)
-                DiskSwap(item.getString("id"), item.getInt("drive"),
-                    item.getString("contentId"), parseHashes(item.getJSONArray("screenHashes")),
-                    item.getString("key"), item.getBoolean("enter"))
-            }
-        } ?: emptyList()
-        val boxArtPath = artwork?.optString("boxArt")?.takeIf(::validArtPath)
-        val previewPath = artwork?.optString("preview")?.takeIf(::validArtPath)
-        val boxArtUrl = artwork?.optString("boxArtUrl")?.takeIf(::validImageUrl)
-        val previewUrl = artwork?.optString("previewUrl")?.takeIf(::validImageUrl)
+        // Paths and URLs are checked where an image is opened or downloaded, for that game alone.
+        val boxArtPath = artwork?.optString("boxArt")?.takeIf { it.isNotEmpty() }
+        val previewPath = artwork?.optString("preview")?.takeIf { it.isNotEmpty() }
+        val boxArtUrl = artwork?.optString("boxArtUrl")?.takeIf { it.isNotEmpty() }
+        val previewUrl = artwork?.optString("previewUrl")?.takeIf { it.isNotEmpty() }
         return Game(
             contentId, title.ifBlank { fileName },
-            merged.optString("description").takeIf(::validDescription),
+            merged.optString("description").takeIf { it.isNotBlank() },
             merged.opt("heart") as? Boolean,
-            installedCatalogs.artwork(boxArtPath) ?: artworkStore.availablePath(boxArtPath),
-            installedCatalogs.artwork(previewPath) ?: artworkStore.availablePath(previewPath),
-            boxArtUrl, previewUrl, boxArtPath, previewPath,
+            boxArtPath, previewPath, boxArtUrl, previewUrl, boxArtPath, previewPath,
             machine?.optInt("baseClockTenthsMHz")?.takeIf { it == 20 || it == 25 },
             machine?.optInt("gdcClockTenthsMHz")?.takeIf { it == 25 || it == 50 },
             machine?.optInt("cpuMultiple")?.takeIf { it in CPU_MULTIPLES },
@@ -243,18 +263,16 @@ class GameCatalog(private val context: Context) : LibraryCatalog {
             media?.let { items ->
                 (0 until items.length()).mapNotNull { items.optJSONObject(it) }
                     .firstOrNull { it.optString("role") == "bootFloppy" }
-                    ?.optString("contentId")?.takeIf(::validId)
+                    ?.optString("contentId")?.takeIf { it.isNotEmpty() }
             },
             media?.let { items ->
                 (0 until items.length()).mapNotNull { items.optJSONObject(it) }
                     .firstOrNull { it.optString("role") == "floppyB" }
-                    ?.optString("contentId")?.takeIf(::validId)
+                    ?.optString("contentId")?.takeIf { it.isNotEmpty() }
             },
-            commands.joinToString("; ").takeIf { commands.isNotEmpty() },
-            commands,
-            commandHashes,
-            choices,
-            diskSwaps,
+            launch, hashSource >= commandSource,
+            merged.optJSONArray("startupChoices"),
+            merged.optJSONArray("diskSwaps"),
             launch?.optInt("timeoutMs", 30000)?.coerceIn(1000, 120000) ?: 30000,
             user?.keys()?.asSequence()?.toSet() ?: emptySet(),
             controllerDefaultBindings = (controller?.optJSONObject("defaults")
@@ -294,11 +312,12 @@ class GameCatalog(private val context: Context) : LibraryCatalog {
         require(field !in OBJECT_FIELDS) { "Use subfield updates for nested settings" }
         require(validField(field, value)) { "Invalid $field" }
         overrides.set(contentId, field, value)
+        invalidate(contentId)
     }
 
     /** Hide a known support disk without removing it from media lookup or disk swaps. */
     @Synchronized override fun hiddenFromLibrary(contentId: String): Boolean {
-        if (!validId(contentId)) return false
+        if (contentId.isEmpty()) return false
         fun hidden(source: JSONObject?): Boolean? = source?.optJSONObject("games")
             ?.optJSONObject(contentId)?.opt("hidden") as? Boolean
         return CatalogFieldLayers.hidden(hidden(base), hidden(shardFor(contentId)),
@@ -324,6 +343,7 @@ class GameCatalog(private val context: Context) : LibraryCatalog {
             }
         }
         overrides.updateSubfields(contentId, field, changes)
+        invalidate(contentId)
     }
 
     fun setOverrideSubfield(contentId: String, field: String, subfield: String, value: Any) =
@@ -333,6 +353,7 @@ class GameCatalog(private val context: Context) : LibraryCatalog {
         require(validId(contentId)) { "Invalid game ID" }
         require(field == null || field in FIELDS)
         overrides.clear(contentId, field)
+        invalidate(contentId)
     }
 
     fun resetOverrideSubfield(contentId: String, field: String, subfield: String) =
@@ -347,11 +368,6 @@ class GameCatalog(private val context: Context) : LibraryCatalog {
         require(kind in ART_PATH_FIELDS)
         resetOverrideSubfield(contentId, "artwork", kind)
     }
-
-    private fun validLocalRecord(contentId: String, record: JSONObject): Boolean =
-        validId(contentId) && record.keys().asSequence().all {
-            it in FIELDS && validField(it, record.opt(it) ?: return@all false)
-        }
 
     private fun validField(field: String, value: Any): Boolean = when (field) {
         "title" -> value is String && validTitle(value)
@@ -482,10 +498,9 @@ class GameCatalog(private val context: Context) : LibraryCatalog {
 
     private fun normalizedName(fileName: String): String {
         val simple = fileName.substringAfterLast('/').substringAfterLast('\\')
-            .replace(Regex("\\[[^]]*]"), "")
-            .replace(Regex("\\((?:disk|disc|fd)\\s*\\d+[^)]*\\)", RegexOption.IGNORE_CASE), "")
-            .replace(Regex("\\.(?:zip|hdi|fdi|d88|88d|d98|98d|nfd|fdd|dcp|dcu|hdm|xdf)$",
-                RegexOption.IGNORE_CASE), "")
+            .replace(BRACKETED, "")
+            .replace(DISK_NUMBER, "")
+            .replace(IMAGE_EXTENSION, "")
         val key = Normalizer.normalize(simple, Normalizer.Form.NFKC).lowercase()
             .filter(Char::isLetterOrDigit)
         return key
@@ -520,11 +535,10 @@ class GameCatalog(private val context: Context) : LibraryCatalog {
         val manifest = readAsset("catalog/manifest-v1.json")
         require(manifest.optInt("schemaVersion") == 1)
         val names = manifest.getJSONArray("shards")
-        (0 until names.length()).map { names.getString(it) }.filter { it.matches(Regex("[0-9a-f]{2}")) }.toSet()
+        (0 until names.length()).map { names.getString(it) }.filter { it.matches(SHARD_NAME) }.toSet()
     } catch (_: Exception) { emptySet() }
 
     private fun shardFor(contentId: String): JSONObject? {
-        if (!validId(contentId)) return null
         val name = contentId.substringAfter(':').take(2)
         if (name !in shardNames) return null
         shardCache.get(name)?.let { return it }
@@ -532,7 +546,7 @@ class GameCatalog(private val context: Context) : LibraryCatalog {
     }
 
     private fun readLocal(file: File): JSONObject =
-        LocalCatalogFile.read(file, MAX_LOCAL_JSON.toInt(), ::validLocalRecord) ?: empty()
+        LocalCatalogFile.read(file, MAX_LOCAL_JSON.toInt()) ?: empty()
 
     private fun readUpdate(): JSONObject = try {
         // activeFile is checksum-verified and schema-validated for this APK by the shared store.
@@ -558,6 +572,12 @@ class GameCatalog(private val context: Context) : LibraryCatalog {
 
     companion object {
         private const val MAX_ASSET_JSON = 64 * 1024 * 1024
+        private val BRACKETED = Regex("\\[[^]]*]")
+        private val DISK_NUMBER = Regex("\\((?:disk|disc|fd)\\s*\\d+[^)]*\\)", RegexOption.IGNORE_CASE)
+        private val IMAGE_EXTENSION = Regex("\\.(?:zip|hdi|fdi|d88|88d|d98|98d|nfd|fdd|dcp|dcu|hdm|xdf)$",
+            RegexOption.IGNORE_CASE)
+        private val SHARD_NAME = Regex("[0-9a-f]{2}")
+        private val SHORT_ID = Regex("[a-z0-9-]{1,40}")
         private const val MAX_LOCAL_JSON = 8L * 1024 * 1024
         private const val UPDATE_URL = "https://raw.githubusercontent.com/MrJackSpade/Kairo98/main/catalog/core-v2.json"
         private const val METADATA_URL = "https://raw.githubusercontent.com/MrJackSpade/Kairo98/main/catalog/core-v2.meta.json"
@@ -585,7 +605,7 @@ class GameCatalog(private val context: Context) : LibraryCatalog {
         private fun validDescription(value: String) = value.isNotBlank() && value.length <= 8000
         private fun validCommand(value: String) = value.isNotBlank() && value.length <= 128 &&
             value.all { it.code in 32..126 && (it.isLetterOrDigit() || it in " \\/._:-") }
-        private fun validShortId(value: String) = value.matches(Regex("[a-z0-9-]{1,40}"))
+        private fun validShortId(value: String) = value.matches(SHORT_ID)
         private fun validLabel(value: String) = value.isNotBlank() && value.length <= 100
         private fun validHashes(value: org.json.JSONArray?): Boolean = value != null &&
             value.length() in 1..16 && (0 until value.length()).all {

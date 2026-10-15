@@ -4,6 +4,10 @@ import com.mrjackspade.kairo.frontend.LibraryItem
 import com.mrjackspade.kairo.frontend.DocumentTreeWalker
 import com.mrjackspade.kairo.frontend.ExternalGameFile
 import com.mrjackspade.kairo.frontend.VersionedLibraryCache
+import com.mrjackspade.kairo.frontend.readOptionalText
+import com.mrjackspade.kairo.frontend.readText
+import com.mrjackspade.kairo.frontend.writeOptionalText
+import com.mrjackspade.kairo.frontend.writeText
 import com.mrjackspade.kairo.frontend.LibraryScanPipeline
 
 import android.content.Context
@@ -41,6 +45,8 @@ data class LibraryEntry(
 
 data class BootMedia(val hardDisk: LibraryEntry, val bootFloppy: LibraryEntry)
 
+private val BOOT_DISK_NAME = Regex("(?i)\\bboot[ _-]*disk\\b")
+
 fun requiredFloppyFor(contentId: String, source: LibraryEntry,
                       entries: List<LibraryEntry>): LibraryEntry {
     val candidates = entries.filter { it.playable && it.isFloppy && it.contentId == contentId }
@@ -63,7 +69,7 @@ fun bootMediaFor(entry: LibraryEntry, entries: List<LibraryEntry>, requiredFlopp
     val siblings = entries.filter { it.playable && it.zipEntry != null && it.uri == entry.uri }
     val hardDisks = siblings.filter { !it.isFloppy }
     val bootFloppies = siblings.filter {
-        it.isFloppy && Regex("(?i)\\bboot[ _-]*disk\\b").containsMatchIn(it.displayName)
+        it.isFloppy && BOOT_DISK_NAME.containsMatchIn(it.displayName)
     }
     if (hardDisks.size != 1 || bootFloppies.size != 1) {
         if (entry.isFloppy && entry.contentId == requiredFloppyId)
@@ -86,9 +92,10 @@ object DiskFormat {
 }
 
 class RomLibrary(private val context: Context) {
-    private val store = File(context.filesDir, "library-v1.json")
-    private val storeCache = VersionedLibraryCache(store, 1, "entries", MAX_STORE_BYTES,
-        MAX_DOCUMENTS, ::decodeCacheEntry, ::encodeCacheEntry)
+    private val storeCache = VersionedLibraryCache(File(context.filesDir, "library-v2.bin"), 2,
+        MAX_STORE_BYTES, MAX_DOCUMENTS, ::writeCacheRecord, ::readCacheRecord,
+        VersionedLibraryCache.Legacy(File(context.filesDir, "library-v1.json"), 1, "entries",
+            ::decodeLegacyEntry))
     private val scanPipeline by lazy {
         LibraryScanPipeline(storeCache, LibraryEntry::id, ::planScan, ::inspectSource,
             ::failedSource,
@@ -424,32 +431,27 @@ class RomLibrary(private val context: Context) {
         return normalized
     }
 
-    private fun decodeCacheEntry(value: JSONObject): LibraryEntry? {
-        val id = value.optString("id")
-        val uri = value.optString("uri")
-        val path = value.optString("path")
-        val zipEntry = value.optString("zipEntry").takeIf { it.isNotEmpty() }
-        if (!LOCATION_ID.matches(id) || !uri.startsWith("content://") ||
-            path.isBlank() || path.length > 4096 ||
-            (zipEntry != null && (zipEntry.length > 4096 ||
-                runCatching { safeEntryName(zipEntry) }.isFailure))) return null
-        val sourceSize = value.optLong("sourceSize", -1)
-        val sourceModified = value.optLong("sourceModified")
-        val imageSize = value.optLong("imageSize", -1)
-        val imageCrc = value.optLong("imageCrc", -1)
-        if (sourceSize < -1 || sourceModified < 0 || imageSize < -1 || imageCrc < -1) return null
-        return LibraryEntry(id, uri, path, zipEntry, sourceSize, sourceModified,
-            imageSize, imageCrc,
-            value.optString("contentId").takeIf(GameCatalog::validId),
-            value.optString("error").takeIf { it.length in 1..1024 })
+    private fun writeCacheRecord(output: java.io.DataOutputStream, entry: LibraryEntry) = with(output) {
+        writeText(entry.id); writeText(entry.uri); writeText(entry.path); writeOptionalText(entry.zipEntry)
+        writeLong(entry.sourceSize); writeLong(entry.sourceModified)
+        writeLong(entry.imageSize); writeLong(entry.imageCrc)
+        writeOptionalText(entry.contentId); writeOptionalText(entry.error)
     }
 
-    private fun encodeCacheEntry(entry: LibraryEntry) = JSONObject().put("id", entry.id)
-        .put("uri", entry.uri).put("path", entry.path)
-        .put("zipEntry", entry.zipEntry ?: "")
-        .put("sourceSize", entry.sourceSize).put("sourceModified", entry.sourceModified)
-        .put("imageSize", entry.imageSize).put("imageCrc", entry.imageCrc)
-        .put("contentId", entry.contentId ?: "").put("error", entry.error ?: "")
+    private fun readCacheRecord(input: java.io.DataInputStream) = with(input) {
+        LibraryEntry(readText(), readText(), readText(), readOptionalText(), readLong(), readLong(),
+            readLong(), readLong(), readOptionalText(), readOptionalText())
+    }
+
+    /** The JSON cache that version 1.0.3 and earlier wrote. */
+    private fun decodeLegacyEntry(value: JSONObject) = LibraryEntry(value.getString("id"),
+        value.getString("uri"), value.getString("path"),
+        value.optString("zipEntry").takeIf { it.isNotEmpty() },
+        value.optLong("sourceSize", -1), value.optLong("sourceModified"),
+        value.optLong("imageSize", -1), value.optLong("imageCrc", -1),
+        value.optString("contentId").takeIf { it.isNotEmpty() },
+        value.optString("error").takeIf { it.isNotEmpty() })
+
 
     companion object {
         private const val MEDIA_FORMATS_VERSION = 3
@@ -460,7 +462,6 @@ class RomLibrary(private val context: Context) {
         private const val MAX_ARCHIVE_BYTES = 8L * 1024 * 1024 * 1024
         private const val MAX_EXPANSION_RATIO = 1000L
         private const val MAX_STORE_BYTES = 16 * 1024 * 1024
-        private val LOCATION_ID = Regex("[0-9a-f]{32}")
         private val PROJECTION = arrayOf(
             DocumentsContract.Document.COLUMN_DOCUMENT_ID,
             DocumentsContract.Document.COLUMN_DISPLAY_NAME,

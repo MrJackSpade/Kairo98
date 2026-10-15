@@ -172,7 +172,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
     private var controllerSetupPending = false
     private var pendingControllerExternalRequest = false
     private val guestLifecycle: GuestLifecycleCoordinator by lazy {
-        GuestLifecycleCoordinator(this, { !libraryVisible }, { releaseInputs() }, ::applyPauseState, {}, {},
+        GuestLifecycleCoordinator(fullscreen::restore, { releaseInputs() }, ::applyPauseState, {}, {},
             initiallyVisible = false,
             companionActive = { ::secondaryKeyboard.isInitialized && secondaryKeyboard.isCompanionActive },
             beforeSuspend = { commandCancelled.set(true) },
@@ -297,11 +297,12 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
             { id, kind, path ->
                 if (path == null) romLibrary.catalog.resetArtworkOverride(id, kind)
                 else romLibrary.catalog.setArtworkOverride(id, kind, path)
-            }, { libraryScreen.showEntries(libraryEntries) },
+            }, { id -> libraryScreen.metadataChanged(id) },
             { entry -> romLibrary.catalog.resolve(entry.contentId ?: "", entry.displayName).title },
             ::toast, GameCatalog::validImageUrl)
     }
     private lateinit var controllerPages: ControllerPages<LibraryEntry>
+    private val fullscreen by lazy { com.mrjackspade.kairo.frontend.GameFullscreen(this) { !libraryVisible } }
     private val sessionState = SessionNavigationState()
     private val libraryVisible: Boolean get() = sessionState.libraryVisible
     private val gameOrientation by lazy { GameOrientation(this, preferences) }
@@ -627,7 +628,8 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
         dispatchExternalGame(intent)
     }
 
-    private fun dispatchExternalGame(intent: Intent) = externalDispatcher.dispatch(intent)
+    /** A frontend launch matches the game against the library, so it waits for the library to load. */
+    private fun dispatchExternalGame(intent: Intent) = libraryFlow.whenLoaded { externalDispatcher.dispatch(intent) }
 
     private fun chooseExternalGame(entries: List<LibraryEntry>) {
         val playable = entries.filter { it.playable }
@@ -875,6 +877,16 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
             return
         }
         val game = romLibrary.catalog.resolve(entry.contentId!!, entry.displayName)
+        // Launching is where catalog launch data is used, so this is where bad data fails.
+        try {
+            game.launchCommands
+            game.launchScreenHashes
+            game.startupChoices
+            game.diskSwaps
+        } catch (failure: RuntimeException) {
+            toast("${game.title} can't start: its catalog launch data is unreadable (${failure.message})")
+            return
+        }
         debugStartupOption?.let { requested ->
             val selected = game.startupChoices.mapNotNull { choice ->
                 choice.options.firstOrNull { it.id == requested }?.let { choice to it }
@@ -1494,7 +1506,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
             action()
             if (currentEntry?.contentId == entry.contentId && entry.contentId != null)
                 currentGame = romLibrary.catalog.resolve(entry.contentId, entry.displayName)
-            libraryScreen.showEntries(libraryEntries)
+            entry.contentId?.let(libraryScreen::metadataChanged)
             toast(message)
         } catch (error: Exception) {
             toast(failure ?: "Could not save: ${error.message ?: "Invalid value"}")
@@ -1888,7 +1900,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
     override fun onConfigurationChanged(newConfig: Configuration) {
         super.onConfigurationChanged(newConfig)
         if (relocating || rebuildIfRescaled()) return
-        guestLifecycle.restoreFullscreen()
+        fullscreen.restore()
         graphics.load()
         root.post { updateViewport() }
         gameOrientation.configurationChanged()

@@ -4,9 +4,12 @@ plugins {
 }
 
 apply(from = rootProject.file("shared/gradle/android-module.gradle"))
+apply(from = rootProject.file("shared/gradle/catalog-binary.gradle"))
+@Suppress("UNCHECKED_CAST")
+val compileCatalogParts = extra["compileCatalogParts"] as groovy.lang.Closure<Unit>
 
 android {
-    androidResources { noCompress += listOf("json", "idx") }
+    androidResources { noCompress += listOf("json", "idx", "bin") }
     namespace = "com.mrjackspade.kairo98"
 
     defaultConfig {
@@ -90,9 +93,15 @@ val catalogAssets by tasks.registering(Sync::class) {
     from("src/main/assets") { exclude("catalog/**") }
     from(rootProject.file("catalog/parts")) {
         into("catalog")
+        include("*.idx")
         if (providers.gradleProperty("kairoDistribution").orNull == "play") exclude("art.nsfw.*")
     }
+    inputs.dir(rootProject.file("catalog/parts"))
     into(layout.buildDirectory.dir("generated/catalog-assets"))
+    doLast {
+        compileCatalogParts.call(rootProject.file("catalog/parts"),
+            layout.buildDirectory.dir("generated/catalog-assets/catalog").get().asFile)
+    }
 }
 tasks.named("preBuild") { dependsOn(catalogAssets) }
 
