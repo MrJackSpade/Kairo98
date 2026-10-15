@@ -53,6 +53,7 @@ extern "C" void kairo98_mouse_button(int button, int down);
 extern "C" void kairo98_mouse_warp(int x, int y, unsigned generation);
 extern "C" int kairo98_machine_save_state(const char *dir);
 extern "C" int kairo98_machine_load_state(const char *dir);
+extern "C" int kairo98_machine_locks(void);
 extern "C" unsigned kairo98_mouse_warp_completed(void);
 extern "C" void kairo98_joy_set(int control, int down);
 extern "C" void kairo98_joy_release_all(void);
@@ -104,6 +105,8 @@ std::atomic<bool> audio_muted{false};
 // is written only as far as the output buffer has room.
 std::atomic<bool> fast_forward{false};
 std::atomic<bool> dos_prompt_ready{false};
+// Caps and Kana as a loaded state left them, published before the load completes.
+std::atomic<int> loaded_locks{0};
 std::atomic<unsigned> mouse_warp_requested{0};
 // A passive host-side observation of the complete 640x400 RGB565 guest image.
 // The emulator core neither knows about nor depends on startup automation.
@@ -470,6 +473,7 @@ void run_machine(std::string image, std::string font_path, std::string bios_dir,
                     dos_prompt_ready.store(false);
                     clear_screen_hash();
                     int result = kairo98_machine_load_state(command.path.c_str());
+                    loaded_locks.store(kairo98_machine_locks());
                     next_frame = std::chrono::steady_clock::now();
                     if (command.completion) command.completion->set_value(result);
                     break;
@@ -819,6 +823,11 @@ Java_com_mrjackspade_kairo98_MainActivity_nativeSaveState(JNIEnv *env, jobject, 
 extern "C" JNIEXPORT jint JNICALL
 Java_com_mrjackspade_kairo98_MainActivity_nativeLoadState(JNIEnv *env, jobject, jstring dir) {
     return run_state_command(env, CommandType::LoadState, dir);
+}
+
+extern "C" JNIEXPORT jint JNICALL
+Java_com_mrjackspade_kairo98_MainActivity_nativeLoadedLocks(JNIEnv *, jobject) {
+    return loaded_locks.load();
 }
 
 extern "C" JNIEXPORT void JNICALL

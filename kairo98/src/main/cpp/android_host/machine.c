@@ -230,6 +230,11 @@ void kairo98_machine_key(unsigned char code, int down) {
     keystat_senddata((REG8)(code | (down ? 0 : 0x80)));
 }
 
+/* Bit 0: Caps lock, bit 1: Kana lock, as the keyboard controller holds them. */
+int kairo98_machine_locks(void) {
+    return (keyctrl.capsref != NKEYREF_NC ? 1 : 0) | (keyctrl.kanaref != NKEYREF_NC ? 2 : 0);
+}
+
 void kairo98_machine_release_keys(void) {
     keystat_allrelease();
 }

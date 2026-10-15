@@ -124,6 +124,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
     private external fun nativePause(paused: Boolean)
     private external fun nativeReset()
     private external fun nativeClock(mhzTimesTen: Int)
+    private external fun nativeLoadedLocks(): Int
     private external fun nativeKey(scanCode: Int, down: Boolean)
     private external fun nativeMouseMove(dx: Int, dy: Int)
     private external fun nativeMouseButton(button: Int, down: Boolean)
@@ -142,7 +143,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
     private external fun nativeSetMuted(muted: Boolean)
     private external fun nativeSetFastForward(enabled: Boolean)
 
-    private val inputRouter = InputRouter(::nativeKey)
+    private val inputRouter = InputRouter(::nativeKey, lockCodes = Pc98KeyboardLayout.value.lockCodes)
     private val joystickRouter = JoystickInputRouter(::nativeJoystick)
     private val mouseRouter = MouseInputRouter(::nativeMouseMove, ::nativeMouseButton)
     private val gamepadMapper = GamepadMapper(inputRouter, joystickRouter, mouseRouter,
@@ -424,7 +425,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
             { (if (::secondaryKeyboard.isInitialized) secondaryKeyboard.activeGameSurface else null)
                 ?: screen },
             { scratch -> nativeSaveState(scratch.absolutePath) },
-            { directory -> nativeLoadState(directory.absolutePath) }, ::stateError, ::toast,
+            ::loadMachineState, ::stateError, ::toast,
             {
                 releaseInputs()
                 inputModeDecider.reset()
@@ -960,7 +961,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
                 else {
                     nativeStop()
                     if (generation != startGeneration) null
-                    else if (nativeStart(disk.absolutePath, font, firmwareDir().absolutePath,
+                    else if (startMachine(disk.absolutePath, font, firmwareDir().absolutePath,
                             game.baseClockTenthsMHz ?: clock,
                             game.gdcClockTenthsMHz ?: 50, game.cpuMultiple ?: DEFAULT_CPU_MULTIPLE,
                             primary.isFloppy,
@@ -1525,7 +1526,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
         closeMenu()
         if (state.startsWith("Running") || state.startsWith("Paused") ||
             state.startsWith("Starting")) {
-            nativeReset()
+            resetMachine()
             inputModeDecider.reset()
             scheduleStartupQueue(currentGame, selectedStartup)
         } else {
@@ -1669,7 +1670,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
         preferences.edit().putInt("base_clock", clock).apply()
         if (currentDisk == null) return
         if (currentGame?.baseClockTenthsMHz == null) {
-            nativeClock(clock)
+            setMachineClock(clock)
             toast("Clock change resets the machine")
         } else toast("Global clock saved; this game uses its own clock")
     }
@@ -1774,6 +1775,35 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
 
     private fun controllerActionReleased(action: String) {
         if (action == "fastForward") nativeSetFastForward(false)
+    }
+
+    /** Every machine start and reset: the PC-98 keyboard starts with Caps and Kana off. */
+    private fun startMachine(path: String?, fontPath: String, biosDir: String, mhzTimesTen: Int,
+                             gdcMhzTimesTen: Int, cpuMultiple: Int, floppy: Boolean,
+                             bootFloppyPath: String?, secondFloppyPath: String?): Boolean {
+        inputRouter.resetLocks()
+        return nativeStart(path, fontPath, biosDir, mhzTimesTen, gdcMhzTimesTen, cpuMultiple, floppy,
+            bootFloppyPath, secondFloppyPath)
+    }
+
+    private fun resetMachine() {
+        inputRouter.resetLocks()
+        nativeReset()
+    }
+
+    private fun setMachineClock(mhzTimesTen: Int) {
+        inputRouter.resetLocks()
+        nativeClock(mhzTimesTen)
+    }
+
+    /** A loaded state restores the Caps and Kana locks it was saved with. */
+    private fun loadMachineState(directory: File): Int = nativeLoadState(directory.absolutePath).also { result ->
+        if (result == 0) {
+            val locks = nativeLoadedLocks()
+            val layout = Pc98KeyboardLayout.value
+            inputRouter.syncLocks(setOfNotNull(layout.capsCode.takeIf { locks and 1 != 0 },
+                layout.kanaCode.takeIf { locks and 2 != 0 }))
+        }
     }
 
     private fun stateError(code: Int) = when (code) {
@@ -1963,7 +1993,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
                 Files.move(partial.toPath(), disk.toPath(), StandardCopyOption.REPLACE_EXISTING)
                 val font = prepareFont()
                 if (generation != startGeneration) "Start cancelled"
-                else if (nativeStart(disk.absolutePath, font, firmwareDir().absolutePath, clock,
+                else if (startMachine(disk.absolutePath, font, firmwareDir().absolutePath, clock,
                         50, DEFAULT_CPU_MULTIPLE, DiskFormat.isFloppy(name), null, null))
                     awaitMachineReady()?.let { "Disk start failed: $it" } ?: "Starting $name"
                 else "Unable to start machine"
@@ -2173,7 +2203,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
                 val font = prepareFont()
                 nativeStop()
                 if (generation != startGeneration) "Start cancelled"
-                else if (nativeStart(disk.absolutePath, font, firmwareDir().absolutePath,
+                else if (startMachine(disk.absolutePath, font, firmwareDir().absolutePath,
                         clock, 50, DEFAULT_CPU_MULTIPLE, floppy, null, null))
                     awaitMachineReady()?.let { "Disk start failed: $it" } ?: message
                 else "Unable to start machine"
