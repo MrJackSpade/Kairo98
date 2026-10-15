@@ -825,13 +825,8 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
         }
         val presentation = sessionState.presentation(activityVisible, menuOpen, false, preparingFont)
         val showingGuest = presentation.showGuest
-        if (::swappedKeyboardPanel.isInitialized) {
-            if (::secondaryKeyboard.isInitialized && secondaryKeyboard.swapped && showingGuest &&
-                swappedKeyboardPanel.visibility != View.VISIBLE)
-                swappedKeyboardPanel.open()
-            else if (swappedKeyboardPanel.visibility == View.VISIBLE)
-                swappedKeyboardPanel.close()
-        }
+        if (::swappedKeyboardPanel.isInitialized) swappedKeyboardPanel.setShown(
+            ::secondaryKeyboard.isInitialized && secondaryKeyboard.swapped && showingGuest)
         if (::secondaryKeyboard.isInitialized) secondaryKeyboard.setAppearance(
             showingGuest,
             if (::firstRunSetup.isInitialized && firstRunSetup.isOpen) Ui.BG
