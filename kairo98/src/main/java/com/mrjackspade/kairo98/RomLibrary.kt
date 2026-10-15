@@ -23,7 +23,7 @@ import java.util.zip.ZipFile
 /** A source location is separate from the uncompressed disk-image content ID. */
 data class LibraryEntry(
     override val id: String,
-    val uri: String,
+    override val uri: String,
     override val path: String,
     override val zipEntry: String?,
     val sourceSize: Long,
@@ -107,8 +107,10 @@ class RomLibrary(private val context: Context) {
 
     val hashCount: Int get() = scanPipeline.hashCount
 
-    fun cached(treeUri: Uri): List<LibraryEntry> =
-        storeCache.readForTree(treeUri.toString())?.entries.orEmpty()
+    fun cached(treeUri: Uri): List<LibraryEntry> = scanPipeline.cached(treeUri)
+
+    /** Saves a library edited without a scan, such as after deleting a source. */
+    fun store(treeUri: Uri, entries: List<LibraryEntry>) = scanPipeline.store(treeUri, entries)
 
     /** Delete the source document shared by every image entry from that file. */
     fun deleteSource(entry: LibraryEntry, entries: List<LibraryEntry>) {

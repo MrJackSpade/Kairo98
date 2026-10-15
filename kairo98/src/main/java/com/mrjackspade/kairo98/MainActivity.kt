@@ -3,6 +3,7 @@ package com.mrjackspade.kairo98
 import com.mrjackspade.kairo.frontend.SecondaryDisplayCoordinator
 import com.mrjackspade.kairo.frontend.EdgeSwipeNavigation
 import com.mrjackspade.kairo.frontend.ImmersiveWindow
+import com.mrjackspade.kairo.frontend.SessionMenus
 import com.mrjackspade.kairo.frontend.ViewScale
 import com.mrjackspade.kairo.frontend.RgDsDisplayRouter
 import com.mrjackspade.kairo.frontend.GuestKeyboardPanel
@@ -59,13 +60,11 @@ import com.mrjackspade.kairo.frontend.GroupsPage
 import com.mrjackspade.kairo.frontend.ChoicePage
 import com.mrjackspade.kairo.frontend.SetupPage
 import com.mrjackspade.kairo.frontend.FooterButton
-import com.mrjackspade.kairo.frontend.FlyoutModel
 import com.mrjackspade.kairo.frontend.SettingsRow
 import com.mrjackspade.kairo.frontend.RowGroup
 import com.mrjackspade.kairo.frontend.ChoiceSpec
 import com.mrjackspade.kairo.frontend.ChoiceGroup
 import com.mrjackspade.kairo.frontend.ChoiceOption
-import com.mrjackspade.kairo.frontend.Confirm
 import com.mrjackspade.kairo.frontend.TraySpec
 import com.mrjackspade.kairo.frontend.TrayButton
 import com.mrjackspade.kairo.frontend.ButtonTone
@@ -76,8 +75,6 @@ import com.mrjackspade.kairo.frontend.GameValue
 import com.mrjackspade.kairo.frontend.GameSource
 import com.mrjackspade.kairo.frontend.GameSettingsRows
 import com.mrjackspade.kairo.frontend.gameSettingsPage
-import com.mrjackspade.kairo.frontend.fileLabel
-import com.mrjackspade.kairo.frontend.variantLabel
 
 import android.app.Activity
 import android.app.ActivityOptions
@@ -94,7 +91,6 @@ import android.os.Handler
 import android.os.Looper
 import android.net.Uri
 import android.provider.OpenableColumns
-import android.provider.DocumentsContract
 import android.view.Gravity
 import android.view.Display
 import android.view.InputDevice
@@ -175,7 +171,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
     private var controllerSetupPending = false
     private var pendingControllerExternalRequest = false
     private val guestLifecycle: GuestLifecycleCoordinator by lazy {
-        GuestLifecycleCoordinator({ releaseInputs() }, ::applyPauseState, {}, {},
+        GuestLifecycleCoordinator(this, { !libraryVisible }, { releaseInputs() }, ::applyPauseState, {}, {},
             initiallyVisible = false,
             companionActive = { ::secondaryKeyboard.isInitialized && secondaryKeyboard.isCompanionActive },
             beforeSuspend = { commandCancelled.set(true) },
@@ -316,11 +312,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
                 commandCancelled.set(true)
                 releaseInputs()
                 hideKeyboard()
-            }, {}, {
-                libraryScreen.showEntries(libraryEntries)
-                libraryScreen.showFolder(romTree?.let(::folderName))
-                libraryScreen.showStatus("${libraryEntries.count { it.playable }} games ready")
-            }, ::applyPauseState, { screen.requestFocus() }, ::endSessionForLibrary, gameOrientation)
+            }, {}, libraryFlow::show, ::applyPauseState, { screen.requestFocus() }, ::endSessionForLibrary, gameOrientation)
     }
     private val backCoordinator: FrontendBackCoordinator by lazy {
         FrontendBackCoordinator(this, { if (::pages.isInitialized) pages else null }, libraryScreen,
@@ -553,7 +545,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
             ::chooseRomFolder, { preferences.getString("last_played_entry", null) },
             { launchEntry(it) }, ::showDetailPreview, ::showGameDetails, ::showLibrarySelection)
         libraryFlow = LibraryFlow(this, preferences, libraryPage, ROM_FOLDER_REQUEST,
-            romLibrary::cached, romLibrary::scan, ::folderName,
+            romLibrary::cached, romLibrary::scan,
             "Choose a ROM folder to find disk images and ZIP games",
             "Folder access expired. Select the ROM folder again.",
             { entries ->
@@ -573,7 +565,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
                 if (firstRunSetup.isChoosingRomFolder) advanceFirstRunFirmware(folderChosen = true)
                 else refreshLibrary(false)
             },
-            { message -> if (firstRunSetup.isOpen) toast(message) })
+            { message -> if (firstRunSetup.isOpen) toast(message) }, store = romLibrary::store)
         libraryMenu = LibraryMenu(this, pages, libraryFlow, romLibrary.catalog, strings,
             { updateGameCatalog(false) },
             { if (resources.getBoolean(R.bool.catalog_art_download_enabled)) artworkDownloads else null },
@@ -711,21 +703,18 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
     }
 
     /** One settings list, shown the same way in the game flyout and the library flyout. */
-    private fun settingsRows() = listOf(
-        SettingsRow.nav("f-graphics", "Graphics") { pages.push(graphics.page(shaderOptions)) },
-        SettingsRow.nav("f-controls", "Controls") {
+    private fun settingsRows() = SessionMenus.settingsRows(SessionMenus.Settings(
+        graphics = { pages.push(graphics.page(shaderOptions)) },
+        controls = {
             pages.push(controllerPages.controlsPage(currentEntry?.takeIf { !libraryVisible && it.contentId != null }))
         },
-        SettingsRow.nav("f-machine", "Machine") { pages.push(machinePage()) },
-        SettingsRow.nav("f-configurations", "Configurations") { pages.push(configurationsPage()) },
-        SettingsRow.switch("f-sound", "Sound", { !muted }) { on -> if (on == muted) toggleMute() },
-        SettingsRow.nav("f-about", "About") { pages.push(aboutPage()) })
-
-    /** Configurations: settings for all games, such as screen orientation and where saves go. */
-    private fun configurationsPage() = GroupsPage("Configurations", { GameSource.ALL_GAMES }, {
-        listOf(RowGroup("DISPLAY", listOf(gameOrientation.row())),
-            RowGroup("SAVE STATES", listOf(saveFolder.row())))
-    })
+        machine = { pages.push(machinePage()) },
+        configurations = {
+            pages.push(SessionMenus.configurationsPage(gameOrientation, saveFolder, "SAVE STATES"))
+        },
+        soundOn = { !muted },
+        setSound = { on -> if (on == muted) toggleMute() },
+        about = { pages.push(aboutPage()) }))
 
     /** A save folder's game name, as a library title when the game is still in the library. */
     private fun saveTitle(game: String): String = libraryEntries.firstOrNull {
@@ -733,25 +722,12 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
     }?.let { romLibrary.catalog.resolve(it.contentId!!, it.displayName).title } ?: game
 
     /** The game flyout: the game's own pages, settings, then leaving. */
-    private fun gameFlyout() = FlyoutModel("KAIRO98", { currentTitle ?: "No disk selected" },
-        { if (preparingFont) "Preparing PC-98 font" else menuStatusText() }) {
-        listOf(
-            RowGroup("GAME", stateFlow.rows() + listOf(
-                SettingsRow.nav("f-disks", "Disks") { pages.push(disksPage()) },
-                SettingsRow.nav("f-game", "Game settings",
-                    enabled = { currentEntry != null },
-                    disabledReason = { "Game settings are available for games started from the library." }) {
-                    currentEntry?.let(::showGameDetails)
-                })),
-            RowGroup("SETTINGS", settingsRows()),
-            RowGroup(null, listOf(
-                SettingsRow.action("f-restart", "Restart game",
-                    confirm = Confirm("Progress since your last save is lost.", "Restart", run = ::restartMachine)),
-                sessionNavigation.returnRow("Kairo98"),
-                SettingsRow.action("f-exit", "Exit Kairo98",
-                    confirm = Confirm("The machine stops. Progress since your last save is lost.", "Exit",
-                        title = "Exit Kairo98?", run = ::exitApp)))))
-    }
+    private fun gameFlyout() = SessionMenus.gameFlyout("KAIRO98", "Kairo98",
+        { currentTitle ?: "No disk selected" },
+        { if (preparingFont) "Preparing PC-98 font" else menuStatusText() }, sessionNavigation,
+        { stateFlow.rows() + SettingsRow.nav("f-disks", "Disks") { pages.push(disksPage()) } },
+        { currentEntry != null }, { currentEntry?.let(::showGameDetails) }, ::settingsRows,
+        restart = ::restartMachine, exit = ::exitApp)
 
     /**
      * Machine state, media, and sound for the flyout header. The menu itself pauses the
@@ -805,18 +781,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
     /** Shows the selected library game on the second screen, if there is one. */
     private fun showLibrarySelection(entry: LibraryEntry?) {
         if (!::secondaryKeyboard.isInitialized) return
-        if (entry == null) {
-            secondaryKeyboard.setLibraryInfo(null)
-            return
-        }
-        val game = libraryScreen.metadata(entry)
-        val media = entry.zipEntry ?: entry.path
-        val tags = listOf(if (DiskFormat.isFloppy(media)) "Floppy disk" else "Hard disk") +
-            ((variantLabel(entry.path) ?: entry.zipEntry?.let(::variantLabel))?.split("  ·  ") ?: emptyList())
-        val info = SecondaryDisplayCoordinator.LibraryInfo(game.title,
-            listOf(fileLabel(entry)) + tags + game.tags,
-            game.description ?: "No description available yet.", null, hasArtwork = game.preview != null)
-        secondaryKeyboard.setLibraryInfo(info, game.preview, romLibrary.catalog::openArtwork)
+        secondaryKeyboard.showLibrarySelection(entry, entry?.let(libraryScreen::metadata), romLibrary.catalog)
     }
 
     private fun applyPauseState() {
@@ -845,11 +810,6 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
     }
 
     private fun hasRomGrant(uri: Uri) = libraryFlow.hasGrant(uri)
-
-    private fun folderName(uri: Uri): String = try {
-        DocumentsContract.getTreeDocumentId(uri).substringAfterLast('/').substringAfterLast(':')
-            .ifEmpty { "ROM folder" }
-    } catch (_: Exception) { "ROM folder" }
 
     private fun chooseRomFolder() = libraryFlow.chooseFolder()
 
@@ -1506,12 +1466,11 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
                 artwork.row(entry, "preview", hashed)),
                 "Chosen images are copied into your library."),
             RowGroup("FILE", GameSettingsRows.file(entry.path, entry.zipEntry, id, entry.error) +
-                listOfNotNull(if (!library) null else GameDeletionFlow.row(this, libraryScreen,
-                    GameDeletionFlow.Prompt(entry.path, "file",
-                        affectedEntries = libraryEntries.count { it.uri == entry.uri }),
-                    "ROM folder", { romTree?.let(libraryFlow::hasWriteGrant) == true }, ::chooseRomFolder,
-                    { !libraryVisible && currentEntry?.uri == entry.uri }, "Kairo98-delete-game",
-                    { romLibrary.deleteSource(entry, libraryEntries) }, { refreshLibrary(false) }))),
+                listOfNotNull(if (!library) null else GameDeletionFlow.row(this, libraryFlow, entry,
+                    GameDeletionFlow.Prompt(entry.path, "file"), "ROM folder",
+                    { !libraryVisible && currentEntry?.uri == entry.uri }, "Kairo98-delete-game") {
+                    romLibrary.deleteSource(entry, libraryEntries)
+                })),
             RowGroup(null, listOf(GameSettingsRows.reset(hashed) {
                 saveGameSetting(entry, "Game settings reset. Machine changes apply on next launch or restart.",
                     "Could not reset game settings") {
@@ -1809,17 +1768,8 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
     }
 
     private fun controllerAction(action: String) {
-        when (action) {
-            "menu" -> if (menuOpen) closeMenu() else openMenu()
-            "pause" -> {
-                userPaused = !userPaused
-                applyPauseState()
-                toast(if (userPaused) "Paused" else "Resumed")
-            }
-            "restart" -> if (!menuOpen) openMenu("f-restart", confirm = true)
-            "exit" -> if (!menuOpen) openMenu("f-exit", confirm = true)
-            "fastForward" -> nativeSetFastForward(true)
-        }
+        if (sessionFlow.controllerAction(action, sessionState, ::applyPauseState)) return
+        if (action == "fastForward") nativeSetFastForward(true)
     }
 
     private fun controllerActionReleased(action: String) {
@@ -1908,7 +1858,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
     override fun onConfigurationChanged(newConfig: Configuration) {
         super.onConfigurationChanged(newConfig)
         if (relocating || rebuildIfRescaled()) return
-        ImmersiveWindow.apply(this)
+        guestLifecycle.restoreFullscreen()
         graphics.load()
         root.post { updateViewport() }
         gameOrientation.configurationChanged()
@@ -2247,30 +2197,13 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
     private fun dispatchGuestTouch(event: MotionEvent) = super.dispatchTouchEvent(event)
 
     override fun dispatchTouchEvent(event: MotionEvent): Boolean {
-        // Edge gestures work over the game and its flyout, not over pages above the flyout.
-        if (!::firstRunSetup.isInitialized || !::sessionFlow.isInitialized || !::keyboardPanel.isInitialized ||
-            libraryVisible || (pages.isActive && pages.top?.isFlyout != true))
+        if (!::firstRunSetup.isInitialized || !::sessionFlow.isInitialized || !::keyboardPanel.isInitialized)
             return super.dispatchTouchEvent(event)
-        return when (edgeSwipes.handle(event, root.width, menuOpen,
-            canOpenMenu = true,
-            canOpenKeyboard = keyboardPanel.visibility != View.VISIBLE &&
-                (!::secondaryKeyboard.isInitialized || !secondaryKeyboard.isKeyboardVisible),
-            controlsHit = onScreenControls.hitTest(event.x, event.y))) {
-            EdgeSwipeNavigation.Result.PASS -> super.dispatchTouchEvent(event)
-            EdgeSwipeNavigation.Result.CONSUME -> true
-            EdgeSwipeNavigation.Result.REPLAY_GUEST ->
-                edgeSwipes.replay(event, ::dispatchGuestTouch)
-            EdgeSwipeNavigation.Result.OPEN_MENU -> { openMenu(); true }
-            EdgeSwipeNavigation.Result.OPEN_KEYBOARD -> { showKeyboard(); true }
-            EdgeSwipeNavigation.Result.CLOSE_MENU -> {
-                val cancel = MotionEvent.obtain(event)
-                cancel.action = MotionEvent.ACTION_CANCEL
-                super.dispatchTouchEvent(cancel)
-                cancel.recycle()
-                closeMenu()
-                true
-            }
-        }
+        return edgeSwipes.dispatch(event, root.width, pages, !libraryVisible, menuOpen,
+            { keyboardPanel.visibility != View.VISIBLE &&
+                (!::secondaryKeyboard.isInitialized || !secondaryKeyboard.isKeyboardVisible) },
+            { onScreenControls.hitTest(event.x, event.y) },
+            { super.dispatchTouchEvent(it) }, ::dispatchGuestTouch, { openMenu() }, ::showKeyboard, ::closeMenu)
     }
 
     @Deprecated("Legacy Back path; API 33+ also uses OnBackInvokedDispatcher")
