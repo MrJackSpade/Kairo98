@@ -58,6 +58,13 @@ def inspect(path: pathlib.Path, bundle: bool, allow_art: bool = False) -> dict[s
             name[len(prefix):]: digest(archive.read(name))
             for name in files if name.startswith(prefix + "assets/")
         }
+        if bundle:
+            # The bundle keeps the baseline profile as metadata; bundletool installs it as assets/dexopt/.
+            profiles = "BUNDLE-METADATA/com.android.tools.build.profiles/"
+            assets.update({
+                "assets/dexopt/" + name[len(profiles):]: digest(archive.read(name))
+                for name in files if name.startswith(profiles)
+            })
         print(f"{path.name}: {len(files)} files, {len(assets)} assets, "
               f"SHA-256 {digest(path.read_bytes())}")
         return assets
@@ -79,8 +86,12 @@ def main() -> None:
         assert "assets/art/catalog-provenance-v1.json" in artwork, (
             "Artwork APK has no provenance manifest"
         )
-        shared_assets = {name: value for name, value in with_assets.items() if name not in artwork}
-        assert shared_assets == apk_assets, "Shared APK assets differ"
+        # The compiled baseline profile records its own variant's dex checksums, so it differs with the dex.
+        profile = "assets/dexopt/"
+        shared_assets = {name: value for name, value in with_assets.items()
+                         if name not in artwork and not name.startswith(profile)}
+        assert shared_assets == {name: value for name, value in apk_assets.items()
+                                 if not name.startswith(profile)}, "Shared APK assets differ"
         print(f"Artwork APK has {len(artwork)} artwork assets and matching shared assets")
 
 
