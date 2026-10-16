@@ -118,8 +118,9 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
     private external fun nativeStart(path: String?, fontPath: String, biosDir: String,
                                      mhzTimesTen: Int, gdcMhzTimesTen: Int,
                                      cpuMultiple: Int, floppy: Boolean, bootFloppyPath: String?,
-                                     secondFloppyPath: String?): Boolean
+                                     secondFloppyPath: String?, cdPath: String?): Boolean
     private external fun nativeFloppy(drive: Int, path: String?): Boolean
+    private external fun nativeCd(path: String?): Boolean
     private external fun nativeStop()
     private external fun nativePause(paused: Boolean)
     private external fun nativeReset()
@@ -351,10 +352,15 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
     private var currentIsFloppy = false
     private val mountedFloppies = arrayOfNulls<String>(2)
     private val manualFloppies = arrayOfNulls<File>(2)
+    /** The disc in the CD-ROM drive, by file name. */
+    private var mountedCd: String? = null
     private data class PreparedLaunch(val disk: File, val bootFloppy: LibraryEntry?,
                                       val floppyB: LibraryEntry?,
                                       val swapSources: Map<String, LibraryEntry>,
-                                      val gameFont: Boolean)
+                                      val gameFont: Boolean,
+                                      val cd: LibraryEntry?,
+                                      /** What started: the launched entry, or a CD's boot disk. */
+                                      val boot: LibraryEntry)
     /** The running game uses a FONT.BMP from its own folder instead of the global one. */
     private var gameFontActive = false
     private val gameFonts by lazy { GameFontLocator(contentResolver, File(filesDir, "game-font.bmp")) }
@@ -945,14 +951,16 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
         Thread {
             val result = try {
                 val sources = libraryEntries + externalEntries
-                val media = bootMediaFor(entry, sources, game.requiredBootFloppyId)
+                val cd = cdFor(entry, game.cdId, sources)
+                val boot = if (entry.isCd) cdBootDiskFor(entry, game.bootDiskId, sources) else entry
+                val media = bootMediaFor(boot, sources, game.requiredBootFloppyId)
                 val swapSources = game.diskSwaps.map { rule ->
                     rule.contentId to requiredFloppyFor(rule.contentId, entry, sources)
                 }.toMap()
                 val floppyB = game.initialFloppyBId?.let { id ->
                     requiredFloppyFor(id, entry, sources)
                 }
-                val primary = media?.hardDisk ?: entry
+                val primary = media?.hardDisk ?: boot
                 val disk = romLibrary.prepare(primary, cancelled) { message ->
                     runOnUiThread { if (generation == startGeneration) showProgress(message) }
                 }
@@ -962,6 +970,11 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
                     }
                 }
                 val secondFloppy = floppyB?.let { companion ->
+                    romLibrary.prepare(companion, cancelled) { message ->
+                        runOnUiThread { if (generation == startGeneration) showProgress(message) }
+                    }
+                }
+                val disc = cd?.let { companion ->
                     romLibrary.prepare(companion, cancelled) { message ->
                         runOnUiThread { if (generation == startGeneration) showProgress(message) }
                     }
@@ -977,9 +990,9 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
                             game.baseClockTenthsMHz ?: clock,
                             game.gdcClockTenthsMHz ?: 50, game.cpuMultiple ?: DEFAULT_CPU_MULTIPLE,
                             primary.isFloppy,
-                            bootFloppy?.absolutePath, secondFloppy?.absolutePath)) {
+                            bootFloppy?.absolutePath, secondFloppy?.absolutePath, disc?.absolutePath)) {
                         awaitMachineReady()?.let(::error)
-                        PreparedLaunch(disk, media?.bootFloppy, floppyB, swapSources, gameFont != null)
+                        PreparedLaunch(disk, media?.bootFloppy, floppyB, swapSources, gameFont != null, cd, boot)
                     }
                     else error("Unable to start machine")
                 }
@@ -1001,9 +1014,11 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
                         preferences.edit().putString("last_played_entry", entry.id).apply()
                         currentDisk = result.disk
                         gameFontActive = result.gameFont
-                        currentIsFloppy = result.bootFloppy == null && entry.isFloppy
+                        val booted = result.boot
+                        currentIsFloppy = result.bootFloppy == null && booted.isFloppy
                         mountedFloppies[0] = result.bootFloppy?.displayName
-                            ?: if (entry.isFloppy) entry.displayName else null
+                            ?: if (booted.isFloppy) booted.displayName else null
+                        mountedCd = result.cd?.displayName
                         mountedFloppies[1] = result.floppyB?.displayName
                         currentTitle = game.title
                         currentGame = game
@@ -1052,6 +1067,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
                 currentIsFloppy = false
                 mountedFloppies.fill(null)
                 manualFloppies.fill(null)
+                mountedCd = null
                 selectedStartup = emptyList()
                 sessionFromFrontend = false
                 userPaused = false
@@ -1560,8 +1576,56 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
                     else TraySpec("Starting another disk image ends this game. Progress since your last save is lost.",
                         listOf(TrayButton("Cancel"), TrayButton("Choose file\u2026", ButtonTone.PRIMARY) { chooseHdi() }), focus = 0)
                 }),
-            floppyRow(0), floppyRow(1))))
+            floppyRow(0), floppyRow(1), cdRow())))
     })
+
+    private fun cdRow() = SettingsRow.choice("cd", "CD-ROM", cdChoice(),
+        value = { mountedCd ?: "Empty" },
+        tone = { if (mountedCd == null) ValueTone.EMPTY else ValueTone.CURRENT },
+        enabled = { machineRunning && !floppyBusy },
+        disabledReason = { if (floppyBusy) "Wait for the disk change to finish" else "Start a game before inserting a CD" })
+
+    /** Empty ejects; otherwise the game's catalog disc and the CDs in its ZIP or folder. */
+    private fun cdChoice(): ChoiceSpec {
+        fun candidates(): List<LibraryEntry> {
+            val current = currentEntry ?: return emptyList()
+            val named = currentGame?.cdId
+            return libraryEntries.filter { entry ->
+                entry.playable && entry.isCd && (entry.contentId == named || sameSource(current, entry))
+            }.distinctBy { it.contentId }
+        }
+        return ChoiceSpec("CD-ROM", { currentTitle }, {
+            val found = candidates()
+            listOfNotNull(ChoiceGroup(null, listOf(ChoiceOption("empty", "Empty")),
+                if (found.isEmpty()) "No CDs for this game in the library." else null),
+                found.takeIf { it.isNotEmpty() }?.let { items ->
+                    ChoiceGroup("FOR THIS GAME", items.map { ChoiceOption(it.id, it.displayName) })
+                })
+        }, { candidates().firstOrNull { it.displayName == mountedCd }?.id
+            ?: if (mountedCd == null) "empty" else null }, { id ->
+            if (id == "empty") changeCd(null)
+            else candidates().firstOrNull { it.id == id }?.let(::changeCd)
+        }, cycles = false)
+    }
+
+    private fun changeCd(entry: LibraryEntry?) {
+        if (!beginFloppyChange()) return
+        toast(if (entry == null) "Ejecting CD\u2026" else "Preparing ${entry.displayName}\u2026")
+        pages.refresh()
+        Thread {
+            val result = try {
+                val disc = entry?.let { romLibrary.prepare(it, AtomicBoolean(false)) { } }
+                if (!nativeCd(disc?.absolutePath)) error("CD could not be mounted")
+                null
+            } catch (error: Exception) { error.message ?: "CD change failed" }
+            runOnUiThread {
+                endFloppyChange()
+                if (result == null) mountedCd = entry?.displayName
+                toast(result ?: "CD-ROM: ${entry?.displayName ?: "Empty"}")
+                pages.refresh()
+            }
+        }.start()
+    }
 
     private fun floppyRow(drive: Int) = SettingsRow.choice("floppy$drive", "Floppy ${'A' + drive}", floppyChoice(drive),
         value = { mountedFloppies[drive] ?: "Empty" },
@@ -1574,9 +1638,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
         fun candidates(): List<LibraryEntry> {
             val current = currentEntry ?: return emptyList()
             return libraryEntries.filter { entry ->
-                entry.playable && entry.isFloppy &&
-                    (if (current.zipEntry != null) entry.uri == current.uri
-                    else entry.path.substringBeforeLast('/', "") == current.path.substringBeforeLast('/', ""))
+                entry.playable && entry.isFloppy && sameSource(current, entry)
             }
         }
         return ChoiceSpec("Floppy ${'A' + drive}", { currentTitle }, {
@@ -1792,10 +1854,10 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
     /** Every machine start and reset: the PC-98 keyboard starts with Caps and Kana off. */
     private fun startMachine(path: String?, fontPath: String, biosDir: String, mhzTimesTen: Int,
                              gdcMhzTimesTen: Int, cpuMultiple: Int, floppy: Boolean,
-                             bootFloppyPath: String?, secondFloppyPath: String?): Boolean {
+                             bootFloppyPath: String?, secondFloppyPath: String?, cdPath: String?): Boolean {
         inputRouter.resetLocks()
         return nativeStart(path, fontPath, biosDir, mhzTimesTen, gdcMhzTimesTen, cpuMultiple, floppy,
-            bootFloppyPath, secondFloppyPath)
+            bootFloppyPath, secondFloppyPath, cdPath)
     }
 
     private fun resetMachine() {
@@ -1969,7 +2031,8 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
             return
         }
         val isSwap = requestCode != HDI_REQUEST
-        if (name == null || !DiskFormat.supported(name) || (isSwap && !DiskFormat.isFloppy(name))) {
+        if (name == null || !DiskFormat.supported(name) || DiskFormat.isCd(name) ||
+            (isSwap && !DiskFormat.isFloppy(name))) {
             toast(if (isSwap) "Select a supported floppy image" else "Select a supported disk image")
             return
         }
@@ -2006,7 +2069,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
                 val font = prepareFont()
                 if (generation != startGeneration) "Start cancelled"
                 else if (startMachine(disk.absolutePath, font, firmwareDir().absolutePath, clock,
-                        50, DEFAULT_CPU_MULTIPLE, DiskFormat.isFloppy(name), null, null))
+                        50, DEFAULT_CPU_MULTIPLE, DiskFormat.isFloppy(name), null, null, null))
                     awaitMachineReady()?.let { "Disk start failed: $it" } ?: "Starting $name"
                 else "Unable to start machine"
             } catch (error: Exception) {
@@ -2026,6 +2089,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
                     currentIsFloppy = DiskFormat.isFloppy(name)
                     mountedFloppies[0] = if (currentIsFloppy) name else null
                     mountedFloppies[1] = null
+                    mountedCd = null
                     currentTitle = name
                     currentGame = null
                     setSecondaryInitialMode(false)
@@ -2216,7 +2280,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
                 nativeStop()
                 if (generation != startGeneration) "Start cancelled"
                 else if (startMachine(disk.absolutePath, font, firmwareDir().absolutePath,
-                        clock, 50, DEFAULT_CPU_MULTIPLE, floppy, null, null))
+                        clock, 50, DEFAULT_CPU_MULTIPLE, floppy, null, null, null))
                     awaitMachineReady()?.let { "Disk start failed: $it" } ?: message
                 else "Unable to start machine"
             } catch (error: Exception) {

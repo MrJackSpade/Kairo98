@@ -75,6 +75,7 @@ set(NP21W_CORE_SOURCES
     ${NP21W_ROOT}/fdd/fdd_mtr.c
     ${NP21W_ROOT}/fdd/newdisk.c
     ${NP21W_ROOT}/fdd/sxsi.c
+    ${NP21W_ROOT}/fdd/sxsicd.c
     ${NP21W_ROOT}/fdd/sxsihdd.c
     ${NP21W_ROOT}/font/font.c
     ${NP21W_ROOT}/font/fontdata.c

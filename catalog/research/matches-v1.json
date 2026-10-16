@@ -16209,7 +16209,8 @@
         "sha256-fd-v1:b0fa99e9bb71feaf804ed2662d8df58c018016b601c70e4b793cb77e4c2ba81c",
         "sha256-fd-v1:d025f4528265128d8d4e0b85bc7f916cd17179d677a76451664bf8bde6ecad24",
         "sha256-fd-v1:dfa9b2b64bbe2e587741992870845e8cd0aaa5194a0485630cf9551872f5db78",
-        "sha256-hdi-v1:fa5aaa3772bf44eff2b0d1eaf70a31fdd645878262ab119caa51fd41291c61ea"
+        "sha256-hdi-v1:fa5aaa3772bf44eff2b0d1eaf70a31fdd645878262ab119caa51fd41291c61ea",
+        "sha256-cd-v1:170f2b8d71138a093c2482cd89c2ac47cfd483ebd5b1a95cd1a19d92c92e157d"
       ],
       "description": "",
       "pageUrl": "https://gamesdb.launchbox-app.com/games/details/133251-akiko-gold-the-queen-of-adult",
@@ -16293,7 +16294,8 @@
         "sha256-fd-v1:c206d7a86d406eef9abafdaf7c3e2362ae35936576a615bb3b15545017ee9557",
         "sha256-fd-v1:cdb44870b4be1a390fab233acf0c56795f8d85e77c46eb1b24f1176799eb56b2",
         "sha256-fd-v1:f21ba739ef82751670d652ebf1d5a0b6d2e983bdbec139c2940adebc355cdf61",
-        "sha256-hdi-v1:3104d1ff0037d91221edccc0c04878d197ce9ae42f9ee7f384e09a1fef906b77"
+        "sha256-hdi-v1:3104d1ff0037d91221edccc0c04878d197ce9ae42f9ee7f384e09a1fef906b77",
+        "sha256-cd-v1:932e4b43f0ef2df1fcd7ab47523a54464470aa87a984d56beebc644450b15891"
       ],
       "description": "",
       "pageUrl": "https://gamesdb.launchbox-app.com/games/details/147563-akumu-aoi-kajitsu-no-sange",
@@ -16479,7 +16481,8 @@
         "sha256-fd-v1:8f2bcccd3d2db0ce6b07b65b10feff27fb14bd6de81318732ba9512cb1b9b937",
         "sha256-fd-v1:ea556d39d1414bd7c8904c3cafa00adc408a35a3f6e650eb099182ec98211818",
         "sha256-fd-v1:ec998a4ca2d53b5fe4c0da683ebd5a8e21d4ba737eb7cff9c436223d2bbf44e2",
-        "sha256-hdi-v1:da32efbdc4ae7d0452edbd049e48a2e548cc5fd672bc4124776af25362b91ff9"
+        "sha256-hdi-v1:da32efbdc4ae7d0452edbd049e48a2e548cc5fd672bc4124776af25362b91ff9",
+        "sha256-cd-v1:86ff62860ff894edaaccf756322e9b5ed4331b755220fcad9da7f73fd1d66593"
       ],
       "description": "",
       "controller": {"profile": "alice-no-yakata-v1", "bindings": [{"input": "virtual:a", "keys": [28]}, {"input": "virtual:b", "keys": [42]}, {"input": "virtual:x", "keys": [43]}, {"input": "virtual:y", "keys": [52]}, {"input": "virtual:start", "keys": [28]}, {"input": "virtual:select", "keys": [0]}, {"input": "virtual:menu", "action": "menu"}, {"input": "virtual:up", "keys": [58]}, {"input": "virtual:down", "keys": [61]}, {"input": "virtual:left", "keys": [59]}, {"input": "virtual:right", "keys": [60]}, {"input": "virtual:lsup", "mouse": "moveUp"}, {"input": "virtual:lsdown", "mouse": "moveDown"}, {"input": "virtual:lsleft", "mouse": "moveLeft"}, {"input": "virtual:lsright", "mouse": "moveRight"}, {"input": "virtual:rsup", "keys": [67]}, {"input": "virtual:rsdown", "keys": [75]}, {"input": "virtual:rsleft", "keys": [70]}, {"input": "virtual:rsright", "keys": [72]}], "defaults": {"withoutSticks": [{"input": "virtual:a", "keys": [28]}, {"input": "virtual:b", "keys": [42]}, {"input": "virtual:x", "keys": [43]}, {"input": "virtual:y", "keys": [52]}, {"input": "virtual:start", "keys": [28]}, {"input": "virtual:select", "keys": [0]}, {"input": "virtual:menu", "action": "menu"}, {"input": "virtual:up", "keys": [58]}, {"input": "virtual:down", "keys": [61]}, {"input": "virtual:left", "keys": [59]}, {"input": "virtual:right", "keys": [60]}, {"input": "virtual:lsup", "mouse": "moveUp"}, {"input": "virtual:lsdown", "mouse": "moveDown"}, {"input": "virtual:lsleft", "mouse": "moveLeft"}, {"input": "virtual:lsright", "mouse": "moveRight"}, {"input": "virtual:rsup", "keys": [67]}, {"input": "virtual:rsdown", "keys": [75]}, {"input": "virtual:rsleft", "keys": [70]}, {"input": "virtual:rsright", "keys": [72]}]}},
@@ -16599,7 +16602,8 @@
         "sha256-fd-v1:f2cb4d04c0e1c9413e7716ada8f2c795d92cd332980b219a510482f2625596e8",
         "sha256-fd-v1:f7e899ca98c157745975e81968d85326bb1677531bb6e949224030f88ebf161f",
         "sha256-hdi-v1:5eca78fe3ffc009066758261bc045095dacc3bc7b5fe20f1db48fb94f3be95a5",
-        "sha256-hdi-v1:79b549208d95786ab6522f6e125afc3f7fb5ebe654b1fc6c421c072f75372e9b"
+        "sha256-hdi-v1:79b549208d95786ab6522f6e125afc3f7fb5ebe654b1fc6c421c072f75372e9b",
+        "sha256-cd-v1:2161595e35291631e7bc793b0ae89c768f80771f28d9471b1c071d38e835f2bb"
       ],
       "description": "",
       "pageUrl": "https://gamesdb.launchbox-app.com/games/details/139632-alone-in-the-dark-2",
@@ -16615,7 +16619,8 @@
         "pc98:AmtSavan.zip:Alone in the Dark 3"
       ],
       "contentIds": [
-        "sha256-hdi-v1:812ad0a727dc5e61fdbce591b5abc9cb0dbc762ea8ea7d4263b18b1961a78c06"
+        "sha256-hdi-v1:812ad0a727dc5e61fdbce591b5abc9cb0dbc762ea8ea7d4263b18b1961a78c06",
+        "sha256-cd-v1:04b36989d601b02d82da63f8bc0a1299b5149a4bec02912eabfefdbd7cfa7f3f"
       ],
       "description": "",
       "pageUrl": "https://gamesdb.launchbox-app.com/games/details/139554-alone-in-the-dark-3",
@@ -16982,7 +16987,8 @@
         "sha256-fd-v1:fe6e1c444e27e82ec1c6460765cbc5348f67f7f6e69c6fe50403b72cb81d1856",
         "sha256-hdi-v1:0d79b7773ca1654212dd8c4cfaad80d42f2f625e2bae28c451661fa33189a9d8",
         "sha256-hdi-v1:46e15ff00685c023ee55a5631f6546fbf6bcb9ed5b303ea529977398d79be0d8",
-        "sha256-hdi-v1:aa4ed1f23cfec463fe47728f1f43483b9214391f0d4441d9d6fb6232b09fb7b1"
+        "sha256-hdi-v1:aa4ed1f23cfec463fe47728f1f43483b9214391f0d4441d9d6fb6232b09fb7b1",
+        "sha256-cd-v1:23f772f482028021096d3862e51edb6510e67694a91ce368f00c8bc2e963995c"
       ],
       "description": "",
       "pageUrl": "https://gamesdb.launchbox-app.com/games/details/140347-amy-to-yobanaide",
@@ -17026,7 +17032,8 @@
         "sha256-fd-v1:b72212751511961fc65727b98919ae231accd42d90aa6de94b02a1986f6a2dfa",
         "sha256-fd-v1:e6312b9629034176f5e94284031ff754954315b6387e9ecbb8e74ae53642058b",
         "sha256-fd-v1:e6b283977c79edb90a69362955837627e5bdda5af0901b1c413a19b0ce06120e",
-        "sha256-hdi-v1:c32a2055dde9e9f4c01b8204054f58e4b741a59515cd933c119380f9f871a9c1"
+        "sha256-hdi-v1:c32a2055dde9e9f4c01b8204054f58e4b741a59515cd933c119380f9f871a9c1",
+        "sha256-cd-v1:7d94d595c0f719e69ebaa7491d7aee57bb1f5b458dcdd1d765d3afe89d3ce3fe"
       ],
       "description": "",
       "pageUrl": "https://gamesdb.launchbox-app.com/games/details/131106-angel",
@@ -17075,7 +17082,8 @@
         "sha256-fd-v1:e5930a438d785f8e78f752ad6e07aea220aa19b3f7152fc4b06dcef535b968de",
         "sha256-fd-v1:fd8fce1babd8c31725399ee2513bc6f1c73a55ff5ca65eac100eccf835381f2d",
         "sha256-hdi-v1:28b700e78a017fbe182415e1609d71f590b3e91cacb584a1dadee9379cc2c3b1",
-        "sha256-hdi-v1:298b352f664f81f8218aee1694a47e8d495aed2b976daa0620dbfe9a85b69558"
+        "sha256-hdi-v1:298b352f664f81f8218aee1694a47e8d495aed2b976daa0620dbfe9a85b69558",
+        "sha256-cd-v1:8aa9a305c807f7bea9a61bcc6daae3f785f6b1672451826f950b6a46c4f5178b"
       ],
       "description": "",
       "pageUrl": "https://gamesdb.launchbox-app.com/games/details/131108-angel-halo",
@@ -17399,7 +17407,8 @@
         "sha256-fd-v1:d8b5aa088958819c4aa74bdbcc471500090f5f21a49c68430707e344fabefa7e",
         "sha256-fd-v1:f6cdef57b53644f1c20e0c40cce4ef3567f74cb52d87c1aebd5af44d5d4a082a",
         "sha256-hdi-v1:c4be1c3da2bd3dc5c9930d31de18054b7931f9c6b933cfd4373249d185262d77",
-        "sha256-hdi-v1:db75a53a2cb2df31a50c62922ad0c281bffcaab9b1dc25661045914f5450d485"
+        "sha256-hdi-v1:db75a53a2cb2df31a50c62922ad0c281bffcaab9b1dc25661045914f5450d485",
+        "sha256-cd-v1:e89ba37cdd32306ea16b1d27ed147729cf4b4f14ef1a8c784cb9bb0cc6941cfe"
       ],
       "description": "Gento and his feline companion Benimaru travel across Japan after an attack by Edo soldiers draws them into a struggle over a sealed dragon god.",
       "pageUrl": "https://gamesdb.launchbox-app.com/games/details/106062-appareden-fukuryuu-no-shou",
@@ -18185,7 +18194,8 @@
         "pc98:CoreMagazine.zip:Ayumi-chan Monogatari Jissha-ban"
       ],
       "contentIds": [
-        "sha256-hdi-v1:8a2027958fcbe0d1bc1d324de8bb9a3986b4277c7223a9821b3ca115a0384986"
+        "sha256-hdi-v1:8a2027958fcbe0d1bc1d324de8bb9a3986b4277c7223a9821b3ca115a0384986",
+        "sha256-cd-v1:fc194f1be8b28576c39790361ada93beeac8040dd67a017588dfd3663585ad1e"
       ],
       "description": "",
       "pageUrl": "https://gamesdb.launchbox-app.com/games/details/140330-ayumi-chan-monogatari-jissha-ban",
@@ -18287,7 +18297,8 @@
       ],
       "contentIds": [
         "sha256-fd-v1:bcd5fc7bbd59f02286f3890f8ff4d65f106a8e97f93e778815f0181835050842",
-        "sha256-hdi-v1:27a2c8e8e9c74b3e970d4f0b7050fd7ad40e8e987321b31ecc4391ef01f97256"
+        "sha256-hdi-v1:27a2c8e8e9c74b3e970d4f0b7050fd7ad40e8e987321b31ecc4391ef01f97256",
+        "sha256-cd-v1:54874f23c9ee7258d05b40251aec65beb70262c8fedcf9beab37ae177f115579"
       ],
       "description": "",
       "pageUrl": "https://gamesdb.launchbox-app.com/games/details/137057-bacta-12-voice",
@@ -18461,7 +18472,8 @@
         "sha256-fd-v1:d3bd9bda7398ff90ac6a2ab492aac260499c63323d184021676007c9e6b0acaa",
         "sha256-fd-v1:d88c0403b197f76238170c561061be2f2c3a1a7a8927b067a3b6475052b1b73f",
         "sha256-fd-v1:f3cbb3f7e2583cef11ce92f4fe408ffe7f78759fdd4b8ac514ff1659139af65e",
-        "sha256-hdi-v1:5ef13b7187493955782713241e1dfc13e84001de83b8261a54a237ab2df8c777"
+        "sha256-hdi-v1:5ef13b7187493955782713241e1dfc13e84001de83b8261a54a237ab2df8c777",
+        "sha256-cd-v1:b404bf96dd3915ccd177db75ee847290b536f00ed6e235e6f9ebb322a86b1c20"
       ],
       "description": "",
       "pageUrl": "https://gamesdb.launchbox-app.com/games/details/137062-ballade-for-maria",
@@ -19413,7 +19425,8 @@
         "sha256-fd-v1:978fa1df80ceec1548ebf4837633a3b392c12d89832c566bab55351ecad15bd6",
         "sha256-fd-v1:d44b38df0be113ada2764809894a5d6126385bece4ab0a2e8719014bf42a9e73",
         "sha256-hdi-v1:a7156033987b226c7db42036686b31ebf8604243705842894cea851fc56f9152",
-        "sha256-hdi-v1:c7405a125de28b799321a33427f46c242e689597908433de7ebf4cd29626cee3"
+        "sha256-hdi-v1:c7405a125de28b799321a33427f46c242e689597908433de7ebf4cd29626cee3",
+        "sha256-cd-v1:a7f19b6dd4de65e26d94217ee42be920d0a72e728352586810685bb78b9ab6c7"
       ],
       "description": "",
       "pageUrl": "https://gamesdb.launchbox-app.com/games/details/137071-blandia-98",
@@ -19795,7 +19808,8 @@
         "sha256-fd-v1:ad80f4b899d990b5f4685546fe97dc06929cc17f142a369ce1d6c2072a8aae79",
         "sha256-fd-v1:d63aa57042ebd276ccc6b22b81de2dfb2ae858b7434051ef46630e91fbe68877",
         "sha256-hdi-v1:7f7ced640e0949e9de65cd0b00b7c64dda281532e3bfdbb0707c0c80c22e7b54",
-        "sha256-hdi-v1:c5e1add31c987404340f287147a21f3887e1a38641927df460626f25061d20d1"
+        "sha256-hdi-v1:c5e1add31c987404340f287147a21f3887e1a38641927df460626f25061d20d1",
+        "sha256-cd-v1:61c07c1b531e09852614b831596f1e0bf4d490369c54f6c46662eab6e79e654b"
       ],
       "description": "",
       "pageUrl": "https://gamesdb.launchbox-app.com/games/details/136564-bounty-hunter-ludy",
@@ -19935,7 +19949,8 @@
         "sha256-fd-v1:8be27b3b784fd5ab9539a90d5a307c5d3ed190d55a124a1554e45bae7b477e04",
         "sha256-fd-v1:a06482efe5e281ec1309178bd86455c97f7d941f6ae5264ca3744010ce382fc9",
         "sha256-hdi-v1:bd88eebe3d7531af91dba5c8ce6c0435fbd40e78798b05402d01c162743e541e",
-        "sha256-hdi-v1:fe1196f39b92ba203a16146f2d1a65a54b156277af5624edc9e8dc86ca78916a"
+        "sha256-hdi-v1:fe1196f39b92ba203a16146f2d1a65a54b156277af5624edc9e8dc86ca78916a",
+        "sha256-cd-v1:7b61a60c2f19f24761b38ae2c144e28455b6daa35f3336dea19ed3f93d0d0938"
       ],
       "description": "",
       "pageUrl": "https://gamesdb.launchbox-app.com/games/details/139256-brandish-2-the-planet-buster-renewal",
@@ -19969,7 +19984,8 @@
         "sha256-fd-v1:e4b84c2e12736481a3c74e7d24e1d0fc00ce58c8f851123412f0f7c4fa6228e1",
         "sha256-fd-v1:f4b82e03d76f7126fe5346bb70abd831fd7ee50b36883aed8a2244639d0b36e0",
         "sha256-hdi-v1:2d215a5bfdd7dc31b4bff50d1a20cde123bc7dc42399dbe8af1585f480b275bf",
-        "sha256-hdi-v1:b348708820a5895ef91424fbf81ef82be5491d058e7f91b175b34cf6080c4973"
+        "sha256-hdi-v1:b348708820a5895ef91424fbf81ef82be5491d058e7f91b175b34cf6080c4973",
+        "sha256-cd-v1:0198f0415161ea7b87c0c40436ceda348768cbff6175f6c584bb45acea0b25e3"
       ],
       "description": "",
       "pageUrl": "https://gamesdb.launchbox-app.com/games/details/134288-brandish-3-spirit-of-balcan",
@@ -19987,7 +20003,8 @@
         "pc98:Falcom.zip:Brandish 3 Renewal"
       ],
       "contentIds": [
-        "sha256-hdi-v1:d185b841e8979c8732177c6aa742f76072a44fc4e6a7778179f471819d050201"
+        "sha256-hdi-v1:d185b841e8979c8732177c6aa742f76072a44fc4e6a7778179f471819d050201",
+        "sha256-cd-v1:3cfe4db76642a5fdf63f4e9dd886e97813d5705fdfa0b5a723a22990bf0575f0"
       ],
       "description": "",
       "pageUrl": "https://gamesdb.launchbox-app.com/games/details/139257-brandish-3-spirit-of-balcan-renewal",
@@ -20013,7 +20030,8 @@
         "sha256-fd-v1:b6197cc7ecc30344cc167c8e22a7743f581de6102068bd09e26ca861ac734491",
         "sha256-hdi-v1:98856b37c295d76662af9c0083e1780481c6150dce60fd21f8c5605a584a11fa",
         "sha256-hdi-v1:a060740ae268bf9d577cc00872c0c6066c9288d5f334964c9a7ce9b4d85fb895",
-        "sha256-hdi-v1:e251fb6c821b83fd14c2ec62784fdf259ad7db5ff07ad95eb0e817ab4cd38524"
+        "sha256-hdi-v1:e251fb6c821b83fd14c2ec62784fdf259ad7db5ff07ad95eb0e817ab4cd38524",
+        "sha256-cd-v1:f28f342b6f8e1e84044f22e0e7586589cf95555e1cccc1873528eec5bcc66ba7"
       ],
       "description": "",
       "pageUrl": "https://gamesdb.launchbox-app.com/games/details/133261-brandish-vt",
@@ -20036,7 +20054,8 @@
         "sha256-fd-v1:c29574e0f7838959fe3c20c7deab13f39044204c2e806ede7ff928d81416fa24",
         "sha256-fd-v1:d42c10c28ac32d1e285094b64801edd14d4a2d3a473c01233e02e54245de6875",
         "sha256-hdi-v1:0669f252a0e14bcf0634b4ea6b87ee07ab56df981495cfc6e36997745ffef309",
-        "sha256-hdi-v1:ac96404c735afc43c0cc0c5c47e32d6430d6c9f2fed0a17cdd770aa4f170521c"
+        "sha256-hdi-v1:ac96404c735afc43c0cc0c5c47e32d6430d6c9f2fed0a17cdd770aa4f170521c",
+        "sha256-cd-v1:3e18e7c3863ca092ab159b304ffd6b7004085294f7bfa9be90630927b32388cd"
       ],
       "description": "",
       "pageUrl": "https://gamesdb.launchbox-app.com/games/details/139255-brandish-renewal",
@@ -20065,7 +20084,8 @@
         "sha256-fd-v1:b3cc0c3747aaa757604c58c39ebea87ffb5077b22cf593b382d595942e85c526",
         "sha256-fd-v1:b62a2fc49552fa70353c7e020b9715bc6695b02bcbe6aed5afaab6c70b7115bb",
         "sha256-fd-v1:f17dce4cf869500d0e2ed4c0ae63be8af346e187e273ed7b09185638deeeb118",
-        "sha256-fd-v1:ffabcad7713ba577797c420b0860046171dafafd7fd384ff75fdb2220bc54098"
+        "sha256-fd-v1:ffabcad7713ba577797c420b0860046171dafafd7fd384ff75fdb2220bc54098",
+        "sha256-cd-v1:d05aa765f1f6439df77ec294e6fd5fd5d937cb5c33fe723da6b919e452c11e97"
       ],
       "description": "",
       "pageUrl": "https://gamesdb.launchbox-app.com/games/details/133262-branmarker",
@@ -20123,7 +20143,8 @@
         "sha256-fd-v1:ed9d6c76d7b2a85d55e9573b9fbb60ab803e621d9f15c514fe3badcb3b5e7450",
         "sha256-fd-v1:f556e931960664f90f81277e2edc8f4ae1ee5d30242931290d79dab449df8b99",
         "sha256-fd-v1:f838e79b3f210d2333ccb61774b1f6c27173774ea3a7dd446b97d2d425bf0280",
-        "sha256-hdi-v1:9279633de63ea1f0e0191b7886adbcceb4235f68d1a2d80bdee3d1d35246d509"
+        "sha256-hdi-v1:9279633de63ea1f0e0191b7886adbcceb4235f68d1a2d80bdee3d1d35246d509",
+        "sha256-cd-v1:6037abb09d091ba0c695916d02f0f3b5612cd77b252b67cc7bdb82fd4add4b6b"
       ],
       "description": "",
       "pageUrl": "https://gamesdb.launchbox-app.com/games/details/133263-branmarker-2",
@@ -20472,7 +20493,8 @@
       ],
       "contentIds": [
         "sha256-fd-v1:0dab40f2fe30903ec859b144a94e87c3c34032d3dd739d84f071d8715761f5c7",
-        "sha256-hdi-v1:962a475870d6d0ed4274660375ecc6db4c8651656f2ab0f8fc4cb752159d9e2f"
+        "sha256-hdi-v1:962a475870d6d0ed4274660375ecc6db4c8651656f2ab0f8fc4cb752159d9e2f",
+        "sha256-cd-v1:0f27afac40b32d088536c8faee2a4eea4b5c538d11e88162bf5774444f92e3df"
       ],
       "description": "",
       "pageUrl": "https://gamesdb.launchbox-app.com/games/details/140894-buzz-aldrins-race-into-space",
@@ -22689,7 +22711,8 @@
         "sha256-fd-v1:e0bbe478913f9aaa4675db5a4f092f9af588366033502ce0722b1208157473d3",
         "sha256-fd-v1:e3ea27d1d52ee5bf02e311b4e5ee385b75f77415f91dabe3e9905efeee9cb71d",
         "sha256-fd-v1:f96f15b6a6ef95d5865bed8b5762099683bbafaa2e238652e730fc199bd184b9",
-        "sha256-hdi-v1:91acc253a0efd65bff5d8a4f53021ebd6502771e6a6138b73121d33fe5b999cb"
+        "sha256-hdi-v1:91acc253a0efd65bff5d8a4f53021ebd6502771e6a6138b73121d33fe5b999cb",
+        "sha256-cd-v1:3af9a91a1167feecbfed8eb76e6d31ea23b4c69365ec9ff4fb1f5c8948750fbc"
       ],
       "description": "",
       "pageUrl": "https://gamesdb.launchbox-app.com/games/details/132172-crw-2",
@@ -22738,7 +22761,8 @@
       ],
       "contentIds": [
         "sha256-fd-v1:c4727f59ca1770fe0b50635f532a498f09e9041222e7bad08222b181e964843d",
-        "sha256-hdi-v1:8695e65197b3936af8a4b644a2b334281ec02b1b009613f83443cdc724231aba"
+        "sha256-hdi-v1:8695e65197b3936af8a4b644a2b334281ec02b1b009613f83443cdc724231aba",
+        "sha256-cd-v1:a664cf30a730cbb82b8344891e9a1f6610f36919985a4fe6bbeacfffd250aecf"
       ],
       "description": "",
       "pageUrl": "https://gamesdb.launchbox-app.com/games/details/140500-cry-sweeper",
@@ -22852,7 +22876,8 @@
         "sha256-fd-v1:efab609cd872423fef537f6af4f8e88b9255626f80f40247c71ca499ea28ce1f",
         "sha256-fd-v1:fe9b515cec637468acc8f4dc6b8a7d7f161909211a8b5de7bc0a8029fa5e31c3",
         "sha256-hdi-v1:d1e4fe95c5bcfad8ff21e3bfec8bdf99798ff4c75eb7584e4cfab5f4ad6b71df",
-        "sha256-hdi-v1:d3c091594d029664b7cef3a799cc55c65cb2dbfa423252e0f536121643941652"
+        "sha256-hdi-v1:d3c091594d029664b7cef3a799cc55c65cb2dbfa423252e0f536121643941652",
+        "sha256-cd-v1:1362b10066dcb17aafc5d4fd0c39bf1e8c07197a66778e076f75434c18e76a79"
       ],
       "description": "",
       "pageUrl": "https://gamesdb.launchbox-app.com/games/details/133280-crystal-rinal",
@@ -23094,7 +23119,10 @@
         "pc98:TsukamotoYoshihikoJimusho.zip:Cyber War"
       ],
       "contentIds": [
-        "sha256-hdi-v1:412a9c0a84eef89beb1bdba765412586ce552abcf4e49bcc846d3923e54cc928"
+        "sha256-hdi-v1:412a9c0a84eef89beb1bdba765412586ce552abcf4e49bcc846d3923e54cc928",
+        "sha256-cd-v1:1bec1e830805303275aad733b1aa5a754a5b72d4d4f7e75be8a378c85f13063e",
+        "sha256-cd-v1:53a217ea6cea293ecbbc86f616b6077f8837486d6d9fb290f289b58c7cc910cd",
+        "sha256-cd-v1:8a5e3567d768a26cd84c02b56d69a13f348dbf2b94f3f83bb3f0a212742fc37a"
       ],
       "description": "",
       "pageUrl": "https://gamesdb.launchbox-app.com/games/details/154564-cyberwar",
@@ -23200,7 +23228,8 @@
       ],
       "contentIds": [
         "sha256-fd-v1:492bd676987c5c99ce8f59f73bd5f441da76ae45f9ef62469e6218282a660df9",
-        "sha256-fd-v1:d56cc38cc0e55ed8fb31dd8669e59b41b9fb284ba58d5bddaef1014886fd4669"
+        "sha256-fd-v1:d56cc38cc0e55ed8fb31dd8669e59b41b9fb284ba58d5bddaef1014886fd4669",
+        "sha256-cd-v1:9f7faf492e7e40abce44f3a6e14a393e8cb6cba11ea971cbf30168fb7c345942"
       ],
       "description": "",
       "pageUrl": "https://gamesdb.launchbox-app.com/games/details/140510-do-doki-doki-disk-vol-1",
@@ -23221,7 +23250,8 @@
       "contentIds": [
         "sha256-fd-v1:2c7bcf8f8f13604e17da5751b9eaa33a5b83abc5f98751a59847bc3041bc956f",
         "sha256-fd-v1:6ce853735fd519c39969c9b2253be15bc14b3ba2653299287253752abcc32779",
-        "sha256-fd-v1:d4e07cc4342d7b1d6d6f222893ca3c0cc5c5c55b05c8a9bf23ae3093470f2a89"
+        "sha256-fd-v1:d4e07cc4342d7b1d6d6f222893ca3c0cc5c5c55b05c8a9bf23ae3093470f2a89",
+        "sha256-cd-v1:daae0f70a2e747a04a689fcdac03e933fe750fa818131a34bd019492b923d756"
       ],
       "description": "",
       "pageUrl": "https://gamesdb.launchbox-app.com/games/details/140566-do-doki-doki-disk-vol-2",
@@ -23241,7 +23271,8 @@
       ],
       "contentIds": [
         "sha256-fd-v1:59677b363b3f361d22d43363b7deba2b31dc04fb2e7de288d17c544bf1f7cd5a",
-        "sha256-fd-v1:7339d952816b57c81b8d6b520566086e190aedb2fdcb79606d5e94afab19b9af"
+        "sha256-fd-v1:7339d952816b57c81b8d6b520566086e190aedb2fdcb79606d5e94afab19b9af",
+        "sha256-cd-v1:e9613f2fb724bf780cf42ddd4f6dec6044e10f9de1b674d9579ddeb7c7385346"
       ],
       "description": "",
       "pageUrl": "https://gamesdb.launchbox-app.com/games/details/140569-do-doki-doki-disk-vol-3",
@@ -23385,7 +23416,8 @@
         "sha256-fd-v1:411a2f908f03b8ffb36d24d06a31c8689bdc14c3e5537e4bdff4e6a8e6abe60a",
         "sha256-fd-v1:574d192ee7c758996d2085016683535d06b91235ff581d721b12e7cd2757938e",
         "sha256-fd-v1:c45ff52b1934708bdbfe04da9e28e6f3cf9b7304d3148a7286948a08df630b54",
-        "sha256-hdi-v1:8f41f678a9c267a4a83b1adfe119e9074711ec268915e0bb1e3f93734ce28f19"
+        "sha256-hdi-v1:8f41f678a9c267a4a83b1adfe119e9074711ec268915e0bb1e3f93734ce28f19",
+        "sha256-cd-v1:00be303ef00c21d1e1737547e29d94172b56d6eddf7b3232a49baa2c1924136a"
       ],
       "description": "",
       "pageUrl": "https://gamesdb.launchbox-app.com/games/details/140626-do-kanshuu-premium-box-touch-my-heart",
@@ -23431,7 +23463,8 @@
         "pc98:AliceSoft.zip:D.P.S Zenbu (All Dream Program System)"
       ],
       "contentIds": [
-        "sha256-hdi-v1:0cd53d30f09352c2a27d13c38ca72590a735f07e2446b886110a7b11d2dd776e"
+        "sha256-hdi-v1:0cd53d30f09352c2a27d13c38ca72590a735f07e2446b886110a7b11d2dd776e",
+        "sha256-cd-v1:63038438c482fd704c84ddfd3272bc9ef1cf9b774a0709623de3992a8b597628"
       ],
       "description": "",
       "pageUrl": "https://gamesdb.launchbox-app.com/games/details/139393-dps-zenbu",
@@ -24080,7 +24113,8 @@
         "sha256-fd-v1:b5d2b2c33feb293247552c5a52b17ba0540e7733682734314206d88aec9298af",
         "sha256-fd-v1:e3394640577deb7b01ebd8b23d3272d7b5f12029a78981f6a4d69b7977f5aa33",
         "sha256-hdi-v1:064eeeb70ca60aaae9858cf3afc9d889c229acce96331882763ab50a32f21f26",
-        "sha256-hdi-v1:e40098c3f49dcfa82dd317dd103a7787e503a4e6a2d119db57e8a73a064432b8"
+        "sha256-hdi-v1:e40098c3f49dcfa82dd317dd103a7787e503a4e6a2d119db57e8a73a064432b8",
+        "sha256-cd-v1:4fb986b975fba9df365169762ecc0fcfb879ded29183265b142016a5d05945c7"
       ],
       "description": "",
       "pageUrl": "https://gamesdb.launchbox-app.com/games/details/137679-dangel",
@@ -24138,7 +24172,8 @@
         "sha256-fd-v1:d68814a342b55ae007af1c18fd5ac25010688166f80c3c062a86fba45c7b2c21",
         "sha256-fd-v1:f04a939ecefad987ce0d88fcba1132b6d202fbe97ef1a85c80718e7ebf7341e2",
         "sha256-hdi-v1:89ae45331defc26f536d58c4bbdc6b3df76a835a2ff2aa7d44f80de0f25fe763",
-        "sha256-hdi-v1:e371fe648cad1676180a5e8b38bf26757d190d2d06577037f8ee7a5e19de2334"
+        "sha256-hdi-v1:e371fe648cad1676180a5e8b38bf26757d190d2d06577037f8ee7a5e19de2334",
+        "sha256-cd-v1:4aa22dd8c2a3c4bb3f34b0ecd917ba59fb78fb5b1ae75a2edfe9091c013831b9"
       ],
       "description": "",
       "pageUrl": "https://gamesdb.launchbox-app.com/games/details/137110-daraku-no-kuni-no-angie",
@@ -24228,7 +24263,8 @@
         "sha256-fd-v1:aceeff3841db6d503f4e0364acf6f4725a848841a28d5df0e7a73aeb9779fd7f",
         "sha256-fd-v1:ae796d13a15b9b480d6e66ab4d157640f0371feb6e42dd51789050ca0648d548",
         "sha256-fd-v1:f025ecb89f2c3174d2d19fab73c30ecdccdce76e33ea44ae130807801c074936",
-        "sha256-hdi-v1:01768007679b0801bda42839f8241df592a6476315a4f6596e0f636b71e488b4"
+        "sha256-hdi-v1:01768007679b0801bda42839f8241df592a6476315a4f6596e0f636b71e488b4",
+        "sha256-cd-v1:a08d55fc3fa3fc3d97734b1311c6325344e6a7c23a89a77f367adc3a1ab952ac"
       ],
       "description": "",
       "pageUrl": "https://gamesdb.launchbox-app.com/games/details/106028-dark-seraphim",
@@ -24355,7 +24391,8 @@
         "sha256-fd-v1:c2e47f25ef3ed99b2b4a5bd5e50c811355abc3f805bcb851ff39b9a18ee56c9f",
         "sha256-fd-v1:e4f7ecac7fe29b8af3af824d5a284eccd913c0bff3f719fac86330d67c3daa21",
         "sha256-hdi-v1:00e1119b42d81c83ac21553fa3b7a9aab8a6a11a9766130c9ef596021ef899ba",
-        "sha256-hdi-v1:fad0758ff5df21033793d7eba4d1c692947e7a4fe1507b39b0c0bdb91fdb5205"
+        "sha256-hdi-v1:fad0758ff5df21033793d7eba4d1c692947e7a4fe1507b39b0c0bdb91fdb5205",
+        "sha256-cd-v1:a67a1b0ea5ff86d6768ad3f536ce516ea272a33908a7f13c7aa9723ecc1e1087"
       ],
       "description": "",
       "pageUrl": "https://gamesdb.launchbox-app.com/games/details/137114-defana",
@@ -25082,7 +25119,8 @@
         "sha256-fd-v1:bc28bbc8d6fd9c2f37c5968bc1a126bd65bd9a983eeff38a22bfc5a9590484dc",
         "sha256-fd-v1:f13fff8868a94dedcdd16eb5fff3308640575121721b96e4368c238f7e1f1128",
         "sha256-hdi-v1:0ea8d67b49745066765d85f83f70d7eda7c32d503ceba1b483bd369c70c09afc",
-        "sha256-hdi-v1:7b8c5ecfdcc8d45f13fca6aae6535fb353a258b34184e5c90a6edf67ba504f36"
+        "sha256-hdi-v1:7b8c5ecfdcc8d45f13fca6aae6535fb353a258b34184e5c90a6edf67ba504f36",
+        "sha256-cd-v1:85d056466f21d5daeca5477836d388a9f8b032a3a239856ee4984da2e977d1b2"
       ],
       "description": "",
       "machine": {"gdcClockTenthsMHz": 25},
@@ -25300,7 +25338,8 @@
         "sha256-fd-v1:f6a32cc2878d0c61fc6ab05f393c005c86756776870c0c3acad629e59fedc963",
         "sha256-fd-v1:f710bfb7bcd59e5e46dc5e09788bf6441d895a0107c73bbfca346c2af464b671",
         "sha256-hdi-v1:4b37414c01372c080d049a04b9f31e53d61623465ca3086c4b1957eb3201de85",
-        "sha256-hdi-v1:60ce7577019cdb2962672d40987e714091b3a5fb7b19848ca04d922fb66b8cf2"
+        "sha256-hdi-v1:60ce7577019cdb2962672d40987e714091b3a5fb7b19848ca04d922fb66b8cf2",
+        "sha256-cd-v1:64f831ebcfb457ec3a0718c480f6714123eebd2b4d221562d3d439aa3af606b1"
       ],
       "description": "",
       "pageUrl": "https://gamesdb.launchbox-app.com/games/details/131955-dies-irae",
@@ -26092,7 +26131,9 @@
       "sourceGroups": [
         "pc98:Compile.zip:Disc Station Vol. 09"
       ],
-      "contentIds": [],
+      "contentIds": [
+        "sha256-cd-v1:a288832c3f1ff2ff457f457d2db450eb27d8bb24f902e1dd886322aeb097c7db"
+      ],
       "description": "",
       "pageUrl": "https://gamesdb.launchbox-app.com/games/details/140305-disc-station-vol-09",
       "boxArtUrl": "",
@@ -26106,7 +26147,9 @@
       "sourceGroups": [
         "pc98:Compile.zip:Disc Station Vol. 10"
       ],
-      "contentIds": [],
+      "contentIds": [
+        "sha256-cd-v1:4b323d92dba726ef8d158a0218c97932ef0312c5bd21315599f905db7c3990e7"
+      ],
       "description": "",
       "pageUrl": "https://gamesdb.launchbox-app.com/games/details/140306-disc-station-vol-10",
       "boxArtUrl": "https://images.launchbox-app.com/36300142-4576-48ad-8c1c-267f3380b1ed.jpg",
@@ -26120,7 +26163,9 @@
       "sourceGroups": [
         "pc98:Compile.zip:Disc Station Vol. 11"
       ],
-      "contentIds": [],
+      "contentIds": [
+        "sha256-cd-v1:47443d804a8cad0baffae5a568b3223078b2f5ee67e078a90401e8c07e66ba01"
+      ],
       "description": "",
       "pageUrl": "https://gamesdb.launchbox-app.com/games/details/140307-disc-station-vol-11",
       "boxArtUrl": "",
@@ -26524,7 +26569,8 @@
         "sha256-fd-v1:e8331e361fa0a77275d60afcf4a5eaebea7065d2709344a3192d8991178f12ba",
         "sha256-fd-v1:f0683a3428b3f12f6c3da8b621ab8a7a9e291466bdf994d8fe52a6396536b20c",
         "sha256-hdi-v1:1010a50e490296cac99fbde8952723a2a8786d1a21112cb6448ab397017acf4f",
-        "sha256-hdi-v1:b1f057f0739f576b10316dc0606be9e131d93adb79ecec7d60acc8e587cd1f38"
+        "sha256-hdi-v1:b1f057f0739f576b10316dc0606be9e131d93adb79ecec7d60acc8e587cd1f38",
+        "sha256-cd-v1:b1b55bf3f147dc68fa9fb3b2740dec5c627e29e0e17cfe6f45eddaaa776fdd02"
       ],
       "description": "",
       "pageUrl": "https://gamesdb.launchbox-app.com/games/details/106086-doom",
@@ -26554,7 +26600,9 @@
         "sha256-fd-v1:c3cfe5c4de02805a982f23949a6291c9c1f00785c749043f497af111df9b470d",
         "sha256-fd-v1:e653d207229ad8bf8b05415c75a06da8cb7d733db48ba1a6e5451d8c11b37737",
         "sha256-hdi-v1:3da1e6c0cd6efbe2cd35d91067acc15c4005343620496b3e12059b73694a5ae4",
-        "sha256-hdi-v1:c7359c35d8d01bc1cea28d9c98d7ee10524d37e564805553484e9be0b59552ae"
+        "sha256-hdi-v1:c7359c35d8d01bc1cea28d9c98d7ee10524d37e564805553484e9be0b59552ae",
+        "sha256-cd-v1:ad7e184e56dc70ca33f12bee14c0691175327d0c548f8be4a2d0fcd9f98b7e83",
+        "sha256-cd-v1:b64e0394c68cf52de1caf79b1ca55ed924b1bae24bcfb58f64f3a11c73f4750e"
       ],
       "description": "",
       "pageUrl": "https://gamesdb.launchbox-app.com/games/details/106087-doom-ii",
@@ -26666,7 +26714,9 @@
       ],
       "contentIds": [
         "sha256-fd-v1:326dd1a5beec29902395457ad954fac9a84a0ef6a7d5195dcbc5b17ea2c07601",
-        "sha256-fd-v1:fc6c2a1274ad5785f3bba2b5f2d2dabe64e9d985233e29289566d0b1be971f37"
+        "sha256-fd-v1:fc6c2a1274ad5785f3bba2b5f2d2dabe64e9d985233e29289566d0b1be971f37",
+        "sha256-cd-v1:a717a3b61e7d60a6619e12a69ef41d4d870f324add2bb434762cea3ef807dbea",
+        "sha256-cd-v1:d8bfd7667f022b8cd841391f30ce6f55b9ab5a7a59aeca87b7e177cd1ff72be9"
       ],
       "description": "",
       "pageUrl": "https://gamesdb.launchbox-app.com/games/details/140627-dor-best-selection-vol-1",
@@ -26686,7 +26736,9 @@
       ],
       "contentIds": [
         "sha256-fd-v1:443cd68d1e65efc3e2be57107872cca041597625494563000fcf93fedcb9cd8b",
-        "sha256-fd-v1:60512f9f957986927dcd34e36177ee0e6b8e3d593bf43a95fc997d3f0b6d7b7a"
+        "sha256-fd-v1:60512f9f957986927dcd34e36177ee0e6b8e3d593bf43a95fc997d3f0b6d7b7a",
+        "sha256-cd-v1:b88a0f653b47c7b5d3d5b314cfd08692da5e733047230e98ddf9975af20a8ba4",
+        "sha256-cd-v1:e082e07e5fa19a4dcb4b5f030f07850333385240e1238cf731d6f5196eca5454"
       ],
       "description": "",
       "pageUrl": "https://gamesdb.launchbox-app.com/games/details/140632-dor-best-selection-vol-2",
@@ -26768,7 +26820,8 @@
         "sha256-fd-v1:d43c545470507ddc7a6af07387f605417644dc3373fc06613b593643d47ff178",
         "sha256-fd-v1:e5bc750e0fe40be8c092ddcb779080b7dbb904525cffb7dd8504dd81b24df944",
         "sha256-hdi-v1:01d457c7fac46e0aafa60446ce4e63cb897d7b299ca016ad0f8ee33909f50ecd",
-        "sha256-hdi-v1:238cb929adb8cb7384c88d92f675df7ce9025e5d760516374d0324597b85b357"
+        "sha256-hdi-v1:238cb929adb8cb7384c88d92f675df7ce9025e5d760516374d0324597b85b357",
+        "sha256-cd-v1:0bd32a4afaeeb0b36b24f3dd1ea3151d15b698f6c0eca06019d5228e38446bb4"
       ],
       "description": "",
       "pageUrl": "https://gamesdb.launchbox-app.com/games/details/133312-dor-special-edition-93",
@@ -27264,7 +27317,9 @@
         "pc98:KSS.zip:Dragon Lore"
       ],
       "contentIds": [
-        "sha256-hdi-v1:318a3365f703ad2ee1bddc05b12fa169cbca5bf4140d3020f0722101fcf4ec65"
+        "sha256-hdi-v1:318a3365f703ad2ee1bddc05b12fa169cbca5bf4140d3020f0722101fcf4ec65",
+        "sha256-cd-v1:710d28f7458a249f46493659f16dd1a1cc551b9c69043bd6e37386f5ba9113b8",
+        "sha256-cd-v1:b4b73eceb0ab319b7a631999d106c2ab7a3585a077f7e42333a86849de94b1f2"
       ],
       "description": "",
       "pageUrl": "https://gamesdb.launchbox-app.com/games/details/149571-dragon-lore",
@@ -28224,7 +28279,8 @@
         "pc98:PioneerLdc.zip:El-Hazard - The Magnificent World"
       ],
       "contentIds": [
-        "sha256-hdi-v1:c551c2ab1b6a8e608bb1ff1eae75fffc3325dc1027cae688ad4fbf91b67dc870"
+        "sha256-hdi-v1:c551c2ab1b6a8e608bb1ff1eae75fffc3325dc1027cae688ad4fbf91b67dc870",
+        "sha256-cd-v1:da3a0640c0ecbfbc3730215963d01d9fb03504f3003565197a7ca8c5e320d99d"
       ],
       "description": "",
       "pageUrl": "https://gamesdb.launchbox-app.com/games/details/127793-el-hazard-the-magnificent-world",
@@ -28325,7 +28381,8 @@
         "sha256-fd-v1:e4f2091319822f67bdbb86569b33bd802b7a199af98c8da1d41cce796b7289e4",
         "sha256-fd-v1:fffad699b4d621ced7caca7a51aa83f144e066165d8405f14100e6be33d8aaff",
         "sha256-hdi-v1:54fcdcb8ab343e89d7ddcd4d898e73eba4c449f5a8a4f12b59aa6b1b8080b603",
-        "sha256-hdi-v1:b0f329acd393921734161c153c2fd41368efafa22a2f5bf58c5b29f97853b218"
+        "sha256-hdi-v1:b0f329acd393921734161c153c2fd41368efafa22a2f5bf58c5b29f97853b218",
+        "sha256-cd-v1:5dade5989f2527fca78c5ad976d1076bf3dd061930f3f598e9f090e7b5f243a6"
       ],
       "description": "",
       "pageUrl": "https://gamesdb.launchbox-app.com/games/details/106027-elm-knight-a-living-body-armor",
@@ -28467,7 +28524,8 @@
       "contentIds": [
         "sha256-fd-v1:5ad426aae29128a0cc6fd9ae56b4bb153f6fe77dac845aa0db9ddcef3eaec6b2",
         "sha256-fd-v1:991e34cb2516594d82d698abf3c2b5033b5a4b44666719f32ec99ccfbc32b35e",
-        "sha256-fd-v1:cfb45545caa88c932eb6fa738af7ae36ad6c9d5b0a8628004ad634a94dc3caea"
+        "sha256-fd-v1:cfb45545caa88c932eb6fa738af7ae36ad6c9d5b0a8628004ad634a94dc3caea",
+        "sha256-cd-v1:107f5c77c988a0e26bf2e2d275be22872130ad89049d63b97555ef9b8daa9b26"
       ],
       "description": "",
       "pageUrl": "https://gamesdb.launchbox-app.com/games/details/137162-emit-vol-1-toki-no-maigo",
@@ -28485,7 +28543,8 @@
       "contentIds": [
         "sha256-fd-v1:0bc22421c39591568336610333e341ac0ae37db7f3ef9a04d7e1cd167c85c61a",
         "sha256-fd-v1:c6f0cc8f44da1ac7b269831929ae84217b38a335035ca023bcf0f55850a9e649",
-        "sha256-fd-v1:d838f6f6452166c6dc8998cf90a887b99d1cac2b72a71f4560e05c28f9d5526c"
+        "sha256-fd-v1:d838f6f6452166c6dc8998cf90a887b99d1cac2b72a71f4560e05c28f9d5526c",
+        "sha256-cd-v1:00e1672acf67b716f5c40fd94dbb91bbeb4a50d13a9a4cc371bede53ebbf7fcb"
       ],
       "description": "",
       "pageUrl": "https://gamesdb.launchbox-app.com/games/details/137163-emit-vol-3-watashi-ni-sayonara-o",
@@ -28869,7 +28928,8 @@
         "sha256-fd-v1:e7f17d16165f5da848b47fb6db2468aab934b8d53b0563aa31026da04d5172de",
         "sha256-fd-v1:f41a75d4fa149fc609948430afc6efadda3966c21b9d7a3ec423f6d7946e1e7c",
         "sha256-hdi-v1:32d073ecc91eecf8306991059678aaa75388352a78a7fc0caa037a30eb8cf7f6",
-        "sha256-hdi-v1:6ed90e81a7bc01a8d94a8781041b5b65cf03a2ef9330e3428493a8318dd4d9cd"
+        "sha256-hdi-v1:6ed90e81a7bc01a8d94a8781041b5b65cf03a2ef9330e3428493a8318dd4d9cd",
+        "sha256-cd-v1:3c2e1d6db5f31e5e563ff74365a94b89018ec492c1c54339810a46e3441fc87c"
       ],
       "description": "Switch between intelligence agent Marina and detective Kojiroh as their separate investigations converge on a murder conspiracy.",
       "pageUrl": "https://gamesdb.launchbox-app.com/games/details/106054-eve-burst-error",
@@ -29118,7 +29178,8 @@
         "sha256-fd-v1:48bb300c53b187bac430b8c473d023354ef4fa418a716d3af0fe41721a45c802",
         "sha256-fd-v1:b2dfcc1dfc77d624c5af3da2b74b77f9b224d98a687f0872d80ff6ef8c5f6934",
         "sha256-hdi-v1:6e4477f3888757c768d310d8334f7a7a3e06bb6e12268d5139b98bf48c9f33a2",
-        "sha256-hdi-v1:b11de1327edf1957d2172aab3ea934a53411e3f77aab3cc3928abba13371d934"
+        "sha256-hdi-v1:b11de1327edf1957d2172aab3ea934a53411e3f77aab3cc3928abba13371d934",
+        "sha256-cd-v1:e43c5ca8413c2cdd339a6aa3fb6025178b9bc71cc3f5803b9488b94cf863027e"
       ],
       "description": "",
       "pageUrl": "https://gamesdb.launchbox-app.com/games/details/132978-f-117a-nighthawk-stealth-fighter-20",
@@ -29966,7 +30027,8 @@
         "sha256-fd-v1:ba5a3a139d38be80e91782962477ec2f59031eae40cdaec5a22f78535866663f",
         "sha256-fd-v1:d07b19e23d0f5e47a55d8a0ef9e95eab2c5665d25f682b424a1a5e50cd3eb258",
         "sha256-fd-v1:e5587135d9b69ba874c5e86a85f2a169ed23f7e9aa198fec6bfda6b9d4697c4d",
-        "sha256-hdi-v1:ac3baacadf3d73109da3d7a5914a3a444897ebf5d9c3458e98a04480b297a148"
+        "sha256-hdi-v1:ac3baacadf3d73109da3d7a5914a3a444897ebf5d9c3458e98a04480b297a148",
+        "sha256-cd-v1:7d8e7ab761f8c67b9f0d78867fbed304ace63bfb285bb81849e63431f8af179c"
       ],
       "description": "",
       "pageUrl": "https://gamesdb.launchbox-app.com/games/details/139373-finish-hold-2-tag",
@@ -30660,7 +30722,8 @@
         "pc98:Crowd.zip:Fukushuu"
       ],
       "contentIds": [
-        "sha256-hdi-v1:72d7235e259e24a4617be7f5831634acbb448472fc33ac03d6c72d5479db9084"
+        "sha256-hdi-v1:72d7235e259e24a4617be7f5831634acbb448472fc33ac03d6c72d5479db9084",
+        "sha256-cd-v1:0e55697733999ccb8f991ac974a77c20a18ee35b771e3e9cdfb1873c812bdf8d"
       ],
       "description": "",
       "pageUrl": "https://gamesdb.launchbox-app.com/games/details/133675-fukushuu",
@@ -30952,7 +31015,8 @@
         "sha256-fd-v1:e04454ac614b31911deab24c9760cfc4d3c9e41cbc8b783aaea68ccf906d8e19",
         "sha256-fd-v1:e3f2498c7039b4900a06767f9c647c2378b4bfe8e53203c58cdbde79d4d36bc4",
         "sha256-hdi-v1:54e04eb85e9052913e77cf8a528c7aa9dba9ea2db283be0529e8cae11d2f5e1c",
-        "sha256-hdi-v1:dc13278e770eba8a75b292e79c6f87bf3bf00147a7c4454c03db08dad677d098"
+        "sha256-hdi-v1:dc13278e770eba8a75b292e79c6f87bf3bf00147a7c4454c03db08dad677d098",
+        "sha256-cd-v1:dc5aee8d1f76dc9d2a706c5ad9e879de984ce6a3e25227c650a26af382c54c4b"
       ],
       "description": "",
       "pageUrl": "https://gamesdb.launchbox-app.com/games/details/133676-gakuen-king-hidehiko-gakkou-o-tsukuru",
@@ -31168,7 +31232,8 @@
         "pc98:CreoI.zip:Galpani"
       ],
       "contentIds": [
-        "sha256-fd-v1:b1dda33a19b863a778efc28176437aee34e1b55d5c1c7d4bd188b8a71c451dad"
+        "sha256-fd-v1:b1dda33a19b863a778efc28176437aee34e1b55d5c1c7d4bd188b8a71c451dad",
+        "sha256-cd-v1:e53cefd76731992f8ca2afa703262bd6fa10c597d3d7eaf23b8eaec645d1f042"
       ],
       "description": "",
       "pageUrl": "https://gamesdb.launchbox-app.com/games/details/137217-gal-pani",
@@ -31186,7 +31251,8 @@
         "pc98:MainichiCommunications.zip:Gal Pani 2"
       ],
       "contentIds": [
-        "sha256-fd-v1:a387f92e8fd6c743e44ead0b60571f22065dce37d7374210c411c5e3bd362c13"
+        "sha256-fd-v1:a387f92e8fd6c743e44ead0b60571f22065dce37d7374210c411c5e3bd362c13",
+        "sha256-cd-v1:447e3bf9dbeab94daf5e24f2af8a0647e86747b6e9db0ae67dc7917387a6ea84"
       ],
       "description": "",
       "pageUrl": "https://gamesdb.launchbox-app.com/games/details/137218-gal-pani-ii",
@@ -32466,7 +32532,8 @@
         "sha256-fd-v1:45ae7823bf4992b53b7a7327eba64293536c4a0b7de7fcb0d26d9e8d6ca5eeca",
         "sha256-hdi-v1:bfc1ab2c358e566989911d7aa87758a724937be0e01c137e190deb3521f9cd28",
         "sha256-hdi-v1:e760379a2d294bce6cb4e08ae07e81955f7c4cac730093e82547a6afc7b58584",
-        "sha256-hdi-v1:0ddcbf3e1e2c208322b905de7558e95b03c7c72a43195609f33e8ed9f4862bf3"
+        "sha256-hdi-v1:0ddcbf3e1e2c208322b905de7558e95b03c7c72a43195609f33e8ed9f4862bf3",
+        "sha256-cd-v1:4201afcfcd02b782cc088977bdf0ad878a101370c1846d39d1c6d2965d477f4f"
       ],
       "description": "Survive in underground shelters after a nuclear attack on Tokyo and confront demons as a member of the Devil Busters.",
       "pageUrl": "https://gamesdb.launchbox-app.com/games/details/130890-giten-megami-tensei-tokyo-mokushiroku",
@@ -32640,7 +32707,8 @@
         "pc98:G.A.M.zip:Gokichi-kun Series Igo Kinenban CD"
       ],
       "contentIds": [
-        "sha256-hdi-v1:f808e088a7b66dc2388d12530c8ad110d8651f7145557efd8e31569874c3969b"
+        "sha256-hdi-v1:f808e088a7b66dc2388d12530c8ad110d8651f7145557efd8e31569874c3969b",
+        "sha256-cd-v1:1bb205e63b94eb94d943c70af57549dc5946fec24a606ede94f2f407c8529f8a"
       ],
       "description": "",
       "pageUrl": "https://gamesdb.launchbox-app.com/games/details/142138-gokichi-kun-series-igo-kinenban-cd",
@@ -32837,7 +32905,8 @@
         "sha256-fd-v1:a930e5348e5aa0da55484661080153766f87a72573b0f98f40452b31ff9c4c28",
         "sha256-fd-v1:fbb6da2a3b25271b45d01fefc027d6fe553a7dfe489a637f4cc15661ab4d1df3",
         "sha256-hdi-v1:039d09d26575dbe7f3fcde896d71c74bd1b691f0f429169f60d87da5022ae0f2",
-        "sha256-hdi-v1:0f769e288a24d4e862f018b67550c69710a5011b47f5fe40176ced14cb4c6b95"
+        "sha256-hdi-v1:0f769e288a24d4e862f018b67550c69710a5011b47f5fe40176ced14cb4c6b95",
+        "sha256-cd-v1:56d26ffe0a134bf588e0962f053affdec472c7fb47cdee552c49ac0e3bc1ff3b"
       ],
       "description": "",
       "pageUrl": "https://gamesdb.launchbox-app.com/games/details/140365-golf-links-386-pro",
@@ -33260,7 +33329,8 @@
         "sha256-fd-v1:d4f71c1d722cb4a4411072aa1ea1bd26fd0fae73587fe0b6c8d30d0b4ce96527",
         "sha256-fd-v1:d640539d304f19de6724f646cdce5017c26d10c6ae638e50687b3511827a20ec",
         "sha256-hdi-v1:9f368ea87d7c9045e103e8836f547560b169b7923bbc1cafc15b4e608df637a7",
-        "sha256-hdi-v1:ca3a794c994a69248ffceb8a3c044b9799c09ceb670f660c0c14811f41829b01"
+        "sha256-hdi-v1:ca3a794c994a69248ffceb8a3c044b9799c09ceb670f660c0c14811f41829b01",
+        "sha256-cd-v1:aff7f7438348c82ec072aad50ca1851f58cede9fe49a7944b7c4348a304585e7"
       ],
       "description": "",
       "pageUrl": "https://gamesdb.launchbox-app.com/games/details/133019-guardian-recall-shyugojyuu-shyoukan",
@@ -33433,7 +33503,8 @@
       ],
       "contentIds": [
         "sha256-fd-v1:764543039d01a07c1e67f44ea988dcb6dd0a845e84bd5b3dd46534dfc5fd22a5",
-        "sha256-hdi-v1:d289a1c4a08bd381e5226b92fa79e583657c420d9bce49dbceca3e4b8fcaed76"
+        "sha256-hdi-v1:d289a1c4a08bd381e5226b92fa79e583657c420d9bce49dbceca3e4b8fcaed76",
+        "sha256-cd-v1:ab87e967abb14572d8f665f9ad11717345cfb8b80f2f640c425bdcd4e9e86f51"
       ],
       "description": "",
       "pageUrl": "https://gamesdb.launchbox-app.com/games/details/133059-guynarock-r",
@@ -33794,7 +33865,8 @@
         "sha256-fd-v1:83b6d10b697c0895d1cf101d4626835655640f3e7e5c4d3a76c8c9509012edaa",
         "sha256-fd-v1:ed2c2fa4b773726cdecab82f9f57f891dc4f2b5e5fc2bf43f6a5dd695913376e",
         "sha256-hdi-v1:ba2afc02a563881a7ac29b670fa6e14e54ce8785c4f8ee3a31274eb60bc0fa69",
-        "sha256-hdi-v1:bce46d03116d1b53501e0948f5c26d31bad1e1f4aa88d1762300fad170c63c41"
+        "sha256-hdi-v1:bce46d03116d1b53501e0948f5c26d31bad1e1f4aa88d1762300fad170c63c41",
+        "sha256-cd-v1:46e5c82fd9f36c261a68d528071056d5c1eb32ccc6eae4aa882bfba789caec1a"
       ],
       "description": "",
       "pageUrl": "https://gamesdb.launchbox-app.com/games/details/137282-hana-no-kiouku",
@@ -33889,7 +33961,8 @@
         "sha256-fd-v1:ed26497adcdae0a9e7531fcb72ba1154984d703b0f30cf260d3fe7516f8669aa",
         "sha256-fd-v1:f2cab8f24ebc07c2b365c7faa26de24cfaa01a632c371abc6cec8fce3d28f1e2",
         "sha256-hdi-v1:4f0af0b85ad5d81629531da1b73c641e12d02281049173b425d9847a2043c22d",
-        "sha256-hdi-v1:86effd8920601fe5e81e11ffe435377e1ef5f49e011c6bf4cd56ef2467a940b1"
+        "sha256-hdi-v1:86effd8920601fe5e81e11ffe435377e1ef5f49e011c6bf4cd56ef2467a940b1",
+        "sha256-cd-v1:6e17356b539748ee7d7d4d0c78878b52ff0cbc169a89b11da4c7946b11e987d7"
       ],
       "description": "",
       "pageUrl": "https://gamesdb.launchbox-app.com/games/details/139242-hanafuda-de-pon",
@@ -34226,7 +34299,8 @@
         "sha256-fd-v1:ab1185f61517158ffb1413407a124c8891d628cbe3d0f0737b20995cf62571f5",
         "sha256-fd-v1:b89d1b73e46f8e6696771afeb124717e9b178aeb482d93eeb313efc3e61dd448",
         "sha256-fd-v1:bd2e379f4b3b8786183d706166786ff2f4d3730196b8fb75bdd456f59b657e8c",
-        "sha256-hdi-v1:6ac926ca41de318e2e407f9c262a63727f123dbbd3310ecb271a59cfbc310295"
+        "sha256-hdi-v1:6ac926ca41de318e2e407f9c262a63727f123dbbd3310ecb271a59cfbc310295",
+        "sha256-cd-v1:9d57106731b42e8515cea205ad76dbfcdf99dd45e2ab05ed5f86fae4845972d7"
       ],
       "description": "",
       "pageUrl": "https://gamesdb.launchbox-app.com/games/details/140633-heart-de-ron",
@@ -34299,7 +34373,8 @@
         "pc98:MiamiSoft.zip:Henshin Ring"
       ],
       "contentIds": [
-        "sha256-hdi-v1:c3f75e298e47bb25e17fce9af50e475b1f371e1e1652b19d438e6d6046b3c732"
+        "sha256-hdi-v1:c3f75e298e47bb25e17fce9af50e475b1f371e1e1652b19d438e6d6046b3c732",
+        "sha256-cd-v1:8884d2a6efd9f0ed7ee47d3bd5da45a6f173de9cf796d4ea907252e11e5d14aa"
       ],
       "description": "",
       "pageUrl": "https://gamesdb.launchbox-app.com/games/details/147706-henshin-ring",
@@ -34503,7 +34578,8 @@
         "sha256-fd-v1:f78ffa43c7ca4bdc40c92ef7873156aa5a9de12eb8b9daa073340ee34d442587",
         "sha256-fd-v1:fef6a3f0fb415a320b9457de6fc2f11225d1b611d03d745969c9e4a6281f266e",
         "sha256-hdi-v1:279984ab0cf1571c4f43d2eaa54ebd1b56f4bf7755ad43f134d0db51aa800d6d",
-        "sha256-hdi-v1:cb4607007344986e5225974bdebabe5293ddd6c61aa059ffc1a86485d288c25c"
+        "sha256-hdi-v1:cb4607007344986e5225974bdebabe5293ddd6c61aa059ffc1a86485d288c25c",
+        "sha256-cd-v1:c089952bcc041c482556397dcba2ad0cda35c2dd05d34ae4a58ab2311a603aeb"
       ],
       "description": "",
       "pageUrl": "https://gamesdb.launchbox-app.com/games/details/147725-hiiragizaka-no-kyuukan",
@@ -34977,7 +35053,8 @@
         "sha256-fd-v1:b9fda9770d32e3d802a28facea148b3a25032298703a1bab44603442dedf4212",
         "sha256-fd-v1:dc2d60a679c271ed26ebd01c6b0b9f8ed89a8dae85aa520250a5ffb516455a95",
         "sha256-fd-v1:e1a78a236acbc73af045b88f7995e3a092727149701c434ecfb2d22c57168dd2",
-        "sha256-hdi-v1:bc2760efc705db8dd2f797b847e245feae5831682f1d1f9922042cb04016cd33"
+        "sha256-hdi-v1:bc2760efc705db8dd2f797b847e245feae5831682f1d1f9922042cb04016cd33",
+        "sha256-cd-v1:aed231fdae4510633e3a35a4f4ba72ad14335ab7cb851c3d34fb0b703958bd41"
       ],
       "description": "",
       "pageUrl": "https://gamesdb.launchbox-app.com/games/details/137307-hoshi-no-suna-monogatari-3",
@@ -35241,7 +35318,8 @@
         "pc98:MiamiSoft.zip:Hyoui Tengoku"
       ],
       "contentIds": [
-        "sha256-hdi-v1:3b34ff5f3dd6c77beb471c94b3f2fbb492b33fa3ccbc313dff3946e46fb2d49f"
+        "sha256-hdi-v1:3b34ff5f3dd6c77beb471c94b3f2fbb492b33fa3ccbc313dff3946e46fb2d49f",
+        "sha256-cd-v1:23f3d496761abf4789f04deff3dc7d6653dd1977f9e006501977ace510fe2a57"
       ],
       "description": "",
       "pageUrl": "https://gamesdb.launchbox-app.com/games/details/147733-hyoui-tengoku",
@@ -35606,7 +35684,8 @@
         "sha256-fd-v1:e73e4a1be68b36a5801db16236ab07293e04cc3ba7fa1b0459971f5599a1dcd1",
         "sha256-fd-v1:e9fa74daeed8ff7eeed3862de3e743d264c0b300957f9ff0ec65b20211a46914",
         "sha256-hdi-v1:788949bf903c0137ee62cc64206e63404d233ce34759a4b1fef9171d6656d9a2",
-        "sha256-hdi-v1:c6de1ef2f26350069707f7f75610afe8fcda6d12d43eb609edeac906095a6a89"
+        "sha256-hdi-v1:c6de1ef2f26350069707f7f75610afe8fcda6d12d43eb609edeac906095a6a89",
+        "sha256-cd-v1:ff8a148531a17ea5d5ddfc8bab3b3ea67b91d1d38ea6bf84bbb02b486db2a5a4"
       ],
       "description": "",
       "pageUrl": "https://gamesdb.launchbox-app.com/games/details/137316-ikazuchi-no-senshi-raidy-2",
@@ -35944,7 +36023,8 @@
         "sha256-fd-v1:c5b511053960d50affbcd220de668fcfdbfbe11b93d05ef279337b6665e5d9f5",
         "sha256-fd-v1:d74535570b5f40b7ec30dc12d2eaae15a268e00a273a94f8aacc888e3f427df4",
         "sha256-fd-v1:dc5e5ff1a1aab08688c1f86c645f1d5b6ad8f0daf9b9a65ad49c8b6070cc6ef6",
-        "sha256-hdi-v1:825a423260d1b2764cc690f898616377e3175b6cc7774f945077d455962bb429"
+        "sha256-hdi-v1:825a423260d1b2764cc690f898616377e3175b6cc7774f945077d455962bb429",
+        "sha256-cd-v1:08b16b7ced645622fbead5cf50d059a1fdb19ef5fc2070105a13de7d8951ec8c"
       ],
       "description": "",
       "pageUrl": "https://gamesdb.launchbox-app.com/games/details/154620-inherit-the-earth-quest-for-the-orb",
@@ -36116,7 +36196,8 @@
         "sha256-fd-v1:443884a14b64620864672ecf86b05c42e305e3dd228d160f601e09b988dd99e1",
         "sha256-fd-v1:942f439e82934827188f81088ecced120808a5b25e8afc56f4c966234110e672",
         "sha256-fd-v1:a78624cb29920fac64d0a917e7b77449dc9244c169d0907ff11621319ecd0b94",
-        "sha256-hdi-v1:0e7341031b755fe54f5c3679fa84681bd1514a69b2a2e28aeed625f78c375ae5"
+        "sha256-hdi-v1:0e7341031b755fe54f5c3679fa84681bd1514a69b2a2e28aeed625f78c375ae5",
+        "sha256-cd-v1:c96d0a68d1f44a8fcb40fe0a23f75592a6eeae6ef67d2171b2c9a1fc1b4100c2"
       ],
       "description": "Choose one of three heroes for a strategy RPG journey while the computer directs the other two through board-based battles.",
       "pageUrl": "https://gamesdb.launchbox-app.com/games/details/139246-innocent-tour",
@@ -37255,7 +37336,8 @@
         "sha256-fd-v1:e3b4db468a61ec89e8db9a5e77d5e7aa06c09f834a6af363ac2ccb8d559c950a",
         "sha256-fd-v1:f45c53563bf238795b1c7b9de9c4aa7e902fccfd2d650f8d46d8b809cf8befe7",
         "sha256-fd-v1:fc30d93fc3e152310cdec5a724c6afcaf52e56f4e225b4d4501fbddb7577870f",
-        "sha256-hdi-v1:857d2ab3544e29e50a24d7a92e294c873a6d877f3bcf58926d3b53a9424f0b12"
+        "sha256-hdi-v1:857d2ab3544e29e50a24d7a92e294c873a6d877f3bcf58926d3b53a9424f0b12",
+        "sha256-cd-v1:f1bae3a106af0d60ec06d07d31d554c3d6f3e31a2c4b89f4613a32002f0183db"
       ],
       "description": "",
       "pageUrl": "https://gamesdb.launchbox-app.com/games/details/137377-jinmon-yuugi",
@@ -39082,7 +39164,8 @@
         "sha256-fd-v1:22cd1f75e546e8ddb3a1cf09807aac3e1a7d359f923b71ab1d0da468ff1da187",
         "sha256-fd-v1:41a09a200e6714f33b4d5f0b9f57b583e186ca057a254c2496d324d09a697ce1",
         "sha256-hdi-v1:2eca450f64ce7de223601f5f708a91e8a4720e29d12274a544a5a4cfc0c86582",
-        "sha256-hdi-v1:f067f30e9a6909eb75563d7ac561552b9447b9b6452ca4b6f350bb34be420c81"
+        "sha256-hdi-v1:f067f30e9a6909eb75563d7ac561552b9447b9b6452ca4b6f350bb34be420c81",
+        "sha256-cd-v1:ac932943a18812e44c7f4ddc0f7b58951faaf8cf3b9b6ea774b2ce8ccc236f0e"
       ],
       "description": "",
       "pageUrl": "https://gamesdb.launchbox-app.com/games/details/142074-koko-wa-rakuensou",
@@ -39106,7 +39189,8 @@
         "sha256-fd-v1:4f0388968dcc3100597fd67132969b1dd12f4d2c140471795c368cc2cdf1ced1",
         "sha256-fd-v1:8d352c8b9c4c0f6cb3cc2751a06555f9787c85e001e1f62bf19ce162120a64ca",
         "sha256-hdi-v1:0b6fc76209da836791272f63da83b206693e7046a92a1875e1f9eebd734e76eb",
-        "sha256-hdi-v1:57f410522b2a3a2a5b3ec05ad89fa8f38e57b170bbd3b5d09ff850c0319194f3"
+        "sha256-hdi-v1:57f410522b2a3a2a5b3ec05ad89fa8f38e57b170bbd3b5d09ff850c0319194f3",
+        "sha256-cd-v1:adb26eb66d425849e7de06cc4b5380fed5272cebce4611535af5cd99d9842134"
       ],
       "description": "",
       "pageUrl": "https://gamesdb.launchbox-app.com/games/details/142076-koko-wa-rakuensou-2",
@@ -39174,7 +39258,8 @@
         "sha256-fd-v1:b68b0335bfda4bcf2e7691b5431410db3199f22fbac7e67e7b97cf53770f01ce",
         "sha256-fd-v1:b9433af0b3c0a1daee4caf60368649cd6625592819d458d8f2c6ad68bda4cc93",
         "sha256-fd-v1:f4cddf8201ff452b62bc75dac208a69f42c39dfddd3e80ed20ff275d9b84fb41",
-        "sha256-hdi-v1:850cbc4b39c3fa290ee7af9e950b2fbbc7c34b3f3ac2e8f67a671294f49dd27c"
+        "sha256-hdi-v1:850cbc4b39c3fa290ee7af9e950b2fbbc7c34b3f3ac2e8f67a671294f49dd27c",
+        "sha256-cd-v1:2752bee1477c899cb18693d511e9600764b2e77bbb4968131c766233e1cf17e4"
       ],
       "description": "",
       "pageUrl": "https://gamesdb.launchbox-app.com/games/details/106032-kono-yo-no-hate-de-koi-o-utau-shoujo-yu-no",
@@ -40625,7 +40710,8 @@
       ],
       "contentIds": [
         "sha256-fd-v1:0a54432849c16bdc2664f5bdfdf33ded1a97521c05f28a0b37709ce50c6d33d4",
-        "sha256-fd-v1:37836406d7bb78c3230a485dbf6f9c5cca1644b73928c3e0e42568a8180e9662"
+        "sha256-fd-v1:37836406d7bb78c3230a485dbf6f9c5cca1644b73928c3e0e42568a8180e9662",
+        "sha256-cd-v1:2b10c251f62e692147e5fea61029dcb6f3db511ac46a4b0ed2fd5f0cb0d32af9"
       ],
       "description": "",
       "pageUrl": "https://gamesdb.launchbox-app.com/games/details/137409-lesser-mern-special-directors-edition",
@@ -40643,7 +40729,8 @@
       "contentIds": [
         "sha256-fd-v1:1a5031a381ba39c0bda9e9b68c83237bee0d42350a5778d9b76a3ef4c85a6373",
         "sha256-fd-v1:200de125c6982ef438ecfb73f66f21089535e221873548ea14f4cb85f1525287",
-        "sha256-hdi-v1:bdf8b4abcebe9d76cdd950b9b38ec315553492567044d2c32a3133166c20768a"
+        "sha256-hdi-v1:bdf8b4abcebe9d76cdd950b9b38ec315553492567044d2c32a3133166c20768a",
+        "sha256-cd-v1:c7f79a8d928d2358f05f035c898e290c7c1d8f21ef3f4551d1fd5d8d62908df7"
       ],
       "description": "",
       "pageUrl": "https://gamesdb.launchbox-app.com/games/details/137523-lets-pirates-trouble-vacances",
@@ -40865,7 +40952,8 @@
         "sha256-fd-v1:dbbfa07e649d648d7d164765731307253b5c6f121f6616c8ef1d9255952d6174",
         "sha256-fd-v1:e791a25ff4ba81eb7373df60671cb0f110c4011c21162604355c98861d754150",
         "sha256-hdi-v1:10794089eb82584b316e6fc8286867120abf1433c472f1ed3d46eca8be626df4",
-        "sha256-hdi-v1:1fec38dac57e19fc576e00b8637d7c6df7e19ab370bca5bebbfdc9cb988979ff"
+        "sha256-hdi-v1:1fec38dac57e19fc576e00b8637d7c6df7e19ab370bca5bebbfdc9cb988979ff",
+        "sha256-cd-v1:89991ade8c78d48d3f4c9d1b8aa678087546b9e55d9a98ff04d86f067d3f58dc"
       ],
       "description": "",
       "pageUrl": "https://gamesdb.launchbox-app.com/games/details/436203-lightning-warrior-raidy",
@@ -41332,7 +41420,8 @@
       ],
       "contentIds": [
         "sha256-hdi-v1:838296b20552d5714d991d9ae4188d59afd84fce924fc723407fceccfed3146c",
-        "sha256-hdi-v1:bf240904bf7f77f0c76311a9ac20c7ced6cb66a48619e26f28cf1a891d4a88fa"
+        "sha256-hdi-v1:bf240904bf7f77f0c76311a9ac20c7ced6cb66a48619e26f28cf1a891d4a88fa",
+        "sha256-cd-v1:15ad4fa7ca0986d17063e90348b1ad853c54b0b29427d43040b1864d6dc1ed16"
       ],
       "description": "",
       "pageUrl": "https://gamesdb.launchbox-app.com/games/details/147754-love-escalator",
@@ -41410,7 +41499,8 @@
         "sha256-fd-v1:e046a2ea09c5ce7137cd786b1b46d5d31919d254f2a754e9492c16677f399bc0",
         "sha256-fd-v1:e7fdefa9f037fb4e0b1ac9dfbf52703c0f8832974aa598e7ab61756c367d8918",
         "sha256-hdi-v1:43d94d1223bdfcfd50464dafbd2ea535c575c68d02fbeef78d4c0198644a35a2",
-        "sha256-hdi-v1:7b2b05690d8e3e5cd93a9108bff9524d0f7cc34d91306590bd8a6925a9c922c1"
+        "sha256-hdi-v1:7b2b05690d8e3e5cd93a9108bff9524d0f7cc34d91306590bd8a6925a9c922c1",
+        "sha256-cd-v1:25b0407bb0d9dd9423b82ef22051e961de95f98e0a98f5224b98ed732a78e448"
       ],
       "description": "",
       "machine": {"gdcClockTenthsMHz": 25},
@@ -41898,7 +41988,9 @@
       "sourceGroups": [
         "pc98:AicSpirits.zip:Magical Girl Pretty Samy:part-1"
       ],
-      "contentIds": [],
+      "contentIds": [
+        "sha256-cd-v1:e7527f4e5613c530a8bc3addb0c3f235adb713da5fd58f5e368fe1637d3e2baa"
+      ],
       "description": "",
       "pageUrl": "https://gamesdb.launchbox-app.com/games/details/129028-magical-girl-pretty-sammy-first-part",
       "boxArtUrl": "https://images.launchbox-app.com/c50f6b62-1d31-497c-9208-b76ca021da04.jpg",
@@ -41916,7 +42008,9 @@
       "sourceGroups": [
         "pc98:AicSpirits.zip:Magical Girl Pretty Samy:part-2"
       ],
-      "contentIds": [],
+      "contentIds": [
+        "sha256-cd-v1:81924636aa32fecaa1e052cba586e7428243c50a043eeaba5639aaf8fd35b9d6"
+      ],
       "description": "",
       "pageUrl": "https://gamesdb.launchbox-app.com/games/details/129030-magical-girl-pretty-sammy-second-part",
       "boxArtUrl": "https://images.launchbox-app.com/ed6bde1c-9892-4b39-921c-cd5fb315a79e.jpg",
@@ -41993,7 +42087,9 @@
         "pc98:Kogado.zip:Magical Squadron"
       ],
       "contentIds": [
-        "sha256-hdi-v1:8efdebf3051349c9ee352b22c9a638a4c5e9bca7f3ff9eda00a4109b176c2361"
+        "sha256-hdi-v1:8efdebf3051349c9ee352b22c9a638a4c5e9bca7f3ff9eda00a4109b176c2361",
+        "sha256-cd-v1:03f6114e3ae690998698fdc478c4eac5d8675b9073f22dd6736ca7b0b99bce27",
+        "sha256-cd-v1:c2a30051a3eca10ad91be6cd1a37a8f61b1a6ca8ae623b28dc510aee560b34ae"
       ],
       "description": "",
       "pageUrl": "https://gamesdb.launchbox-app.com/games/details/134698-magical-squadron",
@@ -42098,7 +42194,8 @@
         "sha256-fd-v1:c17921e2bb04d34097f43c1a70ae4c1ad257acda9af079d5e13a66c68c55b078",
         "sha256-fd-v1:fac0add2dd09e544bda574bfe09b78ee974eb478e8ba3446d59317b3a7436612",
         "sha256-hdi-v1:5777a43843bd5900f4c4ba0782f0f52aef3eac376efbf9e27332d718f3437cf8",
-        "sha256-hdi-v1:664044a25414843d4abe4b0e7688c2d1899fd10dd2e2f6938723224e670518e7"
+        "sha256-hdi-v1:664044a25414843d4abe4b0e7688c2d1899fd10dd2e2f6938723224e670518e7",
+        "sha256-cd-v1:e365b46ece93ec22b373f2a09e6ea2ede50b2b01ea679cb2e5d9a54296c10d56"
       ],
       "description": "",
       "pageUrl": "https://gamesdb.launchbox-app.com/games/details/137438-mahjong-de-pon",
@@ -42833,7 +42930,8 @@
         "pc98:Curott.zip:Making Candy - Oki ni Mesu mama"
       ],
       "contentIds": [
-        "sha256-hdi-v1:7553d8f5bbe29066d2281e62a36eed829b674031bb07a959eafafd2708edc28a"
+        "sha256-hdi-v1:7553d8f5bbe29066d2281e62a36eed829b674031bb07a959eafafd2708edc28a",
+        "sha256-cd-v1:cd7b9f24f92fb2bf7a85966d1d4d3a2419ec4dd32e6c817f5f0e8566553ddbb6"
       ],
       "description": "",
       "pageUrl": "https://gamesdb.launchbox-app.com/games/details/140360-making-candy-oki-ni-mesu-mama",
@@ -42980,7 +43078,8 @@
       ],
       "contentIds": [
         "sha256-fd-v1:765b387405c28f3c3db2b03ea2ed8103eade2515431ed3def1ef80d617df0781",
-        "sha256-hdi-v1:1f818d6ce657264fabb251ab26f21b198bea271b5f62ce4d7fced9fb8c77c5b1"
+        "sha256-hdi-v1:1f818d6ce657264fabb251ab26f21b198bea271b5f62ce4d7fced9fb8c77c5b1",
+        "sha256-cd-v1:cbfc77682702fcf9acd382e63b36a433d10c979b463b9259aa3d0ce470778734"
       ],
       "description": "",
       "pageUrl": "https://gamesdb.launchbox-app.com/games/details/136483-manji-psy-yuuki",
@@ -43816,7 +43915,8 @@
         "sha256-fd-v1:f0833be7aa9b0d46720569fc7db397dfdea3881dae47a1aa431b74e12354d018",
         "sha256-fd-v1:fa4509d64f4e55226c6228746e2f6aac56193553a59adb723b3248dd2036dedc",
         "sha256-hdi-v1:68b071d6113295575a0a5ffb9837b916bf8a1b7c2da94692d77af9a5fc01e55a",
-        "sha256-hdi-v1:82a8e4c59ae89f58583ffd3fc0d519b32cfe465d307181fcda46489234fdaafb"
+        "sha256-hdi-v1:82a8e4c59ae89f58583ffd3fc0d519b32cfe465d307181fcda46489234fdaafb",
+        "sha256-cd-v1:ae0b77fcbdc3dfbb2763aa5886a067f57fd053d2b43ae386e61f9916bbe85394"
       ],
       "description": "",
       "pageUrl": "https://gamesdb.launchbox-app.com/games/details/149601-menzoberranzan-yami-no-monshou",
@@ -44401,7 +44501,8 @@
         "sha256-fd-v1:c7c85accd10150110aff113aff17c029cca8750776194b40ce3d3323156d42e8",
         "sha256-fd-v1:f558cd0cc423e7c6b08e2471095a7525364328fba52285dcb133694ef477a8b2",
         "sha256-hdi-v1:ad6dbd8d70018865a25359e2e0bb4d871afb26bf9e54a907bd61ffde9e9539c2",
-        "sha256-hdi-v1:b3dd3ee7637ef0accdd68ee035719e7838987d9bd67e14adf99eb6381b0c2994"
+        "sha256-hdi-v1:b3dd3ee7637ef0accdd68ee035719e7838987d9bd67e14adf99eb6381b0c2994",
+        "sha256-cd-v1:eaa26e55d903d06f55565805592e5a1f577250ae957056ccf144b10b2ee744bf"
       ],
       "description": "",
       "pageUrl": "https://gamesdb.launchbox-app.com/games/details/151656-might-and-magic-clouds-of-xeen",
@@ -45653,7 +45754,8 @@
       ],
       "contentIds": [
         "sha256-fd-v1:6d4dab41f08c8c13821738f1fa3bcfbf88d26f91183c385c9a8dd4852bb0fb57",
-        "sha256-fd-v1:d248487780bbedb9730d376a746036c98b4e43103e03df83a927ec5696a6728b"
+        "sha256-fd-v1:d248487780bbedb9730d376a746036c98b4e43103e03df83a927ec5696a6728b",
+        "sha256-cd-v1:011ecb939c73e76daacb18e366a7020eea95ba9f837be3c8cdaff5db3d2e76d3"
       ],
       "description": "Investigate a missing father and a suspicious death in a point-and-click mystery with live-action video.",
       "pageUrl": "https://gamesdb.launchbox-app.com/games/details/140774-ms-detective-1-iwami-ginzan-satsujin-jiken",
@@ -45670,7 +45772,8 @@
       ],
       "contentIds": [
         "sha256-fd-v1:1fcea2e1df193b943c5fa18403ce8b1310c211907ee704729e91a91ae5f7b7e2",
-        "sha256-fd-v1:df83ba4fe31f82daa44ad02f3de787072b045b96a8593e734794a85a7d016c11"
+        "sha256-fd-v1:df83ba4fe31f82daa44ad02f3de787072b045b96a8593e734794a85a7d016c11",
+        "sha256-cd-v1:4affb62238f493035b64d6525b7c78a38a116029f03def5edfc36674fdd5beff"
       ],
       "description": "The second Ms. Detective live-action mystery adventure from DataWest.",
       "pageUrl": "https://gamesdb.launchbox-app.com/games/details/140775-ms-detective-2-sugatanaki-iraisha",
@@ -45721,7 +45824,8 @@
         "sha256-fd-v1:85ab184c33c5131abeba74faa9caefd0e9eeb56677f79b548dc2897b42d6c0a2",
         "sha256-fd-v1:b6c47fa031ffefbb8430fb0f8df2dd35c97ca6ba53f07afcc017fd09c24d2161",
         "sha256-hdi-v1:e24980f6c388b1a32105cf38b03f20b0e03358ea1e0a102fbbcb05164568c207",
-        "sha256-hdi-v1:e400b4aed879886abaab66e2910ce0518d2547429f87ae38eba3982c48b5e9da"
+        "sha256-hdi-v1:e400b4aed879886abaab66e2910ce0518d2547429f87ae38eba3982c48b5e9da",
+        "sha256-cd-v1:61e0eb5d2bac6401d89d272e349c53ea7479f94915601c8e01a49047e41ab059"
       ],
       "description": "",
       "pageUrl": "https://gamesdb.launchbox-app.com/games/details/137480-mugen-houyou",
@@ -45849,7 +45953,8 @@
         "sha256-fd-v1:f55c5d829ef26b6771a943b7f0a3238bc0b2a7cd1b544a2dcb0ae9863298c18f",
         "sha256-fd-v1:fccba7dc978136eb047373334190094b6c7173118a0d7a049b827fbeafa686c7",
         "sha256-hdi-v1:14142e5bfe32f2ca3bec3fa8121d227af8c01f5e19715b45d1f2723c075180df",
-        "sha256-hdi-v1:a5f4a59d4ec90a2602e78e795dd9764e065ec521923d92eed3443bfb22769e56"
+        "sha256-hdi-v1:a5f4a59d4ec90a2602e78e795dd9764e065ec521923d92eed3443bfb22769e56",
+        "sha256-cd-v1:7320847bd860d59fe88bf2ff60427cca70c3b3b42ef2306a247714def534fa4c"
       ],
       "description": "",
       "pageUrl": "https://gamesdb.launchbox-app.com/games/details/137482-mujintou-monogatari",
@@ -45933,7 +46038,8 @@
         "sha256-fd-v1:46268ccecf3d5008cd4b6406443ac71b9f00babb02770990bcae3adcd2169c17",
         "sha256-fd-v1:70d6505e44b27e72ad9540c344c7797181b977e6d106832beda642208dc707f8",
         "sha256-fd-v1:e7a3db5635ed688ae88d664de8649b4042b67d2603b00f4d2d5ed95d3c07c80c",
-        "sha256-hdi-v1:3a40407f4ec04e6c8696fffd5d1b0433d8e11e4d375bec1b74983c1831ef2dbc"
+        "sha256-hdi-v1:3a40407f4ec04e6c8696fffd5d1b0433d8e11e4d375bec1b74983c1831ef2dbc",
+        "sha256-cd-v1:e79e7e9296656689ac4fedd36e55572f247f085c2e32b9df1bba2933313426be"
       ],
       "description": "",
       "pageUrl": "https://gamesdb.launchbox-app.com/games/details/137485-mujintou-monogatari-memorial-version",
@@ -46079,7 +46185,8 @@
         "pc98:VictorEntertainment.zip:My Home Dream 2"
       ],
       "contentIds": [
-        "sha256-hdi-v1:171c8337759b5af2ea9a827e070cdf8955227b58dc95e20f28c82e202a77d699"
+        "sha256-hdi-v1:171c8337759b5af2ea9a827e070cdf8955227b58dc95e20f28c82e202a77d699",
+        "sha256-cd-v1:1b246d0e5e861e744b0daeefbfdc3b774212212895b4326e757773f2b824228f"
       ],
       "description": "",
       "pageUrl": "https://gamesdb.launchbox-app.com/games/details/141015-my-home-dream-2",
@@ -46379,7 +46486,8 @@
         "sha256-fd-v1:c3068fe36587f7f8cca5c49f19772acbbd36b3431b96b6b7af676662ebbb048f",
         "sha256-fd-v1:cc629cf081acff24962a268fc72e74a891ca119d6a633729e90fcf30abba1d2a",
         "sha256-fd-v1:f6556eb5e3aa445246818308e3a4af9463c801c8eb70e10212b2f98130d5e1d1",
-        "sha256-hdi-v1:868568d143d705805ed89c62fe816030e3d97eb6021a9be419f4bd5dd50d520a"
+        "sha256-hdi-v1:868568d143d705805ed89c62fe816030e3d97eb6021a9be419f4bd5dd50d520a",
+        "sha256-cd-v1:402c3ddcb2406fe32fed4d7434ed39ba9fca7aa75a002c2a506bdb0a0eb2265c"
       ],
       "description": "",
       "pageUrl": "https://gamesdb.launchbox-app.com/games/details/134811-necronomicon",
@@ -47530,7 +47638,8 @@
         "sha256-fd-v1:e6beaf3be54ddc0a93640ac3029a887d582203689f877d73ec2fea85a1ba81d4",
         "sha256-fd-v1:e8481cfd4ab72d9269e1873349e69dd36dbb9ed2f5f5707ad247dcbef1b3af7a",
         "sha256-fd-v1:fa4739b1aec743dd00c0dcac0b7873c6db52973a04a83bb385be4585a478f9b3",
-        "sha256-hdi-v1:b157cd898b4e425bd371179ac6efb053366f8926b868c7238b280e5b4d9e5f3d"
+        "sha256-hdi-v1:b157cd898b4e425bd371179ac6efb053366f8926b868c7238b280e5b4d9e5f3d",
+        "sha256-cd-v1:6cd7f59a32c29f5a5c521a4247cb111a39021e2991370117c086417980b58b39"
       ],
       "description": "",
       "pageUrl": "https://gamesdb.launchbox-app.com/games/details/137501-oh-kitsune-sama",
@@ -47741,7 +47850,8 @@
         "sha256-fd-v1:eb969bb8e1ad1c8ff7d6c41a06047025e6b6ab5c9f1dcf66734456657f38351f",
         "sha256-hdi-v1:34e1ac15ee17b0023572a066c77fc69788634e0de344084d5eaae39ddafd167f",
         "sha256-hdi-v1:837799d5f024411d7e3eacc3cda041947220351875d37133aa060a0d04a2c9f5",
-        "sha256-hdi-v1:e0baca746083237420ec1141ef93386e04f0dd338352b1767369a76d793b3c60"
+        "sha256-hdi-v1:e0baca746083237420ec1141ef93386e04f0dd338352b1767369a76d793b3c60",
+        "sha256-cd-v1:02a93e1ce4c490699c16ae5b540d5a9546d694cd9d28d75be8c876850178dfdf"
       ],
       "description": "",
       "pageUrl": "https://gamesdb.launchbox-app.com/games/details/137506-only-you-seikimatsu-no-juliet-tachi",
@@ -48778,7 +48888,8 @@
         "pc98:Sunsoft.zip:Photo Genic"
       ],
       "contentIds": [
-        "sha256-hdi-v1:abcfde37527fc1d0372e8044648cbbb3df96729115eab24b6256fedb9a87ced7"
+        "sha256-hdi-v1:abcfde37527fc1d0372e8044648cbbb3df96729115eab24b6256fedb9a87ced7",
+        "sha256-cd-v1:71e5fdcc318a225abaf6b40db18cb4341877140bef4112c3e4c7936155632ba9"
       ],
       "description": "",
       "pageUrl": "https://gamesdb.launchbox-app.com/games/details/147798-photo-genic",
@@ -48957,7 +49068,8 @@
         "sha256-fd-v1:8385aaffc77dabe3562780d9b2cae3eb4f6b8ad679ceff27aa81198dd9a520f0",
         "sha256-fd-v1:98a5bc2438fcabf346805a31e772c174cabb19bbe5ea62855e46dc81996613d8",
         "sha256-fd-v1:c79621506b6c8f33942da1aed4026d9ee955a8ce2c10a4375edc1b849b02acf3",
-        "sha256-hdi-v1:3228bce307a14f1193ad8275c6339e7916db33ae4290f2ebfd826307370e8b30"
+        "sha256-hdi-v1:3228bce307a14f1193ad8275c6339e7916db33ae4290f2ebfd826307370e8b30",
+        "sha256-cd-v1:ac52c1ada0c228fc2cb14d08e8639c5c4dae918e78e5db5a85536579423e7b69"
       ],
       "description": "",
       "pageUrl": "https://gamesdb.launchbox-app.com/games/details/147799-pilcasex",
@@ -49704,7 +49816,8 @@
       "contentIds": [
         "sha256-fd-v1:2023b3e9c7673fad85307d51f98fffe1acdd8f4dd445fb5d25c7804d215c8d74",
         "sha256-fd-v1:3352a912a9c12edacd5e98b03241d36d09f5e859a238ceb784c7e99c4c4b4d91",
-        "sha256-hdi-v1:3e4a9962ca06fdce56ee839c897e62a02ad8e9ba822f40489e86809b66f2e65f"
+        "sha256-hdi-v1:3e4a9962ca06fdce56ee839c897e62a02ad8e9ba822f40489e86809b66f2e65f",
+        "sha256-cd-v1:342a7e3f412dac00ec823172be216297b1240daa05fdb7754c52f2ff94bec5fd"
       ],
       "description": "",
       "pageUrl": "https://gamesdb.launchbox-app.com/games/details/106088-policenauts",
@@ -50740,7 +50853,8 @@
       ],
       "contentIds": [
         "sha256-fd-v1:68ea037a09a7b2a5bba8b9e099aa18cf0695e571b8f6c54a9ba8a888d9e4c079",
-        "sha256-hdi-v1:2c527d7036c7bc3fd4e0e2107db4457b3fcde42a2dfdc53057c2c52ff284a894"
+        "sha256-hdi-v1:2c527d7036c7bc3fd4e0e2107db4457b3fcde42a2dfdc53057c2c52ff284a894",
+        "sha256-cd-v1:f6e83619d00f47d9279a9e2c916fc5e324805244c5369096151f79a16fee3daa"
       ],
       "description": "",
       "pageUrl": "https://gamesdb.launchbox-app.com/games/details/154828-professional-baseball-1996",
@@ -50839,7 +50953,8 @@
       ],
       "contentIds": [
         "sha256-fd-v1:661cb70af6db2a3512f63b4c7178f7af5a6378fa684f8c3e6ff7c86aaa906694",
-        "sha256-fd-v1:922c0859be73abce19ea7c5107243eea26aa17c12d2d02e1023fda30138a7c20"
+        "sha256-fd-v1:922c0859be73abce19ea7c5107243eea26aa17c12d2d02e1023fda30138a7c20",
+        "sha256-cd-v1:ae7c88ba10bded6772e172fa81184123acd4e3205e83cb987fb3bd3e654288fd"
       ],
       "description": "",
       "pageUrl": "https://gamesdb.launchbox-app.com/games/details/140776-psychic-detective-series-vol-1-invitation",
@@ -50856,7 +50971,8 @@
       ],
       "contentIds": [
         "sha256-fd-v1:68c53d81ee2858d8ab0384027ebfd1718cdd4252fd9a1ec7755e7fabbe3310fa",
-        "sha256-fd-v1:d1f91650cbe53448cc766ed7b71b86f25ff1b5a48494bd0d4a0667a980baaead"
+        "sha256-fd-v1:d1f91650cbe53448cc766ed7b71b86f25ff1b5a48494bd0d4a0667a980baaead",
+        "sha256-cd-v1:5f6e5bdaa5556fdf72f04ba19546987c44cd7bad4b923d45b07fb9e386329f3e"
       ],
       "description": "",
       "pageUrl": "https://gamesdb.launchbox-app.com/games/details/140777-psychic-detective-series-vol-2-memories",
@@ -50873,7 +50989,8 @@
       ],
       "contentIds": [
         "sha256-fd-v1:0de90251e62bd202acf5e880d17b615d9172e89615285ebe2c580e32445f13bd",
-        "sha256-fd-v1:5cd6b6ead1255a3ac2c5df3dd3e44255f29f8018336559d551a149377b8de48b"
+        "sha256-fd-v1:5cd6b6ead1255a3ac2c5df3dd3e44255f29f8018336559d551a149377b8de48b",
+        "sha256-cd-v1:2fe1c62968347fd188fd47ff8c8cb8e06efb4c19f49a4f1f6dae67f0fd1a2ad1"
       ],
       "description": "",
       "pageUrl": "https://gamesdb.launchbox-app.com/games/details/140778-psychic-detective-series-vol-3-aya",
@@ -51534,7 +51651,8 @@
         "sha256-fd-v1:d92e9be2f01a42495929b10522b355b2511a623479aa07e4217ae4ded265ce3d",
         "sha256-fd-v1:e5c98aa77eb4a845fb8195b1bff0b3935595f1e4cc171036243699eed98f3090",
         "sha256-fd-v1:e7983fbe7ed3abe8db143e1efbdfbb4c616fef4d7ea2e96355a66b3a4a1d7c03",
-        "sha256-hdi-v1:f3a4246064b0eafcca98676eb698acec72757926d5ee8b675d157a140f8750f7"
+        "sha256-hdi-v1:f3a4246064b0eafcca98676eb698acec72757926d5ee8b675d157a140f8750f7",
+        "sha256-cd-v1:c6202ec2581489597a73a323787aae124cd4c67875adb5231628145befbfa1a9"
       ],
       "description": "",
       "pageUrl": "https://gamesdb.launchbox-app.com/games/details/142356-r-a-m-1-new-evolution-organize",
@@ -52757,7 +52875,9 @@
         "sha256-hdi-v1:0a1d3f26c96ad15378960a82b97138848804b3f07ef758a8aab9d83e9fb9e4c4",
         "sha256-hdi-v1:43a708087fbfa86505a7cbeb098df07d3abd1076adc20ea82928077cc9051401",
         "sha256-hdi-v1:56486db0fb99eff78ef0ead50521371bd354f21ca0868f534f1428591a9c31dd",
-        "sha256-hdi-v1:8836569a8bfe18cd61a3e6ca40c4703bbdbd06680a824a2e18a6f5ed77a0d45d"
+        "sha256-hdi-v1:8836569a8bfe18cd61a3e6ca40c4703bbdbd06680a824a2e18a6f5ed77a0d45d",
+        "sha256-cd-v1:ac79f49942a819f4c3be9653836c7a7e5340d13567f588c8dc67e97d8c592e39",
+        "sha256-cd-v1:ec3f080d19ab68eaad947c907fb1abe8008299f1045e4cee79b0a91980d206fe"
       ],
       "description": "",
       "pageUrl": "https://gamesdb.launchbox-app.com/games/details/133474-revival-xanadu",
@@ -52788,7 +52908,8 @@
         "sha256-fd-v1:f90fd6bd6ffbe8632e5e99a38fcac08016d8dda48d86812ba56f5ebf751a79c9",
         "sha256-fd-v1:ff16baf3d56e301a97ffce04885e84b7fabea66fd99e0094105cabc01e5e46f7",
         "sha256-hdi-v1:22ecc266291952f63da7566715eaa56b025bf07d048352efd7d8598c35628a85",
-        "sha256-hdi-v1:f681b5fa2adb1aa0611413bc71cd96d514d27e2685bd2cc37baf806199aeb7ce"
+        "sha256-hdi-v1:f681b5fa2adb1aa0611413bc71cd96d514d27e2685bd2cc37baf806199aeb7ce",
+        "sha256-cd-v1:341a8622d83e539e7606230bdf2b47c0fc0ab7970b98cfe4ee66358e894e1af8"
       ],
       "description": "",
       "pageUrl": "https://gamesdb.launchbox-app.com/games/details/133414-revival-xanadu-2-remix",
@@ -52902,7 +53023,8 @@
         "sha256-fd-v1:ddb09412fbf6ace5b4d99bc226445264ec288485e9d4befa55d302aa6d92b55e",
         "sha256-fd-v1:f81225c58777a37205a52168b92a28a4664a0d85c63bf9087f842eb75a53ba21",
         "sha256-hdi-v1:7886fb3c8b21464d3266513269617e336f2d0b4b10a49497c6fcdb0724cd5f6d",
-        "sha256-hdi-v1:8511ddbd3045a67ac57732a680594479062d98abab0db21897ff5793722c98dc"
+        "sha256-hdi-v1:8511ddbd3045a67ac57732a680594479062d98abab0db21897ff5793722c98dc",
+        "sha256-cd-v1:ce3f4b024da828d91dd5a04e3405ba5035928540f8b1f517ccf3402f02f925ef"
       ],
       "description": "",
       "pageUrl": "https://gamesdb.launchbox-app.com/games/details/106158-ring-out-pro-lesring",
@@ -53245,7 +53367,8 @@
         "sha256-fd-v1:8881540f435bcf8d30b0731335435f9290a904f69c9b6dc4aebd2c0b1eb53e4b",
         "sha256-fd-v1:eff310f5e7353889eb40d3e1671e3b663a0dfbf8033d466cd2c4fb776b0faf00",
         "sha256-hdi-v1:323dced9b46220c4207edf61af25ee0c969d3826209e00e4d98bf12f554c1af2",
-        "sha256-hdi-v1:4f69a7aa7c1dd0e14a469e0d03afbdc88181dadd366b3d14481a120a569e1246"
+        "sha256-hdi-v1:4f69a7aa7c1dd0e14a469e0d03afbdc88181dadd366b3d14481a120a569e1246",
+        "sha256-cd-v1:9c302cfd3a71e94a57eb6a31c0718f91f66513ed76b2c3e01ca5890887ab59da"
       ],
       "description": "",
       "pageUrl": "https://gamesdb.launchbox-app.com/games/details/147825-rookies",
@@ -53554,7 +53677,8 @@
         "sha256-fd-v1:df184d1e7786aaf8ea9691780ce82366a33f66e1d9fd09fd64a98004c474c826",
         "sha256-fd-v1:f7a9fe75d0952a07e513eedc1c65c16b1cb6c69b9001dc12f6f106eff1aba298",
         "sha256-fd-v1:f9cc13ea077141905a6e7e772eee89310eb182bfd0c13d282f67addacd4739ab",
-        "sha256-hdi-v1:0ad21b1fad7408a00ae4a5b741103dca608aff8527763b3f591c6a15359a56f5"
+        "sha256-hdi-v1:0ad21b1fad7408a00ae4a5b741103dca608aff8527763b3f591c6a15359a56f5",
+        "sha256-cd-v1:e95a4908609628c0bcda95eedaa763adba62a344179b7f341bb7b127a4f02966"
       ],
       "description": "",
       "pageUrl": "https://gamesdb.launchbox-app.com/games/details/133419-ruriiro-no-yuki",
@@ -53626,7 +53750,8 @@
         "sha256-fd-v1:9187381bd2d8a1ef8bdd7fd27728b37986cd462241178676844790cc70ef09f4",
         "sha256-fd-v1:9d157f712466b7028f4d1b4392e083ea95ee1412aad810ecb03e723e56113a15",
         "sha256-fd-v1:fe6eef09e5a9b6e59f10489e86aa904ef839d9d3963ebfba02941a3f6ef98394",
-        "sha256-hdi-v1:e9f756fef01240318f354980417ad14a63431e5d1fcbeba25f6179f3784ef81a"
+        "sha256-hdi-v1:e9f756fef01240318f354980417ad14a63431e5d1fcbeba25f6179f3784ef81a",
+        "sha256-cd-v1:77a4fa33e274d615765df67078bc1831fcaef230067942798f673cb5301b0202"
       ],
       "description": "",
       "pageUrl": "https://gamesdb.launchbox-app.com/games/details/137570-ryouki-no-ori",
@@ -53657,7 +53782,8 @@
         "sha256-fd-v1:e6a711d60119f6584e95f9b8a68c1fa26f4180788b7e703303dfafda91755892",
         "sha256-fd-v1:f84bf0f3009aa1e5117f8e788b63b18ba30934148bfe3ab468cb7013a1e27200",
         "sha256-hdi-v1:5806340bd7a9c0f0a53e23f7d625006c3a5f3cc131b1bfd4b949d3df602cb4cb",
-        "sha256-hdi-v1:8bf043fbd011e5a1728b3c08878db05a95d272b374dba357eb99e669173b2195"
+        "sha256-hdi-v1:8bf043fbd011e5a1728b3c08878db05a95d272b374dba357eb99e669173b2195",
+        "sha256-cd-v1:5e69978ffc4bc0e15d5ead50f668ab1282822bb683bd31dea3b1d92f22883c8f"
       ],
       "description": "",
       "pageUrl": "https://gamesdb.launchbox-app.com/games/details/137558-ryouki-no-ori-dai-2-shou",
@@ -54418,7 +54544,8 @@
         "sha256-fd-v1:de16ac98dca6fbe6ee37cc26fde9e15180f4ec364bb144a0a4cfcfaa32cb3113",
         "sha256-hdi-v1:0c149b51846cc27fab4d700198a3cb72468f3934eef6203b1ab4ce3bd8aa7315",
         "sha256-hdi-v1:4e3b944aa92f173e77da5af6e652022c0c880bd2f299f3d2e89dc8313b4c46d9",
-        "sha256-hdi-v1:db0ff91b30ffb79e5c963fc1beb096dd6d71aff76c8b991a23d3084ae51cbf17"
+        "sha256-hdi-v1:db0ff91b30ffb79e5c963fc1beb096dd6d71aff76c8b991a23d3084ae51cbf17",
+        "sha256-cd-v1:d40e5b5ed9208a0c12135c4c8c847c94582c6ac689ff32cba25ce67b3d699156"
       ],
       "description": "",
       "pageUrl": "https://gamesdb.launchbox-app.com/games/details/137577-sangokushi-v",
@@ -54664,7 +54791,8 @@
         "sha256-fd-v1:3e553f0fd9f63ba39ee02e31f36dc4684717ed83e4cf48f33171777094bf30f0",
         "sha256-fd-v1:4e2e0f09b92aca8908eae52b5586171548fc922631e5405f209ede2bb8ad100a",
         "sha256-hdi-v1:8d3d56bd4b9bb0d1f7630c482d0a2f3f488e2736305c4b6a2edf88b250c51b60",
-        "sha256-hdi-v1:b3e37d54d3896433a6aebf99909c34f6cab4fec321b511281717df600df845c7"
+        "sha256-hdi-v1:b3e37d54d3896433a6aebf99909c34f6cab4fec321b511281717df600df845c7",
+        "sha256-cd-v1:ecea734506cc67e1470bc06680e58b1607845f24c2656476dd88411dd3c106bf"
       ],
       "description": "",
       "pageUrl": "https://gamesdb.launchbox-app.com/games/details/137599-sayonara-no-mukougawa",
@@ -54774,7 +54902,8 @@
         "pc98:NecHomeElectronics.zip:Schwarzschild EX - Tessa no Seigun"
       ],
       "contentIds": [
-        "sha256-hdi-v1:9646d6542e5b872f2f36c51b5d09298bc0777a86351e5aa95fb7f27d8bc9aa72"
+        "sha256-hdi-v1:9646d6542e5b872f2f36c51b5d09298bc0777a86351e5aa95fb7f27d8bc9aa72",
+        "sha256-cd-v1:86fc5866dc571696945632c2b75658d1e76f8aca070244cfef505dc85e4a91b6"
       ],
       "description": "",
       "pageUrl": "https://gamesdb.launchbox-app.com/games/details/133428-schwarzschild-ex-tessa-no-seigun",
@@ -54792,7 +54921,8 @@
         "pc98:NecInterchannel.zip:Schwarzschild GX - Sabita Sousei"
       ],
       "contentIds": [
-        "sha256-hdi-v1:77bf8a222c449a2830b01cb920d0bb1009cea3bce8a517622f543276ba2340c3"
+        "sha256-hdi-v1:77bf8a222c449a2830b01cb920d0bb1009cea3bce8a517622f543276ba2340c3",
+        "sha256-cd-v1:f6a6797c84159795d2d81889aef6ab1fd42ba64a2d5cae1638007840436fa8a8"
       ],
       "description": "",
       "pageUrl": "https://gamesdb.launchbox-app.com/games/details/133429-schwarzschild-gx-sabita-sousei",
@@ -55240,7 +55370,8 @@
         "sha256-fd-v1:60c1e769b001683936483328595e68643d236a144b4abd1095716984408fa28d",
         "sha256-fd-v1:60ea07358c283b742d09626657848219f28568f4db398a4e24adf09134cb740b",
         "sha256-hdi-v1:79764fcc2277e2c19eef130b0898f29d309d4d42451f2f468294fa385f637e56",
-        "sha256-hdi-v1:beeaad4fcf96bfe6a504b9af63c4ac4447c29ed0dbe98543c6d7ccf70db05d3b"
+        "sha256-hdi-v1:beeaad4fcf96bfe6a504b9af63c4ac4447c29ed0dbe98543c6d7ccf70db05d3b",
+        "sha256-cd-v1:976c62f4784c038aa7e6c4fa252ec6baf5c263f7527d56f2332cd6164ff1d36d"
       ],
       "description": "",
       "pageUrl": "https://gamesdb.launchbox-app.com/games/details/146505-sela",
@@ -55393,7 +55524,8 @@
       ],
       "contentIds": [
         "sha256-fd-v1:662fa124fe626b9055f91313f1f7823cd35d764ace7a979ab1f4689457ba28c4",
-        "sha256-fd-v1:f74e88363da31f19b8aca77532b45f1aac1188ca075661c701c2ddae85e18260"
+        "sha256-fd-v1:f74e88363da31f19b8aca77532b45f1aac1188ca075661c701c2ddae85e18260",
+        "sha256-cd-v1:336ae2853c53c3650ecc762193ee1142f1f9d01b09b422003b8949184e8e4d67"
       ],
       "description": "",
       "pageUrl": "https://gamesdb.launchbox-app.com/games/details/140795-sensual-angels",
@@ -55473,7 +55605,8 @@
         "sha256-fd-v1:b459327b9fc7466c199525e9ca24ff8b6609e38d1034271db3f10207e873d211",
         "sha256-fd-v1:f71228a8bf303e8421003edd931216a5bf2cbe73be946923d8f2af50252129b9",
         "sha256-fd-v1:fb957eaa5b016b30b70b78bcfa7c9992c1742d373212af88eb5b2a3277694afe",
-        "sha256-hdi-v1:7c985a4212df5fd9fce402ccce9e7370b2a0713070d42b434765cdbf41f6e07c"
+        "sha256-hdi-v1:7c985a4212df5fd9fce402ccce9e7370b2a0713070d42b434765cdbf41f6e07c",
+        "sha256-cd-v1:9d62e7504f62a157cdaae1ab5b6c4b40a26a3b6226f0de0b5be56e9c0b9f152a"
       ],
       "description": "",
       "pageUrl": "https://gamesdb.launchbox-app.com/games/details/133486-sex-2",
@@ -55590,7 +55723,8 @@
       ],
       "contentIds": [
         "sha256-fd-v1:39197ba25832887a0ab4aaa8431fb9c52c8b245a1c01ca5435c79b0f372752f0",
-        "sha256-fd-v1:7d7f15befa2dd6fbca0f7f3e88596b8ebdf77873d7ef93afac1789d5d97168e7"
+        "sha256-fd-v1:7d7f15befa2dd6fbca0f7f3e88596b8ebdf77873d7ef93afac1789d5d97168e7",
+        "sha256-cd-v1:9ecc445c9d6ff0dd0621027ba11f13cd94256682cdeb5e2da5d5e98a3acf81d1"
       ],
       "description": "Explore polygon-rendered towns and ruins in an adventure inspired by the Epic of Gilgamesh.",
       "pageUrl": "https://gamesdb.launchbox-app.com/games/details/140779-shamhat-the-holy-circlet",
@@ -57687,7 +57821,8 @@
         "sha256-fd-v1:b50d931de7dc5f2b7ccdb70dcbc8605977bf931891e892d628b4008de0082b91",
         "sha256-fd-v1:d864ca7ce312c67644ba4b5fe6437a5648a7f6f556e4b887479977163cc63081",
         "sha256-fd-v1:eb942a0c3053a73ce4b5361050f437a320030f7836aaa34b72fbbf8eb0cb77e1",
-        "sha256-hdi-v1:1c71540fd42a3ae091eb47e6c2b30627c5f7a5df2914aa029be3352ea4f0eefa"
+        "sha256-hdi-v1:1c71540fd42a3ae091eb47e6c2b30627c5f7a5df2914aa029be3352ea4f0eefa",
+        "sha256-cd-v1:b18676e07153332f92a5d70d069b91eea9bdbf8cbdce8fa4fd0c340352b40a5f"
       ],
       "description": "",
       "pageUrl": "https://gamesdb.launchbox-app.com/games/details/136488-star-cruiser-ii-the-odysseus-project",
@@ -58176,7 +58311,8 @@
         "pc98:ElectronicArtsVictor.zip:Strike Commander Plus"
       ],
       "contentIds": [
-        "sha256-hdi-v1:f87e3b0e41797849d6a68a794f9f7f047eefd1d650141a9548b0c683872366f5"
+        "sha256-hdi-v1:f87e3b0e41797849d6a68a794f9f7f047eefd1d650141a9548b0c683872366f5",
+        "sha256-cd-v1:9e412902e6cb07fa13522e44316da245e7edf55f4c6087fdabbfeff8b975bbca"
       ],
       "description": "",
       "pageUrl": "https://gamesdb.launchbox-app.com/games/details/140871-strike-commander-plus",
@@ -58730,7 +58866,8 @@
         "pc98:Ving.zip:Super Real Mahjong PIV Final"
       ],
       "contentIds": [
-        "sha256-hdi-v1:214e95d34d9f02167d60edea99d5003d21c0c13b60943dbfc8efd10680edb290"
+        "sha256-hdi-v1:214e95d34d9f02167d60edea99d5003d21c0c13b60943dbfc8efd10680edb290",
+        "sha256-cd-v1:a61c7e66df2354e28600fa67936cb796caeb8e8ac47cba578656ddec7939ec6a"
       ],
       "description": "",
       "pageUrl": "https://gamesdb.launchbox-app.com/games/details/137642-super-real-mahjong-piv-final",
@@ -59435,7 +59572,8 @@
         "sha256-fd-v1:af556a4391b118863d59b05caa3007598117d07735af7b763614dcd1be1c283b",
         "sha256-fd-v1:c96a409fc23f158aef92b12b35c284c5f7dff93d5da7f5dc32c75eb60400857d",
         "sha256-fd-v1:e9b35349af72a206e8dda69c4c689308adc2ecddbfe19b1891136e3e403de4ea",
-        "sha256-hdi-v1:35ebd4062069e9f8791edd09b549e2a7b417eac3aadfc0dbe461b1ff26673555"
+        "sha256-hdi-v1:35ebd4062069e9f8791edd09b549e2a7b417eac3aadfc0dbe461b1ff26673555",
+        "sha256-cd-v1:56723182f834f8bb8d509037da4a959b90e66bfda4f99d2189787bded4b91ce4"
       ],
       "description": "",
       "pageUrl": "https://gamesdb.launchbox-app.com/games/details/139785-tamago-ryouri",
@@ -59547,7 +59685,8 @@
         "sha256-fd-v1:d1751e418131341f9a2f1f1d25be9706d2d7011c7bdf092564a5f60f9006eba9",
         "sha256-fd-v1:dc17894526315ec45709a0ca6f57c75a61816b12f3228ddf4b06313a5fb177be",
         "sha256-fd-v1:f6bbbdbd062dbae4e9c0e26ee806b3861905139d3c6c66874b17ae29a6e2a184",
-        "sha256-hdi-v1:98798011241532ce00de1521941c167ec4379c2968cfc053bb3cfdf4c2676d2c"
+        "sha256-hdi-v1:98798011241532ce00de1521941c167ec4379c2968cfc053bb3cfdf4c2676d2c",
+        "sha256-cd-v1:8acb5feb90049a439edadc3508dab137903c04c09c05f69dc641fc2c979e8ed4"
       ],
       "description": "",
       "pageUrl": "https://gamesdb.launchbox-app.com/games/details/137645-tanjou-debut",
@@ -60452,7 +60591,8 @@
       ],
       "contentIds": [
         "sha256-fd-v1:c7e04de32740e9c290c61794a36aae2d66268b0880c059577de27a52769a59de",
-        "sha256-hdi-v1:a02857b688fce7e60999ab9de26c8e298d77c0cead698a89e94e5e2f242c36a2"
+        "sha256-hdi-v1:a02857b688fce7e60999ab9de26c8e298d77c0cead698a89e94e5e2f242c36a2",
+        "sha256-cd-v1:b70dc39e6cde2686ce0af265c811b4deb098a0f5c8a79cbe0adc1a3bbfd568ae"
       ],
       "description": "",
       "pageUrl": "https://gamesdb.launchbox-app.com/games/details/149034-tfx",
@@ -60988,7 +61128,8 @@
         "pc98:ArrowMicro-techs.zip:The Horde"
       ],
       "contentIds": [
-        "sha256-hdi-v1:1feffbff1640ddcaaeb0964e4b4fd8dd774a216f1958c0118eb8550a773d5a9c"
+        "sha256-hdi-v1:1feffbff1640ddcaaeb0964e4b4fd8dd774a216f1958c0118eb8550a773d5a9c",
+        "sha256-cd-v1:af3651824bf32ddf293d41a953fc4d0fc14f67069591f93acd989f57b2e93cd0"
       ],
       "description": "",
       "pageUrl": "https://gamesdb.launchbox-app.com/games/details/139653-the-horde",
@@ -61150,7 +61291,8 @@
         "sha256-fd-v1:e5ee8f8fabc9f1f046f43f6835de2b2d352cdc08843370526f5fd24f8f8a4b9e",
         "sha256-fd-v1:f04976ca5f7f0b450a5fb5ef8f84966f846e2a346fedab6efc91570413fcfbdf",
         "sha256-hdi-v1:2aa1bae5b4ab08a31945adf65498dd2d36aef2ed4cb13a410867c3a48761807c",
-        "sha256-hdi-v1:365ff098772b46a44d91f2d1de75c0e3db0133b5984743fa068a7a75445bbf11"
+        "sha256-hdi-v1:365ff098772b46a44d91f2d1de75c0e3db0133b5984743fa068a7a75445bbf11",
+        "sha256-cd-v1:b17c3fb541d6eba79724f317f0ba7fa10e462e439352f78587cb7c92a66a0d17"
       ],
       "description": "",
       "pageUrl": "https://gamesdb.launchbox-app.com/games/details/133498-the-legend-of-heroes-iii-shiroki-majo-renewal",
@@ -61188,7 +61330,8 @@
         "sha256-fd-v1:f2c0e72b0f126a4235afa328d8143d793df1026e4bcbebaee80eb6305c608b94",
         "sha256-fd-v1:f861f98ccfd6d8fb59b4bf6490f7dfca88720b4f31437d991ac90e53f1df7a1c",
         "sha256-hdi-v1:6766bfd4a7b0bb9a335a1d86af4cf761dbc20eeb80ba61c63796c885e6e9f630",
-        "sha256-hdi-v1:899ee0216383b44d0f64686d6fc2376e52647e4314086cbf7b2177487886c25e"
+        "sha256-hdi-v1:899ee0216383b44d0f64686d6fc2376e52647e4314086cbf7b2177487886c25e",
+        "sha256-cd-v1:1cde89bc5192e55f3e92dbc8c63d2ccd23d617fb1415df99be59d7a1428dd049"
       ],
       "description": "",
       "pageUrl": "https://gamesdb.launchbox-app.com/games/details/133499-the-legend-of-heroes-iv-akai-shizuku",
@@ -61225,7 +61368,8 @@
         "sha256-fd-v1:cd2a7256c6f0cc356974b81f56ff4c2f34b51e9f7df614ad6ef8eea928cc40b5",
         "sha256-fd-v1:d6b12a802afe88ec110e201e879bc447be3c706eb2065fe678c16bb7b4af51a4",
         "sha256-fd-v1:fd36a0bd3cf5436d205f74bf04b15a84869e386eb6a0a78b0d564c4dfec8c3cd",
-        "sha256-hdi-v1:13e60ffc789f3888de3a5e1a2e9d13cee74581deea0cfd02aafab3eb31b5b028"
+        "sha256-hdi-v1:13e60ffc789f3888de3a5e1a2e9d13cee74581deea0cfd02aafab3eb31b5b028",
+        "sha256-cd-v1:bdc488b4139a8b7cb8bba7e68bdbf74d332e7fcb1b7eefac341b6d5de6e7bc70"
       ],
       "description": "",
       "pageUrl": "https://gamesdb.launchbox-app.com/games/details/140685-the-legend-of-kyrandia",
@@ -61719,7 +61863,8 @@
         "sha256-fd-v1:e76bc3060e322c2a9b1332eae236e7b366403eeb0af53416b89783cbe1c60d25",
         "sha256-hdi-v1:12b2bb6686087d810a4c5955adf34c330c2750f8488f92c6e02209d41b716301",
         "sha256-hdi-v1:408c1a49f2879c8285316d6e99774e5c8d210a4e9bda379deb82b967b91e286e",
-        "sha256-hdi-v1:4593555540c68ef93c9e01eb9d156cde22a62a28d08540da021f1f9d0a2c7f7b"
+        "sha256-hdi-v1:4593555540c68ef93c9e01eb9d156cde22a62a28d08540da021f1f9d0a2c7f7b",
+        "sha256-cd-v1:5305d7332323d49e30ff5c92b02cb74b52a4acd31efbc7223252dadada211698"
       ],
       "description": "",
       "pageUrl": "https://gamesdb.launchbox-app.com/games/details/84846-the-super-dimension-fortress-macross-skull-leader-complete-pack",
@@ -61803,7 +61948,8 @@
         "sha256-fd-v1:c6159ee1ab0fc7b0262da0563666a1d8a53338e0e2d152e98d94063698731be9",
         "sha256-fd-v1:ccd5ee1dbea469b672d90d23baef09769f8053ca50262f08587c1c4b7e0772fd",
         "sha256-hdi-v1:8cc0f90092508e5a8ffc869a8dc20e5230d3cc75b37be1351cc21c2b928dc1fb",
-        "sha256-hdi-v1:913d0b0465518d23fc89c9ea939de5973dacd358d67ae72ebedd7a3fd2152466"
+        "sha256-hdi-v1:913d0b0465518d23fc89c9ea939de5973dacd358d67ae72ebedd7a3fd2152466",
+        "sha256-cd-v1:9e20f89e6a9bfb2972009722e455b1d485f7bd3e03bb93ef5fbbd764bbb026db"
       ],
       "description": "",
       "pageUrl": "https://gamesdb.launchbox-app.com/games/details/140872-theme-park",
@@ -62184,7 +62330,8 @@
         "pc98:Artdink.zip:Tokio 2 - Kaitaku Imin Boshuuchuu!"
       ],
       "contentIds": [
-        "sha256-hdi-v1:512bc6bd511c7d51fa9657a074be39df1e0d59a709bb31a80f3c9beb78db502b"
+        "sha256-hdi-v1:512bc6bd511c7d51fa9657a074be39df1e0d59a709bb31a80f3c9beb78db502b",
+        "sha256-cd-v1:a5f57f484e8606a482c2f3de7407ecba3435b7bb58deea39b84d071d8be7f681"
       ],
       "description": "",
       "pageUrl": "https://gamesdb.launchbox-app.com/games/details/132154-tokio-2",
@@ -62722,7 +62869,8 @@
         "pc98:AliceSoft.zip:Toushin Toshi II - Soshite, Sorekara"
       ],
       "contentIds": [
-        "sha256-hdi-v1:9356c501b0f255941cdeef3bc58bf41e765135d01f8deb704e50387ba3489a0f"
+        "sha256-hdi-v1:9356c501b0f255941cdeef3bc58bf41e765135d01f8deb704e50387ba3489a0f",
+        "sha256-cd-v1:671e0de740429a8d2748cf0fc3ad788ecf85aa2e497958ce231b76220977e15c"
       ],
       "description": "",
       "pageUrl": "https://gamesdb.launchbox-app.com/games/details/139271-toushin-toshi-ii-soshite-sorekara",
@@ -63223,7 +63371,8 @@
         "sha256-fd-v1:9b012418a22b22531ba722778ec76c344e4a1192edd0772894aae13b40133ca2",
         "sha256-fd-v1:e4f6cda158a622e63d4a2362d4e777c11bcd7a60c76e0791530a47d855b02e3f",
         "sha256-hdi-v1:575355d4ec0d2cf47f1aa81ccf53876536e12feabd683005ce25d35540bc330a",
-        "sha256-hdi-v1:6b05c5a3d4f9cdb36426ac2785ff2325248fa8e3311957c69ad389e1b8bcd68a"
+        "sha256-hdi-v1:6b05c5a3d4f9cdb36426ac2785ff2325248fa8e3311957c69ad389e1b8bcd68a",
+        "sha256-cd-v1:107c0eb2e6614cd0acc864a52837c9b1d33d985b9c652e61c428c9424796f0e5"
       ],
       "description": "Lead a crime-fighting squad through turn-based city battles, improving its members and customizing their vehicles.",
       "pageUrl": "https://gamesdb.launchbox-app.com/games/details/118776-tuned-heart",
@@ -64543,7 +64692,8 @@
         "sha256-fd-v1:df8803c2ec043ab15516c5cfe04edaf33cb8b93cda3afb84f36b1ab8bc9b9abd",
         "sha256-fd-v1:e8ac90c94e8be1e5877c4f130a6cca49fd0b349d4546f95a691106d734ea1ae4",
         "sha256-hdi-v1:07b53ca276281a6341b17b42e28763d93567cbf6ca1acb2a4d6d54dc0f60fc84",
-        "sha256-hdi-v1:89364b2f7720f88e88a53795d5222da796ec69684c6c73042040021e2ef120ab"
+        "sha256-hdi-v1:89364b2f7720f88e88a53795d5222da796ec69684c6c73042040021e2ef120ab",
+        "sha256-cd-v1:72203f6a703acc40a86e7ca15ed46a895eafd6abd6a4766a00e6e6678f8328e5"
       ],
       "description": "",
       "pageUrl": "https://gamesdb.launchbox-app.com/games/details/137690-vastness-kuukyo-no-ikenietachi",
@@ -64727,7 +64877,8 @@
       ],
       "contentIds": [
         "sha256-hdi-v1:3213b59eec34fc2394454616d578bf0d0af8e226294821d5f6cd5db5cb614a43",
-        "sha256-hdi-v1:16a5365cd51d3498c3419f80e2e3271042418d57bb951fbaa27f1895e1bed8cd"
+        "sha256-hdi-v1:16a5365cd51d3498c3419f80e2e3271042418d57bb951fbaa27f1895e1bed8cd",
+        "sha256-cd-v1:99723c82d5ab44ede04d2a7177f67edb7c3208fbeba28842c6183f816d89accf"
       ],
       "description": "",
       "pageUrl": "https://gamesdb.launchbox-app.com/games/details/133085-viper-ctr-asuka",
@@ -64744,7 +64895,8 @@
       ],
       "contentIds": [
         "sha256-fd-v1:ec004ae48a1e52bbeeed2ef917e75a0ffeeccaca420ac2b8eb56f00473c563b4",
-        "sha256-hdi-v1:d3f70699445152b94a95a45558f85edacc3d8368fbcd87255144a63e7da55a11"
+        "sha256-hdi-v1:d3f70699445152b94a95a45558f85edacc3d8368fbcd87255144a63e7da55a11",
+        "sha256-cd-v1:58efcaa722ec156f5aed8d56bf5690bddd633801bdbf7541c21e4fa1f2f6b4ce"
       ],
       "description": "",
       "pageUrl": "https://gamesdb.launchbox-app.com/games/details/133087-viper-f40",
@@ -65092,7 +65244,8 @@
         "sha256-fd-v1:c46c4874c4de4b721cd4c0f1204c441ddb58edb81a8c10076a4e208f94d21836",
         "sha256-fd-v1:c67a2b9100b552325b1b4c7300047896be0e056bf13c5cd3948eaa28743d0047",
         "sha256-fd-v1:fb8b24d41a50cde8e616f4cca0c25431e43bb27ac1aab62d8bcd95a8b6aa8bfd",
-        "sha256-hdi-v1:ddb1f2146db84daefdb471c2befb5f1feef83fcf65ee83193c0fa8506e475977"
+        "sha256-hdi-v1:ddb1f2146db84daefdb471c2befb5f1feef83fcf65ee83193c0fa8506e475977",
+        "sha256-cd-v1:c65a6d1412b627e94a0d65f64393d45f017b8d2ff117909bd3ebcd73132bbd64"
       ],
       "description": "",
       "pageUrl": "https://gamesdb.launchbox-app.com/games/details/141561-virtuacall-2",
@@ -65338,7 +65491,8 @@
         "sha256-fd-v1:bf859d4a38478657e3a86a7e042f6ee37381713e95bd2129ac5c12961813f652",
         "sha256-fd-v1:d423f48520bdafde66779ba78044946ac2479bb79c34392dd1447aca0036204b",
         "sha256-hdi-v1:564e927fbf3823241fe3eade29e5ba81c27a946f8282b8af956b9b299ffdd137",
-        "sha256-hdi-v1:ccf328d30fcc27b07791a71a7198c5ebb33f41ca4489973494fa8971d05a1546"
+        "sha256-hdi-v1:ccf328d30fcc27b07791a71a7198c5ebb33f41ca4489973494fa8971d05a1546",
+        "sha256-cd-v1:16ef40a307f8704c1955f1582630a36ebbb0487e06fcf0490085071024aa6dc6"
       ],
       "description": "",
       "pageUrl": "https://gamesdb.launchbox-app.com/games/details/137697-warcraft-orcs-humans",
@@ -65378,7 +65532,8 @@
         "sha256-fd-v1:ba475ae343db9967f83153ae98d1a349810712f59780403d255840c556554093",
         "sha256-fd-v1:ed219fa59294a5e54e8f8b53be338667180aa0d1fdd1fb115eb42392434dffbe",
         "sha256-hdi-v1:e4e466489ffefeff51f4ac33e731c5abb4bd7578322e883906f49fdbe6e29910",
-        "sha256-hdi-v1:e7a794d32aaec67e6afda9e58f25e236ffff74e1e924a0e0f3b0c565483dcfdb"
+        "sha256-hdi-v1:e7a794d32aaec67e6afda9e58f25e236ffff74e1e924a0e0f3b0c565483dcfdb",
+        "sha256-cd-v1:fc6832d0c40121becf6433201bd3645270336660bee1d1d7544134d09bdd8e1c"
       ],
       "description": "",
       "pageUrl": "https://gamesdb.launchbox-app.com/games/details/137276-watashi",
@@ -66739,7 +66894,8 @@
         "sha256-fd-v1:dcd0a75a0db8b8547e40fa227dd94d74b02ce2bc34b691d88bbe42da5bea1329",
         "sha256-fd-v1:f1c71fd5b65d3e9607ab7cb4b1d13764766ed09446a5687a4f046c8572e2c83a",
         "sha256-hdi-v1:1f48cf99aff86d5bc451c5650a55ea5da45abc0bebb30f97de406f2e94fe8785",
-        "sha256-hdi-v1:7fa534ff22bb51da170d567e1096b36736d7272b30c9e5cf5af7b91e5f296bf1"
+        "sha256-hdi-v1:7fa534ff22bb51da170d567e1096b36736d7272b30c9e5cf5af7b91e5f296bf1",
+        "sha256-cd-v1:5cd09d10e4fa3c55a39192711094c84fbcc6f9a3bf0752a5809e9a4774164cc6"
       ],
       "description": "Investigate a space station that appears in Kouji’s recurring dreams as its mysteries begin to affect his waking life.",
       "pageUrl": "https://gamesdb.launchbox-app.com/games/details/106059-xenon-mugen-no-shitai",
@@ -67631,7 +67787,8 @@
         "sha256-fd-v1:2d5d9f5e17663f9c4976a9089a030065e82fc1d2cbb326950a31381c10c6062c",
         "sha256-fd-v1:808af0124b3733276bdf71d766725621c6a6cf003eaf925a0c20f9c68527a2d3",
         "sha256-fd-v1:e51bc46de07f4f6ffdd19d4677369d5dea3d5dcfa71945da3f77245bac2be2a5",
-        "sha256-hdi-v1:c87dedceb4588f0c2ba7bd3049a24b1184c6bc9a89543a29110612b476a4a2f3"
+        "sha256-hdi-v1:c87dedceb4588f0c2ba7bd3049a24b1184c6bc9a89543a29110612b476a4a2f3",
+        "sha256-cd-v1:14e03377a3bcf03e6376e2380140a0b2a3ed55df08b44ca8ed9c425f2d02852d"
       ],
       "description": "",
       "pageUrl": "https://gamesdb.launchbox-app.com/games/details/139219-yume-no-sei",
@@ -67682,7 +67839,8 @@
         "sha256-fd-v1:d357182d8b0ab539f4747df2b4e98e5497027602e318a01f7d5347b65a380642",
         "sha256-fd-v1:dfb79d5c7afae18045600f1be3ad94bedaf61bcaa8bbebaca487feaa37bfc570",
         "sha256-hdi-v1:35be26d76a8bfc6a471d7cd2d66edaf5c34bc7f71f1bbd0ea1a9bbfeb876946a",
-        "sha256-hdi-v1:bf35b54ddfb896c73f018ea219d9f87c96a7c1b90a6dac18eb5b69a26652b90a"
+        "sha256-hdi-v1:bf35b54ddfb896c73f018ea219d9f87c96a7c1b90a6dac18eb5b69a26652b90a",
+        "sha256-cd-v1:d724ec011cc1eef15b25927085c6c7363475aec6056dcca250532397aac7873e"
       ],
       "description": "",
       "pageUrl": "https://gamesdb.launchbox-app.com/games/details/147707-yumemizaka",
@@ -67994,7 +68152,8 @@
         "sha256-fd-v1:bd035adcaab2546b6eede89bf9cd045c6bdace49485eba7a3577af997c3a5f59",
         "sha256-fd-v1:c4c6adc5b05c470a7e8f5a7442161aacc48038465757ac0ad6c532771f3bfb57",
         "sha256-fd-v1:c99530081845fb8552510ad31477ca14a1bd4467d89304b0413df84da99b5148",
-        "sha256-hdi-v1:fc556956e187f9a05a150f1041026632da04494e5e39200a3f413da79953c502"
+        "sha256-hdi-v1:fc556956e187f9a05a150f1041026632da04494e5e39200a3f413da79953c502",
+        "sha256-cd-v1:a96a4658b4215338d0e6c55dc5a304b1c5b0e676b3eb2a3e00093ff47ce143bd"
       ],
       "description": "",
       "pageUrl": "https://gamesdb.launchbox-app.com/games/details/137726-zai-metajo",
@@ -68193,7 +68352,8 @@
         "sha256-fd-v1:f24be24c180c036ee0b9518bec5113306057f84da89edb100cade02e0bde78d5",
         "sha256-fd-v1:f4281f5d0c4aec7275f7edcbfdab26030ced9fea46635814f1e95b77e1e25e31",
         "sha256-fd-v1:fd92185891c8cf927469ac3b622492b46e40c6e7bc6c002de2cbd853adcbba0c",
-        "sha256-hdi-v1:935047e7861578cf3f1b697d4327771e84265f1812f3e27822118338190bc131"
+        "sha256-hdi-v1:935047e7861578cf3f1b697d4327771e84265f1812f3e27822118338190bc131",
+        "sha256-cd-v1:5441e90b80dfb39dc4c2ec4b70e40a140e453264c5c1a9c28650ae0985c7b465"
       ],
       "description": "",
       "pageUrl": "https://gamesdb.launchbox-app.com/games/details/140765-zatsuon-ryouiki",
@@ -68266,7 +68426,8 @@
         "sha256-fd-v1:f6285257214b593de11ad1e2612dc00d8264c63ec1cb57f7d5a2bb2e196bcc2e",
         "sha256-fd-v1:ff83b5d4724b1121568167f047ccda5070854785e310757d05953ba98c58483c",
         "sha256-hdi-v1:40b4de241506c697c1c75a9f76e19c20c636e7b694085a65d0c57e4f076323b2",
-        "sha256-hdi-v1:b2e13b20c8a6c38b7a2bb953876b6ec6f4cbc4ceeec511d489c8b708d64f56dd"
+        "sha256-hdi-v1:b2e13b20c8a6c38b7a2bb953876b6ec6f4cbc4ceeec511d489c8b708d64f56dd",
+        "sha256-cd-v1:efe93a099e2fc95ebdc0d101e2dec9432769fb436e00160d5eb629ebecd45e71"
       ],
       "description": "",
       "pageUrl": "https://gamesdb.launchbox-app.com/games/details/137733-zenith",

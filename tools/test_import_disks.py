@@ -1,7 +1,7 @@
 import json
 import unittest
 
-from import_disks import add_research_ids, find_sets, neokobe_disks, set_profile
+from import_disks import add_research_ids, find_cd_links, find_sets, neokobe_disks, set_media, set_profile
 
 
 def disk(source, name, content):
@@ -97,6 +97,26 @@ class NeoKobeTests(unittest.TestCase):
                                {"groups": []}))
 
 
+class CdLinkTests(unittest.TestCase):
+    def test_cd_version_and_cd_floppy_releases_run_their_disc(self):
+        def at(folder, name, content):
+            return {**disk(f"Pub/Pub/Dangel/{folder}", name, content), "group": "g"}
+        cd = {**at("Dangel [CD]", "Dangel.ccd", "c"), "contentId": "sha256-cd-v1:" + "c" * 64}
+        disks = [cd, at("Dangel (CD version) [HD]", "Dangel (CD version).hdi", "h"),
+                 at("Dangel [FD]", "Dangel (Disk 1).hdm", "a"), at("Dangel [FD]", "Dangel (Disk 2).hdm", "b")]
+        sets, _ = find_sets(disks)
+        self.assertEqual([(link["target"][:14], link["cd"]) for link in find_cd_links(disks, sets)],
+                         [("sha256-hdi-v1:", cd["contentId"])])
+
+    def test_hard_disk_runs_the_disc_only_beside_cd_releases_alone(self):
+        def at(folder, name, content):
+            return {**disk(f"Pub/Pub/Game/{folder}", name, content), "group": "g"}
+        cd = {**at("Game [CD]", "Game.ccd", "c"), "contentId": "sha256-cd-v1:" + "c" * 64}
+        hd = at("Game [HD]", "Game.hdi", "h")
+        self.assertEqual(len(find_cd_links([cd, hd], [])), 1)
+        self.assertEqual(find_cd_links([cd, hd, at("Game [FD]", "Game.hdm", "f")], []), [])
+
+
 class EditTests(unittest.TestCase):
     def test_profile_edits_are_idempotent_merge_and_keep_other_fields(self):
         text = '{\n  "schemaVersion": 1,\n  "games": {\n    "a": {\n      "title": "A",\n' \
@@ -109,6 +129,15 @@ class EditTests(unittest.TestCase):
         games = json.loads(twice)["games"]
         self.assertEqual(games["a"], {"setDisks": ["b", "c"], "title": "A", "hidden": False})
         self.assertEqual(games["n"], {"title": "New", "setDisks": ["m"]})
+
+    def test_media_roles_are_set_once_and_keep_others(self):
+        text = '{\n  "schemaVersion": 1,\n  "games": {\n    "a": {\n' \
+               '      "media": [{"role": "bootFloppy", "contentId": "f"}]\n    }\n  }\n}\n'
+        once = set_media(set_media(text, "a", "cd", "c"), "n", "cd", "d")
+        self.assertEqual(set_media(set_media(once, "a", "cd", "c"), "n", "cd", "d"), once)
+        games = json.loads(once)["games"]
+        self.assertEqual(games["a"]["media"], [{"role": "bootFloppy", "contentId": "f"}, {"role": "cd", "contentId": "c"}])
+        self.assertEqual(games["n"], {"media": [{"role": "cd", "contentId": "d"}]})
 
     def test_research_ids_are_added_once(self):
         text = '{\n  "entries": [\n    {\n      "platform": "pc98",\n      "databaseId": "1",\n' \

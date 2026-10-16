@@ -6,7 +6,10 @@ import hashlib
 import json
 from pathlib import Path
 
-from build_catalog import build, compact, validate_record
+from build_catalog import build, compact, inherit, validate_record
+
+# Disk records name their game's shared name index record instead of repeating it.
+CORE_VERSION = 3
 
 
 def build_pack(source, name_index):
@@ -14,7 +17,7 @@ def build_pack(source, name_index):
     if name_index.get("schemaVersion") != 1 or not isinstance(name_index.get("games"), dict) or not isinstance(name_index.get("names"), dict):
         raise ValueError("invalid name index")
     for key, record in name_index["games"].items():
-        if not isinstance(key, str) or not isinstance(record, dict):
+        if not isinstance(key, str) or not isinstance(record, dict) or "game" in record:
             raise ValueError("invalid name index record")
         validate_record({**record, "contentIds": ["sha256-hdi-v1:" + "0" * 64]})
     if any(not isinstance(key, str) or not key.isalnum() or len(key) not in range(4, 129) or
@@ -24,6 +27,8 @@ def build_pack(source, name_index):
     games = {}
     for shard in shards.values():
         games.update(shard)
+    for record in games.values():
+        validate_record({**inherit(record, name_index["games"]), "contentIds": ["sha256-hdi-v1:" + "0" * 64]})
     return {"schemaVersion": 1, "games": games, "nameIndex": name_index}
 
 
@@ -35,7 +40,7 @@ def main():
     args = parser.parse_args()
     source = json.loads(args.source.read_text(encoding="utf-8"))
     names = json.loads(args.name_index.read_text(encoding="utf-8"))
-    result = compact({**build_pack(source, names), "coreVersion": 2})
+    result = compact({**build_pack(source, names), "coreVersion": CORE_VERSION})
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_bytes(result)
     metadata = {"schemaVersion": 1, "archive": args.output.name,

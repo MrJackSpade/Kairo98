@@ -91,7 +91,7 @@ jobs:
       - name: Verify repository catalog generation
         run: |
           python3 tools/build_catalog_packages.py
-          git diff --exit-code -- catalog/parts catalog/optional/kairo98-art.nsfw.meta.json catalog/optional/kairo98-art.nsfw.zip
+          git diff --exit-code -- catalog/parts catalog/optional/kairo98-art-v2.nsfw.meta.json catalog/optional/kairo98-art-v2.nsfw.zip
       - name: Build both release APKs and matching Play bundle
         env:
           KAIRO98_BETA_PASSWORD: ${{ secrets.KAIRO98_BETA_PASSWORD }}

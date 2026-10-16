@@ -31,6 +31,7 @@ from build_review_catalog import lookup_name  # noqa: E402
 CACHE_MAGIC = 0x4B4C4942
 CACHE_VERSION = 2
 FLOPPY = re.compile(r"\.(?:fdi|d88|88d|d98|98d|nfd|fdd|dcp|dcu|hdm|xdf)$", re.I)
+CD = re.compile(r"\.ccd$", re.I)
 HARD_DISK = re.compile(r"\.hdi$", re.I)
 # A disk label names a disk of a set: "(Disk 2)", "(Disk B - Red)", "(System disk)", "(System disk #2)".
 LABEL = re.compile(r"\(([^()]*?)\b(?:disk|disc|fd)\b\s*#?0*(\d+|[a-z]\b)?[^()]*\)", re.I)
@@ -41,7 +42,7 @@ TAG = re.compile(r"\[([^]]*)]")
 ALTERNATE = re.compile(r"alt\s*(\d*)", re.I)
 UNMODIFIED = re.compile(r"original|uncracked", re.I)
 # The same disk is often dumped in several formats; the set starts from the first of them.
-FORMATS = (".hdi", ".hdm", ".d88", ".fdi", ".nfd", ".fdd", ".88d", ".d98", ".98d", ".dcp", ".dcu", ".xdf")
+FORMATS = (".hdi", ".hdm", ".d88", ".fdi", ".nfd", ".fdd", ".88d", ".d98", ".98d", ".dcp", ".dcu", ".xdf", ".ccd")
 
 
 def read_cache(path):
@@ -170,6 +171,60 @@ def find_sets(disks):
     return sets, ambiguous
 
 
+def release_kind(folder):
+    """A NeoKobe release folder's role for CDs: the disc, a disk made to run it, or a hard disk."""
+    if re.search(r"\[CD]", folder):
+        return "cd"
+    if re.search(r"\[CD floppy]", folder) or re.search(r"\(CD version", folder, re.I):
+        return "partner"
+    if re.search(r"\[HD]", folder):
+        return "hd"
+    return "other"
+
+
+def release_qualifier(folder, game):
+    """What tells a release apart within its game, without the CD or media naming."""
+    rest = folder[len(game):] if folder.startswith(game) else folder
+    rest = re.sub(r"\[[^]]*]", "", re.sub(r"\(CD version[^)]*\)", "", rest, flags=re.I))
+    return lookup_name(rest)
+
+
+def find_cd_links(disks, sets):
+    """Pairs each disk that runs a CD with that CD, within one inventory group.
+
+    Partner releases are "[CD floppy]" boot disks and "(CD version)" installs, or a game's hard
+    disk releases when it has only CD and hard disk releases. A partner takes the CD release
+    with its qualifier, or the game's one CD release. Each disk of a partner that starts a set
+    or belongs to none needs the release's first disc."""
+    hidden = {content_id for found in sets for content_id in found["disks"]}
+    releases = defaultdict(lambda: defaultdict(list))
+    for disk in disks:
+        game, folder = disk["source"].split("/")[-2:]
+        releases[disk["group"]][(game, folder)].append(disk)
+    links = []
+    for group, by_release in sorted(releases.items()):
+        kinds = {key: release_kind(key[1]) for key in by_release}
+        cds = {key: sorted((d for d in by_release[key] if CD.search(d["name"])),
+                           key=lambda d: (entry_rank(d["name"]), d["name"]))
+               for key, kind in kinds.items() if kind == "cd"}
+        cds = {key: discs for key, discs in cds.items() if discs}
+        if not cds:
+            continue
+        partners = [key for key, kind in kinds.items() if kind == "partner"]
+        if not partners and set(kinds.values()) == {"cd", "hd"}:
+            partners = [key for key, kind in kinds.items() if kind == "hd"]
+        for key in sorted(partners):
+            matching = [cd for cd in cds if release_qualifier(cd[1], cd[0]) == release_qualifier(key[1], key[0])]
+            release = matching[0] if len(matching) == 1 else next(iter(cds)) if len(cds) == 1 else None
+            if release is None:
+                continue
+            disc = cds[release][0]["contentId"]
+            for disk in by_release[key]:
+                if not CD.search(disk["name"]) and disk["contentId"] not in hidden:
+                    links.append({"target": disk["contentId"], "cd": disc, "group": group})
+    return links
+
+
 def research_keys(matches):
     names = defaultdict(set)
     for item in matches["entries"]:
@@ -227,6 +282,22 @@ def set_profile(text, content_id, disks, title):
     return text[:start] + f'\n      "setDisks": [{listing}],' + text[start:]
 
 
+def set_media(text, content_id, role, value):
+    """Sets one media role on a profile, keeping its other roles."""
+    existing = re.search(r'\n    %s: \{' % re.escape(json.dumps(content_id)), text)
+    item = {"role": role, "contentId": value}
+    if existing is None:
+        close = text.rindex("\n  }\n}")
+        return text[:close] + f',\n    {json.dumps(content_id)}: {{\n      "media": [{json.dumps(item)}]\n    }}' + text[close:]
+    start = existing.end()
+    end = text.index("\n    }", start)
+    field = re.compile(r'\n      "media": (\[[^\n]*\])').search(text, start, end)
+    if field:
+        media = [entry for entry in json.loads(field.group(1)) if entry["role"] != role] + [item]
+        return text[:field.start()] + f'\n      "media": {json.dumps(media)}' + text[field.end():]
+    return text[:start] + f'\n      "media": [{json.dumps(item)}],' + text[start:]
+
+
 def resolve_by_name(found, names):
     """Research entry and title for a library set: the entry its name matches, or, for a
     supplementary set such as "Dangel (Special Disk)", its base game's entry with its own title."""
@@ -258,7 +329,7 @@ def import_library(cache, matches):
               f'{", title " + repr(title) if title else ""}, hides {len(found["disks"])}')
     if unreviewed:
         print("Not in the reviewed research catalog, so not adult-reviewed:", *unreviewed, sep="\n  ")
-    return research_ids, set_profiles, ambiguous
+    return research_ids, set_profiles, ambiguous, []
 
 
 def import_neokobe(index, backlog, matches):
@@ -284,16 +355,18 @@ def import_neokobe(index, backlog, matches):
     sets, ambiguous = find_sets(disks)
     set_profiles = [(found, None) for found in sets
                     if found["entry"]["group"] in linked and found["entry"]["contentId"] not in conflicts]
+    cd_links = [link for link in find_cd_links(disks, sets)
+                if link["group"] in linked and link["target"] not in conflicts and link["cd"] not in conflicts]
     unlinked = {disk["group"] for disk in disks if disk["group"] not in linked}
     print(f"{len(disks)} disks: {sum(len(ids) for ids in research_ids.values())} IDs for "
-          f"{len(research_ids)} research entries, {len(set_profiles)} sets; "
+          f"{len(research_ids)} research entries, {len(set_profiles)} sets, {len(cd_links)} disks that run a CD; "
           f"{sum(disk['group'] not in linked for disk in disks)} disks in {len(unlinked)} unlinked groups")
     for content_id, keys in sorted(conflicts.items()):
         print(f"Not added, disk is in several games: {content_id} {', '.join(keys)}")
-    return research_ids, set_profiles, ambiguous
+    return research_ids, set_profiles, ambiguous, cd_links
 
 
-def apply(matches_text, profiles_text, research_ids, set_profiles):
+def apply(matches_text, profiles_text, research_ids, set_profiles, cd_links=()):
     profiles = json.loads(profiles_text)["games"]
     for research, content_ids in sorted(research_ids.items()):
         matches_text = add_research_ids(matches_text, research.split(":", 1)[1], content_ids)
@@ -306,6 +379,10 @@ def apply(matches_text, profiles_text, research_ids, set_profiles):
         if "title" in profiles.get(found["entry"]["contentId"], {}):
             title = None
         profiles_text = set_profile(profiles_text, found["entry"]["contentId"], disks, title)
+    # A disc is mounted with the disk that runs it, and shows no row of its own beside it.
+    for link in cd_links:
+        profiles_text = set_media(profiles_text, link["target"], "cd", link["cd"])
+        profiles_text = set_profile(profiles_text, link["target"], [link["cd"]], None)
     json.loads(matches_text)
     json.loads(profiles_text)
     return matches_text, profiles_text
@@ -330,10 +407,10 @@ def main():
         found = import_library(args.cache, matches)
     else:
         found = import_neokobe(load(args.index), load(args.backlog), matches)
-    research_ids, set_profiles, ambiguous = found
+    research_ids, set_profiles, ambiguous, cd_links = found
     if ambiguous:
         print("Not recorded as sets:", *ambiguous, sep="\n  ")
-    matches_text, profiles_text = apply(matches_text, profiles_text, research_ids, set_profiles)
+    matches_text, profiles_text = apply(matches_text, profiles_text, research_ids, set_profiles, cd_links)
     if args.write:
         matches_path.write_text(matches_text, encoding="utf-8", newline="\n")
         profiles_path.write_text(profiles_text, encoding="utf-8", newline="\n")

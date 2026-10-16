@@ -42,6 +42,22 @@ class CatalogWorkbenchTest(unittest.TestCase):
             self.assertEqual(result["archives"][0]["status"], "ready")
             self.assertTrue(result["archives"][0]["disks"][0]["contentId"].startswith("sha256-fd-v1:"))
 
+    def test_cd_hashes_its_track_data_loose_and_zipped(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            (root / "Game.ccd").write_text("[CloneCD]")
+            (root / "Game.img").write_bytes(b"track data")
+            with zipfile.ZipFile(root / "Game CD.zip", "w") as archive:
+                archive.writestr("Game.ccd", "[CloneCD]")
+                archive.writestr("Game.img", b"track data")
+            (root / "Lost.ccd").write_text("[CloneCD]")
+            result = {item["path"]: item for item in scan(root)["archives"]}
+            loose, zipped = result["Game.ccd"]["disks"][0], result["Game CD.zip"]["disks"][0]
+            self.assertTrue(loose["contentId"].startswith("sha256-cd-v1:"))
+            self.assertEqual(loose["contentId"], zipped["contentId"])
+            self.assertEqual(zipped["entry"], "Game.ccd")
+            self.assertEqual(result["Lost.ccd"]["error"], "Lost.img is missing")
+
     def test_alias_search_and_grouping_without_review_state(self):
         with tempfile.TemporaryDirectory() as directory:
             metadata = Path(directory) / "metadata.xml"

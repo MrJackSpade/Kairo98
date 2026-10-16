@@ -70,6 +70,11 @@ void sysmng_deinitialize(void) {}
 void sysmng_update(UINT flags) { (void)flags; }
 void sysmng_cpureset(void) {}
 void sysmng_requestupdatecaption(UINT8 flags) { (void)flags; }
+void sysmng_updatecaption(UINT8 flags) { (void)flags; }
+
+/* The core defines this wait only for its Windows reader thread. Off Windows, CD sectors are
+ * read synchronously, so every read has already finished when the IDE code waits for it. */
+void atapi_dataread_asyncwait(int wait) { (void)wait; }
 
 static UINT16 frame_pixels[640 * 400];
 static SCRNSURF frame = {

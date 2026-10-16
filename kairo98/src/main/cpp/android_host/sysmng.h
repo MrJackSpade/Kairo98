@@ -32,6 +32,7 @@ void sysmng_update(UINT update);
 void sysmng_cpureset(void);
 enum { SYS_UPDATECAPTION_FDD = 0x01 };
 void sysmng_requestupdatecaption(UINT8 flag);
+void sysmng_updatecaption(UINT8 flag);
 #define	sysmng_fddaccess(a)
 #define	sysmng_hddaccess(a)
 

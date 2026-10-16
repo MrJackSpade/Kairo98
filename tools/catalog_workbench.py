@@ -15,7 +15,8 @@ from xml.etree import ElementTree as ET
 MAX_HDI = 4 * 1024**3
 MAX_FLOPPY = 64 * 1024**2
 CHUNK = 1024 * 1024
-MEDIA_FORMATS_VERSION = 3
+MEDIA_FORMATS_VERSION = 4
+MAX_CD = 2 * 1024**3
 FLOPPY_EXTENSIONS = {".fdi", ".d88", ".88d", ".d98", ".98d", ".nfd",
                      ".fdd", ".dcp", ".dcu", ".hdm", ".xdf"}
 ANNOTATION = re.compile(r"\s*\[[^]]*\]")
@@ -54,7 +55,17 @@ def valid_entry(info):
 
 def image_kind(name):
     suffix = Path(name).suffix.lower()
-    return "hdi" if suffix == ".hdi" else "fd" if suffix in FLOPPY_EXTENSIONS else None
+    return ("hdi" if suffix == ".hdi" else "fd" if suffix in FLOPPY_EXTENSIONS else
+            "cd" if suffix == ".ccd" else None)
+
+
+def cd_data(name):
+    """A CloneCD descriptor's track data, which its content ID hashes."""
+    return name[:name.rfind(".")] + ".img"
+
+
+def size_limit(kind):
+    return MAX_FLOPPY if kind == "fd" else MAX_CD if kind == "cd" else MAX_HDI
 
 
 def digest(stream, kind):
@@ -87,14 +98,19 @@ def scan(root, previous=None):
         try:
             if path.suffix.lower() != ".zip":
                 kind = image_kind(path.name)
-                if stat.st_size <= 0 or stat.st_size > (MAX_FLOPPY if kind == "fd" else MAX_HDI):
+                data = path.with_name(cd_data(path.name)) if kind == "cd" else path
+                if not data.is_file():
+                    raise ValueError(f"{data.name} is missing")
+                size = data.stat().st_size
+                if size <= 0 or size > size_limit(kind):
                     raise ValueError("disk image exceeds size limit")
-                with path.open("rb") as source:
+                with data.open("rb") as source:
                     content_id = cached_disks.get(None) or digest(source, kind)
                     item["disks"].append({"entry": None, "contentId": content_id})
             else:
                 with zipfile.ZipFile(path) as archive:
                     entries = archive.infolist()
+                    members = {info.filename.lower(): info for info in entries}
                     for info in entries:
                         if not valid_entry(info):
                             raise ValueError("unsafe ZIP entry")
@@ -103,13 +119,15 @@ def scan(root, previous=None):
                         kind = image_kind(info.filename)
                         if not kind:
                             continue
-                        limit = MAX_FLOPPY if kind == "fd" else MAX_HDI
-                        if (info.file_size <= 0 or info.file_size > limit or
-                                info.compress_size <= 0 or info.file_size // info.compress_size > 1000):
+                        data = members.get(cd_data(info.filename).lower()) if kind == "cd" else info
+                        if data is None:
+                            raise ValueError(f"{cd_data(info.filename)} is missing")
+                        if (data.file_size <= 0 or data.file_size > size_limit(kind) or
+                                data.compress_size <= 0 or data.file_size // data.compress_size > 1000):
                             raise ValueError("disk image exceeds size or expansion limit")
                         content_id = cached_disks.get(info.filename)
                         if not content_id:
-                            with archive.open(info) as source:
+                            with archive.open(data) as source:
                                 content_id = digest(source, kind)
                         item["disks"].append({"entry": info.filename, "contentId": content_id})
             item["status"] = "ready" if item["disks"] else ("nested-zip" if item.get("nestedZip") else "no-supported-image")

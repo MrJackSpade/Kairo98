@@ -20,7 +20,7 @@ from catalog_package import build_package, image_paths, filter_artwork
 def lookup_name(value):
     value = re.sub(r"\[[^]]*]", "", value)
     value = re.sub(r"\((?:disk|disc|fd)\s*\d+[^)]*\)", "", value, flags=re.I)
-    value = re.sub(r"\.(?:zip|hdi|fdi|d88|88d|d98|98d|nfd|fdd|dcp|dcu|hdm|xdf)$", "", value, flags=re.I)
+    value = re.sub(r"\.(?:zip|hdi|fdi|d88|88d|d98|98d|nfd|fdd|dcp|dcu|hdm|xdf|ccd)$", "", value, flags=re.I)
     return "".join(char.lower() for char in unicodedata.normalize("NFKC", value)
                    if char.isalnum())
 
@@ -141,12 +141,14 @@ def generate(matches_path, gallery, assets, art_assets, ffmpeg, quality, reuse_a
             metadata["artwork"] = compact_artwork(artwork)
         all_games[key] = metadata
         if entry.get("contentIds"):
-            if any(content_id in profiles for content_id in entry["contentIds"]):
-                for content_id in entry["contentIds"]:
-                    source_games.append({"contentIds": [content_id], **metadata,
-                                         **profiles.pop(content_id, {})})
-            else:
-                source_games.append({"contentIds": entry["contentIds"], **metadata})
+            # Disks name this game's name index record; each stores only its own profile.
+            plain = [content_id for content_id in entry["contentIds"] if content_id not in profiles]
+            if plain:
+                source_games.append({"contentIds": plain, "game": key})
+            for content_id in entry["contentIds"]:
+                if content_id in profiles:
+                    source_games.append({"contentIds": [content_id], "game": key,
+                                         **profiles.pop(content_id)})
         if entry["platform"] == "pc98":
             candidates = [entry["title"], *entry.get("aliases", []),
                           metadata["title"], *metadata.get("aliases", []),
@@ -185,14 +187,16 @@ def generate(matches_path, gallery, assets, art_assets, ffmpeg, quality, reuse_a
             if content_id in excluded_ids: excluded_ids.update(refs)
             if refs & excluded_ids: excluded_ids.add(content_id)
         changed = previous != excluded_ids
+    optional_games = {key:value for key,value in full["games"].items() if key in excluded_ids}
+    # The games the optional records name, so each one resolves within the optional data.
+    optional_keys = excluded | {record["game"] for record in optional_games.values() if "game" in record}
     optional = {"schemaVersion": 1,
-        "games": {key:value for key,value in full["games"].items() if key in excluded_ids},
+        "games": optional_games,
         "nameIndex": {"schemaVersion": 1,
-            "games": {key:value for key,value in all_games.items() if key in excluded},
+            "games": {key:value for key,value in all_games.items() if key in optional_keys},
             "names": {key:value for key,value in unique_names.items() if value in excluded}}}
     optional_dir = matches_path.parent.parent / "optional"
     optional_dir.mkdir(parents=True, exist_ok=True)
-    (optional_dir / "data-v1.json").write_bytes(compact(optional))
     (matches_path.parent.parent / "excluded-ids-v1.json").write_bytes(compact({"schemaVersion": 1,
         "ids": sorted(excluded | excluded_ids), "artwork": sorted(image_paths(optional, expand_artwork))}))
     # Preserve the complete reviewed metadata and artwork for partition generation.

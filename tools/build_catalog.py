@@ -9,9 +9,12 @@ from pathlib import Path
 from urllib.parse import urlsplit
 from artwork_references import expand as expand_artwork
 
-CONTENT_ID = re.compile(r"sha256-(?:hdi|fd)-v1:[0-9a-f]{64}\Z")
+CONTENT_ID = re.compile(r"sha256-(?:hdi|fd|cd)-v1:[0-9a-f]{64}\Z")
 ART_PATH = re.compile(r"art/(?!.*\.\.)[A-Za-z0-9_./-]{1,252}\Z")
-FIELDS = {"title", "description", "aliases", "artwork", "machine", "controller", "input", "media", "launch", "startupChoices", "diskSwaps", "heart", "hidden", "setDisks"}
+# A disk record names its game's shared record, a name index entry, with "game"; its own
+# fields override the shared ones, so a game's metadata is stored once for all its disks.
+GAME_KEY = re.compile(r"(?:pc88|pc98):[A-Za-z0-9:._-]{1,64}\Z")
+FIELDS = {"game", "title", "description", "aliases", "artwork", "machine", "controller", "input", "media", "launch", "startupChoices", "diskSwaps", "heart", "hidden", "setDisks"}
 SCREEN_HASH = re.compile(r"[0-9a-f]{16}\Z")
 SHORT_ID = re.compile(r"[a-z0-9-]{1,40}\Z")
 
@@ -168,8 +171,11 @@ def validate_record(record):
             all(isinstance(value, str) and CONTENT_ID.fullmatch(value) for value in set_disks) and
             len(set_disks) == len(set(set_disks)) and not set(set_disks) & set(ids),
             "setDisks must list 1–32 other disks of the set")
+    require("game" not in record or (isinstance(record["game"], str) and GAME_KEY.fullmatch(record["game"])),
+            "invalid game reference")
     title = record.get("title")
-    require(isinstance(title, str) and 0 < len(title.strip()) <= 256, "invalid title")
+    require((title is None and "game" in record) or
+            (isinstance(title, str) and 0 < len(title.strip()) <= 256), "invalid title")
     description = record.get("description")
     require(description is None or
             (isinstance(description, str) and 0 < len(description.strip()) <= 8000),
@@ -218,8 +224,12 @@ def validate_record(record):
     require(all(item["contentId"].startswith("sha256-fd-v1:")
                 for item in media if item["role"] in ("bootFloppy", "floppyB")),
             "startup floppy must reference a floppy hash")
+    require(all(item["contentId"].startswith("sha256-cd-v1:") for item in media if item["role"] == "cd"),
+            "cd must reference a CD hash")
+    require(all(not item["contentId"].startswith("sha256-cd-v1:") for item in media if item["role"] == "bootDisk"),
+            "bootDisk must reference a hard disk or floppy hash")
     require(all(sum(item["role"] == role for item in media) <= 1
-                for role in ("bootFloppy", "floppyB")), "duplicate startup floppy role")
+                for role in ("bootFloppy", "floppyB", "cd", "bootDisk")), "duplicate media role")
     launch = record.get("launch")
     if launch is not None:
         commands = launch.get("commands") if isinstance(launch, dict) else None
@@ -243,6 +253,14 @@ def validate_record(record):
     if "diskSwaps" in record:
         require(valid_disk_swaps(record["diskSwaps"]), "invalid disk swaps")
     return {key: value for key, value in record.items() if key != "contentIds"}
+
+
+def inherit(record, shared):
+    """A disk record with its game's shared fields filled in."""
+    if "game" not in record:
+        return record
+    require(record["game"] in shared, f"unknown game {record['game']}")
+    return {**shared[record["game"]], **{key: value for key, value in record.items() if key != "game"}}
 
 
 def compact(obj):

@@ -5,7 +5,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from build_catalog import build, compact, main, validate_record
+from build_catalog import build, compact, inherit, main, validate_record
 from build_online_catalog import build_pack
 from make_synthetic_catalog import synthetic_source
 
@@ -99,8 +99,8 @@ class CatalogBuildTests(unittest.TestCase):
         review = json.loads(Path("catalog/research/adult-content-v1.json").read_text(encoding="utf-8"))["games"]
         names = json.loads(Path("kairo98/src/main/assets/catalog/name-index-v1.json").read_text(encoding="utf-8"))["games"]
         source = json.loads(Path("catalog/source-v1.json").read_text(encoding="utf-8"))
-        hashed = {content_id: game for dataset in source["datasets"] for game in dataset["games"]
-                  for content_id in game["contentIds"]}
+        hashed = {content_id: inherit(game, names) for dataset in source["datasets"]
+                  for game in dataset["games"] for content_id in game["contentIds"]}
         self.assertEqual(len(matches), len(review))
         self.assertEqual(len(matches), len(names))
         for entry in matches:
@@ -135,6 +135,28 @@ class CatalogBuildTests(unittest.TestCase):
                     "sha256-fd-v1:" + "b" * 64):
             with self.assertRaisesRegex(ValueError, "setDisks must list"):
                 validate_record({**record, "setDisks": bad})
+
+    def test_disk_record_names_its_shared_game_record(self):
+        disk = {"contentIds": ["sha256-cd-v1:" + "a" * 64], "game": "pc98:187679", "setDisks": ["sha256-fd-v1:" + "b" * 64]}
+        self.assertEqual(validate_record(disk)["game"], "pc98:187679")
+        shared = {"pc98:187679": {"title": "Dangel", "heart": True}}
+        self.assertEqual(inherit({"game": "pc98:187679", "title": "Dangel (Special Disk)"}, shared),
+                         {"title": "Dangel (Special Disk)", "heart": True})
+        for bad in ({"contentIds": disk["contentIds"]}, {**disk, "game": "dangel"}):
+            with self.assertRaises(ValueError):
+                validate_record(bad)
+        with self.assertRaisesRegex(ValueError, "unknown game"):
+            inherit({"game": "pc98:1"}, shared)
+
+    def test_cd_and_boot_disk_media_roles(self):
+        record = {**self.source["datasets"][0]["games"][0], "contentIds": ["sha256-hdi-v1:" + "a" * 64]}
+        cd, floppy = "sha256-cd-v1:" + "c" * 64, "sha256-fd-v1:" + "f" * 64
+        validate_record({**record, "media": [{"role": "cd", "contentId": cd}]})
+        validate_record({**record, "media": [{"role": "bootDisk", "contentId": floppy}]})
+        for bad in ([{"role": "cd", "contentId": floppy}], [{"role": "bootDisk", "contentId": cd}],
+                    [{"role": "cd", "contentId": cd}, {"role": "cd", "contentId": cd}]):
+            with self.assertRaises(ValueError):
+                validate_record({**record, "media": bad})
 
     def test_floppy_content_id_is_accepted(self):
         record = self.source["datasets"][0]["games"][0]

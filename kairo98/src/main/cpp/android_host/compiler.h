@@ -13,6 +13,7 @@
 #include <setjmp.h>
 #include <stdlib.h>
 #include <string.h>
+#include <strings.h>
 #include <time.h>
 
 #define TEXT(s) s
@@ -118,6 +119,13 @@ typedef signed char BOOL;
 
 
 #define	GETTICK()			kairo98_ticks()
+#define	GetTickCount()		kairo98_ticks()
+/* Text helpers the IDE CD-ROM code uses, as the x11 port defines them. */
+#define	_T(s)				s
+#define	_tcsicmp			strcasecmp
+#define	_tcsnicmp			strncasecmp
+/* Working images are app-private and opened by one machine, so none is locked by another. */
+#define	file_islocked(path)	0
 #define	__ASSERT(s)
 #define	SPRINTF				sprintf
 #define	STRLEN				strlen
@@ -141,6 +149,8 @@ typedef signed char BOOL;
 #define	SOUNDRESERVE	100
 
 #define	SUPPORT_SASI
+/* IDE with an ATAPI CD-ROM drive. The core simulates the IDE BIOS, so no ROM is needed. */
+#define	SUPPORT_IDEIO
 
 #define	SCREEN_BPP		16
 #define _tcslen strlen

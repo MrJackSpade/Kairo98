@@ -15,6 +15,9 @@
 #include <stdio.h>
 #include <string.h>
 
+/* The IDE secondary master. */
+#define CD_DRIVE 0x02
+
 static UINT floppy_type(const char *image) {
     size_t length = image ? strlen(image) : 0;
     return length >= 4 && image[length - 4] == '.' &&
@@ -41,8 +44,10 @@ static void apply_gdc_clock(void) {
 int kairo98_machine_start(const char *image, const char *font_path, const char *bios_dir,
                           int mhz_times_ten, int gdc_mhz_times_ten,
                           int cpu_multiple, int floppy,
-                          const char *boot_floppy, const char *second_floppy) {
+                          const char *boot_floppy, const char *second_floppy,
+                          const char *cd_image) {
     size_t length = image ? strlen(image) : 0;
+    size_t cd_length = cd_image ? strlen(cd_image) : 0;
     size_t boot_length = boot_floppy ? strlen(boot_floppy) : 0;
     size_t second_length = second_floppy ? strlen(second_floppy) : 0;
     size_t bios_length = bios_dir ? strlen(bios_dir) : 0;
@@ -50,7 +55,7 @@ int kairo98_machine_start(const char *image, const char *font_path, const char *
     if (length >= (floppy ? sizeof(np2cfg.fddfile[0]) :
                             sizeof(np2cfg.sasihdd[0])) ||
         boot_length >= sizeof(np2cfg.fddfile[0]) || (floppy && boot_length) ||
-        second_length >= sizeof(np2cfg.fddfile[1]) ||
+        second_length >= sizeof(np2cfg.fddfile[1]) || cd_length >= sizeof(np2cfg.idecd[2]) ||
         bios_length >= sizeof(np2cfg.biospath) || !font_length ||
         font_length >= sizeof(np2cfg.fontfile)) {
         return 1;
@@ -68,6 +73,14 @@ int kairo98_machine_start(const char *image, const char *font_path, const char *
     np2cfg.fddfile[0][0] = '\0';
     np2cfg.fddfile[1][0] = '\0';
     np2cfg.biospath[0] = '\0';
+    /* The hard disk is the primary master. The CD-ROM drive is the secondary master and is
+     * always present, so a disc can go in at any time; an empty drive holds no disc. */
+    np2cfg.idetype[0] = SXSIDEV_HDD;
+    np2cfg.idetype[1] = SXSIDEV_NC;
+    np2cfg.idetype[2] = SXSIDEV_CDROM;
+    np2cfg.idetype[3] = SXSIDEV_NC;
+    np2cfg.idecd[CD_DRIVE][0] = '\0';
+    if (cd_length) memcpy(np2cfg.idecd[CD_DRIVE], cd_image, cd_length + 1);
     if (bios_length) memcpy(np2cfg.biospath, bios_dir, bios_length + 1);
     memcpy(np2cfg.fontfile, font_path, font_length + 1);
     if (length) {
@@ -83,6 +96,14 @@ int kairo98_machine_start(const char *image, const char *font_path, const char *
             pccore_term();
             np2cfg.sasihdd[0][0] = '\0';
             return 2;
+        }
+    }
+    if (cd_length) {
+        SXSIDEV drive = sxsi_getptr(CD_DRIVE);
+        if (!drive || !(drive->flag & SXSIFLAG_READY)) {
+            pccore_term();
+            np2cfg.idecd[CD_DRIVE][0] = '\0';
+            return 7;
         }
     }
     const char *first_floppy = boot_length ? boot_floppy : (floppy ? image : NULL);
@@ -121,6 +142,15 @@ int kairo98_machine_set_floppy(int drive, const char *image) {
         }
     }
     return 0;
+}
+
+/* Inserts a disc, or ejects it for an empty path. A disc already in the drive is ejected
+ * first, and the core reports the new one to the guest after the drive's change delay. */
+int kairo98_machine_set_cd(const char *image) {
+    size_t length = image ? strlen(image) : 0;
+    if (length >= sizeof(np2cfg.idecd[CD_DRIVE])) return 1;
+    if (sxsi_getdevtype(CD_DRIVE) != SXSIDEV_CDROM) return 3;
+    return sxsi_devopen(CD_DRIVE, length ? image : NULL) == SUCCESS ? 0 : 2;
 }
 
 int kairo98_machine_dos_prompt(void) {
@@ -308,6 +338,7 @@ int kairo98_machine_stop(void) {
     np2cfg.sasihdd[0][0] = '\0';
     np2cfg.fddfile[0][0] = '\0';
     np2cfg.fddfile[1][0] = '\0';
+    np2cfg.idecd[CD_DRIVE][0] = '\0';
     return result;
 }
 

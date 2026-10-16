@@ -30,7 +30,8 @@ extern "C" int kairo98_hdi_probe(const char *path, unsigned int *cylinders,
 extern "C" int kairo98_machine_start(const char *image, const char *font_path,
                                       const char *bios_dir, int mhz_times_ten,
                                       int gdc_mhz_times_ten, int cpu_multiple, int floppy,
-                                      const char *boot_floppy, const char *second_floppy);
+                                      const char *boot_floppy, const char *second_floppy,
+                                      const char *cd_image);
 extern "C" int kairo98_machine_dos_prompt(void);
 extern "C" void kairo98_machine_exec(void);
 extern "C" void kairo98_machine_counters(unsigned long long *slices, unsigned long long *insts,
@@ -62,6 +63,7 @@ extern "C" void kairo98_input_telemetry_snapshot(uint64_t *, uint64_t *, uint64_
 extern "C" void kairo98_machine_release_keys(void);
 extern "C" int kairo98_machine_set_disk(const char *image);
 extern "C" int kairo98_machine_set_floppy(int drive, const char *image);
+extern "C" int kairo98_machine_set_cd(const char *image);
 extern "C" int kairo98_machine_stop(void);
 extern "C" void kairo98_machine_location(unsigned short *cs, unsigned short *ip);
 extern "C" unsigned long long kairo98_machine_screen_signature(void);
@@ -74,7 +76,7 @@ extern "C" int __llvm_profile_write_file(void);
 #endif
 
 namespace {
-enum class CommandType { Pause, Resume, Reset, Stop, Key, Disk, Floppy, Clock, MouseMove, MouseWarp, MouseButton, Joystick, SaveState, LoadState };
+enum class CommandType { Pause, Resume, Reset, Stop, Key, Disk, Floppy, Cd, Clock, MouseMove, MouseWarp, MouseButton, Joystick, SaveState, LoadState };
 struct Command {
     CommandType type;
     int key = 0;
@@ -263,7 +265,8 @@ void report_state(const char *state, const char *error = "") {
 
 void run_machine(std::string image, std::string font_path, std::string bios_dir,
                  int mhz_times_ten, int gdc_mhz_times_ten, int cpu_multiple,
-                 bool floppy, std::string boot_floppy, std::string second_floppy) {
+                 bool floppy, std::string boot_floppy, std::string second_floppy,
+                 std::string cd_image) {
     dos_prompt_ready.store(false);
     clear_screen_hash();
     kairo98_input_telemetry_reset();
@@ -272,14 +275,17 @@ void run_machine(std::string image, std::string font_path, std::string bios_dir,
     int start_result = kairo98_machine_start(image.c_str(), font_path.c_str(), bios_dir.c_str(),
                                              mhz_times_ten,
                                              gdc_mhz_times_ten, cpu_multiple, floppy ? 1 : 0,
-                                             boot_floppy.c_str(), second_floppy.c_str());
+                                             boot_floppy.c_str(), second_floppy.c_str(),
+                                             cd_image.c_str());
     if (start_result != 0) {
         report_state("Error", start_result == 2 ? "HDI did not mount" :
                               start_result == 3 ? "Invalid clock setting" :
                               start_result == 5 ? "Floppy A did not mount" :
-                              start_result == 6 ? "Floppy B did not mount" : "Disk image path is too long");
+                              start_result == 6 ? "Floppy B did not mount" :
+                              start_result == 7 ? "CD did not mount" : "Disk image path is too long");
         std::lock_guard<std::mutex> guard(command_mutex);
         active = false;
+        commands.clear();
         return;
     }
     report_state("Running");
@@ -420,6 +426,11 @@ void run_machine(std::string image, std::string font_path, std::string bios_dir,
                     break;
                 case CommandType::Floppy: {
                     int result = kairo98_machine_set_floppy(command.key, command.path.c_str());
+                    if (command.completion) command.completion->set_value(result);
+                    break;
+                }
+                case CommandType::Cd: {
+                    int result = kairo98_machine_set_cd(command.path.c_str());
                     if (command.completion) command.completion->set_value(result);
                     break;
                 }
@@ -672,6 +683,8 @@ void run_machine(std::string image, std::string font_path, std::string bios_dir,
     int flush_result = kairo98_machine_stop();
     std::lock_guard<std::mutex> guard(command_mutex);
     active = false;
+    // Unanswered commands break their promises, so a caller waiting on one returns.
+    commands.clear();
     audio_state = "off";
     if (flush_result != 0) {
         machine_state = "Error";
@@ -688,31 +701,32 @@ void enqueue(Command command) {
 }
 } // namespace
 
+/** A Java string argument, or an empty string for null. */
+std::string utf8(JNIEnv *env, jstring value) {
+    if (!value) return "";
+    const char *chars = env->GetStringUTFChars(value, nullptr);
+    std::string result = chars ? chars : "";
+    if (chars) env->ReleaseStringUTFChars(value, chars);
+    return result;
+}
+
 extern "C" JNIEXPORT jboolean JNICALL
 Java_com_mrjackspade_kairo98_MainActivity_nativeStart(JNIEnv *env, jobject, jstring image_path,
-                              jstring font_path, jstring bios_dir,
+                                                      jstring font_path, jstring bios_dir,
                                                       jint mhz_times_ten,
                                                       jint gdc_mhz_times_ten,
                                                       jint cpu_multiple,
                                                       jboolean floppy, jstring boot_floppy_path,
-                                                      jstring second_floppy_path) {
+                                                      jstring second_floppy_path,
+                                                      jstring cd_path) {
     std::lock_guard<std::mutex> lifecycle(lifecycle_mutex);
     if (worker.joinable()) return JNI_FALSE;
-    const char *chars = image_path ? env->GetStringUTFChars(image_path, nullptr) : nullptr;
-    std::string path = chars ? chars : "";
-    if (chars) env->ReleaseStringUTFChars(image_path, chars);
-    const char *font_chars = font_path ? env->GetStringUTFChars(font_path, nullptr) : nullptr;
-    std::string font = font_chars ? font_chars : "";
-    if (font_chars) env->ReleaseStringUTFChars(font_path, font_chars);
-    const char *bios_chars = bios_dir ? env->GetStringUTFChars(bios_dir, nullptr) : nullptr;
-    std::string bios = bios_chars ? bios_chars : "";
-    if (bios_chars) env->ReleaseStringUTFChars(bios_dir, bios_chars);
-    const char *boot_chars = boot_floppy_path ? env->GetStringUTFChars(boot_floppy_path, nullptr) : nullptr;
-    std::string boot_floppy = boot_chars ? boot_chars : "";
-    if (boot_chars) env->ReleaseStringUTFChars(boot_floppy_path, boot_chars);
-    const char *second_chars = second_floppy_path ? env->GetStringUTFChars(second_floppy_path, nullptr) : nullptr;
-    std::string second_floppy = second_chars ? second_chars : "";
-    if (second_chars) env->ReleaseStringUTFChars(second_floppy_path, second_chars);
+    std::string path = utf8(env, image_path);
+    std::string font = utf8(env, font_path);
+    std::string bios = utf8(env, bios_dir);
+    std::string boot_floppy = utf8(env, boot_floppy_path);
+    std::string second_floppy = utf8(env, second_floppy_path);
+    std::string cd = utf8(env, cd_path);
     {
         std::lock_guard<std::mutex> guard(command_mutex);
         commands.clear();
@@ -730,7 +744,8 @@ Java_com_mrjackspade_kairo98_MainActivity_nativeStart(JNIEnv *env, jobject, jstr
     fast_forward.store(false);
     worker = std::thread(run_machine, std::move(path), std::move(font), std::move(bios),
                          mhz_times_ten, gdc_mhz_times_ten, cpu_multiple,
-                         floppy == JNI_TRUE, std::move(boot_floppy), std::move(second_floppy));
+                         floppy == JNI_TRUE, std::move(boot_floppy), std::move(second_floppy),
+                         std::move(cd));
     return JNI_TRUE;
 }
 
@@ -866,6 +881,23 @@ Java_com_mrjackspade_kairo98_MainActivity_nativeFloppy(JNIEnv *env, jobject, jin
     }
     return response.wait_for(std::chrono::seconds(10)) == std::future_status::ready &&
         response.get() == 0 ? JNI_TRUE : JNI_FALSE;
+}
+
+extern "C" JNIEXPORT jboolean JNICALL
+Java_com_mrjackspade_kairo98_MainActivity_nativeCd(JNIEnv *env, jobject, jstring image_path) {
+    auto completion = std::make_shared<std::promise<int>>();
+    auto response = completion->get_future();
+    {
+        std::lock_guard<std::mutex> guard(command_mutex);
+        if (!active) return JNI_FALSE;
+        commands.push_back({CommandType::Cd, 0, false, utf8(env, image_path), 0, completion});
+        command_ready.notify_one();
+    }
+    try {
+        return response.get() == 0 ? JNI_TRUE : JNI_FALSE;
+    } catch (const std::future_error &) {
+        return JNI_FALSE;  // The machine stopped before changing the disc.
+    }
 }
 
 extern "C" JNIEXPORT jstring JNICALL

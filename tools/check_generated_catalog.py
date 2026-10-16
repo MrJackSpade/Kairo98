@@ -19,7 +19,7 @@ SOURCE_FILES = (
 )
 GENERATED_FILES = (
     "catalog/source-v1.json",
-    "catalog/online-v1.json",
+    "catalog/core-v3.json",
     "kairo98/src/main/assets/catalog/manifest-v1.json",
     "kairo98/src/main/assets/catalog/name-index-v1.json",
 )
@@ -82,7 +82,7 @@ def main():
                         str(work / GENERATED_FILES[1])), cwd=ROOT, check=True,
                        stdout=subprocess.DEVNULL)
 
-        expected = set(GENERATED_FILES) | {"catalog/optional/data-v1.json", "catalog/excluded-ids-v1.json"}
+        expected = set(GENERATED_FILES) | {"catalog/excluded-ids-v1.json"}
         expected.update(path.relative_to(work).as_posix()
                         for path in (work / SHARDS).glob("*.json"))
         tracked_shards = {name.decode("utf-8") for name in
