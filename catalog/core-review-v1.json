@@ -4957,6 +4957,34 @@
     "pc98:197562": {
       "title": "Aki to Tsukasa no Fushigi no Kabe",
       "reason": "Same reviewed title on another catalog platform"
+    },
+    "pc98:vndb-r128940": {
+      "title": "Ides' User's Club Disk Magazine #003",
+      "reason": "VNDB adult release"
+    },
+    "pc98:vndb-r128941": {
+      "title": "Ides' User's Club Disk Magazine #004",
+      "reason": "VNDB adult release"
+    },
+    "pc98:vndb-r18094": {
+      "title": "Memories Refrain - Omoide wa Itsu made mo...",
+      "reason": "VNDB adult release"
+    },
+    "pc98:vndb-r89305": {
+      "title": "The Original Pictures of Ryouki no Ori",
+      "reason": "VNDB adult release"
+    },
+    "pc98:vndb-v41908": {
+      "title": "Mahjong Mu",
+      "reason": "VNDB adult release"
+    },
+    "pc98:vndb-v8830": {
+      "title": "Crescent",
+      "reason": "VNDB adult release"
+    },
+    "pc98:vndb-v9109": {
+      "title": "Tenkousei",
+      "reason": "VNDB adult release"
     }
   },
   "artworkPolicy": "Only explicitly visually reviewed artwork is included in the core; all other artwork is withheld pending review.",

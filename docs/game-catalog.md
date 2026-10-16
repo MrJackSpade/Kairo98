@@ -41,7 +41,7 @@ python tools/build_catalog.py catalog/source-v1.json kairo98/src/main/assets/cat
 python tools/build_online_catalog.py catalog/source-v1.json kairo98/src/main/assets/catalog/name-index-v1.json catalog/core-v3.json
 ```
 
-`tools/build_catalog_packages.py` regenerates everything at once. `core-v2.json`, `online-v1.json` and the v1 adult and artwork packages are frozen for app versions up to 1.1.1, which read records with each game's metadata repeated; they keep that catalog until they update. The builder validates identifiers, field bounds, paths, and collisions. Catalog source links and art provenance do not grant redistribution rights; see [licensing](licensing.md) and [artwork rights](art-rights.md).
+Games LaunchBox lacks can come from VNDB: `tools/add_vndb_games.py` reads `catalog/research/vndb-additions-v1.json`, which names each NeoKobe folder's VNDB visual novel or release with an original description, and adds its research entry, adult review, and core-review exclusion from the VNDB dump. VNDB's descriptions and images are not covered by the dump's license, so neither is copied. `tools/build_catalog_packages.py` regenerates everything at once. `core-v2.json`, `online-v1.json` and the v1 adult and artwork packages are frozen for app versions up to 1.1.1, which read records with each game's metadata repeated; they keep that catalog until they update. The builder validates identifiers, field bounds, paths, and collisions. Catalog source links and art provenance do not grant redistribution rights; see [licensing](licensing.md) and [artwork rights](art-rights.md).
 
 ## Reviewed display language
 
