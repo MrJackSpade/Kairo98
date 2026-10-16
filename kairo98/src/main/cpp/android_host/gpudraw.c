@@ -11,7 +11,6 @@ void kairo98_gpudraw_range(SDRAW sdraw, int maxy);
 
 const UINT16 *kairo98_frame_pixels(void);
 
-static int gpu_enabled = 1;
 static int gpu_active = 0;          /* current frame is being recorded */
 static int gpu_was_active = 0;      /* previous drawn frame was recorded */
 static int gpu_mode = 0;
@@ -26,12 +25,6 @@ static unsigned char palette_dirty[KAIRO98_GPU_PALETTE_SLOTS];
 static int palette_current = -1;
 static int palette_next = 0;
 
-void kairo98_gpudraw_set_enabled(int enabled) {
-    /* A static GPU image may have no dirty rows. Refresh the CPU copy before
-     * sampling it, even if the guest does not change its screen again. */
-    if (gpu_enabled && !enabled) scrndraw_redraw();
-    gpu_enabled = enabled ? 1 : 0;
-}
 
 static int palette_slot(void) {
     if (palette_current >= 0 &&
@@ -48,7 +41,7 @@ static int palette_slot(void) {
 }
 
 int kairo98_gpudraw_begin(const SCRNSURF *surf, int variant, SDRAW sdraw) {
-    int usable = gpu_enabled && variant >= 0 && variant < 4 &&
+    int usable = variant >= 0 && variant < 4 &&
                  surf->width == KAIRO98_GPU_COLS && surf->height == KAIRO98_GPU_ROWS &&
                  surf->bpp == 16;
     int i;

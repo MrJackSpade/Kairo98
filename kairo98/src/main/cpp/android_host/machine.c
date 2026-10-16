@@ -10,6 +10,7 @@
 #include "iocore.h"
 #include "mousemng.h"
 #include "statsave.h"
+#include "vram.h"
 #include <ctype.h>
 #include <stdio.h>
 #include <string.h>
@@ -138,6 +139,50 @@ int kairo98_machine_dos_prompt(void) {
     }
     return 0;
 }
+/*
+ * Startup-screen signature (pc98-vram-v1): FNV-1a 64 over the video memory the
+ * guest is displaying, not the rendered picture, so the font, BIOS font ROM,
+ * shader, renderer and text cursor blink do not change it. Text contributes its
+ * character codes and attributes; graphics contribute the displayed page and
+ * palette. A layer that is switched off contributes only its off state.
+ */
+static UINT64 fnv_bytes(UINT64 hash, const UINT8 *bytes, size_t count, size_t stride) {
+    for (size_t i = 0; i < count; i += stride) hash = (hash ^ bytes[i]) * 1099511628211ULL;
+    return hash;
+}
+
+unsigned long long kairo98_machine_screen_signature(void) {
+    const UINT8 display = (gdc.mode1 & 0x80) ? 1 : 0;
+    const UINT8 text = display && (gdcs.textdisp & GDCSCRN_ENABLE);
+    const UINT8 grph = display && (gdcs.grphdisp & GDCSCRN_ENABLE);
+    const UINT8 layers[2] = {(UINT8)(text | (grph << 1)), (UINT8)(grph ? (gdc.analog & 3) : 0)};
+    UINT64 hash = fnv_bytes(14695981039346656037ULL, layers, sizeof(layers), 1);
+    if (text) {
+        /* Codes for all 4096 cells, then the attribute byte of each cell. The
+         * memory switch bytes at A3FE0h and above are machine settings. */
+        hash = fnv_bytes(hash, mem + 0xa0000, 0x2000, 1);
+        hash = fnv_bytes(hash, mem + 0xa2000, 0x1fe0, 2);
+    }
+    if (grph) {
+        if (gdc.analog & 2) {
+            hash = fnv_bytes(hash, vramex, sizeof(vramex), 1);
+            hash = fnv_bytes(hash, gdc.anareg + 16 * 3, 256 * 4, 1);
+        } else {
+            const UINT32 page = gdcs.disp ? VRAM_STEP : 0;
+            hash = fnv_bytes(hash, mem + page + VRAM_B, 0x8000, 1);
+            hash = fnv_bytes(hash, mem + page + VRAM_R, 0x8000, 1);
+            hash = fnv_bytes(hash, mem + page + VRAM_G, 0x8000, 1);
+            if (gdc.analog & 1) {
+                hash = fnv_bytes(hash, mem + page + VRAM_E, 0x8000, 1);
+                hash = fnv_bytes(hash, gdc.anareg, 16 * 3, 1);
+            } else {
+                hash = fnv_bytes(hash, gdc.degpal, sizeof(gdc.degpal), 1);
+            }
+        }
+    }
+    return hash;
+}
+
 static int flush_disk(void) {
     SXSIDEV drive = sxsi_getptr(0);
     if (drive && (drive->flag & SXSIFLAG_FILEOPENED) && drive->hdl) {

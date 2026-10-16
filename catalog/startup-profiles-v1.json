@@ -15,7 +15,7 @@
         "id": "insert-disk-b",
         "drive": 1,
         "contentId": "sha256-fd-v1:4994c13c143109c23a3d842c6fc652db93b6dfed9074a69c5afe940375015e94",
-        "screenHashes": ["24582161ac7732ff", "5eaa8b5b8c83deef"],
+        "screenHashes": ["07d8a6deb87b1d9e", "07ce3a1dc87d7b8c"],
         "key": "",
         "enter": false
       }]
@@ -34,8 +34,7 @@
           "id": "startup",
           "title": "Choose episode",
           "screenHashes": [
-            "7184142527792879",
-            "055cfcfcfbcc6379"
+            "c3a6e6131bcdf17f"
           ],
           "options": [
             {
@@ -75,28 +74,28 @@
               "enter": false
             },
             {"id": "episode-7", "label": "Episode 7", "steps": [
-              {"key": "9", "enter": false, "screenHashes": ["7184142527792879", "055cfcfcfbcc6379"]},
-              {"key": "1", "enter": false, "screenHashes": ["69866fbc10668a7f", "4c96fc6239ad9d7f"]}
+              {"key": "9", "enter": false, "screenHashes": ["c3a6e6131bcdf17f"]},
+              {"key": "1", "enter": false, "screenHashes": ["299ee19f34665df5"]}
             ]},
             {"id": "episode-8", "label": "Episode 8", "steps": [
-              {"key": "9", "enter": false, "screenHashes": ["7184142527792879", "055cfcfcfbcc6379"]},
-              {"key": "2", "enter": false, "screenHashes": ["69866fbc10668a7f", "4c96fc6239ad9d7f"]}
+              {"key": "9", "enter": false, "screenHashes": ["c3a6e6131bcdf17f"]},
+              {"key": "2", "enter": false, "screenHashes": ["299ee19f34665df5"]}
             ]},
             {"id": "episode-9", "label": "Episode 9", "steps": [
-              {"key": "9", "enter": false, "screenHashes": ["7184142527792879", "055cfcfcfbcc6379"]},
-              {"key": "3", "enter": false, "screenHashes": ["69866fbc10668a7f", "4c96fc6239ad9d7f"]}
+              {"key": "9", "enter": false, "screenHashes": ["c3a6e6131bcdf17f"]},
+              {"key": "3", "enter": false, "screenHashes": ["299ee19f34665df5"]}
             ]},
             {"id": "episode-10", "label": "Episode 10", "steps": [
-              {"key": "9", "enter": false, "screenHashes": ["7184142527792879", "055cfcfcfbcc6379"]},
-              {"key": "4", "enter": false, "screenHashes": ["69866fbc10668a7f", "4c96fc6239ad9d7f"]}
+              {"key": "9", "enter": false, "screenHashes": ["c3a6e6131bcdf17f"]},
+              {"key": "4", "enter": false, "screenHashes": ["299ee19f34665df5"]}
             ]},
             {"id": "episode-11", "label": "Episode 11", "steps": [
-              {"key": "9", "enter": false, "screenHashes": ["7184142527792879", "055cfcfcfbcc6379"]},
-              {"key": "5", "enter": false, "screenHashes": ["69866fbc10668a7f", "4c96fc6239ad9d7f"]}
+              {"key": "9", "enter": false, "screenHashes": ["c3a6e6131bcdf17f"]},
+              {"key": "5", "enter": false, "screenHashes": ["299ee19f34665df5"]}
             ]},
             {"id": "episode-12", "label": "Episode 12", "steps": [
-              {"key": "9", "enter": false, "screenHashes": ["7184142527792879", "055cfcfcfbcc6379"]},
-              {"key": "6", "enter": false, "screenHashes": ["69866fbc10668a7f", "4c96fc6239ad9d7f"]}
+              {"key": "9", "enter": false, "screenHashes": ["c3a6e6131bcdf17f"]},
+              {"key": "6", "enter": false, "screenHashes": ["299ee19f34665df5"]}
             ]}
           ]
         }
@@ -109,7 +108,7 @@
           "id": "startup",
           "title": "Cyber Arms Val-Kaizer",
           "screenHashes": [
-            "8dc81ee93b103d36"
+            "e0f38283499d0128"
           ],
           "options": [
             {
@@ -124,7 +123,7 @@
           "id": "new-game",
           "title": "Start a new Val-Kaizer game",
           "screenHashes": [
-            "7676d32ef46bcc0d"
+            "8a757fd48ad10e25"
           ],
           "options": [
             {
@@ -144,8 +143,7 @@
           "id": "startup",
           "title": "Rance II",
           "screenHashes": [
-            "6a013e0f33c612cd",
-            "ba4a4d27ddfaa5cd"
+            "a849241c929d202d"
           ],
           "options": [
             {
@@ -171,8 +169,7 @@
           "id": "startup",
           "title": "Farland Story",
           "screenHashes": [
-            "4f08b74b2e875ba3",
-            "3c7c93c9b66140a3"
+            "92c8a8653b333997"
           ],
           "options": [
             {
@@ -198,8 +195,7 @@
           "id": "startup",
           "title": "Night Slave music driver",
           "screenHashes": [
-            "d965df24c27d8c9d",
-            "b2152147e4e2339d"
+            "8e35257f3b474ed5"
           ],
           "options": [
             {
@@ -225,8 +221,7 @@
           "id": "startup",
           "title": "Dragon Knight",
           "screenHashes": [
-            "939d3e87b42258ab",
-            "86553dad0221edab"
+            "e9a55a542a55e10a"
           ],
           "options": [
             {
@@ -252,8 +247,7 @@
           "id": "startup",
           "title": "Choose display version",
           "screenHashes": [
-            "d7c067596b97be35",
-            "daddf81acfadb135"
+            "c4c66dddab585174"
           ],
           "options": [
             {
@@ -280,8 +274,7 @@
           "id": "startup",
           "title": "Exciting Milk episode",
           "screenHashes": [
-            "d8fa0737ced02bc5",
-            "47c1a335073b24c5"
+            "ce3e9337fb16af07"
           ],
           "options": [
             {
@@ -307,8 +300,7 @@
           "id": "startup",
           "title": "Dragon Knight",
           "screenHashes": [
-            "939d3e87b42258ab",
-            "86553dad0221edab"
+            "e9a55a542a55e10a"
           ],
           "options": [
             {
@@ -334,8 +326,7 @@
           "id": "startup",
           "title": "Foxy",
           "screenHashes": [
-            "9b96b759f0c00727",
-            "8b89995a1f458627"
+            "fbafa455d65ed8d3"
           ],
           "options": [
             {
@@ -368,8 +359,7 @@
           "id": "startup",
           "title": "Choose episode",
           "screenHashes": [
-            "7184142527792879",
-            "055cfcfcfbcc6379"
+            "c3a6e6131bcdf17f"
           ],
           "options": [
             {
@@ -409,28 +399,28 @@
               "enter": false
             },
             {"id": "episode-7", "label": "Episode 7", "steps": [
-              {"key": "9", "enter": false, "screenHashes": ["7184142527792879", "055cfcfcfbcc6379"]},
-              {"key": "1", "enter": false, "screenHashes": ["69866fbc10668a7f", "4c96fc6239ad9d7f"]}
+              {"key": "9", "enter": false, "screenHashes": ["c3a6e6131bcdf17f"]},
+              {"key": "1", "enter": false, "screenHashes": ["299ee19f34665df5"]}
             ]},
             {"id": "episode-8", "label": "Episode 8", "steps": [
-              {"key": "9", "enter": false, "screenHashes": ["7184142527792879", "055cfcfcfbcc6379"]},
-              {"key": "2", "enter": false, "screenHashes": ["69866fbc10668a7f", "4c96fc6239ad9d7f"]}
+              {"key": "9", "enter": false, "screenHashes": ["c3a6e6131bcdf17f"]},
+              {"key": "2", "enter": false, "screenHashes": ["299ee19f34665df5"]}
             ]},
             {"id": "episode-9", "label": "Episode 9", "steps": [
-              {"key": "9", "enter": false, "screenHashes": ["7184142527792879", "055cfcfcfbcc6379"]},
-              {"key": "3", "enter": false, "screenHashes": ["69866fbc10668a7f", "4c96fc6239ad9d7f"]}
+              {"key": "9", "enter": false, "screenHashes": ["c3a6e6131bcdf17f"]},
+              {"key": "3", "enter": false, "screenHashes": ["299ee19f34665df5"]}
             ]},
             {"id": "episode-10", "label": "Episode 10", "steps": [
-              {"key": "9", "enter": false, "screenHashes": ["7184142527792879", "055cfcfcfbcc6379"]},
-              {"key": "4", "enter": false, "screenHashes": ["69866fbc10668a7f", "4c96fc6239ad9d7f"]}
+              {"key": "9", "enter": false, "screenHashes": ["c3a6e6131bcdf17f"]},
+              {"key": "4", "enter": false, "screenHashes": ["299ee19f34665df5"]}
             ]},
             {"id": "episode-11", "label": "Episode 11", "steps": [
-              {"key": "9", "enter": false, "screenHashes": ["7184142527792879", "055cfcfcfbcc6379"]},
-              {"key": "5", "enter": false, "screenHashes": ["69866fbc10668a7f", "4c96fc6239ad9d7f"]}
+              {"key": "9", "enter": false, "screenHashes": ["c3a6e6131bcdf17f"]},
+              {"key": "5", "enter": false, "screenHashes": ["299ee19f34665df5"]}
             ]},
             {"id": "episode-12", "label": "Episode 12", "steps": [
-              {"key": "9", "enter": false, "screenHashes": ["7184142527792879", "055cfcfcfbcc6379"]},
-              {"key": "6", "enter": false, "screenHashes": ["69866fbc10668a7f", "4c96fc6239ad9d7f"]}
+              {"key": "9", "enter": false, "screenHashes": ["c3a6e6131bcdf17f"]},
+              {"key": "6", "enter": false, "screenHashes": ["299ee19f34665df5"]}
             ]}
           ]
         }
@@ -443,8 +433,7 @@
           "id": "startup",
           "title": "Rance II",
           "screenHashes": [
-            "6a013e0f33c612cd",
-            "ba4a4d27ddfaa5cd"
+            "a849241c929d202d"
           ],
           "options": [
             {

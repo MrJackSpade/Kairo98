@@ -64,7 +64,7 @@ extern "C" int kairo98_machine_set_disk(const char *image);
 extern "C" int kairo98_machine_set_floppy(int drive, const char *image);
 extern "C" int kairo98_machine_stop(void);
 extern "C" void kairo98_machine_location(unsigned short *cs, unsigned short *ip);
-extern "C" const unsigned short *kairo98_frame_pixels(void);
+extern "C" unsigned long long kairo98_machine_screen_signature(void);
 extern "C" unsigned int kairo98_audio_buffer_frames(void);
 extern "C" int kairo98_fill_audio(short *destination, unsigned int frames);
 
@@ -108,8 +108,9 @@ std::atomic<bool> dos_prompt_ready{false};
 // Caps and Kana as a loaded state left them, published before the load completes.
 std::atomic<int> loaded_locks{0};
 std::atomic<unsigned> mouse_warp_requested{0};
-// A passive host-side observation of the complete 640x400 RGB565 guest image.
-// The emulator core neither knows about nor depends on startup automation.
+// A passive host-side observation of the guest's displayed video memory
+// (kairo98_machine_screen_signature). Startup automation reads it; the
+// emulator core neither knows about nor depends on it.
 std::atomic<bool> screen_hash_sampling{false};
 std::atomic<uint64_t> screen_hash{0};
 std::atomic<uint64_t> screen_hash_serial{0};
@@ -117,17 +118,6 @@ std::atomic<uint64_t> screen_hash_serial{0};
 void clear_screen_hash() {
     screen_hash.store(0, std::memory_order_relaxed);
     screen_hash_serial.fetch_add(1, std::memory_order_release);
-}
-
-uint64_t hash_guest_frame() {
-    const auto *pixels = kairo98_frame_pixels();
-    uint64_t hash = 14695981039346656037ULL;
-    for (size_t i = 0; i < 640 * 400; ++i) {
-        const uint16_t pixel = pixels[i];
-        hash = (hash ^ static_cast<uint8_t>(pixel)) * 1099511628211ULL;
-        hash = (hash ^ static_cast<uint8_t>(pixel >> 8)) * 1099511628211ULL;
-    }
-    return hash;
 }
 
 // The UI thread hands the current ANativeWindow to the presenter through
@@ -481,10 +471,7 @@ void run_machine(std::string image, std::string font_path, std::string bios_dir,
             }
         }
         if (stop || paused) continue;
-        // Choose rendering and sampling together on the emulation thread. A UI
-        // request arriving during this frame takes effect on the next frame.
         const bool sample_screen = screen_hash_sampling.load(std::memory_order_relaxed);
-        kairo98_gpudraw_set_enabled(sample_screen ? 0 : 1);
         const auto core_start = std::chrono::steady_clock::now();
         kairo98_machine_exec();
         const auto core_end = std::chrono::steady_clock::now();
@@ -515,7 +502,7 @@ void run_machine(std::string image, std::string font_path, std::string bios_dir,
         dos_prompt_ready.store(prompt_frames >= 15);
         if (sample_screen &&
             std::chrono::steady_clock::now() >= next_hash) {
-            screen_hash.store(hash_guest_frame(), std::memory_order_relaxed);
+            screen_hash.store(kairo98_machine_screen_signature(), std::memory_order_relaxed);
             screen_hash_serial.fetch_add(1, std::memory_order_release);
             next_hash = std::chrono::steady_clock::now() + std::chrono::milliseconds(100);
         }

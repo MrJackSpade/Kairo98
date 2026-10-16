@@ -14,9 +14,9 @@
  * The recorded state mirrors the CPU semantics: a line keeps the palette it
  * was last drawn with until it is redrawn, and the core already forces a
  * full redraw whenever a palette changes. Display modes outside the four
- * plain 400-line variants (interleave, skip-line, 15 kHz, 256-colour) and any
- * frame while the startup screen hash is being sampled fall back to the CPU
- * conversion, whose RGB565 frame is then shown by the same GPU presenter.
+ * plain 400-line variants (interleave, skip-line, 15 kHz, 256-colour) fall
+ * back to the CPU conversion, whose RGB565 frame is then shown by the same GPU
+ * presenter.
  */
 
 #ifndef KAIRO98_GPUDRAW_H
@@ -57,10 +57,6 @@ typedef struct {
     unsigned char grph[KAIRO98_GPU_ROWS][KAIRO98_GPU_COLS];
     unsigned short rgb[KAIRO98_GPU_ROWS * KAIRO98_GPU_COLS];
 } kairo98_gpu_frame_t;
-
-/* Emulation-thread switch, applied before executing a frame: 0 forces CPU
- * conversion and requests a full redraw when leaving the GPU path. */
-void kairo98_gpudraw_set_enabled(int enabled);
 
 /* Called by the worker after pccore_exec when the core redrew. Fills the
  * packet from the recorded state or from the CPU frame and clears the
