@@ -158,7 +158,7 @@ def validate_record(record):
     require(isinstance(record, dict), "game must be an object")
     require(set(record) <= FIELDS | {"contentIds"}, "unknown game field")
     ids = record.get("contentIds")
-    require(isinstance(ids, list) and ids and len(ids) <= 32, "contentIds must contain 1–32 hashes")
+    require(isinstance(ids, list) and ids and len(ids) <= 64, "contentIds must contain 1–64 hashes")
     require(all(isinstance(value, str) and CONTENT_ID.fullmatch(value) for value in ids), "invalid content ID")
     require(len(ids) == len(set(ids)), "duplicate content ID in one game")
     require("heart" not in record or type(record["heart"]) is bool, "invalid heart marker")
