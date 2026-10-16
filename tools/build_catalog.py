@@ -11,7 +11,7 @@ from artwork_references import expand as expand_artwork
 
 CONTENT_ID = re.compile(r"sha256-(?:hdi|fd)-v1:[0-9a-f]{64}\Z")
 ART_PATH = re.compile(r"art/(?!.*\.\.)[A-Za-z0-9_./-]{1,252}\Z")
-FIELDS = {"title", "description", "aliases", "artwork", "machine", "controller", "input", "media", "launch", "startupChoices", "diskSwaps", "heart", "hidden"}
+FIELDS = {"title", "description", "aliases", "artwork", "machine", "controller", "input", "media", "launch", "startupChoices", "diskSwaps", "heart", "hidden", "setDisks"}
 SCREEN_HASH = re.compile(r"[0-9a-f]{16}\Z")
 SHORT_ID = re.compile(r"[a-z0-9-]{1,40}\Z")
 
@@ -163,6 +163,11 @@ def validate_record(record):
     require(len(ids) == len(set(ids)), "duplicate content ID in one game")
     require("heart" not in record or type(record["heart"]) is bool, "invalid heart marker")
     require("hidden" not in record or type(record["hidden"]) is bool, "invalid hidden flag")
+    set_disks = record.get("setDisks", [])
+    require(isinstance(set_disks, list) and ("setDisks" not in record or 1 <= len(set_disks) <= 32) and
+            all(isinstance(value, str) and CONTENT_ID.fullmatch(value) for value in set_disks) and
+            len(set_disks) == len(set(set_disks)) and not set(set_disks) & set(ids),
+            "setDisks must list 1–32 other disks of the set")
     title = record.get("title")
     require(isinstance(title, str) and 0 < len(title.strip()) <= 256, "invalid title")
     description = record.get("description")

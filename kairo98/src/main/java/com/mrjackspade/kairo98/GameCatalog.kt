@@ -325,6 +325,19 @@ class GameCatalog(private val context: Context) : LibraryCatalog {
             hidden(additions), overrides.record(contentId)?.opt("hidden"))
     }
 
+    /** Read for every library entry, so it takes the field from the highest layer instead of merging records. */
+    @Synchronized override fun setDisks(contentId: String): List<String> {
+        if (contentId.isEmpty()) return emptyList()
+        fun disks(record: JSONObject?) = record?.optJSONArray("setDisks")
+        fun game(source: JSONObject?) = source?.optJSONObject("games")?.optJSONObject(contentId)
+        val array = disks(overrides.record(contentId)) ?: disks(game(additions))
+            ?: installedCatalogs.sources(contentId).asReversed().firstNotNullOfOrNull { disks(it.record) }
+            ?: disks(game(parts.additional("shards/${contentId.substringAfter(':').take(2)}.json")))
+            ?: disks(game(update)) ?: disks(game(shardFor(contentId))) ?: disks(game(base))
+            ?: return emptyList()
+        return (0 until array.length()).map(array::getString)
+    }
+
     @Synchronized fun updateOverrideSubfields(contentId: String, field: String,
                                               changes: Map<String, Any?>) {
         require(validId(contentId)) { "Invalid game ID" }

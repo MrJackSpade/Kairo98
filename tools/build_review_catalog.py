@@ -181,6 +181,7 @@ def generate(matches_path, gallery, assets, art_assets, ffmpeg, quality, reuse_a
         previous = set(excluded_ids)
         for content_id, record in full["games"].items():
             refs = {item["contentId"] for field in ("media", "diskSwaps") for item in record.get(field, [])}
+            refs.update(record.get("setDisks", []))
             if content_id in excluded_ids: excluded_ids.update(refs)
             if refs & excluded_ids: excluded_ids.add(content_id)
         changed = previous != excluded_ids

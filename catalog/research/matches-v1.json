@@ -20900,7 +20900,10 @@
       "sourceGroups": [
         "pc98:Mink.zip:Dangel"
       ],
-      "contentIds": [],
+      "contentIds": [
+        "sha256-fd-v1:ceea8dd91a61f8ed88165a40d4d47c2e2da03c52fabbcc59a7cea3f392384e62",
+        "sha256-fd-v1:b528cbfdf9ce0c4273c6c34e81c5eafe7e2ae4eca43efb41ec7ab14fde668c9a"
+      ],
       "description": "",
       "pageUrl": "https://gamesdb.launchbox-app.com/games/details/137679-dangel",
       "boxArtUrl": "https://images.launchbox-app.com/1d01c909-c5b6-4360-b645-1855b976b2c3.jpg",

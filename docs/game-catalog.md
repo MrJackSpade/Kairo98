@@ -22,6 +22,8 @@ The library reads HDI and supported FDI, D88, NFD, FDD, DCP/DCU, HDM, and XDF fl
 
 Catalog schema version 1 uses a `games` object keyed by content ID. Records can contain a title, description, aliases, artwork references, machine settings, controller bindings, media roles, launch commands, startup choices, disk-swap rules, and input mode. A `hidden` support disk remains available for swaps but does not appear as a playable entry.
 
+A multi-disk set appears as one entry. The set's entry point, usually disk 1 or the set's only hard disk, carries `setDisks`: the content IDs of the set's other disks. While the entry point is in the library, those disks get no rows of their own. Boot floppies, drive B, disk swaps, and the Floppy A/B menu still use them. Without the entry point, they appear normally. To record the sets in a device library, run `tools/import_library_sets.py` on its `library-v2.bin`. It groups the images in each ZIP or folder that share a game name apart from disk numbers and user, boot, or alternate disks, then adds `setDisks` to the entry point's startup profile.
+
 A catalog command is bounded guest text sent as PC-98 key events. It is never an Android process or host shell command. [Startup choices and screen hashes](startup-choices.md) describe guarded commands, menu answers, and automatic disk swaps.
 
 User catalog additions and explicit overrides live in app-private storage. Overrides replace individual metadata fields; removing an override exposes the latest catalog value. The library cache records source locations and content IDs, not game bytes, and can be rebuilt by scanning the selected folder.

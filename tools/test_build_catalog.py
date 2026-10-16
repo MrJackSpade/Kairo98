@@ -127,6 +127,15 @@ class CatalogBuildTests(unittest.TestCase):
         self.assertIs(games[floppy]["hidden"], True)
         self.assertNotIn("hidden", games[hard_disk])
 
+    def test_set_entry_point_lists_other_disks(self):
+        record = {**self.source["datasets"][0]["games"][0], "contentIds": ["sha256-fd-v1:" + "a" * 64]}
+        disks = ["sha256-fd-v1:" + "b" * 64, "sha256-fd-v1:" + "c" * 64]
+        self.assertEqual(validate_record({**record, "setDisks": disks})["setDisks"], disks)
+        for bad in ([], [disks[0], disks[0]], ["sha256-fd-v1:bad"], [record["contentIds"][0]],
+                    "sha256-fd-v1:" + "b" * 64):
+            with self.assertRaisesRegex(ValueError, "setDisks must list"):
+                validate_record({**record, "setDisks": bad})
+
     def test_floppy_content_id_is_accepted(self):
         record = self.source["datasets"][0]["games"][0]
         floppy = "sha256-fd-v1:" + "a" * 64
