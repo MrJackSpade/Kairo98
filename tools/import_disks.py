@@ -27,6 +27,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "tools"))
 from build_review_catalog import lookup_name  # noqa: E402
+from research_additions import name_matched  # noqa: E402
 
 CACHE_MAGIC = 0x4B4C4942
 CACHE_VERSION = 2
@@ -228,7 +229,7 @@ def find_cd_links(disks, sets):
 def research_keys(matches):
     names = defaultdict(set)
     for item in matches["entries"]:
-        if item["platform"] != "pc98":
+        if item["platform"] != "pc98" or not name_matched(item):
             continue
         key = f'pc98:{item["databaseId"]}'
         for candidate in (item["title"], *item.get("aliases", []),

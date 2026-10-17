@@ -12,6 +12,7 @@ from pathlib import Path
 
 from build_catalog import build, compact
 from artwork_references import compact as compact_artwork, expand as expand_artwork
+from research_additions import name_matched
 import sys
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "shared/tools"))
 from catalog_package import build_package, image_paths, filter_artwork
@@ -143,13 +144,14 @@ def generate(matches_path, gallery, assets, art_assets, ffmpeg, quality, reuse_a
         if entry.get("contentIds"):
             # Disks name this game's name index record; each stores only its own profile.
             plain = [content_id for content_id in entry["contentIds"] if content_id not in profiles]
-            if plain:
-                source_games.append({"contentIds": plain, "game": key})
+            # A source record holds at most 64 content IDs.
+            for start in range(0, len(plain), 64):
+                source_games.append({"contentIds": plain[start:start + 64], "game": key})
             for content_id in entry["contentIds"]:
                 if content_id in profiles:
                     source_games.append({"contentIds": [content_id], "game": key,
                                          **profiles.pop(content_id)})
-        if entry["platform"] == "pc98":
+        if entry["platform"] == "pc98" and name_matched(entry):
             candidates = [entry["title"], *entry.get("aliases", []),
                           metadata["title"], *metadata.get("aliases", []),
                           *(group.rsplit(":", 1)[-1] for group in entry.get("sourceGroups", []))]

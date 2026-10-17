@@ -7,7 +7,7 @@ import json
 import re
 from pathlib import Path
 from urllib.parse import urlsplit
-from artwork_references import expand as expand_artwork
+from artwork_references import SELF_HOSTED_BASE, expand as expand_artwork
 
 CONTENT_ID = re.compile(r"sha256-(?:hdi|fd|cd)-v1:[0-9a-f]{64}\Z")
 ART_PATH = re.compile(r"art/(?!.*\.\.)[A-Za-z0-9_./-]{1,252}\Z")
@@ -100,8 +100,9 @@ def valid_image_url(value):
         return False
     try:
         parsed = urlsplit(value)
-        return (parsed.scheme == "https" and parsed.hostname in
-                {"images.launchbox-app.com", "gamesdb-images.launchbox.gg"} and
+        return (parsed.scheme == "https" and (parsed.hostname in
+                {"images.launchbox-app.com", "gamesdb-images.launchbox.gg"} or
+                value.startswith(SELF_HOSTED_BASE + "art/catalog/") and ".." not in parsed.path) and
                 parsed.port is None and not parsed.username and not parsed.password and
                 bool(parsed.path) and not parsed.query and not parsed.fragment)
     except ValueError:

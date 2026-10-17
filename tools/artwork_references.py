@@ -8,6 +8,23 @@ UUID = re.compile(r"[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}
 URL = re.compile(re.escape(BASE) + r"(r2_)?(" + UUID.pattern + r")\.(jpg|png)")
 PATH = re.compile(r"art/catalog/pc(88|98)/([1-9][0-9]*)/(box|screenshot)-([0-9a-f]{12})\.webp")
 KINDS = {"boxArt": "box", "preview": "screenshot"}
+# Artwork from sources without an image server of their own, served from this repository's
+# catalog/artwork at its own path. Its records keep the path and URL as they are.
+SELF_HOSTED_BASE = "https://raw.githubusercontent.com/MrJackSpade/Kairo98/main/catalog/artwork/"
+SELF_HOSTED_PATH = re.compile(r"art/catalog/moby/([1-9][0-9]*)/(box|screenshot)-([0-9a-f]{12})\.webp")
+
+
+def self_hosted(art):
+    """Whether every image is a self-hosted one with its own URL, all from one game."""
+    games = set()
+    for kind, label in KINDS.items():
+        if kind not in art and kind + "Url" not in art:
+            continue
+        path = SELF_HOSTED_PATH.fullmatch(art.get(kind, ""))
+        if not path or path[2] != label or art.get(kind + "Url") != SELF_HOSTED_BASE + path[0]:
+            return False
+        games.add(path[1])
+    return len(games) == 1
 
 
 def expand(art):
@@ -43,6 +60,8 @@ def compact(art):
     result, groups = {}, set()
     if original.keys() - {"boxArt", "preview", "boxArtUrl", "previewUrl"}:
         raise ValueError("unknown artwork fields")
+    if self_hosted(original):
+        return original
     for kind, label in KINDS.items():
         if kind not in original and kind + "Url" not in original:
             continue

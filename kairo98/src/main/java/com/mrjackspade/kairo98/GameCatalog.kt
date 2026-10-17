@@ -653,9 +653,13 @@ class GameCatalog(private val context: Context) : LibraryCatalog {
                 java.lang.Long.parseUnsignedLong(value.getString(it), 16)
             }.toSet()
         private fun validArtPath(value: String) = ArtworkOverridePath.valid(value, "art/")
+        /** Artwork from sources without an image server of their own, served from this repository. */
+        private const val SELF_HOSTED_ART = "/MrJackSpade/Kairo98/main/catalog/artwork/art/catalog/"
         fun validImageUrl(value: String): Boolean = try {
             if (value.length !in 1..512) false else URI(value).let { uri ->
-                uri.scheme == "https" && uri.host in setOf("images.launchbox-app.com", "gamesdb-images.launchbox.gg") &&
+                uri.scheme == "https" && (uri.host in setOf("images.launchbox-app.com", "gamesdb-images.launchbox.gg") ||
+                    uri.host == "raw.githubusercontent.com" && uri.rawPath.startsWith(SELF_HOSTED_ART) &&
+                    !uri.rawPath.contains("..")) &&
                     uri.port == -1 && uri.userInfo == null && uri.rawPath.isNotEmpty() &&
                     uri.rawQuery == null && uri.rawFragment == null
             }

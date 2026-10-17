@@ -4985,6 +4985,142 @@
     "pc98:vndb-v9109": {
       "title": "Tenkousei",
       "reason": "VNDB adult release"
+    },
+    "pc98:moby-191894": {
+      "title": "U-Jin Special Collection",
+      "reason": "MobyGames or VNDB adult game"
+    },
+    "pc98:moby-43579": {
+      "title": "Wrestle Angels",
+      "reason": "MobyGames or VNDB adult game"
+    },
+    "pc98:moby-55294": {
+      "title": "Super Real Mahjong PIV",
+      "reason": "MobyGames or VNDB adult game"
+    },
+    "pc98:moby-54168": {
+      "title": "Zettai Mahjong",
+      "reason": "MobyGames or VNDB adult game"
+    },
+    "pc98:moby-66931": {
+      "title": "Vision",
+      "reason": "MobyGames or VNDB adult game"
+    },
+    "pc98:moby-66932": {
+      "title": "Vision 2",
+      "reason": "MobyGames or VNDB adult game"
+    },
+    "pc98:moby-256871": {
+      "title": "Fervent Nereid",
+      "reason": "MobyGames or VNDB adult game"
+    },
+    "pc98:neokobe-540606b20c59": {
+      "title": "Akairoi no",
+      "reason": "VNDB adult release"
+    },
+    "pc98:neokobe-40037b1ea1cb": {
+      "title": "Aoiroi no",
+      "reason": "VNDB adult release"
+    },
+    "pc98:neokobe-f7214aa1ec46": {
+      "title": "Kiiroi no",
+      "reason": "VNDB adult release"
+    },
+    "pc98:neokobe-8e5b950794c9": {
+      "title": "Mana '94 - Demo Yappari Kawa ga Suki II",
+      "reason": "VNDB adult release"
+    },
+    "pc98:neokobe-55e125a30b9e": {
+      "title": "Mayumi",
+      "reason": "VNDB adult release"
+    },
+    "pc98:neokobe-78add9c28859": {
+      "title": "Asuka 2 - Chisato-chan no Yuuwaku",
+      "reason": "VNDB adult release"
+    },
+    "pc98:neokobe-b0b1f6102421": {
+      "title": "Asuka X - Mariko-chan no Enikki",
+      "reason": "VNDB adult release"
+    },
+    "pc98:neokobe-9787c644c32c": {
+      "title": "Ice Cream wa Triple de",
+      "reason": "VNDB adult release"
+    },
+    "pc98:neokobe-4407b58bc4ba": {
+      "title": "Wanderers",
+      "reason": "VNDB adult release"
+    },
+    "pc98:neokobe-eeb81b6daf25": {
+      "title": "Reijou Monogatari",
+      "reason": "VNDB adult release"
+    },
+    "pc98:neokobe-ce06226df5be": {
+      "title": "DE-SI-RE",
+      "reason": "VNDB adult release"
+    },
+    "pc98:neokobe-4db7a90589ae": {
+      "title": "Twinkle Twins",
+      "reason": "VNDB adult release"
+    },
+    "pc98:neokobe-ffee8ad3dc17": {
+      "title": "Sailor Bunny Daibakuhatsu",
+      "reason": "VNDB adult release"
+    },
+    "pc98:neokobe-1606abe372a6": {
+      "title": "Hotaru",
+      "reason": "VNDB adult release"
+    },
+    "pc98:neokobe-49ae256b9eb2": {
+      "title": "Himitsu Chouhoubuin 00 Nanako-chan",
+      "reason": "VNDB adult release"
+    },
+    "pc98:neokobe-820b5676c180": {
+      "title": "Toy City",
+      "reason": "VNDB adult release"
+    },
+    "pc98:neokobe-241a7f2e4954": {
+      "title": "Shikimi",
+      "reason": "VNDB adult release"
+    },
+    "pc98:neokobe-340c1af16b10": {
+      "title": "Aido-tachi no Yakata",
+      "reason": "VNDB adult release"
+    },
+    "pc98:neokobe-e4728d19bf4b": {
+      "title": "Chikashitsu no Ikenie",
+      "reason": "VNDB adult release"
+    },
+    "pc98:neokobe-f7f7af5cafe1": {
+      "title": "Tequira Sunrise",
+      "reason": "VNDB adult release"
+    },
+    "pc98:neokobe-d381d545ca9b": {
+      "title": "Gegera no Joshikou Indoka Keikaku Part 1",
+      "reason": "VNDB adult release"
+    },
+    "pc98:neokobe-7ffe0808c367": {
+      "title": "LEX - Kyonyuu Monogatari",
+      "reason": "VNDB adult release"
+    },
+    "pc98:neokobe-cd3047b83372": {
+      "title": "Momoiro Sankaku - Riko & Hikaru Hen",
+      "reason": "VNDB adult release"
+    },
+    "pc98:neokobe-8c41cb22785c": {
+      "title": "Anna Midaller's",
+      "reason": "VNDB adult release"
+    },
+    "pc98:neokobe-4139db65a478": {
+      "title": "Mahou no Shougakusei Clit-chan",
+      "reason": "VNDB adult release"
+    },
+    "pc98:neokobe-1751cea3b631": {
+      "title": "Rinshitsu no Chikubi",
+      "reason": "VNDB adult release"
+    },
+    "pc98:neokobe-31bb62a5e719": {
+      "title": "Ginjou Meganekko",
+      "reason": "VNDB adult release"
     }
   },
   "artworkPolicy": "Only explicitly visually reviewed artwork is included in the core; all other artwork is withheld pending review.",

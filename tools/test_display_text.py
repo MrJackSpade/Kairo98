@@ -3,6 +3,7 @@ import unittest
 from pathlib import Path
 
 from build_review_catalog import lookup_name, reviewed_display
+from research_additions import name_matched
 
 
 class DisplayTextTests(unittest.TestCase):
@@ -12,7 +13,7 @@ class DisplayTextTests(unittest.TestCase):
         names = json.loads(Path("kairo98/src/main/assets/catalog/name-index-v1.json").read_text(encoding="utf-8"))
         original_names = {}
         for entry in entries:
-            if entry["platform"] != "pc98":
+            if entry["platform"] != "pc98" or not name_matched(entry):
                 continue
             key = f'{entry["platform"]}:{entry["databaseId"]}'
             for candidate in [entry["title"], *entry.get("aliases", []),

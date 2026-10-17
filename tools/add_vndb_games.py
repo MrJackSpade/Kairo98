@@ -21,6 +21,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "tools"))
 from import_disks import neokobe_disks  # noqa: E402
+from research_additions import ResearchInputs, entry_key  # noqa: E402
 
 NULL = "\\N"
 
@@ -103,43 +104,15 @@ def main():
     parser.add_argument("--write", action="store_true", help="edit the catalog inputs")
     args = parser.parse_args()
     load = lambda path: json.loads(path.read_text(encoding="utf-8"))
-    matches_path = ROOT / "catalog/research/matches-v1.json"
-    adult_path = ROOT / "catalog/research/adult-content-v1.json"
-    review_path = ROOT / "catalog/core-review-v1.json"
-    matches_text = matches_path.read_text(encoding="utf-8")
-    matches, adult, core_review = json.loads(matches_text), load(adult_path), load(review_path)
-    linked = {group for item in matches["entries"] for group in item["sourceGroups"]}
-    cataloged = {content_id for item in matches["entries"] for content_id in item["contentIds"]}
+    research = ResearchInputs()
     releases, vns = vndb_records(args.vndb)
     disks = list(neokobe_disks(load(args.index), load(args.backlog)))
-    added = []
     for choice in load(args.choices):
-        if choice["group"] in linked:
-            raise ValueError(f"{choice['group']} is already linked to a research entry")
         entry, review = entry_for(choice, releases, vns, disks)
-        key = f"pc98:{entry['databaseId']}"
-        if any(f"{item['platform']}:{item['databaseId']}" == key for item in matches["entries"]):
-            raise ValueError(f"{key} is already a research entry")
-        shared = set(entry["contentIds"]) & cataloged
-        if shared:
-            raise ValueError(f"{choice['group']} shares disks with cataloged games: {sorted(shared)[:2]}")
-        added.append(entry)
-        adult["games"][key] = review
-        if review["status"] == "eroge":
-            core_review["excluded"][key] = {"title": entry["title"], "reason": "VNDB adult release"}
-        print(f"{key}  {entry['title']}  {review['status']}, {len(entry['contentIds'])} disks")
-    # Entries are appended in the research file's own layout, leaving the rest untouched.
-    block = "".join(",\n" + "\n".join("    " + line for line in json.dumps(entry, ensure_ascii=False, indent=2).split("\n"))
-                    for entry in added)
-    close = matches_text.rindex("\n  ]\n}")
-    matches_text = matches_text[:close] + block + matches_text[close:]
-    json.loads(matches_text)
+        research.add(entry, review, "VNDB adult release" if review["status"] == "eroge" else None)
+        print(f"{entry_key(entry)}  {entry['title']}  {review['status']}, {len(entry['contentIds'])} disks")
     if args.write:
-        matches_path.write_text(matches_text, encoding="utf-8", newline="\n")
-        adult_path.write_text(json.dumps(adult, ensure_ascii=False, separators=(",", ":")) + "\n",
-                              encoding="utf-8", newline="\n")
-        review_path.write_text(json.dumps(core_review, ensure_ascii=False, indent=2) + "\n",
-                               encoding="utf-8", newline="\n")
+        research.write()
 
 
 if __name__ == "__main__":
