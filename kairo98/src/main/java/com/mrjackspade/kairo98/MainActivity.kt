@@ -176,6 +176,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
         GuestLifecycleCoordinator(fullscreen::restore, { releaseInputs() }, ::applyPauseState, {}, {},
             initiallyVisible = false,
             companionActive = { ::secondaryKeyboard.isInitialized && secondaryKeyboard.isCompanionActive },
+            companionHoldsStop = { ::secondaryKeyboard.isInitialized && secondaryKeyboard.holdsStoppedPrimary },
             beforeSuspend = { commandCancelled.set(true) },
             resetGestures = edgeSwipes::reset,
             releaseOnFocusLoss = { releaseInputs(preserveAutomation = true) })
@@ -626,6 +627,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
 
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
+        if (RgDsDisplayRouter.isReturnToUpper(intent)) return
         setIntent(intent)
         if (controllerSetupPending) {
             pendingControllerExternalRequest = true
