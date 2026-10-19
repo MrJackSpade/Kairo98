@@ -7,6 +7,7 @@ import com.mrjackspade.kairo.frontend.SessionMenus
 import com.mrjackspade.kairo.frontend.ViewScale
 import com.mrjackspade.kairo.frontend.RgDsDisplayRouter
 import com.mrjackspade.kairo.frontend.GuestKeyboardPanel
+import com.mrjackspade.kairo.frontend.KeyMappingMode
 import com.mrjackspade.kairo.frontend.StateSlotCoordinator
 import com.mrjackspade.kairo.frontend.StateSlotStore
 import com.mrjackspade.kairo.frontend.AppSaveLocation
@@ -211,6 +212,10 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
             { currentEntry },
             { currentEntry?.let { currentGame = romLibrary.catalog.resolve(
                 it.contentId!!, it.displayName) } })
+    }
+    private val keyMapping by lazy {
+        KeyMappingMode(controllerFlow::activeBindings, controllerFlow::saveActive, controllerFlow::physical,
+            { inputDispatch.guestCapture = it })
     }
     private val handler = Handler(Looper.getMainLooper())
     private lateinit var root: FrameLayout
@@ -528,7 +533,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
             },
             { surface, width, height -> nativeSetSurface(surface, width, height) },
             { event, width, height -> handleScreenTouch(event, width, height) },
-            ::onSecondarySwapChanged)
+            ::onSecondarySwapChanged, mapping = keyMapping)
         romLibrary = RomLibrary(this)
         artwork.restoreInstanceState(savedInstanceState)
         controllerPages = ControllerPages(this, pages,
@@ -675,12 +680,13 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
         onScreenControls = OnScreenControls(this, root, gamepadMapper, preferences, ::applyPauseState,
             { controllerProfiles.configuration.layout })
 
-        keyboardPanel = GuestKeyboardPanel(this, inputRouter, Pc98KeyboardLayout.value, ::hideKeyboard)
+        keyboardPanel = GuestKeyboardPanel(this, inputRouter, Pc98KeyboardLayout.value, ::hideKeyboard,
+            mapping = keyMapping)
         root.addView(keyboardPanel, FrameLayout.LayoutParams(-1, dp(260), Gravity.BOTTOM))
         onScreenControls.bindGuestKeyboard(keyboardPanel)
         swappedKeyboardPanel = GuestKeyboardPanel(this, inputRouter, Pc98KeyboardLayout.value,
             {}, showClose = false,
-            onSwap = { secondaryKeyboard.toggleSwap() }, mouse = mouseRouter)
+            onSwap = { secondaryKeyboard.toggleSwap() }, mouse = mouseRouter, mapping = keyMapping)
         root.addView(swappedKeyboardPanel, FrameLayout.LayoutParams(-1, -1))
 
         overlay = GameOverlay(this)
