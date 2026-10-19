@@ -2360,6 +2360,40 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
             KeyEvent.KEYCODE_ALT_LEFT, KeyEvent.KEYCODE_ALT_RIGHT -> 0x73
             KeyEvent.KEYCODE_SHIFT_LEFT, KeyEvent.KEYCODE_SHIFT_RIGHT -> 0x70
             KeyEvent.KEYCODE_CTRL_LEFT, KeyEvent.KEYCODE_CTRL_RIGHT -> 0x74
+            // US punctuation by position on the PC-98's JIS rows; JIS keyboards send Yen and Ro.
+            KeyEvent.KEYCODE_MINUS -> 0x0b
+            KeyEvent.KEYCODE_EQUALS -> 0x0c
+            KeyEvent.KEYCODE_BACKSLASH, KeyEvent.KEYCODE_YEN -> 0x0d
+            KeyEvent.KEYCODE_LEFT_BRACKET -> 0x1a
+            KeyEvent.KEYCODE_RIGHT_BRACKET -> 0x1b
+            KeyEvent.KEYCODE_SEMICOLON -> 0x26
+            KeyEvent.KEYCODE_APOSTROPHE -> 0x27
+            KeyEvent.KEYCODE_COMMA -> 0x30
+            KeyEvent.KEYCODE_PERIOD -> 0x31
+            KeyEvent.KEYCODE_SLASH -> 0x32
+            KeyEvent.KEYCODE_RO -> 0x33
+            KeyEvent.KEYCODE_CAPS_LOCK -> 0x71
+            KeyEvent.KEYCODE_KATAKANA_HIRAGANA -> 0x72
+            KeyEvent.KEYCODE_MUHENKAN -> 0x51
+            KeyEvent.KEYCODE_HENKAN -> 0x35
+            KeyEvent.KEYCODE_NUMPAD_7 -> 0x42
+            KeyEvent.KEYCODE_NUMPAD_8 -> 0x43
+            KeyEvent.KEYCODE_NUMPAD_9 -> 0x44
+            KeyEvent.KEYCODE_NUMPAD_4 -> 0x46
+            KeyEvent.KEYCODE_NUMPAD_5 -> 0x47
+            KeyEvent.KEYCODE_NUMPAD_6 -> 0x48
+            KeyEvent.KEYCODE_NUMPAD_1 -> 0x4a
+            KeyEvent.KEYCODE_NUMPAD_2 -> 0x4b
+            KeyEvent.KEYCODE_NUMPAD_3 -> 0x4c
+            KeyEvent.KEYCODE_NUMPAD_0 -> 0x4e
+            KeyEvent.KEYCODE_NUMPAD_SUBTRACT -> 0x40
+            KeyEvent.KEYCODE_NUMPAD_DIVIDE -> 0x41
+            KeyEvent.KEYCODE_NUMPAD_MULTIPLY -> 0x45
+            KeyEvent.KEYCODE_NUMPAD_ADD -> 0x49
+            KeyEvent.KEYCODE_NUMPAD_EQUALS -> 0x4d
+            KeyEvent.KEYCODE_NUMPAD_COMMA -> 0x4f
+            KeyEvent.KEYCODE_NUMPAD_DOT -> 0x50
+            KeyEvent.KEYCODE_NUMPAD_ENTER -> 0x1c
             else -> null
         }
     }
