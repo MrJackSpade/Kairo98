@@ -377,10 +377,12 @@ void run_machine(std::string image, std::string font_path, std::string bios_dir,
     while (!stop) {
         std::deque<Command> pending;
         {
+            // The worker's only wait. A command wakes it early so input is applied at
+            // once, but the frame itself still waits for its slot on the grid below.
             std::unique_lock<std::mutex> guard(command_mutex);
-            if (paused && commands.empty()) {
-                command_ready.wait(guard, [] { return !commands.empty(); });
-            }
+            const auto has_commands = [] { return !commands.empty(); };
+            if (paused) command_ready.wait(guard, has_commands);
+            else command_ready.wait_until(guard, next_frame, has_commands);
             pending.swap(commands);
         }
         for (const auto &command : pending) {
@@ -482,6 +484,10 @@ void run_machine(std::string image, std::string font_path, std::string bios_dir,
             }
         }
         if (stop || paused) continue;
+        // Running a frame for every input event would run the guest faster than
+        // 60 Hz, overfill the audio stream, and push next_frame ahead of real time
+        // so audio starves once the input stops (#60).
+        if (std::chrono::steady_clock::now() < next_frame) continue;
         const bool sample_screen = screen_hash_sampling.load(std::memory_order_relaxed);
         const auto core_start = std::chrono::steady_clock::now();
         kairo98_machine_exec();
@@ -667,8 +673,6 @@ void run_machine(std::string image, std::string font_path, std::string bios_dir,
                 std::chrono::duration_cast<std::chrono::microseconds>(now - next_frame).count()));
             if (now - next_frame > std::chrono::microseconds(50000)) next_frame = now;
         }
-        std::unique_lock<std::mutex> guard(command_mutex);
-        command_ready.wait_until(guard, next_frame, [] { return !commands.empty(); });
     }
     if (audio) {
         AAudioStream_requestStop(audio);
