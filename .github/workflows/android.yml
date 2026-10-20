@@ -1,18 +1,6 @@
 name: Android debug build
 
 on:
-  push:
-    branches: [main]
-    paths:
-      - '.github/workflows/android.yml'
-      - 'build.gradle.kts'
-      - 'settings.gradle.kts'
-      - 'gradle/**'
-      - 'gradle.properties'
-      - 'gradlew'
-      - 'kairo98/**'
-      - 'shared'
-      - 'tools/checkout_shared.sh'
   pull_request:
     paths:
       - '.github/workflows/android.yml'

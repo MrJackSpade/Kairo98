@@ -1,34 +1,5 @@
 name: Catalog
 on:
-  push:
-    paths:
-      - 'tools/build_catalog.py'
-      - 'tools/artwork_references.py'
-      - 'tools/test_artwork_references.py'
-      - 'tools/build_review_catalog.py'
-      - 'tools/audit_vndb_adult_content.py'
-      - 'tools/build_online_catalog.py'
-      - 'tools/test_build_catalog.py'
-      - 'tools/test_display_text.py'
-      - 'tools/import_art.py'
-      - 'tools/test_import_art.py'
-      - 'tools/make_synthetic_catalog.py'
-      - 'tools/fixtures/catalog/**'
-      - 'tools/fixtures/art-source/**'
-      - 'kairo98/src/withImages/assets/art/**'
-      - 'kairo98/src/main/assets/catalog/**'
-      - 'catalog/source-v1.json'
-      - 'catalog/startup-profiles-v1.json'
-      - 'catalog/research/*.json'
-      - 'catalog/core-v3.json'
-      - 'shared'
-      - 'settings.gradle.kts'
-      - 'kairo98/build.gradle.kts'
-      - 'kairo98/src/main/java/com/mrjackspade/kairo98/GameCatalog.kt'
-      - 'kairo98/src/main/java/com/mrjackspade/kairo98/GameDetailPage.kt'
-      - 'kairo98/src/main/java/com/mrjackspade/kairo98/MainActivity.kt'
-      - 'kairo98/src/main/java/com/mrjackspade/kairo98/LibraryScreen.kt'
-      - '.github/workflows/catalog.yml'
   pull_request:
     paths:
       - 'tools/build_catalog.py'
