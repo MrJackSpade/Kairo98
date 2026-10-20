@@ -48,6 +48,7 @@ kairo_native_debug_defaults(np21w_core)
 
 add_library(kairo98 SHARED
     native_bridge.cpp
+    audio_output.cpp
     android_host/ymfm_bridge.cpp
     ${YMFM_ROOT}/src/ymfm_opn.cpp
     ${YMFM_ROOT}/src/ymfm_adpcm.cpp

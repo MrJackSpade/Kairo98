@@ -8,7 +8,7 @@
 #include "android_host/gpudraw.h"
 #include "gl_presenter.h"
 #include "gpu_frame_merge.h"
-#include <aaudio/AAudio.h>
+#include "audio_output.h"
 #include <algorithm>
 #include <atomic>
 #include <chrono>
@@ -33,7 +33,9 @@ extern "C" int kairo98_machine_start(const char *image, const char *font_path,
                                       const char *boot_floppy, const char *second_floppy,
                                       const char *cd_image);
 extern "C" int kairo98_machine_dos_prompt(void);
-extern "C" void kairo98_machine_exec(void);
+extern "C" unsigned int kairo98_machine_exec(void);
+extern "C" void kairo98_machine_clock_rates(unsigned int *realclock, unsigned int *hzbase,
+                                            unsigned int *clockbase);
 extern "C" void kairo98_machine_counters(unsigned long long *slices, unsigned long long *insts,
                                          unsigned long long *sti, unsigned long long *skips);
 extern "C" unsigned long long kairo98_machine_draw_count(void);
@@ -76,6 +78,10 @@ extern "C" int __llvm_profile_write_file(void);
 #endif
 
 namespace {
+// How far the frame grid may fall behind before it re-anchors to the present;
+// the audio queue holds this much so recoverable lateness never underruns.
+constexpr auto kFrameStall = std::chrono::milliseconds(50);
+constexpr int32_t kAudioStallFrames = 44100 * kFrameStall.count() / 1000;
 enum class CommandType { Pause, Resume, Reset, Stop, Key, Disk, Floppy, Cd, Clock, MouseMove, MouseWarp, MouseButton, Joystick, SaveState, LoadState };
 struct Command {
     CommandType type;
@@ -103,7 +109,7 @@ std::string audio_state = "off";
 std::string audio_config;
 std::string audio_profile;
 std::atomic<bool> audio_muted{false};
-// While set, frames run back to back instead of on the 60 Hz grid, and audio
+// While set, frames run back to back instead of on the frame grid, and audio
 // is written only as far as the output buffer has room.
 std::atomic<bool> fast_forward{false};
 std::atomic<bool> dos_prompt_ready{false};
@@ -309,45 +315,26 @@ void run_machine(std::string image, std::string font_path, std::string bios_dir,
         present_dropped = 0;
     }
     std::thread presenter(present_loop);
-    AAudioStream *audio = nullptr;
-    AAudioStreamBuilder *builder = nullptr;
-    if (kairo98_audio_buffer_frames() == 512 && AAudio_createStreamBuilder(&builder) == AAUDIO_OK) {
-        AAudioStreamBuilder_setDirection(builder, AAUDIO_DIRECTION_OUTPUT);
-        AAudioStreamBuilder_setSampleRate(builder, 44100);
-        AAudioStreamBuilder_setChannelCount(builder, 2);
-        AAudioStreamBuilder_setFormat(builder, AAUDIO_FORMAT_PCM_I16);
-        AAudioStreamBuilder_setPerformanceMode(builder, AAUDIO_PERFORMANCE_MODE_LOW_LATENCY);
-        if (AAudioStreamBuilder_openStream(builder, &audio) != AAUDIO_OK ||
-            AAudioStream_requestStart(audio) != AAUDIO_OK) {
-            if (audio) AAudioStream_close(audio);
-            audio = nullptr;
-        }
-        if (audio) {
-            // Keep about three emulated frames (50 ms) of audio queued: enough
-            // to ride out a game-logic frame that overruns its slot, without
-            // the default 80 ms of output latency.
-            const int32_t burst = AAudioStream_getFramesPerBurst(audio);
-            const int32_t wanted = std::max<int32_t>(3 * 735, 2 * std::max<int32_t>(burst, 1));
-            AAudioStream_setBufferSizeInFrames(audio, wanted);
-        }
-    }
-    if (builder) AAudioStreamBuilder_delete(builder);
-    {
+    std::unique_ptr<AudioOutput> audio;
+    // Opens the stream, or a new one after Android stops the old one, and shows
+    // it in Diagnostics.
+    int32_t earlier_stream_underruns = 0;
+    const auto open_audio = [&audio, &earlier_stream_underruns] {
+        if (audio) earlier_stream_underruns += audio->underruns();
+        audio.reset();
+        if (kairo98_audio_buffer_frames() == 512) audio = AudioOutput::open(kAudioStallFrames);
         std::lock_guard<std::mutex> guard(command_mutex);
         audio_state = audio ? "on" : "off";
-        if (audio) {
-            char config[80];
-            std::snprintf(config, sizeof(config), "buf %d/%d/%d",
-                AAudioStream_getBufferSizeInFrames(audio),
-                AAudioStream_getBufferCapacityInFrames(audio),
-                AAudioStream_getFramesPerBurst(audio));
-            audio_config = config;
-        } else audio_config.clear();
-    }
+        audio_config = audio ? audio->config() : "";
+    };
+    open_audio();
     bool paused = false;
     bool stop = false;
-    unsigned int audio_due = 0;
+    // Guest clocks times hzbase not yet pulled as audio; one 512-sample buffer is
+    // 512 * clockbase of it, the same ratio the core turns clocks into samples with.
+    uint64_t audio_due = 0;
     short audio_samples[512 * 2];
+    double profile_guest_seconds = 0;
     auto next_frame = std::chrono::steady_clock::now();
     auto next_hash = next_frame;
     unsigned int profile_frames = 0;
@@ -391,12 +378,12 @@ void run_machine(std::string image, std::string font_path, std::string bios_dir,
                     paused = true;
                     kairo98_machine_release_keys();
                     kairo98_joy_release_all();
-                    if (audio) AAudioStream_requestPause(audio);
+                    if (audio) audio->pause();
                     report_state("Paused");
                     break;
                 case CommandType::Resume:
                     paused = false;
-                    if (audio) AAudioStream_requestStart(audio);
+                    if (audio) audio->resume();
                     next_frame = std::chrono::steady_clock::now();
                     report_state("Running");
                     break;
@@ -446,6 +433,8 @@ void run_machine(std::string image, std::string font_path, std::string bios_dir,
                         report_state("Error", result == 1 ? "HDI flush failed before clock change" : "Invalid clock setting");
                         stop = true;
                     }
+                    // The clock change rescales hzbase / clockbase.
+                    audio_due = 0;
                     next_frame = std::chrono::steady_clock::now();
                     break;
                 case CommandType::Stop:
@@ -485,13 +474,21 @@ void run_machine(std::string image, std::string font_path, std::string bios_dir,
         }
         if (stop || paused) continue;
         // Running a frame for every input event would run the guest faster than
-        // 60 Hz, overfill the audio stream, and push next_frame ahead of real time
-        // so audio starves once the input stops (#60).
+        // its refresh rate, overfill the audio stream, and push next_frame ahead
+        // of real time so audio starves once the input stops (#60).
         if (std::chrono::steady_clock::now() < next_frame) continue;
         const bool sample_screen = screen_hash_sampling.load(std::memory_order_relaxed);
         const auto core_start = std::chrono::steady_clock::now();
-        kairo98_machine_exec();
+        const unsigned int frame_clocks = kairo98_machine_exec();
         const auto core_end = std::chrono::steady_clock::now();
+        unsigned int realclock = 0, hzbase = 0, clockbase = 0;
+        kairo98_machine_clock_rates(&realclock, &hzbase, &clockbase);
+        if (clockbase == 0) {
+            report_state("Error", "Sound stream has no clock rate");
+            stop = true;
+            continue;
+        }
+        profile_guest_seconds += static_cast<double>(frame_clocks) / realclock;
         const auto core_us = std::chrono::duration_cast<std::chrono::microseconds>(core_end - core_start).count();
         profile_core_us += core_us;
         profile_max_core_us = std::max(profile_max_core_us, static_cast<int64_t>(core_us));
@@ -538,32 +535,33 @@ void run_machine(std::string image, std::string font_path, std::string bios_dir,
         const auto render_us = std::chrono::duration_cast<std::chrono::microseconds>(render_end - core_end).count();
         profile_render_us += render_us;
         profile_max_render_us = std::max(profile_max_render_us, static_cast<int64_t>(render_us));
-        audio_due += 44100;
-        while (audio_due >= 60 * 512) {
-            audio_due -= 60 * 512;
+        // Pull exactly what the frame produced. A fixed 735 samples (44100 / 60)
+        // against a 56.4 Hz guest left 47 extra samples a frame, which the core's
+        // full stream dropped: constant crackle (#60).
+        audio_due += static_cast<uint64_t>(frame_clocks) * hzbase;
+        const uint64_t audio_buffer_due = 512ull * clockbase;
+        while (audio_due >= audio_buffer_due) {
+            audio_due -= audio_buffer_due;
             const auto mix_start = std::chrono::steady_clock::now();
             int filled = kairo98_fill_audio(audio_samples, 512);
             const auto mix_end = std::chrono::steady_clock::now();
             profile_mix_us += std::chrono::duration_cast<std::chrono::microseconds>(mix_end - mix_start).count();
             if (audio_muted.load()) std::memset(audio_samples, 0, sizeof(audio_samples));
             if (audio) {
-                aaudio_result_t written = AAudioStream_write(audio, audio_samples, 512,
-                    fast_forward.load(std::memory_order_relaxed) ? 0 : 2000000);
+                const uint32_t written = audio->write(audio_samples, 512);
                 if (written != 512) ++profile_partial_writes;
-                profile_buffered_frames = static_cast<int32_t>(
-                    AAudioStream_getFramesWritten(audio) - AAudioStream_getFramesRead(audio));
+                profile_buffered_frames = static_cast<int32_t>(audio->queued());
                 profile_write_us += std::chrono::duration_cast<std::chrono::microseconds>(
                     std::chrono::steady_clock::now() - mix_end).count();
-                const int32_t xruns = AAudioStream_getXRunCount(audio);
                 if (written > 0) {
                     bool audible = false;
-                    for (int i = 0; i < written * 2; ++i) {
+                    for (uint32_t i = 0; i < written * 2; ++i) {
                         if (audio_samples[i]) { audible = true; break; }
                     }
                     std::lock_guard<std::mutex> guard(command_mutex);
                     ++audio_buffers;
                     if (filled && audible) ++audible_buffers;
-                    if (xruns >= 0) audio_xruns = xruns;
+                    audio_xruns = earlier_stream_underruns + audio->underruns();
                 }
             }
         }
@@ -600,9 +598,10 @@ void run_machine(std::string image, std::string font_path, std::string bios_dir,
                 egc_dec, egc_cpu);
             char result[360];
             std::snprintf(result, sizeof(result),
-                "c%.1f r%.1f m%.1f w%.1f x+%d p%d q%d maxC%.1f maxR%.1f late%d/%.1f "
+                "g%.2f c%.1f r%.1f m%.1f w%.1f x+%d p%d q%d maxC%.1f maxR%.1f late%d/%.1f "
                 "sl%.0f in%.0f sti%.0f sk%.0f big%u drop%u cpu%.1f ev%.1f dr%.1f fm%.1f "
                 "ew%.0f er%.0f ef%.0f egcbad%llu hv%u/%.1f sw%llu synbad%llu",
+                600 / profile_guest_seconds,
                 profile_core_us / 600000.0, profile_render_us / 600000.0,
                 profile_mix_us / 600000.0, profile_write_us / 600000.0,
                 audio_xruns - profile_previous_xruns, profile_partial_writes,
@@ -651,19 +650,29 @@ void run_machine(std::string image, std::string font_path, std::string bios_dir,
             }
             profile_previous_xruns = audio_xruns;
             profile_frames = 0;
+            profile_guest_seconds = 0;
             profile_core_us = profile_render_us = profile_mix_us = profile_write_us = 0;
             profile_max_core_us = profile_max_render_us = profile_max_late_us = 0;
             profile_late_frames = 0;
             profile_partial_writes = 0;
         }
-        // Frames are scheduled on a fixed 60 Hz grid. A frame that overruns
-        // its slot leaves next_frame in the past, so the following frames
-        // start immediately and the grid is recovered rather than shifted;
-        // otherwise every overrun would permanently lose its excess time,
-        // the emulator would run below 60 Hz, and the audio buffer would
-        // drain. Only when the backlog exceeds three frames (a stall, not an
+        // Each frame's slot lasts as long as the audio it made takes to play at
+        // 44.1 kHz: a guest frame, 56.4 Hz in the normal 400-line mode. The
+        // length comes from the core's samples-per-clock ratio rather than its
+        // clock rate because that ratio is rounded (at the default clock it makes
+        // 0.23% more than 44100 samples per guest second), and timing by clocks
+        // would hold the audio queue that far above its target for good.
+        // The slot is then stretched or shrunk by at most 0.5% to hold the queue
+        // at its target, so the host clock cannot drift from the audio device's.
+        // A frame that overruns its slot leaves next_frame in the past, so the
+        // following frames start immediately and the grid is recovered rather
+        // than shifted; otherwise every overrun would permanently lose its
+        // excess time, the guest would run slow, and the audio queue would
+        // drain. Only when the backlog exceeds kFrameStall (a stall, not an
         // overrun) is the grid re-anchored to the present.
-        next_frame += std::chrono::microseconds(16667);
+        const double pace = audio ? audio->pace_scale() : 1.0;
+        const double frame_samples = static_cast<double>(frame_clocks) * hzbase / clockbase;
+        next_frame += std::chrono::nanoseconds(static_cast<int64_t>(frame_samples * 1e9 / 44100 * pace));
         auto now = std::chrono::steady_clock::now();
         if (fast_forward.load(std::memory_order_relaxed)) {
             next_frame = now;
@@ -671,13 +680,15 @@ void run_machine(std::string image, std::string font_path, std::string bios_dir,
             ++profile_late_frames;
             profile_max_late_us = std::max(profile_max_late_us, static_cast<int64_t>(
                 std::chrono::duration_cast<std::chrono::microseconds>(now - next_frame).count()));
-            if (now - next_frame > std::chrono::microseconds(50000)) next_frame = now;
+            if (now - next_frame > kFrameStall) next_frame = now;
+        }
+        if (audio && audio->lost_error() != AAUDIO_OK) {
+            __android_log_print(ANDROID_LOG_ERROR, "Kairo98Audio", "stream stopped with %s; reopening",
+                                AAudio_convertResultToText(audio->lost_error()));
+            open_audio();
         }
     }
-    if (audio) {
-        AAudioStream_requestStop(audio);
-        AAudioStream_close(audio);
-    }
+    audio.reset();
     {
         std::lock_guard<std::mutex> guard(present_mutex);
         present_stop = true;

@@ -9,6 +9,7 @@
 #include "dosio.h"
 #include "iocore.h"
 #include "mousemng.h"
+#include "sound/sound.h"
 #include "statsave.h"
 #include "vram.h"
 #include <ctype.h>
@@ -269,8 +270,19 @@ void kairo98_machine_stage_times(unsigned long long *cpu_ns, unsigned long long 
     *fm_ns = kairo98_time_fm_ns;
 }
 
-void kairo98_machine_exec(void) {
+/* One call emulates one guest video frame, as long as the GDC mode makes it: 56.4 Hz
+ * in the normal 400-line mode, not the host's 60 Hz. Returns the guest clocks it ran. */
+unsigned int kairo98_machine_exec(void) {
+    const UINT32 start = CPU_CLOCK + CPU_BASECLOCK - CPU_REMCLOCK;
     pccore_exec(TRUE);
+    return (CPU_CLOCK + CPU_BASECLOCK - CPU_REMCLOCK) - start;
+}
+
+/* The guest clock rate, and the sound stream's samples per clock as hzbase / clockbase. */
+void kairo98_machine_clock_rates(unsigned int *realclock, unsigned int *hzbase, unsigned int *clockbase) {
+    *realclock = pccore.realclock;
+    *hzbase = soundcfg.hzbase;
+    *clockbase = soundcfg.clockbase;
 }
 
 void kairo98_machine_counters(unsigned long long *slices, unsigned long long *insts,
