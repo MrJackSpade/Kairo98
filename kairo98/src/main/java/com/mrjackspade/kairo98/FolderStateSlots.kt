@@ -1,19 +1,19 @@
 package com.mrjackspade.kairo98
 
 import com.mrjackspade.kairo.frontend.FolderSaveLocation
-import com.mrjackspade.kairo.frontend.SaveLocation
+import com.mrjackspade.kairo.frontend.GameKey
 import com.mrjackspade.kairo.frontend.SaveUnit
 import com.mrjackspade.kairo.frontend.StateSlotStore
 import com.mrjackspade.kairo.frontend.StateSlots
 import java.io.File
 
 /**
- * Save-state slots in the user's save folder: `<folder>/<content ID>/slot<N>/`. The core writes
+ * Save-state slots in the user's save folder: `<folder>/<game key's storage name>/slot<N>/`. The core writes
  * a save to [staging]; committing copies it into the folder and replaces the old slot.
  */
-class FolderStateSlots(private val folder: FolderSaveLocation, contentId: String,
+class FolderStateSlots(private val folder: FolderSaveLocation, key: GameKey,
                        private val stateName: String, staging: File) : StateSlots {
-    private val game = SaveLocation.gameName(contentId)
+    private val game = key.storageName
     private val local = File(staging, game)
 
     override fun summaries(): List<StateSlots.Summary> = (1..StateSlotStore.SLOT_COUNT).map { index ->

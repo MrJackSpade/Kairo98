@@ -1,5 +1,6 @@
 package com.mrjackspade.kairo98
 
+import com.mrjackspade.kairo.frontend.GameKey
 import com.mrjackspade.kairo.frontend.LibraryItem
 import com.mrjackspade.kairo.frontend.DocumentTreeWalker
 import com.mrjackspade.kairo.frontend.ExternalGameFile
@@ -24,7 +25,7 @@ import java.util.concurrent.atomic.AtomicBoolean
 import java.util.zip.CRC32
 import java.util.zip.ZipFile
 
-/** A source location is separate from the uncompressed disk-image content ID. */
+/** An entry's key is its source's path in the ROM folder, separate from its disk image's content ID. */
 data class LibraryEntry(
     override val id: String,
     override val uri: String,
@@ -37,7 +38,8 @@ data class LibraryEntry(
     override val contentId: String?,
     override val error: String? = null,
     /** The other files the image reads: a CD's track data, by document URI or by ZIP entry. */
-    val companions: List<String> = emptyList()
+    val companions: List<String> = emptyList(),
+    override val catalogId: String? = contentId
 ) : LibraryItem {
     override val displayName: String get() = (zipEntry ?: path).substringAfterLast('/').substringAfterLast('\\')
     override val playable: Boolean get() = contentId != null && error == null
@@ -61,7 +63,8 @@ fun requiredFloppyFor(contentId: String, source: LibraryEntry,
 /** A disk a game names by content ID, preferring a copy from the game's own ZIP or folder. */
 fun requiredMediaFor(contentId: String, source: LibraryEntry, entries: List<LibraryEntry>,
                      label: String, kind: (LibraryEntry) -> Boolean): LibraryEntry {
-    val candidates = entries.filter { it.playable && kind(it) && it.contentId == contentId }
+    // A disk keeps the catalog record it was first scanned with, through later edits.
+    val candidates = entries.filter { it.playable && kind(it) && (it.contentId == contentId || it.catalogId == contentId) }
     return candidates.firstOrNull { it.uri == source.uri } ?: candidates.firstOrNull()
         ?: error("Required $label ${contentId.substringAfter(':').take(8)} is missing from the library")
 }
@@ -104,7 +107,7 @@ fun bootMediaFor(entry: LibraryEntry, entries: List<LibraryEntry>, requiredFlopp
         return BootMedia(entry, floppy)
     }
     if (entry.zipEntry == null) {
-        if (entry.isFloppy && entry.contentId == requiredFloppyId)
+        if (entry.isFloppy && requiredFloppyId != null && requiredFloppyId in setOf(entry.contentId, entry.catalogId))
             error("Matching hard disk is missing from the library")
         return null
     }
@@ -114,7 +117,7 @@ fun bootMediaFor(entry: LibraryEntry, entries: List<LibraryEntry>, requiredFlopp
         it.isFloppy && BOOT_DISK_NAME.containsMatchIn(it.displayName)
     }
     if (hardDisks.size != 1 || bootFloppies.size != 1) {
-        if (entry.isFloppy && entry.contentId == requiredFloppyId)
+        if (entry.isFloppy && requiredFloppyId != null && requiredFloppyId in setOf(entry.contentId, entry.catalogId))
             error("Matching hard disk is missing or ambiguous in this archive")
         return null
     }
@@ -148,10 +151,10 @@ object DiskFormat {
 }
 
 class RomLibrary(private val context: Context) {
-    private val storeCache = VersionedLibraryCache(File(context.filesDir, "library-v2.bin"), 3,
+    private val storeCache = VersionedLibraryCache(File(context.filesDir, "library-v2.bin"), 4,
         MAX_STORE_BYTES, MAX_DOCUMENTS, ::writeCacheRecord, ::readCacheRecord,
         VersionedLibraryCache.Legacy(File(context.filesDir, "library-v1.json"), 1, "entries",
-            ::decodeLegacyEntry), earlierRecords = mapOf(2 to ::readCacheRecordV2))
+            ::decodeLegacyEntry), earlierRecords = mapOf(2 to ::readCacheRecordV2, 3 to ::readCacheRecordV3))
     private val scanPipeline by lazy {
         LibraryScanPipeline(storeCache, LibraryEntry::id, ::planScan, ::inspectSource,
             ::failedSource,
@@ -193,11 +196,20 @@ class RomLibrary(private val context: Context) {
         val archiveKey = sha256(entry.uri.toByteArray()).take(32)
         archiveCache.listFiles()?.filter { it.name.startsWith("$archiveKey-") ||
             it.name == "$archiveKey.part" }?.forEach { it.delete() }
-        val imageIds = sourceEntries.map { it.id }.toSet()
-        imageStore.listFiles()?.filter { file ->
-            imageIds.any { file.name.startsWith("$it-") }
-        }?.forEach { it.delete() }
+        sourceEntries.forEach(::resetWorkingImage)
     }
+
+    /** The working copy the game plays from, with the saves written into it; the next launch copies the source again. */
+    fun resetWorkingImage(entry: LibraryEntry) {
+        val file = workingImage(entry)
+        for (copy in listOf(file, File(imageStore, DiskFormat.cdData(file.name))))
+            check(!copy.exists() || copy.delete()) { "Could not remove the working copy of ${entry.displayName}" }
+    }
+
+    fun hasWorkingImage(entry: LibraryEntry) = workingImage(entry).isFile
+
+    private fun workingImage(entry: LibraryEntry) =
+        File(imageStore, "${entry.key.storageName}${DiskFormat.suffix(entry.displayName)}")
 
     /** Inspect one launcher-provided document without requiring a selected ROM tree. */
     fun inspectExternal(file: ExternalGameFile, cancelled: AtomicBoolean): List<LibraryEntry> {
@@ -205,12 +217,13 @@ class RomLibrary(private val context: Context) {
         require(!DiskFormat.isCd(file.name)) {
             "A CD needs its ${DiskFormat.cdData(file.name)}; open the CD's folder or a ZIP that holds both"
         }
+        // A document in the library opens as its entry; any other is keyed by its own URI.
         if (DiskFormat.supported(file.name)) {
-            val candidate = entry(source, null, file.size, -1, null)
+            val candidate = entry(source, null, file.size, -1, null, key = GameKey(file.uri.toString()))
             val id = context.contentResolver.openInputStream(file.uri)?.use {
                 contentId(it, file.size, -1, cancelled, file.name)
             } ?: error("Unable to open ${file.name}")
-            return listOf(candidate.copy(contentId = id))
+            return listOf(candidate.copy(contentId = id, catalogId = id))
         }
         require(file.name.endsWith(".zip", true)) { "Unsupported PC-98 game file: ${file.name}" }
         val archive = cachedZip(source, false, cancelled)
@@ -220,7 +233,8 @@ class RomLibrary(private val context: Context) {
                 val id = zip.getInputStream(data).use {
                     contentId(it, data.size, data.crc, cancelled, image.name)
                 }
-                entry(source, image.entry.name, data.size, data.crc, id, companions = image.companions)
+                entry(source, image.entry.name, data.size, data.crc, id, companions = image.companions,
+                    key = GameKey.inArchive(file.uri.toString(), image.entry.name))
             }
         }
     }
@@ -273,8 +287,13 @@ class RomLibrary(private val context: Context) {
         }
     }
 
+    /** The content each key was first scanned with stays its catalog record through later edits. */
     private fun inspectSource(source: Source,
-                              scan: LibraryScanPipeline.ScanContext<LibraryEntry>): List<LibraryEntry> {
+                              scan: LibraryScanPipeline.ScanContext<LibraryEntry>): List<LibraryEntry> =
+        inspectContent(source, scan).map { it.copy(catalogId = scan.earlier[it.id]?.catalogId ?: it.contentId) }
+
+    private fun inspectContent(source: Source,
+                               scan: LibraryScanPipeline.ScanContext<LibraryEntry>): List<LibraryEntry> {
         if (source.path.endsWith(".zip", ignoreCase = true)) {
             val oldEntries = scan.prior.values.filter { it.uri == source.uri.toString() }
             val formatsCurrent = (scan.previous?.root?.optInt("mediaFormatsVersion", 1) ?: 0) >=
@@ -344,7 +363,8 @@ class RomLibrary(private val context: Context) {
                              error: Exception): List<LibraryEntry> = listOf(
         entry(source, null, source.size, -1, null,
             error.message ?: if (source.path.endsWith(".zip", ignoreCase = true))
-                "ZIP unreadable" else "Disk image unreadable")
+                "ZIP unreadable" else "Disk image unreadable",
+            catalogId = scan.earlier[source.path]?.catalogId)
     )
 
     /**
@@ -354,8 +374,8 @@ class RomLibrary(private val context: Context) {
     @Synchronized fun prepare(entry: LibraryEntry, cancelled: AtomicBoolean,
                 progress: (String) -> Unit): File {
         require(entry.playable) { "This entry is not ready to launch" }
-        val stem = "${entry.id}-${entry.contentId!!.substringAfter(':')}"
-        val file = File(imageStore, "$stem${DiskFormat.suffix(entry.displayName)}")
+        // The working copy holds the game's in-disk saves, so it stays when the source is edited.
+        val file = workingImage(entry)
         val data = if (entry.isCd) File(imageStore, DiskFormat.cdData(file.name)) else file
         if (file.isFile && file.length() > 0 && data.isFile && data.length() > 0) return file
         if (entry.imageSize > 0) require(imageStore.usableSpace > entry.imageSize + 16L * 1024 * 1024) {
@@ -512,11 +532,47 @@ class RomLibrary(private val context: Context) {
     /** A loose CD's modification time is its newest file's, so changed track data rehashes. */
     private fun entry(source: Source, zipEntry: String?, imageSize: Long, imageCrc: Long,
                       contentId: String?, error: String? = null,
-                      companions: List<String> = emptyList()): LibraryEntry {
-        val id = sha256("${source.uri}\u0000${zipEntry ?: ""}".toByteArray()).take(32)
-        return LibraryEntry(id, source.uri.toString(), source.path, zipEntry,
+                      companions: List<String> = emptyList(), key: GameKey = keyOf(source.path, zipEntry),
+                      catalogId: String? = contentId): LibraryEntry =
+        LibraryEntry(key.path, source.uri.toString(), source.path, zipEntry,
             source.size, maxOf(source.modified, source.cdData?.modified ?: 0), imageSize, imageCrc,
-            contentId, error, companions)
+            contentId, error, companions, catalogId)
+
+    /** A disk image's key: its path in the ROM folder, and its path inside a ZIP. */
+    private fun keyOf(path: String, zipEntry: String?) =
+        zipEntry?.let { GameKey.inArchive(path, it) } ?: GameKey(path)
+
+    /** The ID [entry] had before games had keys, which named its working image. */
+    fun legacyEntryId(entry: LibraryEntry): String =
+        sha256("${entry.uri}\u0000${entry.zipEntry ?: ""}".toByteArray()).take(32)
+
+    /** Working images were named by entry ID and content ID before games had keys. */
+    fun legacyWorkingImages() = object : com.mrjackspade.kairo.frontend.GameKeyMigration.EntryStore<LibraryEntry> {
+        private var names = emptyList<String>()
+        override fun refresh() {
+            names = imageStore.list().orEmpty().filterNot { it.startsWith(GameKey.STORAGE_PREFIX) }
+        }
+        private fun legacyName(claim: com.mrjackspade.kairo.frontend.GameKeyMigration.Claim<LibraryEntry>, entry: LibraryEntry) =
+            "${claim.entryId}-${entry.contentId?.substringAfter(':')}${DiskFormat.suffix(entry.displayName)}"
+        override fun has(claim: com.mrjackspade.kairo.frontend.GameKeyMigration.Claim<LibraryEntry>) =
+            names.any { it.startsWith("${claim.entryId}-") }
+        override fun move(claim: com.mrjackspade.kairo.frontend.GameKeyMigration.Claim<LibraryEntry>) {
+            val entry = claim.item
+            val from = File(imageStore, legacyName(claim, entry))
+            // Copies made for an earlier version of the source stay where they are, as before.
+            if (!from.isFile) return
+            val to = workingImage(entry)
+            val pairs = listOf(from to to) + if (entry.isCd)
+                listOf(File(imageStore, DiskFormat.cdData(from.name)) to File(imageStore, DiskFormat.cdData(to.name)))
+            else emptyList()
+            for ((old, new) in pairs) if (old.exists()) {
+                check(!new.exists()) { "${entry.displayName} has working copies in two places" }
+                check(old.renameTo(new)) { "Could not move the working copy of ${entry.displayName}" }
+            }
+            names = names - pairs.map { it.first.name }.toSet()
+        }
+        // Copies for earlier versions of a source were never read again, and are not claimed.
+        override fun isEmpty() = true
     }
 
     private fun trusted(source: Source) = source.size >= 0 && source.modified > 0
@@ -542,26 +598,38 @@ class RomLibrary(private val context: Context) {
         writeLong(entry.imageSize); writeLong(entry.imageCrc)
         writeOptionalText(entry.contentId); writeOptionalText(entry.error)
         writeInt(entry.companions.size); entry.companions.forEach { writeText(it) }
+        writeOptionalText(entry.catalogId)
     }
 
     private fun readCacheRecord(input: java.io.DataInputStream) = with(input) {
-        readCacheRecordV2(input).copy(companions = List(readInt()) { readText() })
+        readFields(input).copy(companions = List(readInt()) { readText() }, catalogId = readOptionalText())
+    }
+
+    /** Layout 3, from before games had keys: its ID hashed the entry's document. */
+    private fun readCacheRecordV3(input: java.io.DataInputStream) = with(input) {
+        keyed(readFields(input).copy(companions = List(readInt()) { readText() }))
     }
 
     /** Layout 2, from before CD track data was recorded. */
-    private fun readCacheRecordV2(input: java.io.DataInputStream) = with(input) {
+    private fun readCacheRecordV2(input: java.io.DataInputStream) = keyed(readFields(input))
+
+    private fun readFields(input: java.io.DataInputStream) = with(input) {
         LibraryEntry(readText(), readText(), readText(), readOptionalText(), readLong(), readLong(),
             readLong(), readLong(), readOptionalText(), readOptionalText())
     }
 
+    /** An entry from before games had keys: its key is its path, and its content names its catalog record. */
+    private fun keyed(entry: LibraryEntry) =
+        entry.copy(id = keyOf(entry.path, entry.zipEntry).path, catalogId = entry.contentId)
+
     /** The JSON cache that version 1.0.3 and earlier wrote. */
-    private fun decodeLegacyEntry(value: JSONObject) = LibraryEntry(value.getString("id"),
+    private fun decodeLegacyEntry(value: JSONObject) = keyed(LibraryEntry(value.getString("id"),
         value.getString("uri"), value.getString("path"),
         value.optString("zipEntry").takeIf { it.isNotEmpty() },
         value.optLong("sourceSize", -1), value.optLong("sourceModified"),
         value.optLong("imageSize", -1), value.optLong("imageCrc", -1),
         value.optString("contentId").takeIf { it.isNotEmpty() },
-        value.optString("error").takeIf { it.isNotEmpty() })
+        value.optString("error").takeIf { it.isNotEmpty() }))
 
 
     companion object {

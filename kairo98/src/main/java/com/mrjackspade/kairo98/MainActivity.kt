@@ -62,6 +62,9 @@ import com.mrjackspade.kairo.frontend.ChoicePage
 import com.mrjackspade.kairo.frontend.SetupPage
 import com.mrjackspade.kairo.frontend.FooterButton
 import com.mrjackspade.kairo.frontend.SettingsRow
+import com.mrjackspade.kairo.frontend.Confirm
+import com.mrjackspade.kairo.frontend.GameKey
+import com.mrjackspade.kairo.frontend.GameKeyMigration
 import com.mrjackspade.kairo.frontend.RowGroup
 import com.mrjackspade.kairo.frontend.ChoiceSpec
 import com.mrjackspade.kairo.frontend.ChoiceGroup
@@ -203,16 +206,14 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
     }
     private val controllerFlow by lazy {
         ControllerProfileCoordinator(controllerProfiles, gamepadMapper,
-            LibraryEntry::contentId,
-            { entry: LibraryEntry -> effectiveControllerBindings(
-                romLibrary.catalog.resolve(entry.contentId!!, entry.displayName)) },
+            { entry: LibraryEntry -> entry.key.takeIf { entry.contentId != null } },
+            { entry: LibraryEntry -> effectiveControllerBindings(romLibrary.catalog.resolve(entry)) },
             { id, bindings -> romLibrary.catalog.setOverrideSubfield(id, "controller", "bindings",
                 ControllerBindings.toJson(bindings)) },
             { id -> romLibrary.catalog.updateOverrideSubfields(id, "controller",
                 mapOf("bindings" to null, "profile" to null)) },
             { currentEntry },
-            { currentEntry?.let { currentGame = romLibrary.catalog.resolve(
-                it.contentId!!, it.displayName) } })
+            { currentEntry?.let { currentGame = romLibrary.catalog.resolve(it) } })
     }
     private val keyMapping by lazy {
         KeyMappingMode(controllerFlow::activeBindings, controllerFlow::saveActive, controllerFlow::physical,
@@ -257,8 +258,8 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
             "Direct tap lands on the touched point in games that move the " +
                 "cursor one pixel per mouse count and stop it at the screen\u2019s top-left edge.",
             changed = { entry ->
-                if (entry != null && currentEntry?.contentId == entry.contentId) {
-                    currentGame = romLibrary.catalog.resolve(entry.contentId!!, entry.displayName)
+                if (entry != null && currentEntry?.id == entry.id) {
+                    currentGame = romLibrary.catalog.resolve(entry)
                     setSecondaryInitialMode(currentGame?.inputSecondary == "touchpad")
                 }
             })
@@ -271,12 +272,12 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
     private fun <V> inputValue(game: LibraryEntry, subfield: String, read: (GameCatalog.Game) -> String?,
                                parse: (String) -> V, store: (V) -> String, builtIn: Boolean = false,
                                global: () -> V): GameValue<V> {
-        val id = game.contentId!!
+        val id = game.key
         val catalog = romLibrary.catalog
-        fun custom() = catalog.sourceOf(id, "input", subfield) == "User override"
-        return GameValue({ if (custom()) read(catalog.resolve(id, game.displayName))?.let(parse) else null },
-            { read(catalog.resolveDefault(id, game.displayName))?.let(parse) ?: global() },
-            { catalog.defaultSourceOf(id, "input", subfield).let { source ->
+        fun custom() = catalog.sourceOf(game, "input", subfield) == "User override"
+        return GameValue({ if (custom()) read(catalog.resolve(game))?.let(parse) else null },
+            { read(catalog.resolveDefault(game))?.let(parse) ?: global() },
+            { catalog.defaultSourceOf(game, "input", subfield).let { source ->
                 if (source == "App default") if (builtIn) GameSource.BUILT_IN else GameSource.ALL_GAMES
                 else GameSource.label(source)
             } },
@@ -289,24 +290,21 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
     private lateinit var romLibrary: RomLibrary
     private val artwork by lazy {
         ArtworkCoordinator(this, pages, romLibrary.catalog.artworkStore,
-            { entry: LibraryEntry -> entry.contentId },
+            LibraryEntry::key,
             { entry, kind ->
                 val catalog = romLibrary.catalog
-                val game = catalog.resolve(entry.contentId ?: "", entry.displayName)
+                val game = catalog.resolve(entry)
                 val urlKind = if (kind == "preview") "previewUrl" else "boxArtUrl"
                 val url = (if (kind == "preview") game.previewUrl else game.boxArtUrl)
-                    ?.takeIf { entry.contentId?.let { id ->
-                        catalog.sourceOf(id, "artwork", kind) ==
-                            catalog.sourceOf(id, "artwork", urlKind)
-                    } == true }
+                    ?.takeIf { catalog.sourceOf(entry, "artwork", kind) == catalog.sourceOf(entry, "artwork", urlKind) }
                 ArtworkCoordinator.Record(if (kind == "preview") game.preview else game.boxArt, url,
-                    entry.contentId?.let { catalog.sourceOf(it, "artwork", kind) })
+                    catalog.sourceOf(entry, "artwork", kind))
             }, { ArtworkOverridePath.valid(it, "art/") },
             { id, kind, path ->
                 if (path == null) romLibrary.catalog.resetArtworkOverride(id, kind)
                 else romLibrary.catalog.setArtworkOverride(id, kind, path)
             }, { id -> libraryScreen.metadataChanged(id) },
-            { entry -> romLibrary.catalog.resolve(entry.contentId ?: "", entry.displayName).title },
+            { entry -> romLibrary.catalog.resolve(entry).title },
             ::toast, GameCatalog::validImageUrl)
     }
     private lateinit var controllerPages: ControllerPages<LibraryEntry>
@@ -349,12 +347,51 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
     private val externalDispatcher by lazy {
         ExternalGameDispatcher(this, contentResolver, { libraryEntries },
             { entry: LibraryEntry -> Uri.parse(entry.uri) },
-            { file, cancelled -> romLibrary.inspectExternal(file, cancelled) },
+            { file, cancelled ->
+                claimSavedData(romLibrary.inspectExternal(file, cancelled)).onEach { it.error?.let(::error) }
+            },
             { entries, inspected ->
                 if (inspected) externalEntries = entries
                 chooseExternalGame(entries)
             }, libraryScreen::showStatus, "Kairo98-external-game")
     }
+    /** Save states, settings and working disks from before games had keys move to their games as the library loads. */
+    private val gameKeyMigration by lazy {
+        GameKeyMigration(preferences, listOf(
+            romLibrary.catalog.legacyOverrides(),
+            GameKeyMigration.SaveStore({ saveFolder.location }, FolderStateSlots.UNITS, cacheDir,
+                File(filesDir, "game-key-migration-v1.json")) { conflicts ->
+                saveFolder.resolveMigrationConflicts(conflicts) { key ->
+                    claiming.firstOrNull { it.key == key }?.let(::titleOf) ?: key.path
+                }
+            }), listOf(romLibrary.legacyWorkingImages(), LegacyLastPlayed()))
+    }
+
+    private inner class LegacyLastPlayed : GameKeyMigration.EntryStore<LibraryEntry> {
+        override fun has(claim: GameKeyMigration.Claim<LibraryEntry>) =
+            preferences.getString("last_played_entry", null) == claim.entryId
+        override fun move(claim: GameKeyMigration.Claim<LibraryEntry>) {
+            check(preferences.edit().putString("last_played_entry", claim.key.path).commit()) {
+                "Could not remember the last played game"
+            }
+        }
+        // A last-played game no longer in the library is not saved data.
+        override fun isEmpty() = true
+    }
+
+    /** Moves saved data from before games had keys to [entries]; an entry whose data did not move shows why. */
+    /** The games a claim is moving data to; the library list is not published until it ends. */
+    @Volatile private var claiming: List<LibraryEntry> = emptyList()
+
+    private fun claimSavedData(entries: List<LibraryEntry>): List<LibraryEntry> {
+        if (!gameKeyMigration.pending) return entries
+        claiming = entries
+        val errors = gameKeyMigration.claim(entries.map { GameKeyMigration.Claim(it, romLibrary.legacyEntryId(it)) })
+        return if (errors.isEmpty()) entries else entries.map { entry ->
+            errors[entry.key]?.let { entry.copy(error = it) } ?: entry
+        }
+    }
+
     private var currentDisk: File? = null
     private var currentIsFloppy = false
     private val mountedFloppies = arrayOfNulls<String>(2)
@@ -431,7 +468,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
     private val stateBusy get() = stateFlow.isBusy
     private val stateFlow by lazy {
         StateSlotCoordinator(this, pages, handler,
-            { currentEntry?.contentId?.takeIf { !libraryVisible } }, { currentTitle },
+            { currentEntry?.takeIf { it.contentId != null && !libraryVisible }?.key }, { currentTitle },
             { id ->
                 saveFolder.folder?.let { FolderStateSlots(it, id, "state.np2", File(cacheDir, "state-staging")) }
                     ?: StateSlotStore(saveFolder.app.root, id, "state.np2")
@@ -553,14 +590,15 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
                     "exit" to "Exit"), Pc98KeyboardLayout.value),
             { ControllerBindings.toJson(it) }, controllerProfiles.configuration,
             { releaseInputs(); controllerFlow.refresh(null) }, { entry -> controllerMappingStatus(entry) },
-            { entry -> romLibrary.catalog.resolve(entry.contentId!!, entry.displayName).title },
+            { entry -> romLibrary.catalog.resolve(entry).title },
             onScreenControls, touchSettingsCoordinator) { releaseInputs() }
         val strings = LibraryStrings("KAIRO98", "Kairo98")
         val libraryPage = LibraryScreen(this, romLibrary.catalog, strings, pages,
             ::chooseRomFolder, { preferences.getString("last_played_entry", null) },
             { launchEntry(it) }, ::showDetailPreview, ::showGameDetails, ::showLibrarySelection)
         libraryFlow = LibraryFlow(this, preferences, libraryPage, ROM_FOLDER_REQUEST,
-            romLibrary::cached, romLibrary::scan,
+            { folder -> claimSavedData(romLibrary.cached(folder)) },
+            { folder, force, cancelled, progress -> claimSavedData(romLibrary.scan(folder, force, cancelled, progress)) },
             "Choose a ROM folder to find disk images and ZIP games",
             "Folder access expired. Select the ROM folder again.",
             { entries ->
@@ -735,9 +773,8 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
         about = { pages.push(aboutPage()) }))
 
     /** A save folder's game name, as a library title when the game is still in the library. */
-    private fun saveTitle(game: String): String = libraryEntries.firstOrNull {
-        it.contentId?.let(SaveLocation::gameName) == game
-    }?.let { romLibrary.catalog.resolve(it.contentId!!, it.displayName).title } ?: game
+    private fun saveTitle(game: String): String = libraryEntries.firstOrNull { it.key.storageName == game }
+        ?.let { romLibrary.catalog.resolve(it).title } ?: game
 
     /** The game flyout: the game's own pages, settings, then leaving. */
     private fun gameFlyout() = SessionMenus.gameFlyout("KAIRO98", "Kairo98",
@@ -891,7 +928,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
             libraryScreen.showStatus("Folder access expired. Select the ROM folder again.")
             return
         }
-        val game = romLibrary.catalog.resolve(entry.contentId!!, entry.displayName)
+        val game = romLibrary.catalog.resolve(entry)
         // Launching is where catalog launch data is used, so this is where bad data fails.
         try {
             game.launchCommands
@@ -1433,23 +1470,23 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
         pages.push(gameSettingsPage({ titleOf(entry) }) { gameSettings(entry) })
     }
 
-    private fun titleOf(entry: LibraryEntry) =
-        romLibrary.catalog.resolve(entry.contentId ?: "", entry.displayName).title
+    private fun titleOf(entry: LibraryEntry) = romLibrary.catalog.resolve(entry).title
 
     private fun gameSettings(entry: LibraryEntry): List<RowGroup> {
-        val id = entry.contentId
+        // Settings belong to the game's key, once its disk image has been read.
+        val id = entry.key.takeIf { entry.contentId != null }
         val catalog = romLibrary.catalog
         val hashed = { id != null }
         val noHash = { GameSettingsRows.NO_HASH }
         val scope = { titleOf(entry) }
-        fun game() = catalog.resolve(id ?: "", entry.displayName)
-        fun custom(field: String, subfield: String? = null) = id != null && catalog.sourceOf(id, field, subfield) == "User override"
+        fun game() = catalog.resolve(entry)
+        fun custom(field: String, subfield: String? = null) = id != null && catalog.sourceOf(entry, field, subfield) == "User override"
         fun defaultSource(field: String, subfield: String, appDefault: String) =
-            { id?.let { catalog.defaultSourceOf(it, field, subfield) }?.takeIf { it != "App default" }
+            { id?.let { catalog.defaultSourceOf(entry, field, subfield) }?.takeIf { it != "App default" }
                 ?.let(GameSource::label) ?: appDefault }
         fun machine(subfield: String, read: (GameCatalog.Game) -> Int?, fallback: () -> Int, appDefault: String) =
             GameValue({ if (custom("machine", subfield)) read(game())?.toString() else null },
-                { (id?.let { read(catalog.resolveDefault(it, entry.displayName)) } ?: fallback()).toString() },
+                { (id?.let { read(catalog.resolveDefault(entry)) } ?: fallback()).toString() },
                 defaultSource("machine", subfield, appDefault),
                 { value -> saveGameSetting(entry) {
                     if (value == null) catalog.resetOverrideSubfield(id!!, "machine", subfield)
@@ -1459,7 +1496,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
             val game = game()
             if (game.controllerBindings == null ||
                 (game.controllerBindings == "[]" && !game.overriddenFields.contains("controller"))) GameSource.ALL_GAMES
-            else GameSource.label(id?.let { catalog.sourceOf(it, "controller", "bindings") } ?: GameSource.ALL_GAMES)
+            else GameSource.label(id?.let { catalog.sourceOf(entry, "controller", "bindings") } ?: GameSource.ALL_GAMES)
         }
         val base = { if ((game().baseClockTenthsMHz ?: clock) == 20) 1.9968 else 2.4576 }
         val multiples = listOf(1, 2, 3, 4, 6, 8, 10, 12, 16, DEFAULT_CPU_MULTIPLE)
@@ -1485,7 +1522,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
                     defaultLabel = { cpu.fallback().toInt().let { "%.1f MHz (\u00d7%d)".format(base() * it, it) } }),
                 GameSettingsRows.text("command", "Startup command", "DOS command, such as GAME",
                     { game().launchCommand }, { custom("launch", "text") },
-                    { id?.let { catalog.sourceOf(it, "launch") }?.takeIf { it != "App default" }?.let(GameSource::label) },
+                    { id?.let { catalog.sourceOf(entry, "launch") }?.takeIf { it != "App default" }?.let(GameSource::label) },
                     { value -> saveGameSetting(entry) {
                         if (value.isEmpty()) catalog.updateOverrideSubfields(id!!, "launch",
                             mapOf("text" to null, "commands" to null, "screenHashes" to null))
@@ -1496,15 +1533,15 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
                 "Machine changes apply on the next launch or restart."),
             RowGroup("LIBRARY", listOf(
                 GameSettingsRows.text("title", "Title", "Game title", { game().title }, { custom("title") },
-                    { id?.let { GameSource.label(catalog.sourceOf(it, "title")) } ?: "Filename" },
+                    { id?.let { GameSource.label(catalog.sourceOf(entry, "title")) } ?: "Filename" },
                     { value -> saveGameSetting(entry, "Saved") { catalog.setOverride(id!!, "title", value) } },
                     { saveGameSetting(entry, "Saved") { catalog.resetOverride(id!!, "title") } },
                     enabled = hashed, disabledReason = noHash),
                 artwork.row(entry, "boxArt", hashed),
                 artwork.row(entry, "preview", hashed)),
                 "Chosen images are copied into your library."),
-            RowGroup("FILE", GameSettingsRows.file(entry.path, entry.zipEntry, id, entry.error) +
-                listOfNotNull(if (!library) null else GameDeletionFlow.row(this, libraryFlow, entry,
+            RowGroup("FILE", GameSettingsRows.file(entry.path, entry.zipEntry, entry.contentId, entry.error) +
+                listOfNotNull(resetDiskRow(entry), if (!library) null else GameDeletionFlow.row(this, libraryFlow, entry,
                     GameDeletionFlow.Prompt(entry.path, "file"), "ROM folder",
                     { !libraryVisible && currentEntry?.uri == entry.uri }, "Kairo98-delete-game") {
                     romLibrary.deleteSource(entry, libraryEntries)
@@ -1513,13 +1550,36 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
                 saveGameSetting(entry, "Game settings reset. Machine changes apply on next launch or restart.",
                     "Could not reset game settings") {
                     catalog.resetOverride(id!!)
-                    if (currentEntry?.contentId == id) {
-                        currentGame = catalog.resolve(id, entry.displayName)
+                    if (currentEntry?.id == entry.id) {
+                        currentGame = catalog.resolve(entry)
                         setSecondaryInitialMode(currentGame?.inputSecondary == "touchpad")
                         gamepadMapper.bindings = effectiveControllerBindings(currentGame)
                     }
                 }
             })))
+    }
+
+    /**
+     * The game plays from a working copy of its disk, which holds the saves the game writes to
+     * it. Resetting replaces that copy with the current disk image, as after editing the image.
+     */
+    private fun resetDiskRow(entry: LibraryEntry): SettingsRow? {
+        if (!romLibrary.hasWorkingImage(entry)) return null
+        return SettingsRow.action("reset-disk", "Reset disk", danger = true,
+            enabled = { libraryVisible || currentEntry?.id != entry.id },
+            disabledReason = { "Exit this game before resetting its disk" },
+            tray = {
+                Confirm("Replace ${entry.displayName}'s working copy with its disk image? " +
+                    "Saves the game wrote to the disk are removed.", "Reset", danger = true) {
+                    try {
+                        romLibrary.resetWorkingImage(entry)
+                        toast("Disk reset")
+                    } catch (error: Exception) {
+                        toast(error.message ?: "Could not reset the disk")
+                    }
+                    pages.refresh()
+                }.tray()
+            })
     }
 
     private fun showDetailPreview(entry: LibraryEntry) = artwork.view(entry)
@@ -1529,9 +1589,8 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
                                 failure: String? = null, action: () -> Unit) {
         try {
             action()
-            if (currentEntry?.contentId == entry.contentId && entry.contentId != null)
-                currentGame = romLibrary.catalog.resolve(entry.contentId, entry.displayName)
-            entry.contentId?.let(libraryScreen::metadataChanged)
+            if (currentEntry?.id == entry.id) currentGame = romLibrary.catalog.resolve(entry)
+            libraryScreen.metadataChanged(entry.key)
             toast(message)
         } catch (error: Exception) {
             toast(failure ?: "Could not save: ${error.message ?: "Invalid value"}")
@@ -1600,7 +1659,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
             val current = currentEntry ?: return emptyList()
             val named = currentGame?.cdId
             return libraryEntries.filter { entry ->
-                entry.playable && entry.isCd && (entry.contentId == named || sameSource(current, entry))
+                entry.playable && entry.isCd && (romLibrary.catalog.matchId(entry) == named || sameSource(current, entry))
             }.distinctBy { it.contentId }
         }
         return ChoiceSpec("CD-ROM", { currentTitle }, {
@@ -1827,7 +1886,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
     private fun controllerMappingStatus(entry: LibraryEntry?): String? {
         if (controllerProfiles.configuration.layout != com.mrjackspade.kairo.frontend.ControllerLayout.WITH_STICKS)
             return null
-        val game = entry?.contentId?.let { romLibrary.catalog.resolve(it, entry.displayName) }
+        val game = entry?.takeIf { it.contentId != null }?.let(romLibrary.catalog::resolve)
         if (game == null) return null
         if (game.overriddenFields.contains("controller") || game.controllerProfile == "custom-v1") return null
         return if (game.controllerDefaultBindings != null &&

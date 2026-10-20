@@ -1,7 +1,10 @@
 package com.mrjackspade.kairo98
 
 import com.mrjackspade.kairo.frontend.CatalogFieldLayers
+import com.mrjackspade.kairo.frontend.GameKey
+import com.mrjackspade.kairo.frontend.GameKeyMigration
 import com.mrjackspade.kairo.frontend.GameMetadataOverrides
+import com.mrjackspade.kairo.frontend.LibraryItem
 import com.mrjackspade.kairo.frontend.LocalCatalogFile
 import com.mrjackspade.kairo.frontend.CatalogArtworkStore
 import com.mrjackspade.kairo.frontend.ArtworkOverridePath
@@ -17,7 +20,10 @@ import java.net.URI
 import java.text.Normalizer
 import java.util.concurrent.atomic.AtomicBoolean
 
-/** Versioned, data-only metadata. Nothing in this file is executed by Android. */
+/**
+ * Versioned, data-only metadata. Catalog records are named by content ID; the user's own
+ * overrides belong to a game's key. Nothing in this file is executed by Android.
+ */
 class GameCatalog(private val context: Context) : LibraryCatalog {
     data class StartupInput(val key: Char, val enter: Boolean, val screenHashes: Set<Long>)
     data class StartupOption(val id: String, val label: String, val inputs: List<StartupInput>)
@@ -121,7 +127,8 @@ class GameCatalog(private val context: Context) : LibraryCatalog {
     private val fallbackRecords = HashMap<String, JSONObject>()
     // A game's merged record and resolved metadata are reused until a catalog, override or
     // artwork change; settings pages read them for every row and every focus move.
-    private data class MemoKey(val contentId: String, val fileName: String?, val includeUser: Boolean)
+    /** [owner] is the game whose overrides apply; null for its catalog record alone. */
+    private data class MemoKey(val contentId: String, val owner: GameKey?, val fileName: String?)
     private val layeredMemo = HashMap<MemoKey, CatalogFieldLayers.Result>()
     private val resolvedMemo = HashMap<MemoKey, Game>()
     private fun invalidate() {
@@ -130,9 +137,9 @@ class GameCatalog(private val context: Context) : LibraryCatalog {
     }
 
     /** Only this game's overrides changed. */
-    private fun invalidate(contentId: String) {
-        layeredMemo.keys.removeAll { it.contentId == contentId }
-        resolvedMemo.keys.removeAll { it.contentId == contentId }
+    private fun invalidate(owner: GameKey) {
+        layeredMemo.keys.removeAll { it.owner == owner }
+        resolvedMemo.keys.removeAll { it.owner == owner }
     }
     private val knownFileNames = HashMap<String, String>()
     private val updatedFallbackIds = HashSet<String>()
@@ -164,33 +171,31 @@ class GameCatalog(private val context: Context) : LibraryCatalog {
         return true
     }
 
-    @Synchronized fun sourceOf(contentId: String, field: String, subfield: String? = null): String {
+    @Synchronized fun sourceOf(item: LibraryItem, field: String, subfield: String? = null): String {
         val path = if (subfield == null) arrayOf(field) else arrayOf(field, subfield)
-        return layered(contentId).sourceOf(*path)
+        return layered(matchId(item) ?: "", item.key, item.displayName).sourceOf(*path)
             ?: if (field == "title") "Filename" else "App default"
     }
 
     /** Where a setting would come from without the user's own change, for its Default option. */
-    @Synchronized fun defaultSourceOf(contentId: String, field: String, subfield: String? = null): String {
+    @Synchronized fun defaultSourceOf(item: LibraryItem, field: String, subfield: String? = null): String {
         val path = if (subfield == null) arrayOf(field) else arrayOf(field, subfield)
-        return layered(contentId, includeUser = false).sourceOf(*path)
+        return layered(matchId(item) ?: "", null, item.displayName).sourceOf(*path)
             ?: if (field == "title") "Filename" else "App default"
     }
 
     /** The game without the user's own changes, so each Default option can show its value. */
-    @Synchronized fun resolveDefault(contentId: String, fileName: String): Game =
-        resolve(contentId, fileName, includeUser = false)
+    @Synchronized fun resolveDefault(item: LibraryItem): Game = resolve(matchId(item) ?: "", null, item.displayName)
 
-    private fun layered(contentId: String, fileName: String? = null,
-                        includeUser: Boolean = true): CatalogFieldLayers.Result {
+    private fun layered(contentId: String, owner: GameKey?, fileName: String? = null): CatalogFieldLayers.Result {
         if (fileName != null && contentId.isNotEmpty()) knownFileNames[contentId] = fileName
-        return layeredMemo.getOrPut(MemoKey(contentId, fileName ?: knownFileNames[contentId], includeUser)) {
-            layeredUncached(contentId, fileName, includeUser)
-        }
+        val key = MemoKey(contentId, owner, fileName ?: knownFileNames[contentId])
+        return layeredMemo.getOrPut(key) { layeredUncached(key) }
     }
 
-    private fun layeredUncached(contentId: String, fileName: String?,
-                                includeUser: Boolean): CatalogFieldLayers.Result {
+    private fun layeredUncached(key: MemoKey): CatalogFieldLayers.Result {
+        val contentId = key.contentId
+        val fileName = key.fileName
         val baseRecord = base.optJSONObject("games")?.optJSONObject(contentId)
         val shardRecord = shardFor(contentId)?.optJSONObject("games")?.optJSONObject(contentId)
         val updateRecord = update.optJSONObject("games")?.optJSONObject(contentId)
@@ -204,9 +209,9 @@ class GameCatalog(private val context: Context) : LibraryCatalog {
                 }
             }
         } else if (baseRecord != null || shardRecord != null || updateRecord != null) fallback = null
-        val name = fileName ?: knownFileNames[contentId]
+        val name = fileName
         val userRecord = additions.optJSONObject("games")?.optJSONObject(contentId)
-        val overrideRecord = if (includeUser) overrides.record(contentId) else null
+        val overrideRecord = key.owner?.let(overrides::record)
         val installed = installedCatalogs.catalogs()
         // A disk record names its game's shared record. Each layer adds its own copy of that
         // record beneath its disk records, so the disk's own fields override it in every layer.
@@ -237,18 +242,36 @@ class GameCatalog(private val context: Context) : LibraryCatalog {
             } else emptySet() })
     }
 
-    @Synchronized override fun resolve(contentId: String, fileName: String): Game =
-        resolve(contentId, fileName, includeUser = true)
+    @Synchronized override fun resolve(item: LibraryItem): Game =
+        resolve(matchId(item) ?: "", item.key, item.displayName)
 
-    private fun resolve(contentId: String, fileName: String, includeUser: Boolean): Game =
-        resolvedMemo.getOrPut(MemoKey(contentId, fileName, includeUser)) {
-            resolveUncached(contentId, fileName, includeUser)
+    /** A catalog record alone, as for a disk a game names that is not a library entry. */
+    @Synchronized fun resolve(contentId: String, fileName: String): Game = resolve(contentId, null, fileName)
+
+    private fun resolve(contentId: String, owner: GameKey?, fileName: String): Game =
+        resolvedMemo.getOrPut(MemoKey(contentId, owner, fileName)) {
+            resolveUncached(contentId, owner, fileName)
         }
 
-    private fun resolveUncached(contentId: String, fileName: String, includeUser: Boolean): Game {
-        val layers = layered(contentId, fileName, includeUser)
+    // An unedited game needs no lookup, so startup reads no shards for it.
+    @Synchronized override fun matchId(item: LibraryItem): String? {
+        val current = item.contentId ?: return item.catalogId
+        val first = item.catalogId ?: return current
+        return if (current == first || known(current)) current else first
+    }
+
+    /** Whether any catalog has a record for [contentId]. */
+    private fun known(contentId: String): Boolean {
+        fun has(source: JSONObject?) = source?.optJSONObject("games")?.has(contentId) == true
+        return has(base) || has(shardFor(contentId)) || has(update) || has(additions) ||
+            has(parts.additional("shards/${contentId.substringAfter(':').take(2)}.json")) ||
+            installedCatalogs.sources(contentId).any { it.record != null }
+    }
+
+    private fun resolveUncached(contentId: String, owner: GameKey?, fileName: String): Game {
+        val layers = layered(contentId, owner, fileName)
         val merged = layers.record
-        val user = if (includeUser) overrides.record(contentId) else null
+        val user = owner?.let(overrides::record)
         val title = merged.optString("title").takeIf { it.isNotBlank() }
             ?: fileName.substringAfterLast('/').substringAfterLast('\\').substringBeforeLast('.')
         val artwork = merged.optJSONObject("artwork")
@@ -302,16 +325,15 @@ class GameCatalog(private val context: Context) : LibraryCatalog {
     fun missingArtworkFor(entries: List<LibraryEntry>): List<ArtworkSource> {
         return entries.asSequence().filter { it.playable }
             .flatMap { entry ->
-                val id = entry.contentId ?: ""
-                val game = resolve(id, entry.displayName)
+                val game = resolve(entry)
                 listOfNotNull(
                     game.boxArtCatalogPath?.takeIf { game.boxArtUrl != null &&
-                        sourceOf(id, "artwork", "boxArt") ==
-                            sourceOf(id, "artwork", "boxArtUrl") }
+                        sourceOf(entry, "artwork", "boxArt") ==
+                            sourceOf(entry, "artwork", "boxArtUrl") }
                         ?.let { ArtworkSource(it, game.boxArtUrl!!) },
                     game.previewCatalogPath?.takeIf { game.previewUrl != null &&
-                        sourceOf(id, "artwork", "preview") ==
-                            sourceOf(id, "artwork", "previewUrl") }
+                        sourceOf(entry, "artwork", "preview") ==
+                            sourceOf(entry, "artwork", "previewUrl") }
                         ?.let { ArtworkSource(it, game.previewUrl!!) }).asSequence()
             }
             .distinctBy { it.path }
@@ -322,31 +344,33 @@ class GameCatalog(private val context: Context) : LibraryCatalog {
     fun downloadArtwork(source: ArtworkSource, cancelled: AtomicBoolean) =
         artworkStore.download(source.path, source.url, cancelled)
 
-    @Synchronized fun setOverride(contentId: String, field: String, value: Any) {
-        require(validId(contentId)) { "Invalid game ID" }
+    @Synchronized fun setOverride(game: GameKey, field: String, value: Any) {
         require(field in FIELDS) { "Unsupported field" }
         require(field !in OBJECT_FIELDS) { "Use subfield updates for nested settings" }
         require(validField(field, value)) { "Invalid $field" }
-        overrides.set(contentId, field, value)
-        invalidate(contentId)
+        overrides.set(game, field, value)
+        invalidate(game)
     }
 
+    /** Overrides from before games had keys, for [GameKeyMigration]. */
+    fun legacyOverrides() = GameKeyMigration.OverrideStore(overrides) { synchronized(this) { invalidate() } }
+
     /** Hide a known support disk without removing it from media lookup or disk swaps. */
-    @Synchronized override fun hiddenFromLibrary(contentId: String): Boolean {
-        if (contentId.isEmpty()) return false
+    @Synchronized override fun hiddenFromLibrary(item: LibraryItem): Boolean {
+        val contentId = matchId(item) ?: return false
         fun hidden(source: JSONObject?): Boolean? = source?.optJSONObject("games")
             ?.optJSONObject(contentId)?.opt("hidden") as? Boolean
         return CatalogFieldLayers.hidden(hidden(base), hidden(shardFor(contentId)),
             hidden(update), *installedCatalogs.sources(contentId).map { it.record?.opt("hidden") }.toTypedArray(),
-            hidden(additions), overrides.record(contentId)?.opt("hidden"))
+            hidden(additions), overrides.record(item.key)?.opt("hidden"))
     }
 
     /** Read for every library entry, so it takes the field from the highest layer instead of merging records. */
-    @Synchronized override fun setDisks(contentId: String): List<String> {
-        if (contentId.isEmpty()) return emptyList()
+    @Synchronized override fun setDisks(item: LibraryItem): List<String> {
+        val contentId = matchId(item) ?: return emptyList()
         fun disks(record: JSONObject?) = record?.optJSONArray("setDisks")
         fun game(source: JSONObject?) = source?.optJSONObject("games")?.optJSONObject(contentId)
-        val array = disks(overrides.record(contentId)) ?: disks(game(additions))
+        val array = disks(overrides.record(item.key)) ?: disks(game(additions))
             ?: installedCatalogs.sources(contentId).asReversed().firstNotNullOfOrNull { disks(it.record) }
             ?: disks(game(parts.additional("shards/${contentId.substringAfter(':').take(2)}.json")))
             ?: disks(game(update)) ?: disks(game(shardFor(contentId))) ?: disks(game(base))
@@ -354,9 +378,8 @@ class GameCatalog(private val context: Context) : LibraryCatalog {
         return (0 until array.length()).map(array::getString)
     }
 
-    @Synchronized fun updateOverrideSubfields(contentId: String, field: String,
+    @Synchronized fun updateOverrideSubfields(game: GameKey, field: String,
                                               changes: Map<String, Any?>) {
-        require(validId(contentId)) { "Invalid game ID" }
         require(field in OBJECT_FIELDS) { "Unsupported setting" }
         if (changes.isEmpty()) return
         for ((subfield, value) in changes) {
@@ -371,31 +394,30 @@ class GameCatalog(private val context: Context) : LibraryCatalog {
                 "Invalid $field.$subfield"
             }
         }
-        overrides.updateSubfields(contentId, field, changes)
-        invalidate(contentId)
+        overrides.updateSubfields(game, field, changes)
+        invalidate(game)
     }
 
-    fun setOverrideSubfield(contentId: String, field: String, subfield: String, value: Any) =
-        updateOverrideSubfields(contentId, field, mapOf(subfield to value))
+    fun setOverrideSubfield(game: GameKey, field: String, subfield: String, value: Any) =
+        updateOverrideSubfields(game, field, mapOf(subfield to value))
 
-    @Synchronized fun resetOverride(contentId: String, field: String? = null) {
-        require(validId(contentId)) { "Invalid game ID" }
+    @Synchronized fun resetOverride(game: GameKey, field: String? = null) {
         require(field == null || field in FIELDS)
-        overrides.clear(contentId, field)
-        invalidate(contentId)
+        overrides.clear(game, field)
+        invalidate(game)
     }
 
-    fun resetOverrideSubfield(contentId: String, field: String, subfield: String) =
-        updateOverrideSubfields(contentId, field, mapOf(subfield to null))
+    fun resetOverrideSubfield(game: GameKey, field: String, subfield: String) =
+        updateOverrideSubfields(game, field, mapOf(subfield to null))
 
-    fun setArtworkOverride(contentId: String, kind: String, path: String) {
+    fun setArtworkOverride(game: GameKey, kind: String, path: String) {
         require(kind in ART_PATH_FIELDS && validArtPath(path))
-        setOverrideSubfield(contentId, "artwork", kind, path)
+        setOverrideSubfield(game, "artwork", kind, path)
     }
 
-    fun resetArtworkOverride(contentId: String, kind: String) {
+    fun resetArtworkOverride(game: GameKey, kind: String) {
         require(kind in ART_PATH_FIELDS)
-        resetOverrideSubfield(contentId, "artwork", kind)
+        resetOverrideSubfield(game, "artwork", kind)
     }
 
     private fun validField(field: String, value: Any): Boolean = when (field) {
