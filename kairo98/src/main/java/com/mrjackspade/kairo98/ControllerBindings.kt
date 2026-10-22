@@ -9,7 +9,7 @@ import org.json.JSONArray
 /** Assigns stable virtual controls to PC-98 keys, joystick, mouse, or app actions. */
 object ControllerBindings {
     val JOYSTICK = JoystickInputRouter.DEFAULT_CONTROLS
-    private val codec = ControllerBindingsCodec(::defaults, { it in 0..127 }, JOYSTICK,
+    val codec = ControllerBindingsCodec(::defaults, { it in 0..127 }, JOYSTICK,
         setOf("menu", "pause", "restart", "exit", "fastForward"))
     fun valid(array: JSONArray) = codec.valid(array)
     fun parse(text: String?) = codec.parse(text)
