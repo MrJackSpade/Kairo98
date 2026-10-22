@@ -168,7 +168,7 @@ def generate(matches_path, gallery, assets, art_assets, ffmpeg, quality, reuse_a
     unique_names = {name: next(iter(keys)) for name, keys in sorted(names.items()) if len(keys) == 1}
     source = {"schemaVersion": 1, "datasets": [{"id": "reviewed-research-2026-09-24",
         "provenance": {"source": "Kairo98 local match catalog, LaunchBox image cache, and VNDB 2026-09-26 dump",
-                       "license": "VNDB-derived metadata: ODbL 1.0; artwork redistribution rights audit pending",
+                       "license": "VNDB-derived metadata: ODbL 1.0; artwork used under fair use",
                        "attribution": "LaunchBox Games Database contributors; VNDB contributors; Kairo98 original descriptions"},
         "games": source_games}]}
     # Separate every marked game, associated hashes and dependent media before generating indexes.

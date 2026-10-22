@@ -103,7 +103,6 @@ Kairo98 can open a game sent from another Android frontend; no library folder is
 - [Release notes](docs/releases/README.md): changes in every version
 - [Licensing and credits](docs/licensing.md): code license and third-party components
 - [Source provenance](docs/source-import.md): imported emulator, sound, and font sources and local changes
-- [Artwork rights](docs/art-rights.md): how bundled artwork is sourced and reviewed
 - [Catalog source data](catalog/research/README.md): research records behind the catalog
 
 ## Help and community
