@@ -73,12 +73,12 @@ class MainActivity : MachineActivity<DiskImageEntry>() {
     private external fun nativeSetMuted(muted: Boolean)
     private external fun nativeSetFastForward(enabled: Boolean)
 
-    override val identity = Identity("KAIRO98", "Kairo98", "PC-98", "kairo98", LibraryStrings("KAIRO98", "Kairo98"),
+    override val identity = Identity("KAIRO98", 0xffF91CB6.toInt(), "Kairo98", "PC-98", "kairo98", LibraryStrings("KAIRO98", "Kairo98"),
         "Kairo98 uses Neko Project 21/W and ymfm. Source and provenance: github.com/MrJackSpade/Kairo98.",
-        "Choose a ROM folder to find disk images and ZIP games",
-        "Folder access expired. Select the ROM folder again.",
-        MachineFirstRun.Folder("Choose a ROM folder", "Select the folder containing your PC-98 games. Kairo98 will " +
-            "scan its disk images and ZIP files.", "Choose ROM folder…"),
+        "Choose a games folder to find disk images and ZIP games",
+        "Folder access expired. Select the games folder again.",
+        MachineFirstRun.Folder("Choose a games folder", "Select the folder containing your PC-98 games. Kairo98 will " +
+            "scan its disk images and ZIP files.", "Choose games folder…"),
         "SAVE STATES", "MrJackSpade/Kairo98")
     override val machine = Machine(640, 400, 640.0 / 400.0, "state.np2")
 
@@ -838,77 +838,31 @@ class MainActivity : MachineActivity<DiskImageEntry>() {
 
     // Machine and firmware ---------------------------------------------------------------------------
 
-    /** Firmware changes only with no game running or starting; a session behind the library still owns it. */
-    private val firmwareConfigurable get() = currentEntry == null && !transitioning
-    @Volatile private var biosBusy = false
-    @Volatile private var fontBusy = false
-    @Volatile private var rhythmBusy = false
 
-    override val firmware get() = MachineFirstRun.Firmware("Optional firmware and font",
-        "Import them now, or add them later in Menu › Machine.", ::firstRunFirmwareRows,
-        "The BIOS ROM must be exactly 96 KiB and the rhythm ROM exactly 8 KiB. Kairo98 works without them.",
-        { biosBusy || fontBusy || rhythmBusy })
-
-    /** First-run firmware rows: each imports its file, and imports wait for each other. */
-    private fun firstRunFirmwareRows(): List<SettingsRow> {
-        val busy = { biosBusy || fontBusy || rhythmBusy }
-        fun row(id: String, label: String, installed: () -> Boolean, importing: () -> Boolean,
-                on: String, off: String, choose: () -> Unit) = SettingsRow.action(id, label,
-            value = { if (importing()) "Importing…" else if (installed()) on else off },
-            tone = { if (installed()) ValueTone.CURRENT else ValueTone.SUMMARY },
-            busy = importing, enabled = { !busy() }, disabledReason = { "Wait for the current import to finish" },
-            tray = { TraySpec(buttons = listOf(TrayButton(if (installed()) "Replace…" else "Choose file…",
-                ButtonTone.PRIMARY) { choose() })) })
-        return listOf(
-            row("bios", "BIOS ROM", { biosFile().isFile }, { biosBusy }, "Installed", "Not installed", ::chooseBiosFile),
-            row("font", "Font BMP", { fontBitmapFile().isFile }, { fontBusy }, "Imported", "Built-in", ::chooseFontFile),
-            row("rhythm", "YM2608 rhythm ROM", { rhythmRomFile().isFile }, { rhythmBusy }, "Installed", "Not installed",
-                ::chooseRhythmFile))
+    /** The PC-98's optional firmware, on the shared firmware rows; Kairo98 has a replacement for each. */
+    override val firmwareSets by lazy {
+        listOf("PC-98 BIOS" to FirmwareSet(firmwareDir(), listOf(
+            FirmwareSet.Part("bios.rom", "BIOS", "bios.rom · the PC-98's own BIOS; Kairo98 has a built-in one",
+                setOf("bios.rom"), false, setOf(BIOS_ROM_BYTES)),
+            FirmwareSet.Part("font.bmp", "Font", "font.bmp · the text and kanji font; Kairo98 has a built-in one",
+                setOf("font.bmp"), false, maxBytes = Pc98FontBitmap.MAX_BYTES, validate = Pc98FontBitmap::validate,
+                status = { if (gameFontActive) "Game folder" else null }, missing = "Built-in",
+                removeLabel = "Use built-in"),
+            FirmwareSet.Part("ym2608_adpcm_rom.bin", "Rhythm samples",
+                "ym2608_adpcm_rom.bin · the sound board's drum sounds", setOf("ym2608_adpcm_rom.bin"), false,
+                setOf(RHYTHM_ROM_BYTES)))))
     }
 
     /** Machine: the base clock, then firmware, which only changes with no game running. */
     override fun machinePage() = GroupsPage("Machine", { GameSource.ALL_GAMES }, {
-        val inGame = !firmwareConfigurable
-        val reason = { "Return to the library to change firmware" }
         listOf(
             RowGroup("CLOCK", listOf(SettingsRow.choice("base-clock", "Base clock", ChoiceSpec("Base clock",
                 { GameSource.ALL_GAMES }, { listOf(ChoiceGroup(null, listOf(
                     ChoiceOption("25", "2.5 MHz"), ChoiceOption("20", "2 MHz")))) },
                 { clock.toString() }, select = { value -> setBaseClock(value.toInt()) }))),
-                "Changing the base clock restarts a running game. Games with their own clock keep it."),
-            RowGroup("FIRMWARE", listOf(
-                firmwareRow("bios", "BIOS ROM", { biosFile().isFile }, { biosBusy }, { "Installed" }, "Not installed",
-                    "Remove", ::chooseBiosFile) { removeFirmware(biosFile(), "BIOS ROM") },
-                firmwareRow("font", "Font BMP", { gameFontActive || fontBitmapFile().isFile }, { fontBusy },
-                    { if (gameFontActive) "Game folder" else "Imported" }, "Built-in",
-                    "Use built-in", ::chooseFontFile) { removeFirmware(fontBitmapFile(), "Font BMP") },
-                firmwareRow("rhythm", "YM2608 rhythm ROM", { rhythmRomFile().isFile }, { rhythmBusy }, { "Installed" },
-                    "Not installed", "Remove", ::chooseRhythmFile) { removeFirmware(rhythmRomFile(), "YM2608 rhythm ROM") })
-                .map { row -> if (inGame) SettingsRow.action(row.id, row.label, row.value, { ValueTone.SUMMARY },
-                    enabled = { false }, disabledReason = reason) else row },
-                if (inGame) "Return to the library to change firmware."
-                else "The BIOS ROM must be exactly 96 KiB and the rhythm ROM exactly 8 KiB."))
+                "Changing the base clock restarts a running game. Games with their own clock keep it.")
+        ) + firmwareGroups()
     })
-
-    /** A firmware file with its state, and a tray to choose, replace, or remove it. */
-    private fun firmwareRow(id: String, label: String, installed: () -> Boolean, busy: () -> Boolean,
-                            on: () -> String, off: String, removeLabel: String, choose: () -> Unit,
-                            remove: () -> Unit) = SettingsRow.action(id, label,
-        value = { if (busy()) "Importing…" else if (installed()) on() else off },
-        tone = { if (installed()) ValueTone.CURRENT else ValueTone.SUMMARY },
-        busy = busy, enabled = { !busy() }, disabledReason = { "Wait for the current import to finish" },
-        tray = {
-            TraySpec(buttons = if (installed()) listOf(TrayButton(removeLabel) { remove() },
-                TrayButton("Replace…", ButtonTone.PRIMARY) { choose() })
-                else listOf(TrayButton("Choose file…", ButtonTone.PRIMARY) { choose() }))
-        })
-
-    private fun removeFirmware(file: File, label: String) {
-        if (!firmwareConfigurable) return
-        toast(if (file.delete()) if (file == fontBitmapFile()) "Using the built-in font" else "$label removed."
-            else "Could not remove $label")
-        firmwareChanged()
-    }
 
     private fun setBaseClock(selected: Int) {
         if (clock == selected) return
@@ -920,31 +874,6 @@ class MainActivity : MachineActivity<DiskImageEntry>() {
             nativeClock(clock)
             toast("Clock change resets the machine")
         } else toast("Global clock saved; this game uses its own clock")
-    }
-
-    private fun chooseBiosFile() { if (firmwareConfigurable) DocumentPicker.open(this, BIOS_REQUEST, failed = ::toast) }
-    private fun chooseFontFile() { if (firmwareConfigurable) DocumentPicker.open(this, FONT_REQUEST, failed = ::toast) }
-    private fun chooseRhythmFile() { if (firmwareConfigurable) DocumentPicker.open(this, RHYTHM_REQUEST, failed = ::toast) }
-
-    /** Imports one firmware file off the UI thread; [busy] marks its row while it runs. */
-    private fun importFirmware(uri: Uri, target: File, label: String, busy: (Boolean) -> Unit, exactBytes: Long? = null,
-                               maxBytes: Long = exactBytes ?: Long.MAX_VALUE, validate: (File) -> Unit = {}) {
-        if (!firmwareConfigurable) return
-        busy(true)
-        firmwareChanged()
-        Thread {
-            val result = try {
-                FirmwareSet.importFile(contentResolver, uri, target, label, exactBytes, maxBytes, validate)
-                "$label imported."
-            } catch (error: Exception) {
-                "$label import failed: ${error.message ?: "Unknown error"}"
-            }
-            runOnUiThread {
-                busy(false)
-                firmwareChanged()
-                toast(result)
-            }
-        }.start()
     }
 
     override fun machineGroup(entry: DiskImageEntry, enabled: () -> Boolean): RowGroup {
@@ -981,29 +910,22 @@ class MainActivity : MachineActivity<DiskImageEntry>() {
     }
 
     override fun handleProductResult(requestCode: Int, resultCode: Int, data: Intent?): Boolean {
-        if (requestCode !in HDI_REQUEST..RHYTHM_REQUEST) return false
+        // Firmware picks belong to the shared firmware rows.
+        if (requestCode !in HDI_REQUEST..FLOPPY_B_REQUEST) return super.handleProductResult(requestCode, resultCode, data)
         val uri = DocumentPicker.selectedUri(resultCode, data) ?: return true
-        when (requestCode) {
-            BIOS_REQUEST -> importFirmware(uri, biosFile(), "BIOS ROM", { biosBusy = it }, BIOS_ROM_BYTES)
-            FONT_REQUEST -> importFirmware(uri, fontBitmapFile(), "Font BMP", { fontBusy = it },
-                maxBytes = Pc98FontBitmap.MAX_BYTES, validate = Pc98FontBitmap::validate)
-            RHYTHM_REQUEST -> importFirmware(uri, rhythmRomFile(), "YM2608 rhythm ROM", { rhythmBusy = it }, RHYTHM_ROM_BYTES)
-            else -> {
-                val name = try {
-                    contentResolver.query(uri, arrayOf(OpenableColumns.DISPLAY_NAME), null, null, null)
-                        ?.use { if (it.moveToFirst()) it.getString(0) else null }
-                } catch (error: Exception) {
-                    toast(error.message ?: "Could not read selected file")
-                    return true
-                }
-                val floppy = requestCode != HDI_REQUEST
-                if (name == null || !Pc98Media.supported(name) || Pc98Media.isCd(name) ||
-                    (floppy && !Pc98Media.isFloppy(name))) {
-                    toast(if (floppy) "Select a supported floppy image" else "Select a supported disk image")
-                } else if (floppy) importFloppyFile(if (requestCode == FLOPPY_A_REQUEST) 0 else 1, uri, name)
-                else openExternalFile(uri)
-            }
+        val name = try {
+            contentResolver.query(uri, arrayOf(OpenableColumns.DISPLAY_NAME), null, null, null)
+                ?.use { if (it.moveToFirst()) it.getString(0) else null }
+        } catch (error: Exception) {
+            toast(error.message ?: "Could not read selected file")
+            return true
         }
+        val floppy = requestCode != HDI_REQUEST
+        if (name == null || !Pc98Media.supported(name) || Pc98Media.isCd(name) ||
+            (floppy && !Pc98Media.isFloppy(name))) {
+            toast(if (floppy) "Select a supported floppy image" else "Select a supported disk image")
+        } else if (floppy) importFloppyFile(if (requestCode == FLOPPY_A_REQUEST) 0 else 1, uri, name)
+        else openExternalFile(uri)
         return true
     }
 
@@ -1114,9 +1036,6 @@ class MainActivity : MachineActivity<DiskImageEntry>() {
         private const val HDI_REQUEST = FIRST_PRODUCT_REQUEST
         private const val FLOPPY_A_REQUEST = FIRST_PRODUCT_REQUEST + 1
         private const val FLOPPY_B_REQUEST = FIRST_PRODUCT_REQUEST + 2
-        private const val BIOS_REQUEST = FIRST_PRODUCT_REQUEST + 3
-        private const val FONT_REQUEST = FIRST_PRODUCT_REQUEST + 4
-        private const val RHYTHM_REQUEST = FIRST_PRODUCT_REQUEST + 5
         private const val BIOS_ROM_BYTES = 0x18000L
         private const val RHYTHM_ROM_BYTES = 0x2000L
         init { System.loadLibrary("kairo98") }

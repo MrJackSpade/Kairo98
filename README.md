@@ -84,7 +84,7 @@ Games are recognized by their disk contents, so recompressing a ZIP does not cha
 
 - **Artwork.** **Menu › Manage library** can download missing artwork for games Kairo98 recognizes.
 - **Catalog updates.** **Update catalogs** on the same page fetches the latest titles, descriptions, and launch settings without an app update.
-- **Disk saves.** A game plays from its own working copy of each disk, which keeps what the game writes to it. Editing the disk image in your ROM folder does not replace that copy; **Game settings › Reset disk** does. Saves, save states and settings belong to the game's place in your ROM folder, so renaming or moving a game makes it a new game.
+- **Disk saves.** A game plays from its own working copy of each disk, which keeps what the game writes to it. Editing the disk image in your games folder does not replace that copy; **Game settings › Reset disk** does. Saves, save states and settings belong to the game's place in your games folder, so renaming or moving a game makes it a new game.
 - **Save states.** Saved in private app storage by default. To use a folder of your choice, choose **Menu › Configurations › Save folder › Custom folder**. Changing the folder moves your save states; if a slot exists in both places, you choose which copy to keep.
 - **Deleting a game file.** Open the game's **Game settings** and choose **Delete game file**. Kairo98 names the file before deleting it; deleting a ZIP removes every game inside it. Saves and settings are kept. If the folder grant is read-only, select the folder again to grant write access.
 - **Startup choices.** Some cataloged games ask a menu question before play; Kairo98 can answer it for you or let you **Play manually**. See [startup choices](docs/startup-choices.md).
@@ -103,7 +103,7 @@ The game menu offers save states, disk changes, game and app settings, restart, 
 
 ## Firmware and fonts
 
-Kairo98 does not include BIOS ROMs or font ROMs. If a game needs them, import your own BIOS, font bitmap, or YM2608 rhythm ROM from **Machine** settings.
+Kairo98 has a built-in BIOS and font, so every file is optional. Menu › Machine lists every BIOS file, each marked Required or Optional. Pick each file, or use **Import all from a folder…** to import every file the app recognizes in a folder you choose. A game that needs the PC-98's own BIOS, font, or the YM2608 rhythm samples uses the ones you import.
 
 A `FONT.BMP` placed in a game's ZIP or library folder overrides the imported font for that game; the one nearest the disk image wins.
 

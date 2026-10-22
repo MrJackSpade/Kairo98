@@ -54,7 +54,7 @@ internal class GameFontLocator(private val resolver: ContentResolver, private va
             val prefix = folders.take(depth).joinToString("/")
             val children = list(tree, parentId)
             val fonts = children.filter { !it.directory && it.name.equals(FONT_NAME, ignoreCase = true) }
-            require(fonts.size <= 1) { "More than one FONT.BMP in ${prefix.ifEmpty { "the ROM folder" }}" }
+            require(fonts.size <= 1) { "More than one FONT.BMP in ${prefix.ifEmpty { "the games folder" }}" }
             fonts.singleOrNull()?.let {
                 nearest = DocumentsContract.buildDocumentUriUsingTree(tree, it.id) to
                     (if (prefix.isEmpty()) it.name else "$prefix/${it.name}")

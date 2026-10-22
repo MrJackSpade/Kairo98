@@ -36,11 +36,11 @@ object Pc98Media {
     fun maxBytes(name: String) = format.limit(name)
 
     /**
-     * The library and its cache. Layout 4 is the shared layout; layouts 2 and 3 and the JSON cache of
-     * version 1.0.3 and earlier are read once and replaced.
+     * The library and its cache. Layouts 4 and later are the shared library's; layouts 2 and 3 and the
+     * JSON cache of version 1.0.3 and earlier are read once and replaced.
      */
     fun library(context: Context) = DiskImageLibrary(context, format, DiskImageLibrary.Cache(
-        file = "library-v2.bin", version = 4, mediaFormatsVersion = 4,
+        file = "library-v2.bin", mediaFormatsVersion = 4,
         legacy = VersionedLibraryCache.Legacy(File(context.filesDir, "library-v1.json"), 1, "entries", ::decodeLegacyEntry),
         earlierRecords = mapOf(2 to ::readCacheRecordV2, 3 to ::readCacheRecordV3)))
 
