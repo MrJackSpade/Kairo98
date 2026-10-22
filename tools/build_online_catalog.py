@@ -4,32 +4,20 @@
 import argparse
 import hashlib
 import json
+import sys
 from pathlib import Path
 
-from build_catalog import build, compact, inherit, validate_record
+from build_catalog import compact, validate_record
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "shared/tools"))
+import catalog_documents
 
 # Disk records name their game's shared name index record instead of repeating it.
 CORE_VERSION = 3
 
 
 def build_pack(source, name_index):
-    _, shards = build(source)
-    if name_index.get("schemaVersion") != 1 or not isinstance(name_index.get("games"), dict) or not isinstance(name_index.get("names"), dict):
-        raise ValueError("invalid name index")
-    for key, record in name_index["games"].items():
-        if not isinstance(key, str) or not isinstance(record, dict) or "game" in record:
-            raise ValueError("invalid name index record")
-        validate_record({**record, "contentIds": ["sha256-hdi-v1:" + "0" * 64]})
-    if any(not isinstance(key, str) or not key.isalnum() or len(key) not in range(4, 129) or
-           not isinstance(value, str) or value not in name_index["games"]
-           for key, value in name_index["names"].items()):
-        raise ValueError("invalid name index alias")
-    games = {}
-    for shard in shards.values():
-        games.update(shard)
-    for record in games.values():
-        validate_record({**inherit(record, name_index["games"]), "contentIds": ["sha256-hdi-v1:" + "0" * 64]})
-    return {"schemaVersion": 1, "games": games, "nameIndex": name_index}
+    return catalog_documents.build_pack(source, name_index, validate_record, "sha256-hdi-v1:" + "0" * 64)
 
 
 def main():

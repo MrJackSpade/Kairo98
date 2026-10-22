@@ -5,9 +5,15 @@ import argparse
 import hashlib
 import json
 import re
+import sys
 from pathlib import Path
 from urllib.parse import urlsplit
+
 from artwork_references import SELF_HOSTED_BASE, expand as expand_artwork
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "shared/tools"))
+import catalog_documents
+from catalog_documents import compact, inherit, require
 
 CONTENT_ID = re.compile(r"sha256-(?:hdi|fd|cd)-v1:[0-9a-f]{64}\Z")
 ART_PATH = re.compile(r"art/(?!.*\.\.)[A-Za-z0-9_./-]{1,252}\Z")
@@ -116,11 +122,6 @@ CONTROLLER_ACTIONS = {"menu", "pause", "restart", "exit"}
 CONTROLLER_JOYSTICK = {"up", "down", "left", "right", "button1", "button2"}
 CONTROLLER_MOUSE = {"moveUp", "moveDown", "moveLeft", "moveRight",
                     "leftButton", "rightButton"}
-
-
-def require(condition, message):
-    if not condition:
-        raise ValueError(message)
 
 
 def valid_bindings(bindings):
@@ -256,50 +257,8 @@ def validate_record(record):
     return {key: value for key, value in record.items() if key != "contentIds"}
 
 
-def inherit(record, shared):
-    """A disk record with its game's shared fields filled in."""
-    if "game" not in record:
-        return record
-    require(record["game"] in shared, f"unknown game {record['game']}")
-    return {**shared[record["game"]], **{key: value for key, value in record.items() if key != "game"}}
-
-
-def compact(obj):
-    return (json.dumps(obj, sort_keys=True, separators=(",", ":"), ensure_ascii=False) + "\n").encode("utf-8")
-
-
 def build(source):
-    require(source.get("schemaVersion") == 1, "unsupported source schema")
-    datasets = source.get("datasets")
-    require(isinstance(datasets, list), "datasets must be an array")
-    by_id = {}
-    provenance = []
-    dataset_ids = set()
-    for dataset in datasets:
-        require(isinstance(dataset, dict), "dataset must be an object")
-        dataset_id = dataset.get("id")
-        info = dataset.get("provenance")
-        require(isinstance(dataset_id, str) and dataset_id and dataset_id not in dataset_ids,
-                "invalid or duplicate dataset ID")
-        require(isinstance(info, dict) and all(isinstance(info.get(k), str) and info[k]
-                                               for k in ("source", "license", "attribution")),
-                "dataset needs source, license and attribution")
-        require(isinstance(dataset.get("games"), list), "games must be an array")
-        dataset_ids.add(dataset_id)
-        provenance.append({"id": dataset_id, **{k: info[k] for k in ("source", "license", "attribution")}})
-        for game in dataset["games"]:
-            normalized = validate_record(game)
-            for content_id in game["contentIds"]:
-                require(content_id not in by_id or by_id[content_id] == normalized,
-                        f"conflicting identity for {content_id}; review before merging")
-                by_id[content_id] = normalized
-    shards = {}
-    for content_id, metadata in sorted(by_id.items()):
-        prefix = content_id.split(":", 1)[1][:2]
-        shards.setdefault(prefix, {})[content_id] = metadata
-    manifest = {"schemaVersion": 1, "shards": sorted(shards),
-                "datasets": sorted(provenance, key=lambda x: x["id"]), "games": len(by_id)}
-    return manifest, shards
+    return catalog_documents.build(source, validate_record)
 
 
 def main():

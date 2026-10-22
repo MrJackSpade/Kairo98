@@ -6,76 +6,18 @@ import copy
 import difflib
 import json
 import re
+import sys
 from collections import Counter
 from pathlib import Path
 
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "shared/tools"))
 from catalog_workbench import key
+from launchbox import BOX_TYPES, SCREENSHOT_TYPES, first_image, new_entry, page_url
 
 
 def load(path):
     return json.loads(Path(path).read_text(encoding="utf-8"))
 
-
-def page_url(game_id):
-    # These snapshot records resolve to different public IDs after LaunchBox
-    # database changes; their URLs were checked against official pages or
-    # official listing links on 2026-09-23.
-    overrides = {
-        "450780": "412248-battle-block-alfin",
-        "453654": "418778-berserkers-front-gaiden-3",
-        "454555": "420335-poy",
-        "454556": "420336-bakutotsu-turb",
-        "454557": "420337-roli-roli-rolling",
-        "454559": "420339-seena-2",
-        "454560": "420340-sengoku-turb",
-        "454562": "420342-stardust-chaser",
-        "454564": "420344-super-depth",
-        "454566": "420346-super-depth-2-finalty",
-        "454567": "420347-turb-3",
-        "454569": "420349-twins",
-        "454570": "420350-turb",
-        "454571": "420351-turb-2",
-        "454572": "420352-twins-2",
-        "454574": "420354-bio-100-free-game-collection",
-        "454575": "420355-bio-100-game-collection-part-2",
-        "454683": "420463-camel-zoo",
-        "454686": "420466-daisenryaku-ii-campaign-version",
-        "454691": "420471-car-ii-grand-prix",
-        "468902": "434684-abnormal-soldier",
-        "470408": "436190-jewel-bem-hunter-lime-vol-02",
-        "470410": "436192-jewel-bem-hunter-lime-vol03",
-        "470413": "436195-jewel-bem-hunter-lime-vol-04",
-        "470421": "436203-lightning-warrior-raidy",
-        "475938": "441727-the-tower-of-zarbartz",
-    }
-    if game_id in overrides:
-        return "https://gamesdb.launchbox-app.com/games/details/" + overrides[game_id]
-    # The adjacent 453654-453669 records tentatively follow the offset
-    # confirmed for Berserkers Front Gaiden 3 (453654). Official pages
-    # sampled across the 454xxx-462xxx snapshot blocks resolve
-    # at DatabaseID - 34220. Samples in the 465xxx-470xxx block resolve at
-    # DatabaseID - 34218, except Jewel Bem Hunter Lime volumes 05-12
-    # (470837-470844), which resolve at DatabaseID - 34216. Remaining records
-    # in those blocks still need final catalog review.
-    snapshot_id = int(game_id)
-    if 453654 <= snapshot_id <= 453669:
-        public_id = snapshot_id - 34876
-    elif 454000 <= snapshot_id < 463000:
-        public_id = snapshot_id - 34220
-    elif 470837 <= snapshot_id <= 470844:
-        public_id = snapshot_id - 34216
-    elif 465000 <= snapshot_id < 471000:
-        public_id = snapshot_id - 34218
-    else:
-        public_id = snapshot_id - 50000
-    if public_id <= 0:
-        raise ValueError(f"no public page mapping for DatabaseID {game_id}")
-    return f"https://gamesdb.launchbox-app.com/games/details/{public_id}"
-
-
-BOX_TYPES = ("Box - Front", "Fanart - Box - Front")
-SCREENSHOT_TYPES = ("Screenshot - Gameplay", "Screenshot - Game Title",
-                    "Screenshot - Game Select")
 
 # These folder names collide with different games in LaunchBox. Keep them out
 # of subsequent automatic exact-title joins after the attribution audit.
@@ -88,26 +30,6 @@ EXACT_TITLE_COLLISIONS = {
     "pc88:Koikoi (S. Miyoshi)",  # LaunchBox entry credits Tsukumo; source has extras only
     "pc88:Tetris (Doujin - Noripy)",  # LaunchBox entry credits Bullet-Proof Software
 }
-
-
-def first_image(game, categories):
-    for category in categories:
-        url = next((image["url"] for image in game["images"]
-                    if image["type"] == category), "")
-        if url:
-            return url
-    return ""
-
-
-def new_entry(platform, game_id, game):
-    return {
-        "platform": platform, "databaseId": game_id,
-        "title": game["Name"], "aliases": list(game["aliases"]),
-        "sourceGroups": [], "contentIds": [], "description": "",
-        "pageUrl": page_url(game_id),
-        "boxArtUrl": first_image(game, BOX_TYPES),
-        "screenshotUrl": first_image(game, SCREENSHOT_TYPES),
-    }
 
 
 def sorted_catalog(entries):

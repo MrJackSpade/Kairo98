@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Add research entries for NeoKobe games from a MobyGames dump made by tools/mobygames_dump.py.
+"""Add research entries for NeoKobe games from a MobyGames dump made by shared/tools/mobygames.py.
 
 A choices file names each inventory group's MobyGames game and gives an original description;
 MobyGames text is reference only and none is copied. An optional "title" replaces MobyGames'
@@ -102,7 +102,7 @@ def adult_review(entry, game, vndb):
 def main():
     parser = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
     parser.add_argument("choices", type=Path)
-    parser.add_argument("dump", type=Path, help="the mobygames_dump.py output directory")
+    parser.add_argument("dump", type=Path, help="the shared/tools/mobygames.py output directory")
     parser.add_argument("vndb", type=Path, help="the extracted VNDB dump's db directory")
     parser.add_argument("--ffmpeg", type=Path, default=Path("C:/bin/ffmpeg.exe"))
     parser.add_argument("--quality", type=int, default=25)

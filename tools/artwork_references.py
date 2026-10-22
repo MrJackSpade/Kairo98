@@ -1,80 +1,13 @@
-"""Lossless identifiers for catalog artwork, with URL templates owned by code."""
-import copy
-import hashlib
-import re
+"""Kairo98's catalog artwork references: PC-88 and PC-98 platform codes, self-hosted images
+served from this repository. The format lives in shared/tools/launchbox_artwork.py."""
+import sys
+from pathlib import Path
 
-BASE = "https://images.launchbox-app.com/"
-UUID = re.compile(r"[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}")
-URL = re.compile(re.escape(BASE) + r"(r2_)?(" + UUID.pattern + r")\.(jpg|png)")
-PATH = re.compile(r"art/catalog/pc(88|98)/([1-9][0-9]*)/(box|screenshot)-([0-9a-f]{12})\.webp")
-KINDS = {"boxArt": "box", "preview": "screenshot"}
-# Artwork from sources without an image server of their own, served from this repository's
-# catalog/artwork at its own path. Its records keep the path and URL as they are.
-SELF_HOSTED_BASE = "https://raw.githubusercontent.com/MrJackSpade/Kairo98/main/catalog/artwork/"
-SELF_HOSTED_PATH = re.compile(r"art/catalog/moby/([1-9][0-9]*)/(box|screenshot)-([0-9a-f]{12})\.webp")
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "shared/tools"))
+from launchbox_artwork import References
 
-
-def self_hosted(art):
-    """Whether every image is a self-hosted one with its own URL, all from one game."""
-    games = set()
-    for kind, label in KINDS.items():
-        if kind not in art and kind + "Url" not in art:
-            continue
-        path = SELF_HOSTED_PATH.fullmatch(art.get(kind, ""))
-        if not path or path[2] != label or art.get(kind + "Url") != SELF_HOSTED_BASE + path[0]:
-            return False
-        games.add(path[1])
-    return len(games) == 1
-
-
-def expand(art):
-    if not isinstance(art, dict):
-        raise ValueError("invalid artwork")
-    if not (art.keys() & {"platform", "game"}) and not any(isinstance(v, dict) for v in art.values()):
-        return copy.deepcopy(art)
-    if (not {"platform", "game"} < art.keys() or art.keys() - {"platform", "game", *KINDS}
-            or type(art["platform"]) is not int or art["platform"] not in (88, 98)
-            or type(art["game"]) is not int or not 1 <= art["game"] <= 2147483647):
-        raise ValueError("invalid artwork group")
-    result = {}
-    for kind, label in KINDS.items():
-        if kind not in art:
-            continue
-        ref = art[kind]
-        if (not isinstance(ref, dict) or set(ref) != {"id", "format", "revision"}
-                or not isinstance(ref["id"], str) or not UUID.fullmatch(ref["id"])
-                or type(ref["format"]) is not int or ref["format"] not in (0, 1)
-                or type(ref["revision"]) is not int or ref["revision"] not in (0, 2)):
-            raise ValueError("invalid artwork reference")
-        url = BASE + ("r2_" if ref["revision"] == 2 else "") + ref["id"] + (".png" if ref["format"] else ".jpg")
-        token = hashlib.sha256(url.encode("utf-8")).hexdigest()[:12]
-        result[kind] = f'art/catalog/pc{art["platform"]}/{art["game"]}/{label}-{token}.webp'
-        result[kind + "Url"] = url
-    return result
-
-
-def compact(art):
-    original = expand(art)
-    if not original:
-        return {}
-    result, groups = {}, set()
-    if original.keys() - {"boxArt", "preview", "boxArtUrl", "previewUrl"}:
-        raise ValueError("unknown artwork fields")
-    if self_hosted(original):
-        return original
-    for kind, label in KINDS.items():
-        if kind not in original and kind + "Url" not in original:
-            continue
-        path = PATH.fullmatch(original.get(kind, ""))
-        url = URL.fullmatch(original.get(kind + "Url", ""))
-        if not path or not url or path[3] != label:
-            raise ValueError("artwork cannot be represented by catalog templates")
-        groups.add((int(path[1]), int(path[2])))
-        result[kind] = {"id": url[2], "format": int(url[3] == "png"), "revision": 2 if url[1] else 0}
-    if len(groups) != 1:
-        raise ValueError("artwork pair uses different asset groups")
-    platform, game = groups.pop()
-    result = {"platform": platform, "game": game, **result}
-    if expand(result) != original:
-        raise ValueError("artwork cache paths or URLs failed round-trip")
-    return result
+_REFERENCES = References("Kairo98", (88, 98))
+SELF_HOSTED_BASE = _REFERENCES.self_hosted_base
+expand = _REFERENCES.expand
+compact = _REFERENCES.compact
+self_hosted = _REFERENCES.self_hosted

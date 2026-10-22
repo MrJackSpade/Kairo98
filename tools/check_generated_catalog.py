@@ -30,6 +30,8 @@ BUILDERS = {
     "tools/artwork_references.py",
     "tools/build_catalog_packages.py",
     "tools/build_online_catalog.py",
+    # The pinned shared tools assemble documents, artwork references and parts.
+    "shared",
 }
 
 
