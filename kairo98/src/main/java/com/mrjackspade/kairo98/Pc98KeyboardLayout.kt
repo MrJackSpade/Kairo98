@@ -1,30 +1,12 @@
 package com.mrjackspade.kairo98
 
 import com.mrjackspade.kairo.frontend.GuestKeyboardLayout
+import com.mrjackspade.kairo.frontend.JisKana
 import com.mrjackspade.kairo.frontend.GuestKeyboardPage
 import com.mrjackspade.kairo.frontend.KeyboardKey
 
 /** PC-98 scan codes and legends supplied to the shared keyboard panel. */
 internal object Pc98KeyboardLayout {
-    /**
-     * JIS kana legends by scan code: the kana, then its Shift form where the key has one.
-     * Declared before [value], whose rows read it while the object initializes.
-     */
-    private val kana = mapOf(
-        0x01 to ("ヌ" to null), 0x02 to ("フ" to null), 0x03 to ("ア" to "ァ"), 0x04 to ("ウ" to "ゥ"),
-        0x05 to ("エ" to "ェ"), 0x06 to ("オ" to "ォ"), 0x07 to ("ヤ" to "ャ"), 0x08 to ("ユ" to "ュ"),
-        0x09 to ("ヨ" to "ョ"), 0x0a to ("ワ" to "ヲ"), 0x0b to ("ホ" to null), 0x0c to ("ヘ" to null),
-        0x0d to ("ー" to null),
-        0x10 to ("タ" to null), 0x11 to ("テ" to null), 0x12 to ("イ" to "ィ"), 0x13 to ("ス" to null),
-        0x14 to ("カ" to null), 0x15 to ("ン" to null), 0x16 to ("ナ" to null), 0x17 to ("ニ" to null),
-        0x18 to ("ラ" to null), 0x19 to ("セ" to null), 0x1a to ("゛" to null), 0x1b to ("゜" to "「"),
-        0x1d to ("チ" to null), 0x1e to ("ト" to null), 0x1f to ("シ" to null), 0x20 to ("ハ" to null),
-        0x21 to ("キ" to null), 0x22 to ("ク" to null), 0x23 to ("マ" to null), 0x24 to ("ノ" to null),
-        0x25 to ("リ" to null), 0x26 to ("レ" to null), 0x27 to ("ケ" to null), 0x28 to ("ム" to "」"),
-        0x29 to ("ツ" to "ッ"), 0x2a to ("サ" to null), 0x2b to ("ソ" to null), 0x2c to ("ヒ" to null),
-        0x2d to ("コ" to null), 0x2e to ("ミ" to null), 0x2f to ("モ" to null), 0x30 to ("ネ" to "、"),
-        0x31 to ("ル" to "。"), 0x32 to ("メ" to "・"), 0x33 to ("ロ" to null))
-
     val value = GuestKeyboardLayout(
         brand = "KAIRO98",
         pages = listOf(
@@ -41,8 +23,7 @@ internal object Pc98KeyboardLayout {
 
     /** An alphabet key with its kana legends. */
     private fun key(label: String, code: Int, width: Float = 1f, shifted: String? = null,
-                    chordShift: Boolean = false) = KeyboardKey(label, code, width, shifted, chordShift,
-        kana[code]?.first, kana[code]?.second)
+                    chordShift: Boolean = false) = JisKana.key(label.single(), code, width, shifted, chordShift)
 
     // The alphabet page follows the PC-98 rows, so every kana legend has its key.
     private fun alphabetRows(): List<List<KeyboardKey>> = listOf(
