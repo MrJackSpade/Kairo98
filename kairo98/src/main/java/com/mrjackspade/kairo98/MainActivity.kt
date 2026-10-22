@@ -79,7 +79,7 @@ class MainActivity : MachineActivity<DiskImageEntry>() {
         "Folder access expired. Select the ROM folder again.",
         MachineFirstRun.Folder("Choose a ROM folder", "Select the folder containing your PC-98 games. Kairo98 will " +
             "scan its disk images and ZIP files.", "Choose ROM folder…"),
-        "SAVE STATES")
+        "SAVE STATES", "MrJackSpade/Kairo98")
     override val machine = Machine(640, 400, 640.0 / 400.0, "state.np2")
 
     /** The 21/W machine. Its status line is "<state>[: error] | frames N | CS:IP | audio | xruns | config | profile". */
