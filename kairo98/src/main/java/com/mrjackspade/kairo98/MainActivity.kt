@@ -1,5 +1,10 @@
 package com.mrjackspade.kairo98
 
+import com.mrjackspade.kairo.frontend.DiskImageEntry
+import com.mrjackspade.kairo.frontend.DiskImageLibrary
+import com.mrjackspade.kairo.frontend.LayeredGameCatalog
+import com.mrjackspade.kairo.frontend.sameSource
+import com.mrjackspade.kairo.frontend.CatalogGame
 import com.mrjackspade.kairo.frontend.SecondaryDisplayCoordinator
 import com.mrjackspade.kairo.frontend.EdgeSwipeNavigation
 import com.mrjackspade.kairo.frontend.ImmersiveWindow
@@ -16,6 +21,8 @@ import com.mrjackspade.kairo.frontend.SaveLocation
 import com.mrjackspade.kairo.frontend.GraphicsOptions
 import com.mrjackspade.kairo.frontend.ShaderOptions
 import com.mrjackspade.kairo.frontend.GameDeletionFlow
+import com.mrjackspade.kairo.frontend.FolderStateSlots
+import com.mrjackspade.kairo.frontend.MachineFirstRun
 
 import com.mrjackspade.kairo.frontend.InputRouter
 import com.mrjackspade.kairo.frontend.AboutDocuments
@@ -206,14 +213,14 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
     }
     private val controllerFlow by lazy {
         ControllerProfileCoordinator(controllerProfiles, gamepadMapper,
-            { entry: LibraryEntry -> entry.key.takeIf { entry.contentId != null } },
-            { entry: LibraryEntry -> effectiveControllerBindings(romLibrary.catalog.resolve(entry)) },
-            { id, bindings -> romLibrary.catalog.setOverrideSubfield(id, "controller", "bindings",
+            { entry: DiskImageEntry -> entry.key.takeIf { entry.contentId != null } },
+            { entry: DiskImageEntry -> effectiveControllerBindings(catalog.resolve(entry)) },
+            { id, bindings -> catalog.setOverrideSubfield(id, "controller", "bindings",
                 ControllerBindings.toJson(bindings)) },
-            { id -> romLibrary.catalog.updateOverrideSubfields(id, "controller",
+            { id -> catalog.updateOverrideSubfields(id, "controller",
                 mapOf("bindings" to null, "profile" to null)) },
             { currentEntry },
-            { currentEntry?.let { currentGame = romLibrary.catalog.resolve(it) } })
+            { currentEntry?.let { currentGame = catalog.resolve(it) } })
     }
     private val keyMapping by lazy {
         KeyMappingMode(controllerFlow::activeBindings, controllerFlow::saveActive, controllerFlow::physical,
@@ -226,8 +233,8 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
     private lateinit var swappedKeyboardPanel: GuestKeyboardPanel
     private lateinit var secondaryKeyboard: SecondaryDisplayCoordinator
     private lateinit var onScreenControls: OnScreenControls
-    private lateinit var libraryFlow: LibraryFlow<LibraryEntry>
-    private val libraryScreen: LibraryScreen<LibraryEntry> get() = libraryFlow.screen
+    private lateinit var libraryFlow: LibraryFlow<DiskImageEntry>
+    private val libraryScreen: LibraryScreen<DiskImageEntry> get() = libraryFlow.screen
     private val touchUi by lazy {
         TouchUiCoordinator(this, libraryScreen, { !libraryVisible },
             { ::secondaryKeyboard.isInitialized && secondaryKeyboard.isKeyboardVisible },
@@ -235,7 +242,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
             { if (::screen.isInitialized) screen.requestFocus() })
     }
     private val touchSettingsCoordinator by lazy {
-        TouchSettingsCoordinator(object : TouchSettingsStore<LibraryEntry> {
+        TouchSettingsCoordinator(object : TouchSettingsStore<DiskImageEntry> {
             override fun global() = TouchInputSelection(globalInputMode, globalTouchDirect)
             override fun saveGlobal(value: TouchInputSelection) {
                 globalInputMode = value.mode
@@ -244,11 +251,11 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
                     .putString("input_mode", InputModeDecider.storageValue(value.mode))
                     .putString("touch_mouse", touchStorage(value.directTouch)).apply()
             }
-            override fun mode(game: LibraryEntry) = inputValue(game, "mode", { it.inputMode },
+            override fun mode(game: DiskImageEntry) = inputValue(game, "mode", { it.inputMode },
                 InputModeDecider::parse, InputModeDecider::storageValue) { globalInputMode }
-            override fun directTouch(game: LibraryEntry) = inputValue(game, "touch", { it.inputTouch },
+            override fun directTouch(game: DiskImageEntry) = inputValue(game, "touch", { it.inputTouch },
                 { it == "direct" }, ::touchStorage) { globalTouchDirect }
-            override fun secondaryTouchpad(game: LibraryEntry) = inputValue(game, "secondary",
+            override fun secondaryTouchpad(game: DiskImageEntry) = inputValue(game, "secondary",
                 { it.inputSecondary }, { it == "touchpad" }, { if (it) "touchpad" else "keyboard" },
                 builtIn = true) { false }
         }, listOf(
@@ -259,7 +266,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
                 "cursor one pixel per mouse count and stop it at the screen\u2019s top-left edge.",
             changed = { entry ->
                 if (entry != null && currentEntry?.id == entry.id) {
-                    currentGame = romLibrary.catalog.resolve(entry)
+                    currentGame = catalog.resolve(entry)
                     setSecondaryInitialMode(currentGame?.inputSecondary == "touchpad")
                 }
             })
@@ -269,11 +276,11 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
      * A per-game input choice: the user's override over the catalog, which falls back to the
      * all-games setting, or to the app for the second screen.
      */
-    private fun <V> inputValue(game: LibraryEntry, subfield: String, read: (GameCatalog.Game) -> String?,
+    private fun <V> inputValue(game: DiskImageEntry, subfield: String, read: (CatalogGame) -> String?,
                                parse: (String) -> V, store: (V) -> String, builtIn: Boolean = false,
                                global: () -> V): GameValue<V> {
         val id = game.key
-        val catalog = romLibrary.catalog
+        val catalog = catalog
         fun custom() = catalog.sourceOf(game, "input", subfield) == "User override"
         return GameValue({ if (custom()) read(catalog.resolve(game))?.let(parse) else null },
             { read(catalog.resolveDefault(game))?.let(parse) ?: global() },
@@ -286,13 +293,14 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
                 else catalog.setOverrideSubfield(id, "input", subfield, store(value))
             })
     }
-    private lateinit var firstRunSetup: FirstRunSetup
-    private lateinit var romLibrary: RomLibrary
+    private lateinit var firstRunSetup: MachineFirstRun
+    private lateinit var romLibrary: DiskImageLibrary
+    private val catalog by lazy { LayeredGameCatalog(this, Pc98Catalog) }
     private val artwork by lazy {
-        ArtworkCoordinator(this, pages, romLibrary.catalog.artworkStore,
-            LibraryEntry::key,
+        ArtworkCoordinator(this, pages, catalog.artworkStore,
+            DiskImageEntry::key,
             { entry, kind ->
-                val catalog = romLibrary.catalog
+                val catalog = catalog
                 val game = catalog.resolve(entry)
                 val urlKind = if (kind == "preview") "previewUrl" else "boxArtUrl"
                 val url = (if (kind == "preview") game.previewUrl else game.boxArtUrl)
@@ -301,13 +309,13 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
                     catalog.sourceOf(entry, "artwork", kind))
             }, { ArtworkOverridePath.valid(it, "art/") },
             { id, kind, path ->
-                if (path == null) romLibrary.catalog.resetArtworkOverride(id, kind)
-                else romLibrary.catalog.setArtworkOverride(id, kind, path)
+                if (path == null) catalog.resetArtworkOverride(id, kind)
+                else catalog.setArtworkOverride(id, kind, path)
             }, { id -> libraryScreen.metadataChanged(id) },
-            { entry -> romLibrary.catalog.resolve(entry).title },
-            ::toast, GameCatalog::validImageUrl)
+            { entry -> catalog.resolve(entry).title },
+            ::toast, catalog::validImageUrl)
     }
-    private lateinit var controllerPages: ControllerPages<LibraryEntry>
+    private lateinit var controllerPages: ControllerPages<DiskImageEntry>
     private val fullscreen by lazy { com.mrjackspade.kairo.frontend.GameFullscreen(this) { !libraryVisible } }
     private val sessionState = SessionNavigationState()
     private val libraryVisible: Boolean get() = sessionState.libraryVisible
@@ -333,20 +341,20 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
         set(value) { libraryFlow.tree = value }
     private val artworkDownloads by lazy {
         CatalogArtworkDownloadController(this, libraryScreen, { libraryEntries },
-            romLibrary.catalog::missingArtworkFor, romLibrary.catalog::downloadArtwork) { pages.refresh() }
+            catalog::missingArtworkFor, catalog::downloadArtwork) { pages.refresh() }
     }
     private val catalogUpdates by lazy {
-        CatalogUpdateController(this, { task -> romLibrary.catalog.downloadUpdate(task) },
+        CatalogUpdateController(this, { task -> catalog.downloadUpdate(task) },
             { message -> if (!message.endsWith("\u2026")) toast(message) }, { libraryScreen.refreshCatalog() },
             { if (libraryVisible) toast("Catalogs updated") }, { libraryMenu.showCatalogProgress(it) },
-            romLibrary.catalog.installedCatalogs::update)
+            catalog.installedCatalogs::update)
     }
-    private var currentEntry: LibraryEntry? = null
+    private var currentEntry: DiskImageEntry? = null
     private var sessionFromFrontend = false
-    private var externalEntries: List<LibraryEntry> = emptyList()
+    private var externalEntries: List<DiskImageEntry> = emptyList()
     private val externalDispatcher by lazy {
         ExternalGameDispatcher(this, contentResolver, { libraryEntries },
-            { entry: LibraryEntry -> Uri.parse(entry.uri) },
+            { entry: DiskImageEntry -> Uri.parse(entry.uri) },
             { file, cancelled ->
                 claimSavedData(romLibrary.inspectExternal(file, cancelled)).onEach { it.error?.let(::error) }
             },
@@ -358,19 +366,19 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
     /** Save states, settings and working disks from before games had keys move to their games as the library loads. */
     private val gameKeyMigration by lazy {
         GameKeyMigration(preferences, listOf(
-            romLibrary.catalog.legacyOverrides(),
+            catalog.legacyOverrides(),
             GameKeyMigration.SaveStore({ saveFolder.location }, FolderStateSlots.UNITS, cacheDir,
                 File(filesDir, "game-key-migration-v1.json")) { conflicts ->
                 saveFolder.resolveMigrationConflicts(conflicts) { key ->
                     claiming.firstOrNull { it.key == key }?.let(::titleOf) ?: key.path
                 }
-            }), listOf(romLibrary.legacyWorkingImages(), LegacyLastPlayed()))
+            }), listOf(Pc98Media.legacyWorkingImages(romLibrary), LegacyLastPlayed()))
     }
 
-    private inner class LegacyLastPlayed : GameKeyMigration.EntryStore<LibraryEntry> {
-        override fun has(claim: GameKeyMigration.Claim<LibraryEntry>) =
+    private inner class LegacyLastPlayed : GameKeyMigration.EntryStore<DiskImageEntry> {
+        override fun has(claim: GameKeyMigration.Claim<DiskImageEntry>) =
             preferences.getString("last_played_entry", null) == claim.entryId
-        override fun move(claim: GameKeyMigration.Claim<LibraryEntry>) {
+        override fun move(claim: GameKeyMigration.Claim<DiskImageEntry>) {
             check(preferences.edit().putString("last_played_entry", claim.key.path).commit()) {
                 "Could not remember the last played game"
             }
@@ -381,12 +389,12 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
 
     /** Moves saved data from before games had keys to [entries]; an entry whose data did not move shows why. */
     /** The games a claim is moving data to; the library list is not published until it ends. */
-    @Volatile private var claiming: List<LibraryEntry> = emptyList()
+    @Volatile private var claiming: List<DiskImageEntry> = emptyList()
 
-    private fun claimSavedData(entries: List<LibraryEntry>): List<LibraryEntry> {
+    private fun claimSavedData(entries: List<DiskImageEntry>): List<DiskImageEntry> {
         if (!gameKeyMigration.pending) return entries
         claiming = entries
-        val errors = gameKeyMigration.claim(entries.map { GameKeyMigration.Claim(it, romLibrary.legacyEntryId(it)) })
+        val errors = gameKeyMigration.claim(entries.map { GameKeyMigration.Claim(it, Pc98Media.legacyEntryId(it)) })
         return if (errors.isEmpty()) entries else entries.map { entry ->
             errors[entry.key]?.let { entry.copy(error = it) } ?: entry
         }
@@ -398,13 +406,13 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
     private val manualFloppies = arrayOfNulls<File>(2)
     /** The disc in the CD-ROM drive, by file name. */
     private var mountedCd: String? = null
-    private data class PreparedLaunch(val disk: File, val bootFloppy: LibraryEntry?,
-                                      val floppyB: LibraryEntry?,
-                                      val swapSources: Map<String, LibraryEntry>,
+    private data class PreparedLaunch(val disk: File, val bootFloppy: DiskImageEntry?,
+                                      val floppyB: DiskImageEntry?,
+                                      val swapSources: Map<String, DiskImageEntry>,
                                       val gameFont: Boolean,
-                                      val cd: LibraryEntry?,
+                                      val cd: DiskImageEntry?,
                                       /** What started: the launched entry, or a CD's boot disk. */
-                                      val boot: LibraryEntry)
+                                      val boot: DiskImageEntry)
     /** The running game uses a FONT.BMP from its own folder instead of the global one. */
     private var gameFontActive = false
     private val gameFonts by lazy { GameFontLocator(contentResolver, File(filesDir, "game-font.bmp")) }
@@ -416,9 +424,9 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
     @Volatile private var fontBusy = false
     @Volatile private var rhythmBusy = false
     private var currentTitle: String? = null
-    private var currentGame: GameCatalog.Game? = null
+    private var currentGame: CatalogGame? = null
     private var commandCancelled = AtomicBoolean(false)
-    private var selectedStartup = emptyList<Pair<GameCatalog.StartupChoice, GameCatalog.StartupOption>>()
+    private var selectedStartup = emptyList<Pair<StartupChoice, StartupOption>>()
     private var traceScreenHashes = false
     private var skipDebugChoices = false
     private var skipDebugCommands = false
@@ -427,14 +435,14 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
     private var debugAdvanceIntervalMs = 100
     private var debugAutoAdvance: DebugAutoAdvance? = null
     private var lastTraceSerial = 0L
-    private var libraryEntries: List<LibraryEntry>
+    private var libraryEntries: List<DiskImageEntry>
         get() = libraryFlow.entries
         set(value) { libraryFlow.entries = value }
     private var pendingDebugGame: String? = null
     private var pendingDebugLaunch: String? = null
     private lateinit var pages: PageStack
     private lateinit var overlay: GameOverlay
-    private lateinit var libraryMenu: LibraryMenu<LibraryEntry>
+    private lateinit var libraryMenu: LibraryMenu<DiskImageEntry>
     private lateinit var sessionFlow: SessionFlow
     /** What the progress strip says while a machine stops or starts. */
     private var progressText = ""
@@ -572,7 +580,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
             { surface, width, height -> nativeSetSurface(surface, width, height) },
             { event, width, height -> handleScreenTouch(event, width, height) },
             ::onSecondarySwapChanged, mapping = keyMapping)
-        romLibrary = RomLibrary(this)
+        romLibrary = Pc98Media.library(this)
         artwork.restoreInstanceState(savedInstanceState)
         controllerPages = ControllerPages(this, pages,
             controllerFlow::load, controllerFlow::save, controllerFlow::reset,
@@ -590,10 +598,10 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
                     "exit" to "Exit"), Pc98KeyboardLayout.value),
             { ControllerBindings.toJson(it) }, controllerProfiles.configuration,
             { releaseInputs(); controllerFlow.refresh(null) }, { entry -> controllerMappingStatus(entry) },
-            { entry -> romLibrary.catalog.resolve(entry).title },
+            { entry -> catalog.resolve(entry).title },
             onScreenControls, touchSettingsCoordinator) { releaseInputs() }
         val strings = LibraryStrings("KAIRO98", "Kairo98")
-        val libraryPage = LibraryScreen(this, romLibrary.catalog, strings, pages,
+        val libraryPage = LibraryScreen(this, catalog, strings, pages,
             ::chooseRomFolder, { preferences.getString("last_played_entry", null) },
             { launchEntry(it) }, ::showDetailPreview, ::showGameDetails, ::showLibrarySelection)
         libraryFlow = LibraryFlow(this, preferences, libraryPage, ROM_FOLDER_REQUEST,
@@ -619,7 +627,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
                 else refreshLibrary(false)
             },
             { message -> if (firstRunSetup.isOpen) toast(message) }, store = romLibrary::store)
-        libraryMenu = LibraryMenu(this, pages, libraryFlow, romLibrary.catalog, strings,
+        libraryMenu = LibraryMenu(this, pages, libraryFlow, catalog, strings,
             { updateGameCatalog(false) },
             { if (resources.getBoolean(R.bool.catalog_art_download_enabled)) artworkDownloads else null },
             ::settingsRows, ::exitApp)
@@ -627,10 +635,12 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
         // Pages and the game overlay sit above the library; pages come forward when they open.
         root.addView(libraryScreen, root.indexOfChild(overlay), FrameLayout.LayoutParams(-1, -1))
         touchUi.bind(keyboardPanel)
-        firstRunSetup = FirstRunSetup(pages, ::chooseRomFolder, ::advanceFirstRunFirmware,
-            ::chooseBiosFile, ::chooseFontFile, ::chooseRhythmFile, ::finishFirstRun,
-            { biosFile().isFile }, { fontBitmapFile().isFile }, { rhythmRomFile().isFile },
-            { biosBusy }, { fontBusy }, { rhythmBusy })
+        firstRunSetup = MachineFirstRun(pages, "KAIRO98", "Kairo98", "PC-98", "disk images and ZIP files",
+            ::chooseRomFolder, ::advanceFirstRunFirmware, ::finishFirstRun, MachineFirstRun.Firmware(
+                "Optional firmware and font", "Import them now, or add them later in Menu › Machine.",
+                ::firstRunFirmwareRows,
+                "The BIOS ROM must be exactly 96 KiB and the rhythm ROM exactly 8 KiB. Kairo98 works without them.",
+                { biosBusy || fontBusy || rhythmBusy }))
         backCoordinator.register()
         handler.post(updateStatus)
         controllerSetupPending = controllerProfiles.configuration.needsSetup
@@ -658,7 +668,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
         else if (romTree != null && hasRomGrant(romTree!!) && setupStep >= 2 &&
             !selectPendingDebugGame()) refreshLibrary(false)
         if (setupStep < 2 && !externallyRequested) firstRunSetup.show(if (setupStep == 0)
-            FirstRunSetup.Step.ROM_FOLDER else FirstRunSetup.Step.FIRMWARE, romTree != null)
+            MachineFirstRun.Step.ROM_FOLDER else MachineFirstRun.Step.FIRMWARE, romTree != null)
         applyPauseState()
         updateGameCatalog(true)
     }
@@ -683,7 +693,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
     /** A frontend launch matches the game against the library, so it waits for the library to load. */
     private fun dispatchExternalGame(intent: Intent) = libraryFlow.whenLoaded { externalDispatcher.dispatch(intent) }
 
-    private fun chooseExternalGame(entries: List<LibraryEntry>) {
+    private fun chooseExternalGame(entries: List<DiskImageEntry>) {
         val playable = entries.filter { it.playable }
         if (playable.isEmpty()) {
             libraryScreen.showStatus("No playable PC-98 disk found")
@@ -774,7 +784,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
 
     /** A save folder's game name, as a library title when the game is still in the library. */
     private fun saveTitle(game: String): String = libraryEntries.firstOrNull { it.key.storageName == game }
-        ?.let { romLibrary.catalog.resolve(it).title } ?: game
+        ?.let { catalog.resolve(it).title } ?: game
 
     /** The game flyout: the game's own pages, settings, then leaving. */
     private fun gameFlyout() = SessionMenus.gameFlyout("KAIRO98", "Kairo98",
@@ -834,9 +844,9 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
 
 
     /** Shows the selected library game on the second screen, if there is one. */
-    private fun showLibrarySelection(entry: LibraryEntry?) {
+    private fun showLibrarySelection(entry: DiskImageEntry?) {
         if (!::secondaryKeyboard.isInitialized) return
-        secondaryKeyboard.showLibrarySelection(entry, entry?.let(libraryScreen::metadata), romLibrary.catalog)
+        secondaryKeyboard.showLibrarySelection(entry, entry?.let(libraryScreen::metadata), catalog)
     }
 
     private fun applyPauseState() {
@@ -864,13 +874,30 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
         }
     }
 
+    /** First-run firmware rows: each imports its file, and imports wait for each other. */
+    private fun firstRunFirmwareRows(): List<SettingsRow> {
+        val busy = { biosBusy || fontBusy || rhythmBusy }
+        fun row(id: String, label: String, installed: () -> Boolean, importing: () -> Boolean,
+                on: String, off: String, choose: () -> Unit) = SettingsRow.action(id, label,
+            value = { if (importing()) "Importing…" else if (installed()) on else off },
+            tone = { if (installed()) ValueTone.CURRENT else ValueTone.SUMMARY },
+            busy = importing, enabled = { !busy() }, disabledReason = { "Wait for the current import to finish" },
+            tray = { TraySpec(buttons = listOf(TrayButton(if (installed()) "Replace…" else "Choose file…",
+                ButtonTone.PRIMARY) { choose() })) })
+        return listOf(
+            row("bios", "BIOS ROM", { biosFile().isFile }, { biosBusy }, "Installed", "Not installed", ::chooseBiosFile),
+            row("font", "Font BMP", { fontBitmapFile().isFile }, { fontBusy }, "Imported", "Built-in", ::chooseFontFile),
+            row("rhythm", "YM2608 rhythm ROM", { rhythmRomFile().isFile }, { rhythmBusy }, "Installed", "Not installed",
+                ::chooseRhythmFile))
+    }
+
     private fun hasRomGrant(uri: Uri) = libraryFlow.hasGrant(uri)
 
     private fun chooseRomFolder() = libraryFlow.chooseFolder()
 
     private fun advanceFirstRunFirmware(folderChosen: Boolean) {
         preferences.edit().putInt("onboarding_step_v1", 1).apply()
-        firstRunSetup.show(FirstRunSetup.Step.FIRMWARE, folderChosen)
+        firstRunSetup.show(MachineFirstRun.Step.FIRMWARE, folderChosen)
     }
 
     private fun finishFirstRun() {
@@ -913,7 +940,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
         return false
     }
 
-    private fun launchEntry(entry: LibraryEntry, fromFrontend: Boolean = false) {
+    private fun launchEntry(entry: DiskImageEntry, fromFrontend: Boolean = false) {
         commandCancelled.set(true)
         releaseInputs()
         if (saveFolder.busy) {
@@ -928,7 +955,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
             libraryScreen.showStatus("Folder access expired. Select the ROM folder again.")
             return
         }
-        val game = romLibrary.catalog.resolve(entry)
+        val game = catalog.resolve(entry)
         // Launching is where catalog launch data is used, so this is where bad data fails.
         try {
             game.launchCommands
@@ -957,9 +984,9 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
     }
 
     /** One choice page per startup choice; Play manually starts without the rest. Back cancels. */
-    private fun chooseStartupOptions(entry: LibraryEntry, game: GameCatalog.Game, index: Int,
-                                     selected: List<Pair<GameCatalog.StartupChoice,
-                                         GameCatalog.StartupOption>>,
+    private fun chooseStartupOptions(entry: DiskImageEntry, game: CatalogGame, index: Int,
+                                     selected: List<Pair<StartupChoice,
+                                         StartupOption>>,
                                      fromFrontend: Boolean, replace: Boolean = false) {
         if (index == game.startupChoices.size) {
             startEntry(entry, game, selected, fromFrontend)
@@ -983,9 +1010,9 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
         if (replace) pages.replace(page) else pages.push(page)
     }
 
-    private fun startEntry(entry: LibraryEntry, game: GameCatalog.Game,
-                           choices: List<Pair<GameCatalog.StartupChoice,
-                               GameCatalog.StartupOption>>,
+    private fun startEntry(entry: DiskImageEntry, game: CatalogGame,
+                           choices: List<Pair<StartupChoice,
+                               StartupOption>>,
                            fromFrontend: Boolean = false) {
         val generation = ++startGeneration
         val cancelled = AtomicBoolean(false)
@@ -1130,7 +1157,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
 
     private fun showLibrary() = sessionNavigation.showLibrary()
 
-    private fun touchSelection(game: GameCatalog.Game? = currentGame) =
+    private fun touchSelection(game: CatalogGame? = currentGame) =
         TouchInputPolicy.resolve(TouchInputSelection(globalInputMode, globalTouchDirect),
             game?.inputMode?.let(InputModeDecider::parse),
             game?.inputTouch?.let { it == "direct" })
@@ -1260,8 +1287,8 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
         return true
     }
 
-    private fun scheduleStartupQueue(game: GameCatalog.Game?,
-        choices: List<Pair<GameCatalog.StartupChoice, GameCatalog.StartupOption>>) {
+    private fun scheduleStartupQueue(game: CatalogGame?,
+        choices: List<Pair<StartupChoice, StartupOption>>) {
         commandCancelled.set(true)
         if (game == null) return
         val steps = (if (skipDebugCommands) emptyList() else game.launchCommands).mapIndexed { index, command ->
@@ -1346,13 +1373,13 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
         }
     }
 
-    private fun scheduleDiskSwaps(rules: List<GameCatalog.DiskSwap>,
-                                  sources: Map<String, LibraryEntry>) {
+    private fun scheduleDiskSwaps(rules: List<DiskSwap>,
+                                  sources: Map<String, DiskImageEntry>) {
         if (rules.isEmpty()) return
         val generation = startGeneration
         acquireScreenHashes()
         Thread {
-            var failedRule: GameCatalog.DiskSwap? = null
+            var failedRule: DiskSwap? = null
             try {
                 DiskSwapMatcher(::nativeScreenHashSnapshot,
                     { nativeStatus().startsWith("Running") },
@@ -1380,7 +1407,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
 
     @Synchronized private fun endFloppyChange() { floppyBusy = false }
 
-    private fun performDiskSwap(rule: GameCatalog.DiskSwap, entry: LibraryEntry, generation: Int) {
+    private fun performDiskSwap(rule: DiskSwap, entry: DiskImageEntry, generation: Int) {
         while (!beginFloppyChange()) {
             if (generation != startGeneration) return
             Thread.sleep(100)
@@ -1421,9 +1448,9 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
     private var swapping: GameNotice? = null
 
     /** The game keeps running, so the prompt docks at the top instead of blocking it. */
-    private fun showDiskSwapFailure(rule: GameCatalog.DiskSwap?, error: Exception,
-                                    rules: List<GameCatalog.DiskSwap>,
-                                    sources: Map<String, LibraryEntry>) {
+    private fun showDiskSwapFailure(rule: DiskSwap?, error: Exception,
+                                    rules: List<DiskSwap>,
+                                    sources: Map<String, DiskImageEntry>) {
         overlay.showNotice(GameNotice("Automatic disk swap failed",
             "${rule?.let { "Floppy ${'A' + it.drive}: " } ?: ""}" +
                 (error.message ?: "Unknown error") + ". The game is still running.",
@@ -1466,16 +1493,16 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
         })?.let(::listOf)
     }
     /** Game settings over the game page, or over the game flyout while the game runs. */
-    private fun showGameDetails(entry: LibraryEntry) {
+    private fun showGameDetails(entry: DiskImageEntry) {
         pages.push(gameSettingsPage({ titleOf(entry) }) { gameSettings(entry) })
     }
 
-    private fun titleOf(entry: LibraryEntry) = romLibrary.catalog.resolve(entry).title
+    private fun titleOf(entry: DiskImageEntry) = catalog.resolve(entry).title
 
-    private fun gameSettings(entry: LibraryEntry): List<RowGroup> {
+    private fun gameSettings(entry: DiskImageEntry): List<RowGroup> {
         // Settings belong to the game's key, once its disk image has been read.
         val id = entry.key.takeIf { entry.contentId != null }
-        val catalog = romLibrary.catalog
+        val catalog = catalog
         val hashed = { id != null }
         val noHash = { GameSettingsRows.NO_HASH }
         val scope = { titleOf(entry) }
@@ -1484,7 +1511,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
         fun defaultSource(field: String, subfield: String, appDefault: String) =
             { id?.let { catalog.defaultSourceOf(entry, field, subfield) }?.takeIf { it != "App default" }
                 ?.let(GameSource::label) ?: appDefault }
-        fun machine(subfield: String, read: (GameCatalog.Game) -> Int?, fallback: () -> Int, appDefault: String) =
+        fun machine(subfield: String, read: (CatalogGame) -> Int?, fallback: () -> Int, appDefault: String) =
             GameValue({ if (custom("machine", subfield)) read(game())?.toString() else null },
                 { (id?.let { read(catalog.resolveDefault(entry)) } ?: fallback()).toString() },
                 defaultSource("machine", subfield, appDefault),
@@ -1563,7 +1590,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
      * The game plays from a working copy of its disk, which holds the saves the game writes to
      * it. Resetting replaces that copy with the current disk image, as after editing the image.
      */
-    private fun resetDiskRow(entry: LibraryEntry): SettingsRow? {
+    private fun resetDiskRow(entry: DiskImageEntry): SettingsRow? {
         if (!romLibrary.hasWorkingImage(entry)) return null
         return SettingsRow.action("reset-disk", "Reset disk", danger = true,
             enabled = { libraryVisible || currentEntry?.id != entry.id },
@@ -1582,14 +1609,14 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
             })
     }
 
-    private fun showDetailPreview(entry: LibraryEntry) = artwork.view(entry)
+    private fun showDetailPreview(entry: DiskImageEntry) = artwork.view(entry)
 
-    private fun saveGameSetting(entry: LibraryEntry,
+    private fun saveGameSetting(entry: DiskImageEntry,
                                 message: String = "Saved. Machine changes apply on next launch or restart.",
                                 failure: String? = null, action: () -> Unit) {
         try {
             action()
-            if (currentEntry?.id == entry.id) currentGame = romLibrary.catalog.resolve(entry)
+            if (currentEntry?.id == entry.id) currentGame = catalog.resolve(entry)
             libraryScreen.metadataChanged(entry.key)
             toast(message)
         } catch (error: Exception) {
@@ -1599,7 +1626,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
     }
 
     /** CPU MHz for a clock multiple on the game's base clock (2.4576 or 1.9968 MHz). */
-    private fun cpuMhz(game: GameCatalog.Game, multiple: Int) =
+    private fun cpuMhz(game: CatalogGame, multiple: Int) =
         (if ((game.baseClockTenthsMHz ?: clock) == 20) 1.9968 else 2.4576) * multiple
 
     private fun restartMachine() {
@@ -1655,11 +1682,11 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
 
     /** Empty ejects; otherwise the game's catalog disc and the CDs in its ZIP or folder. */
     private fun cdChoice(): ChoiceSpec {
-        fun candidates(): List<LibraryEntry> {
+        fun candidates(): List<DiskImageEntry> {
             val current = currentEntry ?: return emptyList()
             val named = currentGame?.cdId
             return libraryEntries.filter { entry ->
-                entry.playable && entry.isCd && (romLibrary.catalog.matchId(entry) == named || sameSource(current, entry))
+                entry.playable && entry.isCd && (catalog.matchId(entry) == named || sameSource(current, entry))
             }.distinctBy { it.contentId }
         }
         return ChoiceSpec("CD-ROM", { currentTitle }, {
@@ -1676,7 +1703,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
         }, cycles = false)
     }
 
-    private fun changeCd(entry: LibraryEntry?) {
+    private fun changeCd(entry: DiskImageEntry?) {
         if (!beginFloppyChange()) return
         toast(if (entry == null) "Ejecting CD\u2026" else "Preparing ${entry.displayName}\u2026")
         pages.refresh()
@@ -1703,7 +1730,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
 
     /** Empty ejects; other disks from the same ZIP or folder; or a file from the device. */
     private fun floppyChoice(drive: Int): ChoiceSpec {
-        fun candidates(): List<LibraryEntry> {
+        fun candidates(): List<DiskImageEntry> {
             val current = currentEntry ?: return emptyList()
             return libraryEntries.filter { entry ->
                 entry.playable && entry.isFloppy && sameSource(current, entry)
@@ -1725,7 +1752,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
         }, cycles = false)
     }
 
-    private fun changeFloppy(drive: Int, entry: LibraryEntry?) {
+    private fun changeFloppy(drive: Int, entry: DiskImageEntry?) {
         if (!beginFloppyChange()) return
         toast(if (entry == null) "Ejecting floppy ${'A' + drive}\u2026" else "Preparing ${entry.displayName}\u2026")
         pages.refresh()
@@ -1868,7 +1895,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
         override fun tick() = refresh()
     }
 
-    private fun effectiveControllerBindings(game: GameCatalog.Game?): List<ControllerBinding> {
+    private fun effectiveControllerBindings(game: CatalogGame?): List<ControllerBinding> {
         val configured = game?.controllerBindings
         if (game != null && !game.overriddenFields.contains("controller") &&
             game.controllerDefaultBindings != null) {
@@ -1883,10 +1910,10 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
         else controllerFlow.global()
     }
 
-    private fun controllerMappingStatus(entry: LibraryEntry?): String? {
+    private fun controllerMappingStatus(entry: DiskImageEntry?): String? {
         if (controllerProfiles.configuration.layout != com.mrjackspade.kairo.frontend.ControllerLayout.WITH_STICKS)
             return null
-        val game = entry?.takeIf { it.contentId != null }?.let(romLibrary.catalog::resolve)
+        val game = entry?.takeIf { it.contentId != null }?.let(catalog::resolve)
         if (game == null) return null
         if (game.overriddenFields.contains("controller") || game.controllerProfile == "custom-v1") return null
         return if (game.controllerDefaultBindings != null &&
@@ -2052,7 +2079,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
     override fun onDestroy() {
         if (relocating) { super.onDestroy(); return }
         catalogUpdates.cancel()
-        romLibrary.catalog.installedCatalogs.close()
+        catalog.installedCatalogs.close()
         backCoordinator.unregister()
         startGeneration++
         libraryFlow.cancel()
@@ -2099,8 +2126,8 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
             return
         }
         val isSwap = requestCode != HDI_REQUEST
-        if (name == null || !DiskFormat.supported(name) || DiskFormat.isCd(name) ||
-            (isSwap && !DiskFormat.isFloppy(name))) {
+        if (name == null || !Pc98Media.supported(name) || Pc98Media.isCd(name) ||
+            (isSwap && !Pc98Media.isFloppy(name))) {
             toast(if (isSwap) "Select a supported floppy image" else "Select a supported disk image")
             return
         }
@@ -2114,7 +2141,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
         showProgress("Preparing $name\u2026")
         gameOrientation.launching()
         Thread {
-            val disk = File(filesDir, "boot${DiskFormat.suffix(name)}")
+            val disk = File(filesDir, "boot${Pc98Media.suffix(name)}")
             val partial = File(filesDir, "${disk.name}.part")
             val result = try {
                 nativeStop()
@@ -2127,7 +2154,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
                             val count = input.read(buffer)
                             if (count < 0) break
                             size += count
-                            require(size <= DiskFormat.maxBytes(name)) { "Disk image exceeds size limit" }
+                            require(size <= Pc98Media.maxBytes(name)) { "Disk image exceeds size limit" }
                             output.write(buffer, 0, count)
                         }
                         require(size > 0) { "Empty disk image" }
@@ -2137,7 +2164,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
                 val font = prepareFont()
                 if (generation != startGeneration) "Start cancelled"
                 else if (startMachine(disk.absolutePath, font, firmwareDir().absolutePath, clock,
-                        50, DEFAULT_CPU_MULTIPLE, DiskFormat.isFloppy(name), null, null, null))
+                        50, DEFAULT_CPU_MULTIPLE, Pc98Media.isFloppy(name), null, null, null))
                     awaitMachineReady()?.let { "Disk start failed: $it" } ?: "Starting $name"
                 else "Unable to start machine"
             } catch (error: Exception) {
@@ -2154,7 +2181,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
                     currentEntry = null
                     currentDisk = disk
                     gameFontActive = false
-                    currentIsFloppy = DiskFormat.isFloppy(name)
+                    currentIsFloppy = Pc98Media.isFloppy(name)
                     mountedFloppies[0] = if (currentIsFloppy) name else null
                     mountedFloppies[1] = null
                     mountedCd = null
@@ -2178,7 +2205,7 @@ class MainActivity : Activity(), SurfaceHolder.Callback {
         toast("Importing $name\u2026")
         pages.refresh()
         Thread {
-            val disk = File(cacheDir, "manual-floppy-$drive-${System.nanoTime()}${DiskFormat.suffix(name)}")
+            val disk = File(cacheDir, "manual-floppy-$drive-${System.nanoTime()}${Pc98Media.suffix(name)}")
             val result = try {
                 contentResolver.openInputStream(uri).use { input ->
                     requireNotNull(input) { "Unable to open selected floppy" }

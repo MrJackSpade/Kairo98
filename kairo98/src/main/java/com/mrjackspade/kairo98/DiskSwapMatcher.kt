@@ -5,9 +5,9 @@ class DiskSwapMatcher(
     private val snapshot: () -> LongArray,
     private val running: () -> Boolean,
     private val cancelled: () -> Boolean,
-    private val swap: (GameCatalog.DiskSwap) -> Unit
+    private val swap: (DiskSwap) -> Unit
 ) {
-    fun run(rules: List<GameCatalog.DiskSwap>) {
+    fun run(rules: List<DiskSwap>) {
         if (rules.isEmpty()) return
         val armed = BooleanArray(rules.size) { true }
         val misses = IntArray(rules.size)

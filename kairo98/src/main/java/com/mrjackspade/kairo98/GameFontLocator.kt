@@ -1,5 +1,6 @@
 package com.mrjackspade.kairo98
 
+import com.mrjackspade.kairo.frontend.DiskImageEntry
 import android.content.ContentResolver
 import android.net.Uri
 import android.provider.DocumentsContract
@@ -23,7 +24,7 @@ internal class GameFontLocator(private val resolver: ContentResolver, private va
      * the game has none. [tree] is null for a game opened outside the library folder, and
      * [archive] is the local copy of the game's ZIP when it came from one.
      */
-    fun prepare(entry: LibraryEntry, tree: Uri?, archive: File?, cancelled: AtomicBoolean): File? {
+    fun prepare(entry: DiskImageEntry, tree: Uri?, archive: File?, cancelled: AtomicBoolean): File? {
         archive?.let { zip -> entry.zipEntry?.let { name -> fromArchive(zip, name) } }
             ?.let { return it }
         return tree?.let { fromTree(it, entry.path, cancelled) }

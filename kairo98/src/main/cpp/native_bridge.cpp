@@ -8,7 +8,7 @@
 #include "android_host/gpudraw.h"
 #include "gl_presenter.h"
 #include "gpu_frame_merge.h"
-#include "audio_output.h"
+#include "kairo/audio_output.h"
 #include <algorithm>
 #include <atomic>
 #include <chrono>
@@ -315,14 +315,14 @@ void run_machine(std::string image, std::string font_path, std::string bios_dir,
         present_dropped = 0;
     }
     std::thread presenter(present_loop);
-    std::unique_ptr<AudioOutput> audio;
+    std::unique_ptr<kairo::AudioOutput> audio;
     // Opens the stream, or a new one after Android stops the old one, and shows
     // it in Diagnostics.
     int32_t earlier_stream_underruns = 0;
     const auto open_audio = [&audio, &earlier_stream_underruns] {
         if (audio) earlier_stream_underruns += audio->underruns();
         audio.reset();
-        if (kairo98_audio_buffer_frames() == 512) audio = AudioOutput::open(kAudioStallFrames);
+        if (kairo98_audio_buffer_frames() == 512) audio = kairo::AudioOutput::open(44100, kAudioStallFrames);
         std::lock_guard<std::mutex> guard(command_mutex);
         audio_state = audio ? "on" : "off";
         audio_config = audio ? audio->config() : "";

@@ -1,5 +1,7 @@
 package com.mrjackspade.kairo98
 
+import com.mrjackspade.kairo.frontend.LayeredGameCatalog
+
 import android.app.Activity
 import android.os.Bundle
 import android.os.SystemClock
@@ -30,7 +32,7 @@ class CatalogBenchmarkActivity : Activity() {
                         .joinToString("") { "%02x".format(it) }
                     "sha256-hdi-v1:$digest"
                 }
-                val catalog = GameCatalog(this)
+                val catalog = LayeredGameCatalog(this, Pc98Catalog)
                 val start = SystemClock.elapsedRealtimeNanos()
                 var matches = 0
                 for ((index, id) in ids.withIndex()) {
@@ -43,7 +45,7 @@ class CatalogBenchmarkActivity : Activity() {
                 val fullMs = (SystemClock.elapsedRealtimeNanos() - start) / 1_000_000.0
                 val known = ids[1234]
                 val coldStart = SystemClock.elapsedRealtimeNanos()
-                val knownTitle = GameCatalog(this).resolve(known, "fallback.hdi").title
+                val knownTitle = LayeredGameCatalog(this, Pc98Catalog).resolve(known, "fallback.hdi").title
                 val coldMs = (SystemClock.elapsedRealtimeNanos() - coldStart) / 1_000_000.0
                 val warmStart = SystemClock.elapsedRealtimeNanos()
                 repeat(1000) { catalog.resolve(known, "fallback.hdi") }

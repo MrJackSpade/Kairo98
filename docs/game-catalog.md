@@ -71,7 +71,7 @@ image UUID (`id`), `format` (0 for JPG, 1 for PNG), and `revision` (0 for the
 ordinary image path, 2 for its r2 variant). No artwork URL or file path is stored
 in these records. Empty artwork remains empty, and absent image kinds stay absent.
 
-The URL template lives in `Pc98ArtworkReferences`. Existing local paths are
+The URL template lives in the shared `LaunchBoxArtworkReferences`. Existing local paths are
 reconstructed from the asset group and the first twelve hex characters of the
 URL's SHA-256, preserving bundled artwork and previously downloaded files. Both
 paths and URLs are expanded before field layering, so user overrides and source
