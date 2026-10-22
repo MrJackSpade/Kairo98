@@ -5,6 +5,7 @@ import com.mrjackspade.kairo.frontend.DiskImageLibrary
 import com.mrjackspade.kairo.frontend.GameKey
 import com.mrjackspade.kairo.frontend.GameKeyMigration
 import com.mrjackspade.kairo.frontend.VersionedLibraryCache
+import com.mrjackspade.kairo.frontend.mediaFor
 import com.mrjackspade.kairo.frontend.readOptionalText
 import com.mrjackspade.kairo.frontend.readText
 import com.mrjackspade.kairo.frontend.sameSource
@@ -119,14 +120,11 @@ private val BOOT_DISK_NAME = Regex("(?i)\\bboot[ _-]*disk\\b")
 fun requiredFloppyFor(contentId: String, source: DiskImageEntry, entries: List<DiskImageEntry>): DiskImageEntry =
     requiredMediaFor(contentId, source, entries, "floppy") { it.isFloppy }
 
-/** A disk a game names by content ID, preferring a copy from the game's own archive or folder. */
+/** A disk a game names by content ID, which the library must have (see [mediaFor]). */
 fun requiredMediaFor(contentId: String, source: DiskImageEntry, entries: List<DiskImageEntry>,
-                     label: String, kind: (DiskImageEntry) -> Boolean): DiskImageEntry {
-    // A disk keeps the catalog record it was first scanned with, through later edits.
-    val candidates = entries.filter { it.playable && kind(it) && (it.contentId == contentId || it.catalogId == contentId) }
-    return candidates.firstOrNull { it.uri == source.uri } ?: candidates.firstOrNull()
+                     label: String, kind: (DiskImageEntry) -> Boolean): DiskImageEntry =
+    mediaFor(contentId, source, entries, kind)
         ?: error("Required $label ${contentId.substringAfter(':').take(8)} is missing from the library")
-}
 
 /**
  * The disc for a game's CD-ROM drive: the CD its catalog names, else the one CD beside it.
