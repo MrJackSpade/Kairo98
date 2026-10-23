@@ -32,10 +32,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Check out pinned Kairo frontend
-        env:
-          KAIRO_SHARED_DEPLOY_KEY: ${{ secrets.KAIRO_SHARED_DEPLOY_KEY }}
-        run: bash tools/checkout_shared.sh
+      - name: Check out the pinned Kairo frontend
+        run: |
+          git submodule update --init --recursive shared
+          bash shared/tools/verify_checkout.sh "$(git rev-parse HEAD:shared)"
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
