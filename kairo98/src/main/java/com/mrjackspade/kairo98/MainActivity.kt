@@ -753,6 +753,11 @@ class MainActivity : MachineActivity<DiskImageEntry>() {
         }.start()
     }
 
+    /** The floppies and CD, by drive, for the UI tests (KairoActivity.gameProbe). */
+    override fun probeDetails(): Map<String, String> = super.probeDetails() + mapOf(
+        "media.Floppy A" to (mountedFloppies[0] ?: ""), "media.Floppy B" to (mountedFloppies[1] ?: ""),
+        "media.CD-ROM" to (mountedCd ?: ""))
+
     private fun floppyRow(drive: Int) = SettingsRow.choice("floppy$drive", "Floppy ${'A' + drive}", floppyChoice(drive),
         value = { mountedFloppies[drive] ?: "Empty" },
         tone = { if (mountedFloppies[drive] == null) ValueTone.EMPTY else ValueTone.CURRENT },
