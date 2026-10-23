@@ -51,7 +51,9 @@ def inspect(path: pathlib.Path, bundle: bool, allow_art: bool = False) -> dict[s
         assert any(name.startswith(prefix + "assets/catalog/") for name in files), (
             f"Catalog metadata missing from {path}"
         )
-        notices = archive.read(prefix + REQUIRED[0]).decode("utf-8")
+        # About › Licenses shows the app's notices with the shared frontend's (Spleen) and the NDK's.
+        notices = "\n".join(archive.read(prefix + name).decode("utf-8") for name in (
+            REQUIRED[0], "assets/FRONTEND_NOTICES.txt", "assets/NDK_NOTICES.txt"))
         for required in ("Neko Project 21/W", "ymfm", "Spleen", "Shinonome", "Android NDK"):
             assert required in notices, f"Missing {required} notice in {path}"
         assets = {
