@@ -70,13 +70,17 @@ def inspect(path: pathlib.Path, bundle: bool, allow_art: bool = False) -> dict[s
         return assets
 
 
+# The adult catalog parts (art.nsfw, data.nsfw), which Play builds leave out.
+ADULT_PART = re.compile(r"assets/catalog/[^/]+\.nsfw\.")
+
+
 def main() -> None:
     if len(sys.argv) not in (3, 4):
         raise SystemExit("Usage: audit_play_release.py WITHOUT_IMAGES_APK AAB [WITH_IMAGES_APK]")
     apk, bundle = (pathlib.Path(argument) for argument in sys.argv[1:3])
     apk_assets = inspect(apk, False)
     bundle_assets = inspect(bundle, True)
-    assert {n:v for n,v in apk_assets.items() if not n.startswith("assets/catalog/art.nsfw.")} == bundle_assets, "APK and AAB core assets differ"
+    assert {n:v for n,v in apk_assets.items() if not ADULT_PART.match(n)} == bundle_assets, "APK and AAB core assets differ"
     print("Non-artwork APK and AAB have matching assets and required notices")
     if len(sys.argv) == 4:
         with_images = pathlib.Path(sys.argv[3])

@@ -37,7 +37,7 @@ def generate():
     for name, document in documents.items():
         if name.startswith('shards/'):
             document['games'] = {k:full['games'][k] for k in document['games']}
-    generate_parts(ROOT,'kairo98',documents,full,expand,compact_art)
+    generate_parts(ROOT,'kairo98',documents,full,{},expand,compact_art)
     print('PC98:' ,len(policy['excluded']),'excluded entries;',len(policy['approvedArtwork']),'reviewed core images')
 
 
