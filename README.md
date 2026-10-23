@@ -77,10 +77,11 @@ Games, operating systems, and firmware are not supplied. Some games need a separ
 | Type | Formats |
 | --- | --- |
 | Hard disks | HDI |
-| Floppies | FDI, D88, NFD, FDD, DCP/DCU, HDM, XDF |
+| Floppies | FDI, D88/88D, D98/98D, NFD, FDD, DCP/DCU, HDM, XDF |
+| CDs | CloneCD (CCD with its IMG) |
 | Archives | Any of the above inside ZIP files |
 
-Games are recognized by their disk contents, so recompressing a ZIP does not change how it matches. A ZIP holding several disks shows up as separate library entries. Details: [game catalog](docs/game-catalog.md).
+Games are recognized by their disk contents, so recompressing a ZIP does not change how it matches. A game's disks show as one library entry, and its other releases in the folder (demos, music disks, other versions) sit behind its main one. Details: [game catalog](docs/game-catalog.md).
 
 ## Managing your library
 
@@ -108,6 +109,8 @@ The game menu offers save states, disk changes, game and app settings, restart, 
 Kairo98 has a built-in BIOS and font, so every file is optional. Menu › Machine lists every BIOS file, each marked Required or Optional. Pick each file, or use **Import all from a folder…** to import every file the app recognizes in a folder you choose. A game that needs the PC-98's own BIOS, font, or the YM2608 rhythm samples uses the ones you import.
 
 A `FONT.BMP` placed in a game's ZIP or library folder overrides the imported font for that game; the one nearest the disk image wins.
+
+**Menu › Machine** also sets the CPU's base clock, and **Skip memory check** (on by default), which starts games without the PC-98's memory count.
 
 ## Launching from other frontends
 
@@ -148,25 +151,13 @@ git clone --recurse-submodules https://github.com/MrJackSpade/Kairo98.git
 ```
 <!-- /kairo:clone -->
 
-<!-- kairo:ui-tests -->
-## UI tests
+Build the app, and optionally install it, with the shared build script:
 
-Kairo98 has device tests in the style of Selenium tests, on the shared Kairo test framework: they
-name the app's elements, act on them as a player would, and assert what the player would see
-([how they work and how to run them](https://github.com/MrJackSpade/Kairo/blob/main/docs/ui-tests.md)). Run them from this
-repository with a device connected over adb (Android 10 or later) and the `LOCAL_BUILD_TOKEN` key set:
-
-```
-shared\tools\uitest.ps1 -Device <serial>                                              every test
-shared\tools\uitest.ps1 -Device <serial> -Filter 'MenuTests|ControllerTests'          by test name
-shared\tools\uitest.ps1 -Device <serial> -Class com.mrjackspade.kairo98.uitest.<Class>   one class
-shared\tools\uitest-all.ps1 -Device <serial>                                          every Kairo app
+```powershell
+shared\tools\build.ps1 -Install <adb serial>
 ```
 
-The tests are in `kairo98/src/androidTest/java/com/mrjackspade/kairo98/uitest/`. They run in a
-build of their own, `com.loxifi.kairo98.uitest`, installed beside the app without touching its data, and
-each run's logs, screenshots and summary land in `.build/uitest/<run id>/`.
-<!-- /kairo:ui-tests -->
+UI tests: see [UI tests](https://github.com/MrJackSpade/Kairo/blob/main/docs/ui-tests.md); run them with `shared/tools/uitest.ps1 -Device <serial>`.
 
 ## License
 
