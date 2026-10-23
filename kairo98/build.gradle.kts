@@ -16,6 +16,7 @@ android {
         applicationId = providers.gradleProperty("kairo98ApplicationId").orNull ?: "com.loxifi.kairo98"
         versionCode = providers.gradleProperty("kairo98VersionCode").orNull?.toInt() ?: 915
         versionName = providers.gradleProperty("kairo98VersionName").orNull ?: "0.9.15"
+        manifestPlaceholders["kairoLabel"] = "Kairo98"
         // Google Play updates its builds itself, so they never offer GitHub releases (shared AppUpdateCheck).
         if (providers.gradleProperty("kairoDistribution").orNull == "play") resValue("bool", "kairo_update_check", "false")
         ndk {
@@ -110,3 +111,6 @@ tasks.named("preBuild") { dependsOn(catalogAssets) }
 dependencies {
     implementation(project(":frontend"))
 }
+
+extra["kairoLabel"] = "Kairo98"
+apply(from = rootProject.file("shared/gradle/kairo-uitest.gradle"))
