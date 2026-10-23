@@ -18,7 +18,9 @@ android {
         versionName = providers.gradleProperty("kairo98VersionName").orNull ?: "0.9.15"
         manifestPlaceholders["kairoLabel"] = "Kairo98"
         // Google Play updates its builds itself, so they never offer GitHub releases (shared AppUpdateCheck).
-        if (providers.gradleProperty("kairoDistribution").orNull == "play") resValue("bool", "kairo_update_check", "false")
+        // Declared in both builds: a resource only the Play build had added a field to the app's R class,
+        // so its code differed from the GitHub build's (audit_android_release.py).
+        resValue("bool", "kairo_update_check", (providers.gradleProperty("kairoDistribution").orNull != "play").toString())
         ndk {
             abiFilters += "arm64-v8a"
         }
