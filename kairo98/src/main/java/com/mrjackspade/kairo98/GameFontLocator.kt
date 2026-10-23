@@ -1,6 +1,7 @@
 package com.mrjackspade.kairo98
 
 import com.mrjackspade.kairo.frontend.DiskImageEntry
+import com.mrjackspade.kairo.frontend.DiskImageLibrary
 import android.content.ContentResolver
 import android.net.Uri
 import android.provider.DocumentsContract
@@ -11,7 +12,6 @@ import java.nio.file.StandardCopyOption
 import java.util.Locale
 import java.util.concurrent.CancellationException
 import java.util.concurrent.atomic.AtomicBoolean
-import java.util.zip.ZipFile
 
 /**
  * Finds the FONT.BMP nearest a library game, as translated releases ship one beside the disk.
@@ -22,27 +22,27 @@ internal class GameFontLocator(private val resolver: ContentResolver, private va
     /**
      * Copies and validates the nearest FONT.BMP into [target] and returns it, or null when
      * the game has none. [tree] is null for a game opened outside the library folder, and
-     * [archive] is the local copy of the game's ZIP when it came from one.
+     * [library] reads the game's archive in place when it came from one.
      */
-    fun prepare(entry: DiskImageEntry, tree: Uri?, archive: File?, cancelled: AtomicBoolean): File? {
-        archive?.let { zip -> entry.zipEntry?.let { name -> fromArchive(zip, name) } }
-            ?.let { return it }
+    fun prepare(entry: DiskImageEntry, tree: Uri?, library: DiskImageLibrary?, cancelled: AtomicBoolean): File? {
+        val member = entry.zipEntry
+        if (library != null && member != null)
+            library.readArchive(entry) { archive -> fromArchive(archive, member) }?.let { return it }
         return tree?.let { fromTree(it, entry.path, cancelled) }
     }
 
-    private fun fromArchive(archive: File, imageName: String): File? = ZipFile(archive).use { zip ->
-        val fonts = zip.entries().asSequence().filter { !it.isDirectory }
-            .groupBy { it.name.replace('\\', '/').lowercase(Locale.ROOT) }
+    private fun fromArchive(archive: DiskImageLibrary.ArchiveFiles, imageName: String): File? {
+        val fonts = archive.files.entries.groupBy { it.key.replace('\\', '/').lowercase(Locale.ROOT) }
         val folders = imageName.replace('\\', '/').split('/').dropLast(1)
         for (depth in folders.size downTo 0) {
             val path = (folders.take(depth) + FONT_NAME).joinToString("/").lowercase(Locale.ROOT)
             val matches = fonts[path] ?: continue
-            require(matches.size == 1) { "ZIP has more than one $path" }
-            val font = matches.single()
-            require(font.size in 1..Pc98FontBitmap.MAX_BYTES) { "Game ${font.name} is not a valid FONT.BMP" }
-            return copy(font.name) { zip.getInputStream(font) }
+            require(matches.size == 1) { "Archive has more than one $path" }
+            val (name, size) = matches.single()
+            require(size in 1..Pc98FontBitmap.MAX_BYTES) { "Game $name is not a valid FONT.BMP" }
+            return copy(name) { archive.open(name) }
         }
-        null
+        return null
     }
 
     private fun fromTree(tree: Uri, gamePath: String, cancelled: AtomicBoolean): File? {

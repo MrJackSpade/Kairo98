@@ -40,7 +40,7 @@ target_include_directories(np21w_core PRIVATE
     ${NP21W_ROOT}/vram
 )
 target_compile_definitions(np21w_core PRIVATE SUPPORT_LARGE_HDD SUPPORT_KAI_IMAGES NP2_SDL2 CPUCORE_IA32 USE_TSC SUPPORT_YMFM KAIRO98_ANDROID_IRQ_FAST KAIRO98_ANDROID_FETCH_FAST
-    USE_CPU_EIPMASK USE_CPU_DIRECTREG)
+    USE_CPU_EIPMASK USE_CPU_DIRECTREG SUPPORT_FAST_MEMORYCHECK)
 # Thin LTO lets the interpreter's memory, paging, and dispatch helpers inline
 # across files; without it every guest memory access is a chain of calls.
 target_compile_options(np21w_core PRIVATE -fsigned-char -fno-strict-aliasing -flto=thin)

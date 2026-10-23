@@ -54,6 +54,7 @@ class MainActivity : MachineActivity<DiskImageEntry>() {
     private external fun nativePause(paused: Boolean)
     private external fun nativeReset()
     private external fun nativeClock(mhzTimesTen: Int)
+    private external fun nativeSkipMemoryCheck(skip: Boolean)
     private external fun nativeLoadedLocks(): Int
     private external fun nativeKey(scanCode: Int, down: Boolean)
     private external fun nativeMouseMove(dx: Int, dy: Int)
@@ -375,12 +376,13 @@ class MainActivity : MachineActivity<DiskImageEntry>() {
         val swapSources = game.diskSwaps.associate { rule -> rule.contentId to requiredFloppyFor(rule.contentId, entry, sources) }
         val floppyB = game.initialFloppyBId?.let { id -> requiredFloppyFor(id, entry, sources) }
         val primary = media?.hardDisk ?: boot
+        nativeSkipMemoryCheck(preferences.getBoolean(SKIP_MEMORY_CHECK, true))
         val disk = disks.prepare(primary, cancelled, progress)
         val bootFloppy = media?.bootFloppy?.let { disks.prepare(it, cancelled, progress) }
         val secondFloppy = floppyB?.let { disks.prepare(it, cancelled, progress) }
         val disc = cd?.let { disks.prepare(it, cancelled, progress) }
         val gameFont = gameFonts.prepare(primary, if (external) null else tree,
-            primary.zipEntry?.let { disks.archive(primary, cancelled) }, cancelled)
+            disks.takeIf { primary.zipEntry != null }, cancelled)
         val font = gameFont?.absolutePath ?: prepareFont()
         check(startMachine(disk.absolutePath, font, game.baseClockTenthsMHz ?: clock, game.gdcClockTenthsMHz ?: 50,
             game.cpuMultiple ?: DEFAULT_CPU_MULTIPLE, primary.isFloppy, bootFloppy?.absolutePath,
@@ -865,7 +867,12 @@ class MainActivity : MachineActivity<DiskImageEntry>() {
                 { GameSource.ALL_GAMES }, { listOf(ChoiceGroup(null, listOf(
                     ChoiceOption("25", "2.5 MHz"), ChoiceOption("20", "2 MHz")))) },
                 { clock.toString() }, select = { value -> setBaseClock(value.toInt()) }))),
-                "Changing the base clock restarts a running game. Games with their own clock keep it.")
+                "Changing the base clock restarts a running game. Games with their own clock keep it."),
+            RowGroup("BOOT", listOf(SettingsRow.choice(SKIP_MEMORY_CHECK, "Skip memory check", ChoiceSpec(
+                "Skip memory check", { GameSource.ALL_GAMES }, { listOf(ChoiceGroup(null, listOf(
+                    ChoiceOption("on", "On"), ChoiceOption("off", "Off")))) },
+                { if (preferences.getBoolean(SKIP_MEMORY_CHECK, true)) "on" else "off" },
+                select = { value -> preferences.edit().putBoolean(SKIP_MEMORY_CHECK, value == "on").apply() }))))
         ) + firmwareGroups()
     })
 
@@ -1034,6 +1041,8 @@ class MainActivity : MachineActivity<DiskImageEntry>() {
     private fun rhythmRomFile() = File(firmwareDir(), "ym2608_adpcm_rom.bin")
 
     companion object {
+        /** The all-games Skip memory check preference, on unless the player turns it off. */
+        private const val SKIP_MEMORY_CHECK = "skipMemoryCheck"
         /** The core's standard CPU clock multiple, about 49 MHz on the 2.5 MHz base clock. */
         const val DEFAULT_CPU_MULTIPLE = 20
         /** Bundled FONT.BMP built by tools/generate_font_bmp.py from redistributable fonts. */
