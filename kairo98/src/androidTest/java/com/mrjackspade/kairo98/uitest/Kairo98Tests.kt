@@ -31,6 +31,10 @@ object Kairo98App : AppUnderTest() {
     override val biosResource: String? = null
     override val bootGame = "Acrojet"
     override val searchTerm = "Acrojet"
+    // PC-98 scan codes: the cursor keys, Return and Space (ControllerBindings).
+    override val arrowKeys = listOf(0x3a, 0x3d, 0x3b, 0x3c)
+    override val returnKey = 0x1c
+    override val spaceKey = 0x34
     override val bootGameFile = "games/Acrojet [T-En by MrRichard999 v1.0].zip"
     override val otherGame = "The Black Onyx"
 }

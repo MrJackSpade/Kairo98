@@ -37,6 +37,7 @@ import android.os.Bundle
 import android.provider.OpenableColumns
 import android.view.KeyEvent
 import android.view.Surface
+import com.mrjackspade.kairo.frontend.ScanDepth
 import java.io.File
 import java.nio.file.Files
 import java.nio.file.StandardCopyOption
@@ -173,8 +174,8 @@ class MainActivity : MachineActivity<DiskImageEntry>() {
     }
 
     override fun cachedLibrary(tree: Uri) = claimSavedData(super.cachedLibrary(tree))
-    override fun scanLibrary(tree: Uri, forceHash: Boolean, cancelled: AtomicBoolean, progress: (String) -> Unit) =
-        claimSavedData(super.scanLibrary(tree, forceHash, cancelled, progress))
+    override fun scanLibrary(tree: Uri, depth: ScanDepth, cancelled: AtomicBoolean, progress: (String) -> Unit) =
+        claimSavedData(super.scanLibrary(tree, depth, cancelled, progress))
     override fun inspectExternal(file: ExternalGameFile, cancelled: AtomicBoolean) =
         claimSavedData(super.inspectExternal(file, cancelled)).onEach { it.error?.let(::error) }
 

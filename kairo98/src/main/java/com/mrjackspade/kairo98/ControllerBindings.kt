@@ -20,15 +20,15 @@ object ControllerBindings {
         else defaults().filterNot { it.input.startsWith("virtual:ls") || it.input.startsWith("virtual:rs") }
 
     /**
-     * The D-pad is the cursor keys and the sound board's joystick, A and B are Z and X and its two
-     * buttons, the left stick moves the mouse with L1 and R1 its buttons, L2 and R2 are F1 and F2,
-     * and the right stick is the numeric keypad's arrows.
+     * The D-pad is the cursor keys and the sound board's joystick, A and B are Return and Space, X
+     * and Y are the joystick's two buttons and Z and X, the left stick moves the mouse with L1 and
+     * R1 its buttons, L2 and R2 are F1 and F2, and the right stick is the numeric keypad's arrows.
      */
     fun defaults() = listOf(
-        ControllerBinding("virtual:a", listOf(0x29), joystick = "button1"),
-        ControllerBinding("virtual:b", listOf(0x2a), joystick = "button2"),
-        ControllerBinding("virtual:x", listOf(0x2b)),
-        ControllerBinding("virtual:y", listOf(0x34)),
+        ControllerBinding("virtual:a", listOf(0x1c)),
+        ControllerBinding("virtual:b", listOf(0x34)),
+        ControllerBinding("virtual:x", listOf(0x29), joystick = "button1"),
+        ControllerBinding("virtual:y", listOf(0x2a), joystick = "button2"),
         ControllerBinding("virtual:l1", mouse = "leftButton"),
         ControllerBinding("virtual:r1", mouse = "rightButton"),
         ControllerBinding("virtual:l2", listOf(0x62)),
