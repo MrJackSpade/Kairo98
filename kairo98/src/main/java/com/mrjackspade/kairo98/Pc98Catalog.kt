@@ -1,6 +1,7 @@
 package com.mrjackspade.kairo98
 
 import com.mrjackspade.kairo.frontend.CatalogGame
+import com.mrjackspade.kairo.frontend.CatalogSetting
 import com.mrjackspade.kairo.frontend.LayeredGameCatalog
 import org.json.JSONArray
 import org.json.JSONObject
@@ -9,7 +10,8 @@ import org.json.JSONObject
  * Kairo98's catalog records beyond the common fields: the machine's clocks (`machine`), a DOS
  * command typed at startup with the screens it waits for (`launch`), startup choices, automatic
  * disk swaps, and the media a game needs besides itself (`media` roles bootFloppy, floppyB, cd and
- * bootDisk). Nothing in a catalog is executed by Android.
+ * bootDisk). Nothing in a catalog is executed by Android. An empty `launch.commands`, `startupChoices`
+ * or `diskSwaps` is a player's setting that turns that automation off for the game.
  */
 object Pc98Catalog : LayeredGameCatalog.Schema {
     override val platform = "pc98"
@@ -20,19 +22,35 @@ object Pc98Catalog : LayeredGameCatalog.Schema {
     override val contentId = Regex("sha256-(?:hdi|fd|cd)-v1:[0-9a-f]{64}")
     override val mediaExtensions = Regex("\\.(?:zip|hdi|fdi|d88|88d|d98|98d|nfd|fdd|dcp|dcu|hdm|xdf|ccd)$",
         RegexOption.IGNORE_CASE)
-    override val fields: Map<String, Set<String>?> = mapOf(
-        "machine" to setOf("baseClockTenthsMHz", "gdcClockTenthsMHz", "cpuMultiple"),
-        "launch" to setOf("type", "text", "commands", "ready", "timeoutMs", "screenHashes"),
-        "startupChoices" to null,
-        "diskSwaps" to null)
-    override val singleMediaRoles = setOf("bootFloppy", "floppyB", "cd", "bootDisk")
+    /** Each a row of the game's settings: MainActivity.customSettingRow builds the custom ones. */
+    override val settings: List<CatalogSetting> = listOf(
+        CatalogSetting.Custom(BASE_CLOCK, "machine", setOf("baseClockTenthsMHz")),
+        CatalogSetting.Custom(GDC_CLOCK, "machine", setOf("gdcClockTenthsMHz")),
+        CatalogSetting.Custom(CPU, "machine", setOf("cpuMultiple")),
+        CatalogSetting.Custom(COMMAND, "launch", setOf("type", "text", "commands", "ready", "timeoutMs", "screenHashes")),
+        CatalogSetting.Custom(CHOICES, "startupChoices", null),
+        CatalogSetting.Custom(SWAPS, "diskSwaps", null),
+        CatalogSetting.Drive("bootFloppy", "Boot floppy") { !it.startsWith(CD) },
+        CatalogSetting.Drive("floppyB", "Drive 2"),
+        CatalogSetting.Drive("cd", "CD-ROM"),
+        CatalogSetting.Drive("bootDisk", "Boot disk") { it.startsWith(CD) })
+    override val fields = CatalogSetting.fields(settings)
+    override val directTouch = true
 
     override fun validMedia(role: String, contentId: String) = when (role) {
         "bootFloppy", "floppyB" -> contentId.startsWith("sha256-fd-v1:")
-        "cd" -> contentId.startsWith("sha256-cd-v1:")
-        "bootDisk" -> !contentId.startsWith("sha256-cd-v1:")
-        else -> true
+        "cd" -> contentId.startsWith(CD)
+        "bootDisk" -> !contentId.startsWith(CD)
+        else -> false
     }
+
+    const val BASE_CLOCK = "clock"
+    const val GDC_CLOCK = "gdc"
+    const val CPU = "cpu"
+    const val COMMAND = "command"
+    const val CHOICES = "choices"
+    const val SWAPS = "swaps"
+    private const val CD = "sha256-cd-v1:"
 
     override fun validBindings(bindings: JSONArray) = ControllerBindings.valid(bindings)
 
@@ -58,7 +76,7 @@ object Pc98Catalog : LayeredGameCatalog.Schema {
             (!value.has("type") || value.optString("type") == "guestCommand") &&
             !(value.has("text") && value.has("commands")) &&
             (!value.has("commands") || value.optJSONArray("commands")?.let { commands ->
-                commands.length() in 1..4 && (0 until commands.length()).all { index ->
+                commands.length() in 0..4 && (0 until commands.length()).all { index ->
                     (commands.opt(index) as? String)?.let(::validCommand) == true
                 }
             } == true) &&
@@ -68,7 +86,7 @@ object Pc98Catalog : LayeredGameCatalog.Schema {
                 groups.length() in 1..4 && (0 until groups.length()).all { index -> validHashes(groups.optJSONArray(index)) }
             } == true) &&
             (!value.has("timeoutMs") || (value.opt("timeoutMs") is Int && value.optInt("timeoutMs") in 1000..120000))
-        "startupChoices" -> value is JSONArray && value.length() in 1..4 &&
+        "startupChoices" -> value is JSONArray && value.length() in 0..4 &&
             (0 until value.length()).all { index ->
                 value.optJSONObject(index)?.let { choice ->
                     validShortId(choice.optString("id")) && validLabel(choice.optString("title")) &&
@@ -97,7 +115,7 @@ object Pc98Catalog : LayeredGameCatalog.Schema {
                         } == true
                 } == true
             } && (0 until value.length()).map { value.getJSONObject(it).getString("id") }.distinct().size == value.length()
-        "diskSwaps" -> value is JSONArray && value.length() in 1..16 &&
+        "diskSwaps" -> value is JSONArray && value.length() in 0..16 &&
             (0 until value.length()).all { index ->
                 value.optJSONObject(index)?.let { swap ->
                     swap.length() == 6 && listOf("id", "drive", "contentId", "screenHashes", "key", "enter").all(swap::has) &&
@@ -118,8 +136,8 @@ object Pc98Catalog : LayeredGameCatalog.Schema {
         else -> false
     }
 
-    /** CPU clock multiples a game can ask for; the app default is 20. */
-    val CPU_MULTIPLES = 1..20
+    /** CPU clock multiples a game can ask for, each a CPU speed choice; the app default is 20. */
+    val CPU_MULTIPLES = listOf(1, 2, 3, 4, 6, 8, 10, 12, 16, 20)
     private val SHORT_ID = Regex("[a-z0-9-]{1,40}")
     private fun validCommand(value: String) = value.isNotBlank() && value.length <= 128 &&
         value.all { it.code in 32..126 && (it.isLetterOrDigit() || it in " \\/._:-") }

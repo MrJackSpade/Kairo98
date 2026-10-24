@@ -2,6 +2,7 @@ package com.mrjackspade.kairo98
 
 import com.mrjackspade.kairo.frontend.ButtonTone
 import com.mrjackspade.kairo.frontend.CatalogGame
+import com.mrjackspade.kairo.frontend.CatalogSetting
 import com.mrjackspade.kairo.frontend.ChoiceGroup
 import com.mrjackspade.kairo.frontend.ChoiceOption
 import com.mrjackspade.kairo.frontend.ChoicePage
@@ -18,6 +19,7 @@ import com.mrjackspade.kairo.frontend.GameKeyMigration
 import com.mrjackspade.kairo.frontend.GameNotice
 import com.mrjackspade.kairo.frontend.GameSettingsRows
 import com.mrjackspade.kairo.frontend.GameSource
+import com.mrjackspade.kairo.frontend.GameValue
 import com.mrjackspade.kairo.frontend.GroupsPage
 import com.mrjackspade.kairo.frontend.LayeredGameCatalog
 import com.mrjackspade.kairo.frontend.LibraryStrings
@@ -39,6 +41,7 @@ import android.view.KeyEvent
 import android.view.Surface
 import com.mrjackspade.kairo.frontend.ScanDepth
 import java.io.File
+import org.json.JSONArray
 import java.nio.file.Files
 import java.nio.file.StandardCopyOption
 import java.util.concurrent.atomic.AtomicBoolean
@@ -127,7 +130,6 @@ class MainActivity : MachineActivity<DiskImageEntry>() {
     override val bindingsCodec = ControllerBindings.codec
     override fun defaultBindings(layout: ControllerLayout) = ControllerBindings.defaults(layout)
     override val artworkDownloadsEnabled: Boolean get() = resources.getBoolean(R.bool.catalog_art_download_enabled)
-    override val directTouchAvailable = true
     override val automationOwners = setOf("guest-command", "disk-swap", "debug-auto-space")
 
     private val disks by lazy { Pc98Media.library(this) }
@@ -889,37 +891,66 @@ class MainActivity : MachineActivity<DiskImageEntry>() {
         } else toast("Global clock saved; this game uses its own clock")
     }
 
-    override fun machineGroup(entry: DiskImageEntry, enabled: () -> Boolean): RowGroup {
+    /** The rows of Kairo98's own catalog settings (Pc98Catalog.settings). */
+    override fun customSettingRow(entry: DiskImageEntry, setting: CatalogSetting.Custom,
+                                  enabled: () -> Boolean): SettingsRow? {
         val id = entry.key.takeIf { entry.contentId != null }
         val noHash = { GameSettingsRows.NO_HASH }
         val scope = { titleOf(entry) }
         fun game() = catalog.resolve(entry)
-        val base = { if ((game().baseClockTenthsMHz ?: clock) == 20) 1.9968 else 2.4576 }
-        val multiples = listOf(1, 2, 3, 4, 6, 8, 10, 12, 16, DEFAULT_CPU_MULTIPLE)
-        val cpu = machineValue(entry, "machine", "cpuMultiple", { it.cpuMultiple?.toString() },
-            { DEFAULT_CPU_MULTIPLE.toString() }, GameSource.BUILT_IN) { it.toInt() }
-        return RowGroup("MACHINE", listOf(
-            GameSettingsRows.choice("clock", "Machine clock", scope,
+        return when (setting.id) {
+            Pc98Catalog.BASE_CLOCK -> GameSettingsRows.choice("clock", "Machine clock", scope,
                 listOf(ChoiceOption("20", "2 MHz"), ChoiceOption("25", "2.5 MHz")),
                 machineValue(entry, "machine", "baseClockTenthsMHz", { it.baseClockTenthsMHz?.toString() },
-                    { clock.toString() }, GameSource.ALL_GAMES) { it.toInt() }, enabled, noHash),
-            GameSettingsRows.choice("gdc", "GDC clock", scope,
+                    { clock.toString() }, GameSource.ALL_GAMES) { it.toInt() }, enabled, noHash)
+            Pc98Catalog.GDC_CLOCK -> GameSettingsRows.choice("gdc", "GDC clock", scope,
                 listOf(ChoiceOption("25", "2.5 MHz"), ChoiceOption("50", "5 MHz")),
                 machineValue(entry, "machine", "gdcClockTenthsMHz", { it.gdcClockTenthsMHz?.toString() },
-                    { "50" }, GameSource.BUILT_IN) { it.toInt() }, enabled, noHash),
-            GameSettingsRows.choice("cpu", "CPU speed", scope,
-                multiples.map { ChoiceOption("$it", "%.1f MHz".format(base() * it), "×$it") },
-                cpu, enabled, noHash,
-                defaultLabel = { cpu.fallback().toInt().let { "%.1f MHz (×%d)".format(base() * it, it) } }),
-            GameSettingsRows.text("command", "Startup command", "DOS command, such as GAME",
-                { game().launchCommand }, { id != null && catalog.sourceOf(entry, "launch", "text") == "User override" },
+                    { "50" }, GameSource.BUILT_IN) { it.toInt() }, enabled, noHash)
+            Pc98Catalog.CPU -> {
+                val base = { if ((game().baseClockTenthsMHz ?: clock) == 20) 1.9968 else 2.4576 }
+                val cpu = machineValue(entry, "machine", "cpuMultiple", { it.cpuMultiple?.toString() },
+                    { DEFAULT_CPU_MULTIPLE.toString() }, GameSource.BUILT_IN) { it.toInt() }
+                GameSettingsRows.choice("cpu", "CPU speed", scope,
+                    Pc98Catalog.CPU_MULTIPLES.map { ChoiceOption("$it", "%.1f MHz".format(base() * it), "×$it") },
+                    cpu, enabled, noHash,
+                    defaultLabel = { cpu.fallback().toInt().let { "%.1f MHz (×%d)".format(base() * it, it) } })
+            }
+            // Saving no command types nothing, even where the catalog gives one; Reset returns to it.
+            Pc98Catalog.COMMAND -> GameSettingsRows.text("command", "Startup command", "DOS command, such as GAME",
+                { game().launchCommand }, {
+                    id != null && (catalog.sourceOf(entry, "launch", "text") == "User override" ||
+                        catalog.sourceOf(entry, "launch", "commands") == "User override")
+                },
                 { id?.let { catalog.sourceOf(entry, "launch") }?.takeIf { it != "App default" }?.let(GameSource::label) },
                 { value -> saveGameSetting(entry) {
-                    catalog.updateOverrideSubfields(id!!, "launch",
-                        mapOf("text" to value.ifEmpty { null }, "commands" to null, "screenHashes" to null))
+                    catalog.updateOverrideSubfields(id!!, "launch", if (value.isEmpty())
+                        mapOf("text" to null, "commands" to JSONArray(), "screenHashes" to null)
+                    else mapOf("text" to value, "commands" to null, "screenHashes" to null))
                 } }, { saveGameSetting(entry) { catalog.resetOverride(id!!, "launch") } },
-                enabled = enabled, disabledReason = noHash)),
-            "Machine changes apply on the next launch or restart.")
+                enabled = enabled, disabledReason = noHash)
+            Pc98Catalog.CHOICES -> automationRow(entry, "startupChoices", "Startup choices", "Ask", enabled)
+            Pc98Catalog.SWAPS -> automationRow(entry, "diskSwaps", "Disk swaps", "Automatic", enabled)
+            else -> error("Kairo98 has no row for its catalog setting ${setting.id}")
+        }
+    }
+
+    /**
+     * On or Off for the catalog's startup automation in [field], for a game the catalog gives some;
+     * Off keeps an empty list as the game's own.
+     */
+    private fun automationRow(entry: DiskImageEntry, field: String, label: String, on: String,
+                              enabled: () -> Boolean): SettingsRow? {
+        val id = entry.key.takeIf { entry.contentId != null }
+        fun custom() = id != null && catalog.sourceOf(entry, field) == "User override"
+        if ((catalog.resolveDefault(entry).record.optJSONArray(field)?.length() ?: 0) == 0 && !custom()) return null
+        val value = GameValue({ if (custom()) OFF else null }, { ON },
+            { GameSource.label(catalog.defaultSourceOf(entry, field)) },
+            { picked -> saveGameSetting(entry) {
+                if (picked == OFF) catalog.setOverride(id!!, field, JSONArray()) else catalog.resetOverride(id!!, field)
+            } })
+        return GameSettingsRows.choice(field, label, { titleOf(entry) },
+            listOf(ChoiceOption(ON, on), ChoiceOption(OFF, "Off")), value, enabled, { GameSettingsRows.NO_HASH })
     }
 
     override fun handleProductResult(requestCode: Int, resultCode: Int, data: Intent?): Boolean {
@@ -1046,6 +1077,8 @@ class MainActivity : MachineActivity<DiskImageEntry>() {
         private const val SKIP_MEMORY_CHECK = "skipMemoryCheck"
         /** The core's standard CPU clock multiple, about 49 MHz on the 2.5 MHz base clock. */
         const val DEFAULT_CPU_MULTIPLE = 20
+        private const val ON = "on"
+        private const val OFF = "off"
         /** Bundled FONT.BMP built by tools/generate_font_bmp.py from redistributable fonts. */
         private const val BUNDLED_FONT = "kairo98-font.bmp"
         private const val HDI_REQUEST = FIRST_PRODUCT_REQUEST
