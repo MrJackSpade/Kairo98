@@ -4,6 +4,7 @@ import com.mrjackspade.kairo.frontend.GuestKeyboardLayout
 import com.mrjackspade.kairo.frontend.JisKana
 import com.mrjackspade.kairo.frontend.GuestKeyboardPage
 import com.mrjackspade.kairo.frontend.KeyboardKey
+import com.mrjackspade.kairo.frontend.SymbolPage
 
 /** PC-98 scan codes and legends supplied to the shared keyboard panel. */
 internal object Pc98KeyboardLayout {
@@ -50,24 +51,25 @@ internal object Pc98KeyboardLayout {
             KeyboardKey("Ins", 0x38), KeyboardKey("Del", 0x39))
     )
 
-    private fun symbolRows(): List<List<KeyboardKey>> = listOf(
-        listOf(KeyboardKey("Esc", 0x00, 1.3f)) +
-            (1..9).map { KeyboardKey("$it", it) } + KeyboardKey("0", 0x0a) + KeyboardKey("Back", 0x0e, 1.5f),
-        listOf("!", "\"", "#", "$", "%", "&", "'", "(", ")")
-            .mapIndexed { index, label -> KeyboardKey(label, index + 1, chordShift = true) } +
-            KeyboardKey("Enter", 0x1c, 1.5f),
-        listOf(KeyboardKey("-", 0x0b), KeyboardKey("^", 0x0c), KeyboardKey("\\", 0x0d),
+    private fun symbolRows(): List<List<KeyboardKey>> = SymbolPage.rows(
+        digits = (1..9).map { KeyboardKey("$it", it) } + KeyboardKey("0", 0x0a),
+        delete = KeyboardKey("Back", 0x0e, 1.5f),
+        shiftedDigits = listOf("!", "\"", "#", "$", "%", "&", "'", "(", ")")
+            .mapIndexed { index, label -> KeyboardKey(label, index + 1, chordShift = true) },
+        symbols = listOf(KeyboardKey("-", 0x0b), KeyboardKey("^", 0x0c), KeyboardKey("\\", 0x0d),
             KeyboardKey("@", 0x1a), KeyboardKey("[", 0x1b), KeyboardKey("]", 0x28), KeyboardKey(";", 0x26),
             KeyboardKey(":", 0x27), KeyboardKey(",", 0x30), KeyboardKey(".", 0x31), KeyboardKey("/", 0x32)),
-        listOf(KeyboardKey("=", 0x0b, chordShift = true), KeyboardKey("`", 0x0c, chordShift = true),
+        shiftedSymbols = listOf(KeyboardKey("=", 0x0b, chordShift = true), KeyboardKey("`", 0x0c, chordShift = true),
             KeyboardKey("|", 0x0d, chordShift = true), KeyboardKey("~", 0x1a, chordShift = true),
             KeyboardKey("{", 0x1b, chordShift = true), KeyboardKey("}", 0x28, chordShift = true),
             KeyboardKey("+", 0x26, chordShift = true), KeyboardKey("*", 0x27, chordShift = true),
             KeyboardKey("<", 0x30, chordShift = true), KeyboardKey(">", 0x31, chordShift = true),
             KeyboardKey("?", 0x32, chordShift = true), KeyboardKey("_", 0x33, chordShift = true)),
-        listOf(KeyboardKey("Tab", 0x0f), KeyboardKey("Space", 0x34, 5f), KeyboardKey("Enter", 0x1c, 1.5f),
-            KeyboardKey("Ins", 0x38), KeyboardKey("Del", 0x39))
-    )
+        space = KeyboardKey("Space", 0x34, 5f),
+        enter = KeyboardKey("Enter", 0x1c, 1.5f),
+        escape = KeyboardKey("Esc", 0x00, 1.3f),
+        tab = KeyboardKey("Tab", 0x0f),
+        bottomEnd = listOf(KeyboardKey("Ins", 0x38), KeyboardKey("Del", 0x39)))
 
     private fun pc98Rows(): List<List<KeyboardKey>> = listOf(
         listOf(KeyboardKey("Stop", 0x60, 1.4f), KeyboardKey("Copy", 0x61, 1.4f)) +

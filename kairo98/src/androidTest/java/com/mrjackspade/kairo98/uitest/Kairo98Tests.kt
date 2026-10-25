@@ -14,6 +14,7 @@ import com.mrjackspade.kairo.uitest.suites.ControllerTests
 import com.mrjackspade.kairo.uitest.suites.TouchTests
 import com.mrjackspade.kairo.uitest.suites.LaunchTests
 import com.mrjackspade.kairo.uitest.suites.LibraryManagementTests
+import com.mrjackspade.kairo.uitest.suites.MediaTests
 import com.mrjackspade.kairo.uitest.suites.SettingsTests
 import com.mrjackspade.kairo.uitest.suites.StateTests
 import org.junit.Test
@@ -37,6 +38,8 @@ object Kairo98App : AppUnderTest() {
     override val spaceKey = 0x34
     override val bootGameFile = "games/Acrojet [T-En by MrRichard999 v1.0].zip"
     override val otherGame = "The Black Onyx"
+    // The Disks page's Floppy A takes The Black Onyx's disk from Other while Acrojet runs.
+    override val mediaSwap = MediaSwap("Acrojet", "Floppy A", "Black Onyx", filler = "d88", page = "f-disks")
 }
 
 class Kairo98FirstRunTests : FirstRunTests() { override val app = Kairo98App }
@@ -51,6 +54,7 @@ class Kairo98LaunchTests : LaunchTests() { override val app = Kairo98App }
 class Kairo98LibraryManagementTests : LibraryManagementTests() { override val app = Kairo98App }
 class Kairo98SettingsTests : SettingsTests() { override val app = Kairo98App }
 class Kairo98StateTests : StateTests() { override val app = Kairo98App }
+class Kairo98MediaTests : MediaTests() { override val app = Kairo98App }
 
 /** The PC-98's own behavior: games start on the built-in BIOS and font. */
 class Pc98Tests : KairoUiTest() {

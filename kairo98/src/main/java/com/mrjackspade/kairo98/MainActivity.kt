@@ -15,6 +15,7 @@ import com.mrjackspade.kairo.frontend.DocumentPicker
 import com.mrjackspade.kairo.frontend.ExternalGameFile
 import com.mrjackspade.kairo.frontend.FirmwareSet
 import com.mrjackspade.kairo.frontend.FolderStateSlots
+import com.mrjackspade.kairo.frontend.GameDisks
 import com.mrjackspade.kairo.frontend.GameKeyMigration
 import com.mrjackspade.kairo.frontend.GameNotice
 import com.mrjackspade.kairo.frontend.GameSettingsRows
@@ -769,28 +770,25 @@ class MainActivity : MachineActivity<DiskImageEntry>() {
         enabled = { machineRunning && !floppyBusy },
         disabledReason = { if (floppyBusy) "Wait for the floppy change to finish" else "Start a game before inserting a floppy" })
 
-    /** Empty ejects; other disks from the same ZIP or folder; or a file from the device. */
+    /**
+     * Empty ejects; then the game's own disks (the shared GameDisks choice), Other for every floppy
+     * in the library, or a file from the device.
+     */
     private fun floppyChoice(drive: Int): ChoiceSpec {
-        fun candidates(): List<DiskImageEntry> {
+        fun takes(entry: DiskImageEntry) = entry.playable && entry.isFloppy
+        fun own(): List<DiskImageEntry> {
             val current = currentEntry ?: return emptyList()
-            return libraryEntries.filter { entry -> entry.playable && entry.isFloppy && sameSource(current, entry) }
+            val inDrives = libraryEntries.filter { it.isFloppy && it.displayName in mountedFloppies }
+            return GameDisks.own(current, libraryEntries, inDrives, catalog.setDisks(current).toSet(), catalog::matchId, ::takes)
         }
-        return ChoiceSpec("Floppy ${'A' + drive}", { currentGame?.title }, {
-            val found = candidates()
-            listOfNotNull(ChoiceGroup(null, listOf(ChoiceOption("empty", "Empty")),
-                if (found.isEmpty()) "No other disk images in this game’s folder." else null),
-                found.takeIf { it.isNotEmpty() }?.let { items ->
-                    ChoiceGroup("IN THIS GAME’S FOLDER", items.map { ChoiceOption(it.id, it.displayName) })
-                })
-        }, { candidates().firstOrNull { it.displayName == mountedFloppies[drive] }?.id
-            ?: if (mountedFloppies[drive] == null) "empty" else null }, { id ->
-            if (id == "empty") changeFloppy(drive, null)
-            else candidates().firstOrNull { it.id == id }?.let { changeFloppy(drive, it) }
-        }, actions = {
+        return GameDisks.choice("Floppy ${'A' + drive}", { currentGame?.title }, ::own, { libraryEntries.filter(::takes) }, {
+            own().firstOrNull { it.displayName == mountedFloppies[drive] }?.id
+                ?: if (mountedFloppies[drive] == null) GameDisks.EMPTY else null
+        }, { entry -> changeFloppy(drive, entry) }) {
             listOf(SettingsRow.action("choose", "Choose file…") {
                 DocumentPicker.open(this, if (drive == 0) FLOPPY_A_REQUEST else FLOPPY_B_REQUEST, failed = ::toast)
             })
-        }, cycles = false)
+        }
     }
 
     private fun changeFloppy(drive: Int, entry: DiskImageEntry?) {
