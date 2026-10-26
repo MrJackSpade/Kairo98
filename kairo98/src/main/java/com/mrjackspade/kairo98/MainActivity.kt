@@ -131,7 +131,6 @@ class MainActivity : MachineActivity<DiskImageEntry>() {
         "Uses the joystick input on the emulated sound board. Games must support joystick 1.",
         ControllerGuestSpec.STANDARD_ACTIONS, Pc98KeyboardLayout.value)
     override val bindingsCodec = ControllerBindings.codec
-    override fun defaultBindings(layout: ControllerLayout) = ControllerBindings.defaults(layout)
     override val artworkDownloadsEnabled: Boolean get() = resources.getBoolean(R.bool.catalog_art_download_enabled)
     override val automationOwners = setOf("guest-command", "disk-swap", "debug-auto-space")
 

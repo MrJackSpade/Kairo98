@@ -14,6 +14,7 @@ ROOT=Path(__file__).resolve().parents[1]
 sys.path.insert(0,str(ROOT/'shared/tools'))
 from artwork_references import expand, compact as compact_art
 from catalog_parts import generate_parts
+from app_catalog import validate_system
 
 
 def generate():
@@ -32,6 +33,10 @@ def generate():
     (ROOT/'kairo98/src/withImages/assets/art/catalog-provenance-v1.json').write_text(json.dumps(provenance,separators=(',',':')),'utf8')
     full = json.loads((ROOT/'catalog/optional/full-v1.json').read_text('utf8'))
     assets = ROOT/'kairo98/src/main/assets/catalog'
+    # The system's definition: the PC-98 controller mapping every game's cascades over (shared ControllerDefaults).
+    system = json.loads((ROOT/'catalog/system-v1.json').read_text('utf8'))
+    validate_system(system)
+    (assets/'system-v1.json').write_text(json.dumps(system,separators=(',',':')),'utf8')
     documents = {p.relative_to(assets).as_posix():json.loads(p.read_text('utf8')) for p in assets.rglob('*.json')}
     documents['name-index-v1.json'] = full['nameIndex']
     for name, document in documents.items():
