@@ -2,7 +2,10 @@ package com.mrjackspade.kairo98
 
 import com.mrjackspade.kairo.frontend.CatalogGame
 import com.mrjackspade.kairo.frontend.CatalogSetting
+import com.mrjackspade.kairo.frontend.ChoiceOption
 import com.mrjackspade.kairo.frontend.LayeredGameCatalog
+import com.mrjackspade.kairo.frontend.MachineOption
+import com.mrjackspade.kairo.frontend.SettingsRow
 import org.json.JSONArray
 import org.json.JSONObject
 
@@ -22,11 +25,37 @@ object Pc98Catalog : LayeredGameCatalog.Schema {
     override val contentId = Regex("sha256-(?:hdi|fd|cd)-v1:[0-9a-f]{64}")
     override val mediaExtensions = Regex("\\.(?:zip|hdi|fdi|d88|88d|d98|98d|nfd|fdd|dcp|dcu|hdm|xdf|ccd)$",
         RegexOption.IGNORE_CASE)
+    /** A game's font: a FONT.BMP beside the game, else the player's font.bmp, else the built-in one. */
+    const val FONT_GAME_FOLDER = "folder"
+    /** The player's font.bmp from the Machine page, else the built-in one. */
+    const val FONT_FIRMWARE = "firmware"
+    const val FONT_BUILT_IN = "builtin"
+    /** A font.bmp the player imported for games to pick by name (ImportedFiles, "font:<hash>"). */
+    val FONT_ID = Regex("font:[0-9a-f]{16}")
+
+    val fixedFonts = listOf(
+        ChoiceOption(FONT_GAME_FOLDER, "Game folder"),
+        ChoiceOption(FONT_FIRMWARE, "Your font.bmp"),
+        ChoiceOption(FONT_BUILT_IN, "Built-in"))
+
+    /**
+     * The FONT.BMP a game starts with (`machine.font`, Kairo98#64): [fixedFonts], or one the
+     * player imported, which [imported] lists; [actions] import more.
+     */
+    fun font(imported: () -> List<ChoiceOption> = { emptyList() },
+             actions: (select: (String) -> Unit) -> List<SettingsRow> = { emptyList() }) =
+        MachineOption("font", "Font", { fixedFonts + imported() }, FONT_GAME_FOLDER,
+            accepts = { value -> fixedFonts.any { it.id == value } || FONT_ID.matches(value) }, actions = actions)
+
+    /** The Font option as the catalog reads it; MainActivity lists the player's fonts too. */
+    val font = font()
+
     /** Each a row of the game's settings: MainActivity.customSettingRow builds the custom ones. */
     override val settings: List<CatalogSetting> = listOf(
         CatalogSetting.Custom(BASE_CLOCK, "machine", setOf("baseClockTenthsMHz")),
         CatalogSetting.Custom(GDC_CLOCK, "machine", setOf("gdcClockTenthsMHz")),
         CatalogSetting.Custom(CPU, "machine", setOf("cpuMultiple")),
+        CatalogSetting.Choice(font),
         CatalogSetting.Custom(COMMAND, "launch", setOf("type", "text", "commands", "ready", "timeoutMs", "screenHashes")),
         CatalogSetting.Custom(CHOICES, "startupChoices", null),
         CatalogSetting.Custom(SWAPS, "diskSwaps", null),
