@@ -184,9 +184,8 @@ class MainActivity : MachineActivity<DiskImageEntry>() {
     override fun inspectExternal(file: ExternalGameFile, cancelled: AtomicBoolean) =
         claimSavedData(super.inspectExternal(file, cancelled)).onEach { it.error?.let(::error) }
 
-    /** The one disk, else the one hard disk, else the one boot disk; otherwise the player chooses. */
-    override fun preferredExternal(playable: List<DiskImageEntry>) = playable.singleOrNull()
-        ?: playable.filter { !it.isFloppy }.singleOrNull()
+    /** When the catalog does not settle it: the one hard disk, else the one boot disk; otherwise the player chooses. */
+    override fun preferredExternal(playable: List<DiskImageEntry>) = playable.filter { !it.isFloppy }.singleOrNull()
         ?: playable.filter { it.displayName.contains("boot", true) }.singleOrNull()
 
     // Debug launches over adb ------------------------------------------------------------------------
@@ -391,7 +390,7 @@ class MainActivity : MachineActivity<DiskImageEntry>() {
 
     override fun startGame(entry: DiskImageEntry, game: CatalogGame, cancelled: AtomicBoolean, progress: (String) -> Unit) {
         val external = entry !in libraryEntries
-        val sources = libraryEntries + listOf(entry).filter { external }
+        val sources = launchEntries
         val cd = cdFor(entry, game.cdId, sources)
         val boot = if (entry.isCd) cdBootDiskFor(entry, game.bootDiskId, sources) else entry
         val media = bootMediaFor(boot, sources, game.requiredBootFloppyId)

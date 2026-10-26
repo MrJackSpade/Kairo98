@@ -5,6 +5,7 @@ import com.mrjackspade.kairo.frontend.DiskImageLibrary
 import com.mrjackspade.kairo.frontend.GameKey
 import com.mrjackspade.kairo.frontend.GameKeyMigration
 import com.mrjackspade.kairo.frontend.VersionedLibraryCache
+import com.mrjackspade.kairo.frontend.companionFor
 import com.mrjackspade.kairo.frontend.mediaFor
 import com.mrjackspade.kairo.frontend.readOptionalText
 import com.mrjackspade.kairo.frontend.readText
@@ -130,11 +131,8 @@ fun requiredMediaFor(contentId: String, source: DiskImageEntry, entries: List<Di
  * The disc for a game's CD-ROM drive: the CD its catalog names, else the one CD beside it.
  * A CD entry is its own disc.
  */
-fun cdFor(entry: DiskImageEntry, catalogCdId: String?, entries: List<DiskImageEntry>): DiskImageEntry? {
-    if (entry.isCd) return entry
-    catalogCdId?.let { return requiredMediaFor(it, entry, entries, "CD") { candidate -> candidate.isCd } }
-    return entries.filter { it.playable && it.isCd && sameSource(entry, it) }.singleOrNull()
-}
+fun cdFor(entry: DiskImageEntry, catalogCdId: String?, entries: List<DiskImageEntry>): DiskImageEntry? =
+    if (entry.isCd) entry else companionFor(catalogCdId, entry, entries, "CD") { it.isCd }
 
 /**
  * What a CD boots from: the disk its catalog names, else the one hard disk or floppy beside it.
