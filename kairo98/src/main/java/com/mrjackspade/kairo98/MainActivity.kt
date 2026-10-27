@@ -74,6 +74,16 @@ class MainActivity : MachineActivity<DiskImageEntry>() {
     private external fun nativeInputTelemetry(): LongArray
     private external fun nativeStatus(): String
     private external fun nativeDosPromptReady(): Boolean
+    /** Types these steps with the shared typer (startup_typer.h), replacing any still to type; none stops it. */
+    private external fun nativeStartupStart(texts: Array<String>, enters: BooleanArray, screens: Array<LongArray>,
+                                            timeoutsMs: IntArray)
+    /** Types [text] at once, after the steps still to type. */
+    private external fun nativeStartupKeys(text: String, enter: Boolean)
+    /** Waits for the step the typer stalled on again. */
+    private external fun nativeStartupResume()
+    /** The typer's state (STARTUP_*) and the step it stalled on, or -1. */
+    private external fun nativeStartupStatus(): IntArray
+    private external fun nativeStartupError(): String
     private external fun nativeSetScreenHashSampling(enabled: Boolean)
     private external fun nativeScreenHashSnapshot(): LongArray
     private external fun nativeSetSurface(surface: Surface?, width: Int, height: Int)
@@ -132,7 +142,7 @@ class MainActivity : MachineActivity<DiskImageEntry>() {
         ControllerGuestSpec.STANDARD_ACTIONS, Pc98KeyboardLayout.value)
     override val bindingsCodec = ControllerBindings.codec
     override val artworkDownloadsEnabled: Boolean get() = resources.getBoolean(R.bool.catalog_art_download_enabled)
-    override val automationOwners = setOf("guest-command", "disk-swap", "debug-auto-space")
+    override val automationOwners = setOf("debug-auto-space")
 
     private val disks by lazy { Pc98Media.library(this) }
     override fun createCatalog() = LayeredGameCatalog(this, Pc98Catalog)
@@ -320,10 +330,10 @@ class MainActivity : MachineActivity<DiskImageEntry>() {
     @Volatile private var floppyBusy = false
     private val samplingLock = Any()
     private var samplingUsers = 0
-    private val guestSequenceLock = Any()
 
     override fun cancelAutomation() {
         commandCancelled.set(true)
+        stopStartupTyping()
         debugAutoAdvance?.cancel()
         debugAutoAdvance = null
     }
@@ -485,20 +495,52 @@ class MainActivity : MachineActivity<DiskImageEntry>() {
 
     // Startup automation: typed commands and choices on recognized screens, and disk swaps ------------
 
+    /** A step for the typer, and what the notice calls it when the typer stalls on it. */
+    private class StartupStep(val label: String, val text: String, val enter: Boolean,
+                              /** The screens it waits for; none waits for the DOS prompt. */
+                              val screens: Set<Long>, val timeoutMs: Int)
+
     private fun scheduleStartupQueue(game: CatalogGame?, choices: List<Pair<StartupChoice, StartupOption>>) {
         commandCancelled.set(true)
         if (game == null) return
         val steps = (if (skipDebugCommands) emptyList() else game.launchCommands).mapIndexed { index, command ->
-            val hashes = game.launchScreenHashes.getOrNull(index) ?: emptySet()
-            StartupHashMatcher.Step("Launch command ${index + 1}: $command", command, true,
-                hashes, hashes.isEmpty(), game.launchTimeoutMs)
+            StartupStep("Launch command ${index + 1}: $command", command, true,
+                game.launchScreenHashes.getOrNull(index) ?: emptySet(), game.launchTimeoutMs)
         } + choices.flatMap { (choice, option) ->
             option.inputs.mapIndexed { index, input ->
-                StartupHashMatcher.Step("${choice.title}: ${option.label} (${index + 1}/${option.inputs.size})",
-                    input.key.toString(), input.enter, input.screenHashes, false, 120000)
+                StartupStep("${choice.title}: ${option.label} (${index + 1}/${option.inputs.size})",
+                    input.key.toString(), input.enter, input.screenHashes, 120000)
             }
         }
-        scheduleStartupSteps(steps)
+        val generation = sessionGeneration
+        if (steps.isEmpty()) {
+            scheduleDebugAutoAdvance(generation)
+            return
+        }
+        nativeStartupStart(steps.map { it.text }.toTypedArray(), BooleanArray(steps.size) { steps[it].enter },
+            steps.map { it.screens.toLongArray() }.toTypedArray(), IntArray(steps.size) { steps[it].timeoutMs })
+        val cancelled = AtomicBoolean(false)
+        commandCancelled = cancelled
+        watchStartup(steps, cancelled, generation)
+    }
+
+    private fun stopStartupTyping() = nativeStartupStart(emptyArray(), BooleanArray(0), emptyArray(), IntArray(0))
+
+    /** Follows the typer until it is done, stalls on a step (a notice offers Retry) or cannot type one. */
+    private fun watchStartup(steps: List<StartupStep>, cancelled: AtomicBoolean, generation: Int) {
+        handler.postDelayed(object : Runnable {
+            override fun run() {
+                if (cancelled.get() || !current(generation)) return
+                val (state, stalled) = nativeStartupStatus()
+                when (state) {
+                    STARTUP_TYPING -> handler.postDelayed(this, 100)
+                    STARTUP_IDLE -> scheduleDebugAutoAdvance(generation)
+                    STARTUP_STALLED -> showStartupTimeout(steps, steps[stalled], cancelled, generation)
+                    STARTUP_FAILED -> toast(nativeStartupError())
+                    else -> error("Unknown startup typer state $state")
+                }
+            }
+        }, 100)
     }
 
     private fun acquireScreenHashes() = synchronized(samplingLock) {
@@ -509,36 +551,6 @@ class MainActivity : MachineActivity<DiskImageEntry>() {
         if (--samplingUsers == 0 && !traceScreenHashes) nativeSetScreenHashSampling(false)
     }
 
-    private fun scheduleStartupSteps(steps: List<StartupHashMatcher.Step>) {
-        val generation = sessionGeneration
-        if (steps.isEmpty()) {
-            scheduleDebugAutoAdvance(generation)
-            return
-        }
-        val cancelled = AtomicBoolean(false)
-        commandCancelled = cancelled
-        acquireScreenHashes()
-        Thread {
-            try {
-                val ready = StartupHashMatcher(::nativeScreenHashSnapshot, ::nativeDosPromptReady,
-                    { nativeStatus().startsWith("Running") },
-                    { cancelled.get() || !current(generation) },
-                    { step -> sendStartupKeys(step, cancelled, generation) },
-                    { step -> runOnUiThread {
-                        if (!cancelled.get() && current(generation)) showStartupTimeout(steps, step)
-                    } }).run(steps)
-                if (ready && !cancelled.get() && current(generation)) scheduleDebugAutoAdvance(generation)
-            } catch (error: Exception) {
-                runOnUiThread {
-                    if (!cancelled.get() && current(generation)) toast(error.message ?: "Startup input failed")
-                }
-            } finally {
-                inputRouter.release("guest-command")
-                releaseScreenHashes()
-            }
-        }.start()
-    }
-
     private fun scheduleDebugAutoAdvance(generation: Int) {
         if (debugAdvanceSeconds <= 0) return
         handler.postDelayed({
@@ -547,21 +559,6 @@ class MainActivity : MachineActivity<DiskImageEntry>() {
             debugAutoAdvance = DebugAutoAdvance(inputRouter, ::nativeStatus,
                 File(filesDir, "performance-auto.txt"), debugAdvanceSeconds, debugAdvanceIntervalMs).also { it.start() }
         }, 2000)
-    }
-
-    private fun sendStartupKeys(step: StartupHashMatcher.Step, cancelled: AtomicBoolean,
-                                generation: Int, source: String = "guest-command") = synchronized(guestSequenceLock) {
-        for (character in step.text) {
-            if (cancelled.get() || !current(generation)) return
-            val scans = guestCommandScans(character) ?: error("Unsupported startup character: $character")
-            inputRouter.hold(source, scans)
-            try { Thread.sleep(70) } finally { inputRouter.release(source) }
-            Thread.sleep(70)
-        }
-        if (step.enter && !cancelled.get() && current(generation)) {
-            inputRouter.hold(source, listOf(0x1c))
-            try { Thread.sleep(70) } finally { inputRouter.release(source) }
-        }
     }
 
     private fun scheduleDiskSwaps(rules: List<DiskSwap>, sources: Map<String, DiskImageEntry>) {
@@ -621,8 +618,7 @@ class MainActivity : MachineActivity<DiskImageEntry>() {
             }
             if (rule.key.isNotEmpty() || rule.enter) {
                 Thread.sleep(150)
-                sendStartupKeys(StartupHashMatcher.Step(rule.id, rule.key, rule.enter, emptySet(), false, 0),
-                    AtomicBoolean(false), generation, "disk-swap")
+                if (current(generation)) nativeStartupKeys(rule.key, rule.enter)
             }
         } finally {
             endFloppyChange()
@@ -648,31 +644,15 @@ class MainActivity : MachineActivity<DiskImageEntry>() {
                 TrayButton("Retry", ButtonTone.PRIMARY) { scheduleDiskSwaps(rules, sources) })))
     }
 
-    private fun showStartupTimeout(steps: List<StartupHashMatcher.Step>, step: StartupHashMatcher.Step) {
+    private fun showStartupTimeout(steps: List<StartupStep>, step: StartupStep, cancelled: AtomicBoolean, generation: Int) {
         overlay.showNotice(GameNotice("Startup screen not recognized",
             "Waiting for ${step.label}. The game is still running.",
             listOf(TrayButton("Restart") { openMenu("f-restart", confirm = true) },
                 TrayButton("Open keyboard") { showKeyboard() },
                 TrayButton("Retry", ButtonTone.PRIMARY) {
-                    scheduleStartupSteps(steps.drop(steps.indexOf(step).coerceAtLeast(0)))
+                    nativeStartupResume()
+                    watchStartup(steps, cancelled, generation)
                 })))
-    }
-
-    private fun guestCommandScans(character: Char): List<Int>? = when {
-        character in 'a'..'z' -> pc98ScanCode(KeyEvent.KEYCODE_A + (character - 'a'))?.let(::listOf)
-        character in 'A'..'Z' -> pc98ScanCode(KeyEvent.KEYCODE_A + (character - 'A'))?.let { listOf(0x70, it) }
-        character in '0'..'9' -> pc98ScanCode(if (character == '0') KeyEvent.KEYCODE_0
-            else KeyEvent.KEYCODE_1 + (character - '1'))?.let(::listOf)
-        else -> (when (character) {
-            ' ' -> 0x34
-            '\\' -> 0x0d
-            '/' -> 0x32
-            '.' -> 0x31
-            '-' -> 0x0b
-            ':' -> 0x27
-            '_' -> 0x33
-            else -> null
-        })?.let(::listOf)
     }
 
     // Direct tap: the mouse warps to the touched point before a click ----------------------------------
@@ -1109,6 +1089,11 @@ class MainActivity : MachineActivity<DiskImageEntry>() {
     companion object {
         /** The all-games Skip memory check preference, on unless the player turns it off. */
         private const val SKIP_MEMORY_CHECK = "skipMemoryCheck"
+        /** The native typer's states (native_bridge.cpp StartupState). */
+        private const val STARTUP_IDLE = 0
+        private const val STARTUP_TYPING = 1
+        private const val STARTUP_STALLED = 2
+        private const val STARTUP_FAILED = 3
         /** The core's standard CPU clock multiple, about 49 MHz on the 2.5 MHz base clock. */
         const val DEFAULT_CPU_MULTIPLE = 20
         private const val ON = "on"

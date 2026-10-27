@@ -9,6 +9,7 @@
 #include "gl_presenter.h"
 #include "gpu_frame_merge.h"
 #include "kairo/audio_output.h"
+#include "kairo/startup_typer.h"
 #include <algorithm>
 #include <atomic>
 #include <chrono>
@@ -83,7 +84,8 @@ namespace {
 // the audio queue holds this much so recoverable lateness never underruns.
 constexpr auto kFrameStall = std::chrono::milliseconds(50);
 constexpr int32_t kAudioStallFrames = 44100 * kFrameStall.count() / 1000;
-enum class CommandType { Pause, Resume, Reset, Stop, Key, Disk, Floppy, Cd, Clock, MouseMove, MouseWarp, MouseButton, Joystick, SaveState, LoadState };
+enum class CommandType { Pause, Resume, Reset, Stop, Key, Disk, Floppy, Cd, Clock, MouseMove, MouseWarp, MouseButton, Joystick, SaveState, LoadState,
+                         StartupStart, StartupAdd, StartupResume };
 struct Command {
     CommandType type;
     int key = 0;
@@ -92,6 +94,7 @@ struct Command {
     int y = 0;
     std::shared_ptr<std::promise<int>> completion;
     unsigned generation = 0;
+    std::vector<kairo::StartupStep> steps;
 };
 std::mutex command_mutex;
 std::condition_variable command_ready;
@@ -114,6 +117,52 @@ std::atomic<bool> audio_muted{false};
 // is written only as far as the output buffer has room.
 std::atomic<bool> fast_forward{false};
 std::atomic<bool> dos_prompt_ready{false};
+// The startup typer's state for the UI (Kairo98#65): StartupIdle with nothing left to type,
+// StartupTyping while steps remain, StartupStalled when it gave up waiting for startup_stalled's
+// step, StartupFailed when a step could not be typed (startup_error, under command_mutex).
+enum StartupState { StartupIdle, StartupTyping, StartupStalled, StartupFailed };
+std::atomic<int> startup_state{StartupIdle};
+std::atomic<int> startup_stalled{-1};
+std::string startup_error;
+// The PC-98's vertical refresh in its 400-line mode, which turns a step's timeout into frames.
+constexpr double kGuestFramesPerSecond = 56.42;
+
+// The guest as kairo::StartupTyper types into it: the DOS prompt once it has stood for 15 frames,
+// the PC-98 keyboard's scan codes, and the displayed video memory's signature.
+struct Pc98Typing {
+    int prompt_frames = 0;
+    kairo::Prompt prompt() const { return prompt_frames >= 15 ? kairo::Prompt::Line : kairo::Prompt::None; }
+    bool typed_key(char c, int &code, bool &shift) {
+        // Letters in A-Z order, then digits 1-9 and 0, at their PC-98 scan codes.
+        static const unsigned char letters[26] = {0x1d, 0x2d, 0x2b, 0x1f, 0x12, 0x20, 0x21, 0x22, 0x17, 0x23, 0x24, 0x25,
+            0x2f, 0x2e, 0x18, 0x19, 0x10, 0x13, 0x1e, 0x14, 0x16, 0x2c, 0x11, 0x2a, 0x15, 0x29};
+        shift = false;
+        if (c >= 'a' && c <= 'z') code = letters[c - 'a'];
+        else if (c >= 'A' && c <= 'Z') { code = letters[c - 'A']; shift = true; }
+        else if (c >= '1' && c <= '9') code = c - '1' + 1;
+        else if (c == '0') code = 0x0a;
+        else if (c == ' ') code = 0x34;
+        else if (c == '\\') code = 0x0d;
+        else if (c == '/') code = 0x32;
+        else if (c == '.') code = 0x31;
+        else if (c == '-') code = 0x0b;
+        else if (c == ':') code = 0x27;
+        else if (c == '_') code = 0x33;
+        else return false;
+        return true;
+    }
+    int special_key(kairo::SpecialKey key) {
+        switch (key) {
+        case kairo::SpecialKey::Return: return 0x1c;
+        case kairo::SpecialKey::Shift: return 0x70;
+        case kairo::SpecialKey::Ctrl: return 0x74;
+        default: return 0x62 + static_cast<int>(key) - static_cast<int>(kairo::SpecialKey::F1);
+        }
+    }
+    bool expand_command(std::string &) { return true; }
+    void key(int code, bool down) { kairo98_machine_key(static_cast<unsigned char>(code), down ? 1 : 0); }
+    uint64_t screen_signature() { return kairo98_machine_screen_signature(); }
+};
 // Caps and Kana as a loaded state left them, published before the load completes.
 std::atomic<int> loaded_locks{0};
 std::atomic<unsigned> mouse_warp_requested{0};
@@ -338,6 +387,12 @@ void run_machine(std::string image, std::string font_path, std::string bios_dir,
     double profile_guest_seconds = 0;
     auto next_frame = std::chrono::steady_clock::now();
     auto next_hash = next_frame;
+    kairo::StartupTyper typer;
+    Pc98Typing typing;
+    const auto publish_typer = [&] {
+        startup_stalled.store(typer.stalled());
+        startup_state.store(typer.stalled() >= 0 ? StartupStalled : typer.active() ? StartupTyping : StartupIdle);
+    };
     unsigned int profile_frames = 0;
     int64_t profile_core_us = 0, profile_render_us = 0;
     int64_t profile_mix_us = 0, profile_write_us = 0;
@@ -402,6 +457,18 @@ void run_machine(std::string image, std::string font_path, std::string bios_dir,
                     break;
                 case CommandType::Key:
                     kairo98_machine_key(static_cast<unsigned char>(command.key), command.down);
+                    break;
+                case CommandType::StartupStart:
+                    typer.start(std::move(command.steps));
+                    publish_typer();
+                    break;
+                case CommandType::StartupAdd:
+                    for (auto &step : command.steps) typer.add(std::move(step));
+                    publish_typer();
+                    break;
+                case CommandType::StartupResume:
+                    typer.resume();
+                    publish_typer();
                     break;
                 case CommandType::Disk:
                     kairo98_input_telemetry_reset();
@@ -515,6 +582,18 @@ void run_machine(std::string image, std::string font_path, std::string bios_dir,
         }
         prompt_frames = kairo98_machine_dos_prompt() ? prompt_frames + 1 : 0;
         dos_prompt_ready.store(prompt_frames >= 15);
+        if (typer.active()) {
+            typing.prompt_frames = prompt_frames;
+            std::string error;
+            if (typer.frame(typing, error)) publish_typer();
+            else {
+                {
+                    std::lock_guard<std::mutex> guard(command_mutex);
+                    startup_error = error;
+                }
+                startup_state.store(StartupFailed);
+            }
+        }
         if (sample_screen &&
             std::chrono::steady_clock::now() >= next_hash) {
             screen_hash.store(kairo98_machine_screen_signature(), std::memory_order_relaxed);
@@ -931,6 +1010,77 @@ Java_com_mrjackspade_kairo98_MainActivity_nativeStatus(JNIEnv *env, jobject) {
                   audio_state.c_str(), audible_buffers, audio_buffers, audio_xruns,
                   audio_config.c_str(), audio_profile.c_str());
     return env->NewStringUTF(text);
+}
+
+/** Steps as the UI gives them: each text, whether Return follows, the screen signatures it waits
+ * for (none: the DOS prompt) and its timeout in milliseconds (0: none). */
+static std::vector<kairo::StartupStep> startup_steps(JNIEnv *env, jobjectArray texts, jbooleanArray enters,
+                                                     jobjectArray screens, jintArray timeouts_ms, bool now) {
+    const jsize count = env->GetArrayLength(texts);
+    std::vector<jboolean> enter(count);
+    std::vector<jint> timeout(count);
+    env->GetBooleanArrayRegion(enters, 0, count, enter.data());
+    env->GetIntArrayRegion(timeouts_ms, 0, count, timeout.data());
+    std::vector<kairo::StartupStep> steps(count);
+    for (jsize i = 0; i < count; ++i) {
+        auto text = static_cast<jstring>(env->GetObjectArrayElement(texts, i));
+        steps[i].text = utf8(env, text);
+        env->DeleteLocalRef(text);
+        steps[i].enter = enter[i] == JNI_TRUE;
+        auto hashes = static_cast<jlongArray>(env->GetObjectArrayElement(screens, i));
+        const jsize hash_count = env->GetArrayLength(hashes);
+        std::vector<jlong> values(hash_count);
+        env->GetLongArrayRegion(hashes, 0, hash_count, values.data());
+        env->DeleteLocalRef(hashes);
+        steps[i].screens.assign(values.begin(), values.end());
+        steps[i].now = now;
+        steps[i].timeout_frames = static_cast<int>(timeout[i] * kGuestFramesPerSecond / 1000);
+    }
+    return steps;
+}
+
+extern "C" JNIEXPORT void JNICALL
+Java_com_mrjackspade_kairo98_MainActivity_nativeStartupStart(JNIEnv *env, jobject, jobjectArray texts,
+        jbooleanArray enters, jobjectArray screens, jintArray timeouts_ms) {
+    Command command{CommandType::StartupStart};
+    command.steps = startup_steps(env, texts, enters, screens, timeouts_ms, false);
+    // Published before the worker takes it, so the UI never reads the typer as idle in between.
+    startup_state.store(command.steps.empty() ? StartupIdle : StartupTyping);
+    startup_stalled.store(-1);
+    enqueue(std::move(command));
+}
+
+extern "C" JNIEXPORT void JNICALL
+Java_com_mrjackspade_kairo98_MainActivity_nativeStartupKeys(JNIEnv *env, jobject, jstring text, jboolean enter) {
+    Command command{CommandType::StartupAdd};
+    kairo::StartupStep step;
+    step.text = utf8(env, text);
+    step.enter = enter == JNI_TRUE;
+    step.now = true;
+    command.steps.push_back(std::move(step));
+    enqueue(std::move(command));
+}
+
+extern "C" JNIEXPORT void JNICALL
+Java_com_mrjackspade_kairo98_MainActivity_nativeStartupResume(JNIEnv *, jobject) {
+    startup_state.store(StartupTyping);
+    startup_stalled.store(-1);
+    enqueue({CommandType::StartupResume});
+}
+
+/** The typer's state (StartupState) and the step it stalled on, or -1. */
+extern "C" JNIEXPORT jintArray JNICALL
+Java_com_mrjackspade_kairo98_MainActivity_nativeStartupStatus(JNIEnv *env, jobject) {
+    const jint values[2] = {startup_state.load(), startup_stalled.load()};
+    jintArray result = env->NewIntArray(2);
+    if (result) env->SetIntArrayRegion(result, 0, 2, values);
+    return result;
+}
+
+extern "C" JNIEXPORT jstring JNICALL
+Java_com_mrjackspade_kairo98_MainActivity_nativeStartupError(JNIEnv *env, jobject) {
+    std::lock_guard<std::mutex> guard(command_mutex);
+    return env->NewStringUTF(startup_error.c_str());
 }
 
 extern "C" JNIEXPORT jboolean JNICALL
