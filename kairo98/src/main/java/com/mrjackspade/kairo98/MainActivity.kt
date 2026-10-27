@@ -69,7 +69,7 @@ class MainActivity : MachineActivity<DiskImageEntry>() {
     private external fun nativeMouseWarp(x: Int, y: Int)
     private external fun nativeMouseWarpDone(): Boolean
     private external fun nativeSaveState(dir: String): Int
-    private external fun nativeLoadState(dir: String): Int
+    private external fun nativeLoadState(dir: String, from: Array<String>, to: Array<String>): Int
     private external fun nativeJoystick(control: Int, down: Boolean)
     private external fun nativeInputTelemetry(): LongArray
     private external fun nativeStatus(): String
@@ -113,7 +113,10 @@ class MainActivity : MachineActivity<DiskImageEntry>() {
         override fun mouseMove(dx: Int, dy: Int) = nativeMouseMove(dx, dy)
         override fun mouseButton(button: Int, down: Boolean) = nativeMouseButton(button, down)
         override fun saveState(directory: String) = nativeSaveState(directory)
-        override fun loadState(directory: String) = nativeLoadState(directory)
+        override fun loadState(directory: String, moved: Map<String, String>): Int {
+            val entries = moved.entries.toList()
+            return nativeLoadState(directory, entries.map { it.key }.toTypedArray(), entries.map { it.value }.toTypedArray())
+        }
         override fun lockedKeys(): Set<Int> {
             val locks = nativeLoadedLocks()
             val layout = Pc98KeyboardLayout.value
@@ -458,7 +461,7 @@ class MainActivity : MachineActivity<DiskImageEntry>() {
 
     /** Native media replacement may require restarting from the original disks. */
     override fun loadRejected(code: Int) {
-        if (code > 3) currentEntry?.let { entry ->
+        if (code in 4..6) currentEntry?.let { entry ->
             userPaused = false
             closeMenu()
             launch(entry, sessionFromFrontend)
@@ -472,6 +475,7 @@ class MainActivity : MachineActivity<DiskImageEntry>() {
         4 -> "disk image copy failed"
         5 -> "state file unreadable"
         6 -> "machine did not respond"
+        7 -> "the game's save path is too long"
         else -> "code $code"
     }
 

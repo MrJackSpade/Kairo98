@@ -5,7 +5,7 @@
 
 #include "compiler.h"
 #include "statsave.h"
-#include "state_paths.h"
+#include "kairo/state_paths.h"
 #include "strres.h"
 #include "dosio.h"
 #include "commng.h"
@@ -1277,7 +1277,7 @@ static int flagload_fdd(STFLAGH sfh, const SFENTRY *tbl) {
 	for (i=0; i<4; i++) {
 		ret |= statflag_read(sfh, &sp, sizeof(sp));
 		if (sp.path[0]) {
-			fdd_set(i, kairo98_state_path(sp.path), sp.ftype, sp.readonly);
+			fdd_set(i, kairo_state_path(sp.path), sp.ftype, sp.readonly);
 		}
 	}
 	(void)tbl;
@@ -1390,7 +1390,7 @@ static int flagload_sxsi(STFLAGH sfh, const SFENTRY *tbl) {
 		sxsi_setdevtype(drv, sds.ide[i]);
 		if (sds.ide[i] != SXSIDEV_NC) {
 			ret |= statflag_read(sfh, &sp, sizeof(sp));
-			sxsi_devopen(drv, kairo98_state_path(sp.path));
+			sxsi_devopen(drv, kairo_state_path(sp.path));
 		}
 	}
 	for (i=0; i<NELEMENTS(sds.scsi); i++) {
@@ -1398,7 +1398,7 @@ static int flagload_sxsi(STFLAGH sfh, const SFENTRY *tbl) {
 		sxsi_setdevtype(drv, sds.scsi[i]);
 		if (sds.scsi[i] != SXSIDEV_NC) {
 			ret |= statflag_read(sfh, &sp, sizeof(sp));
-			sxsi_devopen(drv, kairo98_state_path(sp.path));
+			sxsi_devopen(drv, kairo_state_path(sp.path));
 		}
 	}
 	(void)tbl;

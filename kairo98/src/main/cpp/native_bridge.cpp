@@ -9,6 +9,8 @@
 #include "gl_presenter.h"
 #include "gpu_frame_merge.h"
 #include "kairo/audio_output.h"
+#include "kairo/jni_strings.h"
+#include "kairo/state_paths.h"
 #include "kairo/startup_typer.h"
 #include <algorithm>
 #include <atomic>
@@ -17,6 +19,7 @@
 #include <cstring>
 #include <deque>
 #include <future>
+#include <map>
 #include <memory>
 #include <mutex>
 #include <string>
@@ -95,6 +98,8 @@ struct Command {
     std::shared_ptr<std::promise<int>> completion;
     unsigned generation = 0;
     std::vector<kairo::StartupStep> steps;
+    // LoadState: each disk path a state may name, and where that disk is now (kairo/state_paths.h).
+    std::map<std::string, std::string> moved;
 };
 std::mutex command_mutex;
 std::condition_variable command_ready;
@@ -532,7 +537,11 @@ void run_machine(std::string image, std::string font_path, std::string bios_dir,
                     prompt_frames = 0;
                     dos_prompt_ready.store(false);
                     clear_screen_hash();
-                    int result = kairo98_machine_load_state(command.path.c_str());
+                    int result;
+                    {
+                        kairo::StatePaths paths(std::move(command.moved));
+                        result = kairo98_machine_load_state(command.path.c_str());
+                    }
                     loaded_locks.store(kairo98_machine_locks());
                     next_frame = std::chrono::steady_clock::now();
                     if (command.completion) command.completion->set_value(result);
@@ -797,13 +806,7 @@ void enqueue(Command command) {
 } // namespace
 
 /** A Java string argument, or an empty string for null. */
-std::string utf8(JNIEnv *env, jstring value) {
-    if (!value) return "";
-    const char *chars = env->GetStringUTFChars(value, nullptr);
-    std::string result = chars ? chars : "";
-    if (chars) env->ReleaseStringUTFChars(value, chars);
-    return result;
-}
+using kairo::utf8;
 
 extern "C" JNIEXPORT jboolean JNICALL
 Java_com_mrjackspade_kairo98_MainActivity_nativeStart(JNIEnv *env, jobject, jstring image_path,
@@ -898,18 +901,18 @@ Java_com_mrjackspade_kairo98_MainActivity_nativeMouseWarpDone(JNIEnv *, jobject)
 
 namespace {
 // Runs a state command on the emulation thread between frames and waits for its result.
-jint run_state_command(JNIEnv *env, CommandType type, jstring dir) {
+jint run_state_command(JNIEnv *env, CommandType type, jstring dir,
+                       std::map<std::string, std::string> moved = {}) {
     if (!dir) return 1;
-    const char *chars = env->GetStringUTFChars(dir, nullptr);
-    if (!chars) return 1;
-    std::string path(chars);
-    env->ReleaseStringUTFChars(dir, chars);
+    std::string path = utf8(env, dir);
     auto completion = std::make_shared<std::promise<int>>();
     auto response = completion->get_future();
     {
         std::lock_guard<std::mutex> guard(command_mutex);
         if (!active) return 1;
-        commands.push_back({type, 0, false, std::move(path), 0, completion});
+        Command command{type, 0, false, std::move(path), 0, completion};
+        command.moved = std::move(moved);
+        commands.push_back(std::move(command));
         command_ready.notify_one();
     }
     if (response.wait_for(std::chrono::seconds(60)) != std::future_status::ready) return 6;
@@ -923,8 +926,12 @@ Java_com_mrjackspade_kairo98_MainActivity_nativeSaveState(JNIEnv *env, jobject, 
 }
 
 extern "C" JNIEXPORT jint JNICALL
-Java_com_mrjackspade_kairo98_MainActivity_nativeLoadState(JNIEnv *env, jobject, jstring dir) {
-    return run_state_command(env, CommandType::LoadState, dir);
+Java_com_mrjackspade_kairo98_MainActivity_nativeLoadState(JNIEnv *env, jobject, jstring dir,
+                                                          jobjectArray from, jobjectArray to) {
+    std::map<std::string, std::string> moved;
+    const auto earlier = kairo::utf8_strings(env, from), now = kairo::utf8_strings(env, to);
+    for (size_t i = 0; i < earlier.size(); ++i) moved[earlier[i]] = now.at(i);
+    return run_state_command(env, CommandType::LoadState, dir, std::move(moved));
 }
 
 extern "C" JNIEXPORT jint JNICALL
@@ -957,10 +964,7 @@ Java_com_mrjackspade_kairo98_MainActivity_nativeInputTelemetry(JNIEnv *env, jobj
 extern "C" JNIEXPORT void JNICALL
 Java_com_mrjackspade_kairo98_MainActivity_nativeDisk(JNIEnv *env, jobject, jstring image_path) {
     if (!image_path) return;
-    const char *chars = env->GetStringUTFChars(image_path, nullptr);
-    if (!chars) return;
-    std::string path(chars);
-    env->ReleaseStringUTFChars(image_path, chars);
+    std::string path = utf8(env, image_path);
     enqueue({CommandType::Disk, 0, false, std::move(path)});
 }
 
@@ -968,9 +972,7 @@ extern "C" JNIEXPORT jboolean JNICALL
 Java_com_mrjackspade_kairo98_MainActivity_nativeFloppy(JNIEnv *env, jobject, jint drive,
                                                         jstring image_path) {
     if (drive < 0 || drive > 1) return JNI_FALSE;
-    const char *chars = image_path ? env->GetStringUTFChars(image_path, nullptr) : nullptr;
-    std::string path = chars ? chars : "";
-    if (chars) env->ReleaseStringUTFChars(image_path, chars);
+    std::string path = utf8(env, image_path);
     auto completion = std::make_shared<std::promise<int>>();
     auto response = completion->get_future();
     {
@@ -1127,13 +1129,7 @@ Java_com_mrjackspade_kairo98_MainActivity_nativeSetSurface(JNIEnv *env, jobject,
 extern "C" JNIEXPORT void JNICALL
 Java_com_mrjackspade_kairo98_MainActivity_nativeSetShaderPreset(JNIEnv *env, jobject,
                                                                 jstring preset) {
-    std::string path;
-    if (preset) {
-        const char* chars = env->GetStringUTFChars(preset, nullptr);
-        if (!chars) return;
-        path = chars;
-        env->ReleaseStringUTFChars(preset, chars);
-    }
+    std::string path = utf8(env, preset);
     {
         std::lock_guard<std::mutex> guard(shader_mutex);
         shader_preset = std::move(path);
@@ -1171,15 +1167,12 @@ Java_com_mrjackspade_kairo98_MainActivity_nativeInspectHdi(JNIEnv *env, jobject,
     if (image_path == nullptr) {
         return env->NewStringUTF("No HDI path was provided.");
     }
-    const char *path = env->GetStringUTFChars(image_path, nullptr);
-    if (path == nullptr) {
-        return nullptr;
-    }
+    const std::string image = utf8(env, image_path);
+    const char *path = image.c_str();
     unsigned int cylinders = 0, surfaces = 0, sectors = 0;
     unsigned int sector_size = 0, first_word = 0;
     int result = kairo98_hdi_probe(path, &cylinders, &surfaces, &sectors,
                                   &sector_size, &first_word);
-    env->ReleaseStringUTFChars(image_path, path);
     char message[180];
     if (result == 0) {
         std::snprintf(message, sizeof(message),

@@ -38,6 +38,7 @@ target_include_directories(np21w_core PRIVATE
     ${NP21W_ROOT}/network
     ${NP21W_ROOT}/sound
     ${NP21W_ROOT}/vram
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../../../shared/frontend/src/main/cpp
 )
 target_compile_definitions(np21w_core PRIVATE SUPPORT_LARGE_HDD SUPPORT_KAI_IMAGES NP2_SDL2 CPUCORE_IA32 USE_TSC SUPPORT_YMFM KAIRO98_ANDROID_IRQ_FAST KAIRO98_ANDROID_FETCH_FAST
     USE_CPU_EIPMASK USE_CPU_DIRECTREG SUPPORT_FAST_MEMORYCHECK)
@@ -48,6 +49,7 @@ kairo_native_debug_defaults(np21w_core)
 
 add_library(kairo98 SHARED
     native_bridge.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../../../shared/frontend/src/main/cpp/kairo/state_paths.cpp
     android_host/ymfm_bridge.cpp
     ${YMFM_ROOT}/src/ymfm_opn.cpp
     ${YMFM_ROOT}/src/ymfm_adpcm.cpp
