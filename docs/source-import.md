@@ -79,3 +79,7 @@ state and instruction-cycle overshoot at event boundaries. Its header comment
 was updated with the same rule. These are local changes to the existing
 Android idle optimization; no new upstream snapshot or licensed component was
 imported, and the existing source notices are retained.
+
+## Save-state disk paths
+
+`statsave.c` reopens each disk a save state names by the path the state recorded. A game's working copy can move after a state is saved: a game a frontend opened was keyed by its URI until v1.4.0 and is keyed by its path in the library folder since (Kairo#56), and its working copy moves with the key. Kairo98 passes each recorded path in `flagload_fdd` and `flagload_sxsi` through project-owned `android_host/machine.c` (`kairo98_state_path`, `android_host/state_paths.h`), which maps the paths the slot's `moved.txt` lists to where those copies are now and leaves every other path as it is. This is a local change to the existing rev104 source; no new source archive was imported.

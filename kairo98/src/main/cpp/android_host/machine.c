@@ -11,6 +11,7 @@
 #include "mousemng.h"
 #include "sound/sound.h"
 #include "statsave.h"
+#include "state_paths.h"
 #include "vram.h"
 #include <ctype.h>
 #include <stdio.h>
@@ -402,6 +403,53 @@ static void slot_path(char *out, size_t size, const char *dir, const char *name)
     snprintf(out, size, "%s/%s", dir, name);
 }
 
+/*
+ * The working copies a state names that have moved since it was saved, read from the slot's
+ * moved.txt ("old\tnew" per line) while the state loads (kairo98_state_path).
+ */
+#define MAX_MOVED_PATHS 64
+static char moved_from[MAX_MOVED_PATHS][MAX_PATH * 2];
+static char moved_to[MAX_MOVED_PATHS][MAX_PATH * 2];
+static int moved_count = 0;
+
+const OEMCHAR *kairo98_state_path(const OEMCHAR *recorded) {
+    int i;
+    for (i = 0; i < moved_count; i++) {
+        if (strcmp(recorded, moved_from[i]) == 0) return moved_to[i];
+    }
+    return recorded;
+}
+
+/* Reads the slot's moved.txt, if it has one. Returns nonzero when it is unreadable or too long. */
+static int read_moved_paths(const char *dir) {
+    char path[MAX_PATH * 2];
+    char line[MAX_PATH * 4 + 8];
+    FILE *list;
+    moved_count = 0;
+    slot_path(path, sizeof(path), dir, "moved.txt");
+    list = fopen(path, "r");
+    if (!list) return 0;
+    while (fgets(line, sizeof(line), list)) {
+        char *tab = strchr(line, '\t');
+        char *end;
+        if (!tab) continue;
+        *tab = '\0';
+        end = tab + 1 + strcspn(tab + 1, "\r\n");
+        *end = '\0';
+        if (moved_count == MAX_MOVED_PATHS || strlen(line) >= sizeof(moved_from[0]) ||
+                strlen(tab + 1) >= sizeof(moved_to[0])) {
+            fclose(list);
+            moved_count = 0;
+            return 1;
+        }
+        strcpy(moved_from[moved_count], line);
+        strcpy(moved_to[moved_count], tab + 1);
+        moved_count++;
+    }
+    fclose(list);
+    return 0;
+}
+
 int kairo98_machine_save_state(const char *dir) {
     char path[MAX_PATH * 2];
     char copy[MAX_PATH * 2];
@@ -454,9 +502,13 @@ int kairo98_machine_load_state(const char *dir) {
      * A disk change is expected: the images are restored below. */
     result = statsave_check(path, message, NELEMENTS(message));
     if (result == STATFLAG_FAILURE || (result & STATFLAG_VERSION)) return 2;
+    if (read_moved_paths(dir) != 0) return 3;
     slot_path(path, sizeof(path), dir, "disks.txt");
     list = fopen(path, "r");
-    if (!list) return 3;
+    if (!list) {
+        moved_count = 0;
+        return 3;
+    }
     keystat_allrelease();
     flush_disk();
     sxsi_alltrash();
@@ -470,12 +522,16 @@ int kairo98_machine_load_state(const char *dir) {
         end = tab + 1 + strcspn(tab + 1, "\r\n");
         *end = '\0';
         slot_path(copy, sizeof(copy), dir, line);
-        if (copy_file(copy, tab + 1) != 0) result = 4;
+        if (copy_file(copy, kairo98_state_path(tab + 1)) != 0) result = 4;
     }
     fclose(list);
-    if (result != 0) return result;
+    if (result != 0) {
+        moved_count = 0;
+        return result;
+    }
     slot_path(path, sizeof(path), dir, "state.np2");
     result = statsave_load(path);
+    moved_count = 0;
     if (result == STATFLAG_FAILURE) return 5;
     kairo_ymfm_reload_all_ram();
     mousemng_reset();

@@ -81,7 +81,7 @@ object Pc98Media {
         private val directory = library.workingDirectory
         private var names = emptyList<String>()
         override fun refresh() {
-            names = directory.list().orEmpty().filterNot { it.startsWith(GameKey.STORAGE_PREFIX) }
+            names = directory.list().orEmpty().filter { LEGACY_NAME.matches(it) }
         }
         private fun legacyName(claim: GameKeyMigration.Claim<DiskImageEntry>, entry: DiskImageEntry) =
             "${claim.entryId}-${entry.contentId?.substringAfter(':')}${suffix(entry.displayName)}"
@@ -106,6 +106,9 @@ object Pc98Media {
     }
 
     private fun cdData(name: String) = name.substringBeforeLast('.') + ".img"
+
+    /** A working image's name before games had keys: `<entry ID>-<content>`, then its suffix. */
+    private val LEGACY_NAME = Regex("[0-9a-f]{32}-.+")
 
     private fun sha256(bytes: ByteArray): String = MessageDigest.getInstance("SHA-256")
         .digest(bytes).joinToString("") { "%02x".format(it) }

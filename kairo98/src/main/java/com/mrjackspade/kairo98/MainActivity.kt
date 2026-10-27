@@ -14,7 +14,6 @@ import com.mrjackspade.kairo.frontend.DiskImageLibrary
 import com.mrjackspade.kairo.frontend.DocumentPicker
 import com.mrjackspade.kairo.frontend.ExternalGameFile
 import com.mrjackspade.kairo.frontend.FirmwareSet
-import com.mrjackspade.kairo.frontend.FolderStateSlots
 import com.mrjackspade.kairo.frontend.GameDisks
 import com.mrjackspade.kairo.frontend.GameKeyMigration
 import com.mrjackspade.kairo.frontend.GameNotice
@@ -31,6 +30,7 @@ import com.mrjackspade.kairo.frontend.MachineBridge
 import com.mrjackspade.kairo.frontend.MachineFirstRun
 import com.mrjackspade.kairo.frontend.RowGroup
 import com.mrjackspade.kairo.frontend.SettingsRow
+import com.mrjackspade.kairo.frontend.StateSlotStore
 import com.mrjackspade.kairo.frontend.TrayButton
 import com.mrjackspade.kairo.frontend.TraySpec
 import com.mrjackspade.kairo.frontend.ValueTone
@@ -154,13 +154,15 @@ class MainActivity : MachineActivity<DiskImageEntry>() {
     private val gameKeyMigration by lazy {
         GameKeyMigration(preferences, listOf(
             catalog.legacyOverrides(),
-            GameKeyMigration.SaveStore({ saveFolder.location }, FolderStateSlots.UNITS, cacheDir,
+            GameKeyMigration.SaveStore({ saveFolder.location }, StateSlotStore.KINDS.values.toSet(), cacheDir,
                 File(filesDir, "game-key-migration-v1.json")) { conflicts ->
                 saveFolder.resolveMigrationConflicts(conflicts) { key ->
                     claiming.firstOrNull { it.key == key }?.let(::titleOf) ?: key.path
                 }
             }), listOf(Pc98Media.legacyWorkingImages(disks), LegacyLastPlayed()))
     }
+
+    override val keyMigrationPending: Boolean get() = gameKeyMigration.pending
 
     private inner class LegacyLastPlayed : GameKeyMigration.EntryStore<DiskImageEntry> {
         override fun has(claim: GameKeyMigration.Claim<DiskImageEntry>) =
