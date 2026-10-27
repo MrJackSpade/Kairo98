@@ -894,15 +894,15 @@ class MainActivity : MachineActivity<DiskImageEntry>() {
             Pc98Catalog.BASE_CLOCK -> GameSettingsRows.choice("clock", "Machine clock", scope,
                 listOf(ChoiceOption("20", "2 MHz"), ChoiceOption("25", "2.5 MHz")),
                 machineValue(entry, "machine", "baseClockTenthsMHz", { it.baseClockTenthsMHz?.toString() },
-                    { clock.toString() }, GameSource.ALL_GAMES) { it.toInt() }, enabled, noHash)
+                    { clock.toString() }, GameSource.ALL_GAMES, toStored = { it.toInt() }), enabled, noHash)
             Pc98Catalog.GDC_CLOCK -> GameSettingsRows.choice("gdc", "GDC clock", scope,
                 listOf(ChoiceOption("25", "2.5 MHz"), ChoiceOption("50", "5 MHz")),
                 machineValue(entry, "machine", "gdcClockTenthsMHz", { it.gdcClockTenthsMHz?.toString() },
-                    { "50" }, GameSource.BUILT_IN) { it.toInt() }, enabled, noHash)
+                    { "50" }, GameSource.BUILT_IN, toStored = { it.toInt() }), enabled, noHash)
             Pc98Catalog.CPU -> {
                 val base = { if ((game().baseClockTenthsMHz ?: clock) == 20) 1.9968 else 2.4576 }
                 val cpu = machineValue(entry, "machine", "cpuMultiple", { it.cpuMultiple?.toString() },
-                    { DEFAULT_CPU_MULTIPLE.toString() }, GameSource.BUILT_IN) { it.toInt() }
+                    { DEFAULT_CPU_MULTIPLE.toString() }, GameSource.BUILT_IN, toStored = { it.toInt() })
                 GameSettingsRows.choice("cpu", "CPU speed", scope,
                     Pc98Catalog.CPU_MULTIPLES.map { ChoiceOption("$it", "%.1f MHz".format(base() * it), "×$it") },
                     cpu, enabled, noHash,
