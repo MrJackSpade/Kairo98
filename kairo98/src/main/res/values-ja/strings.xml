@@ -3,235 +3,235 @@
 <resources>
     <!-- %1$s is the app's name, Kairo98; %2$s and %3$s the emulators it runs; %4$s its GitHub repository. -->
     <!-- EN: %1$s uses %2$s and %3$s. Source and provenance: github.com/%4$s. -->
-    <string name="credits">%1$s uses %2$s and %3$s. Source and provenance: github.com/%4$s.</string>
+    <string name="credits">%1$s は %2$s と %3$s を使用しています。ソースと出典: github.com/%4$s</string>
     <!-- EN: Choose a games folder to find disk images and ZIP games -->
-    <string name="library_empty">Choose a games folder to find disk images and ZIP games</string>
+    <string name="library_empty">ゲームフォルダを選択して、ディスクイメージと ZIP のゲームを探します</string>
     <!-- EN: Folder access expired. Select the games folder again. -->
-    <string name="library_expired">Folder access expired. Select the games folder again.</string>
+    <string name="library_expired">フォルダへのアクセス期限が切れました。ゲームフォルダを選択し直してください。</string>
     <!-- EN: Choose a games folder -->
-    <string name="folder_title">Choose a games folder</string>
+    <string name="folder_title">ゲームフォルダを選択</string>
     <!-- %1$s is the machine's name, PC-98; %2$s the app's name, Kairo98. -->
     <!-- EN: Select the folder containing your %1$s games. %2$s will scan its disk images and ZIP files. -->
-    <string name="folder_description">Select the folder containing your %1$s games. %2$s will scan its disk images and ZIP files.</string>
+    <string name="folder_description">%1$s のゲームが入っているフォルダを選択してください。%2$s がディスクイメージと ZIP ファイルをスキャンします。</string>
     <!-- EN: Choose games folder… -->
-    <string name="folder_button">Choose games folder…</string>
+    <string name="folder_button">ゲームフォルダを選択…</string>
     <!-- EN: SAVE STATES -->
-    <string name="saves_group">SAVE STATES</string>
+    <string name="saves_group">ステートセーブ</string>
     <!-- EN: Uses the joystick input on the emulated sound board. Games must support joystick 1. -->
-    <string name="joystick_help">Uses the joystick input on the emulated sound board. Games must support joystick 1.</string>
+    <string name="joystick_help">エミュレートされたサウンドボードのジョイスティック入力を使用します。ゲームがジョイスティック1に対応している必要があります。</string>
     <!-- EN: Button 1 -->
-    <string name="joystick_button_1">Button 1</string>
+    <string name="joystick_button_1">ボタン1</string>
     <!-- EN: Button 2 -->
-    <string name="joystick_button_2">Button 2</string>
+    <string name="joystick_button_2">ボタン2</string>
     <!-- EN: Symbols -->
-    <string name="keyboard_symbols">Symbols</string>
+    <string name="keyboard_symbols">記号</string>
     <!-- EN: Floppy disk -->
-    <string name="floppy_disk">Floppy disk</string>
+    <string name="floppy_disk">フロッピーディスク</string>
     <!-- EN: Hard disk -->
-    <string name="hard_disk">Hard disk</string>
+    <string name="hard_disk">ハードディスク</string>
     <!-- EN: CD-ROM -->
     <string name="cd_rom">CD-ROM</string>
     <!-- The disc a game needs, as "The %1$s this game needs is not in the library" names it. -->
     <!-- EN: CD -->
     <string name="companion_cd">CD</string>
     <!-- EN: Boot floppy -->
-    <string name="boot_floppy">Boot floppy</string>
+    <string name="boot_floppy">起動フロッピー</string>
     <!-- EN: Drive 2 -->
-    <string name="drive_2">Drive 2</string>
+    <string name="drive_2">ドライブ2</string>
     <!-- EN: Boot disk -->
-    <string name="boot_disk">Boot disk</string>
+    <string name="boot_disk">起動ディスク</string>
     <!-- A floppy drive: %1$s is its letter, A or B. -->
     <!-- EN: Floppy %1$s -->
-    <string name="floppy_drive">Floppy %1$s</string>
+    <string name="floppy_drive">フロッピー %1$s</string>
     <!-- Names a picked floppy image in import errors, such as "Floppy is too large". -->
     <!-- EN: Floppy -->
-    <string name="floppy">Floppy</string>
+    <string name="floppy">フロッピー</string>
     <!-- EN: Font -->
-    <string name="option_font">Font</string>
+    <string name="option_font">フォント</string>
     <!-- EN: Game folder -->
-    <string name="font_game_folder">Game folder</string>
+    <string name="font_game_folder">ゲームフォルダ</string>
     <!-- EN: Your font.bmp -->
-    <string name="font_yours">Your font.bmp</string>
+    <string name="font_yours">自分の font.bmp</string>
     <!-- EN: Built-in -->
-    <string name="font_built_in">Built-in</string>
+    <string name="font_built_in">内蔵</string>
     <!-- EN: Game setting -->
-    <string name="font_game_setting">Game setting</string>
+    <string name="font_game_setting">ゲーム設定</string>
     <!-- EN: Use built-in -->
-    <string name="font_use_built_in">Use built-in</string>
+    <string name="font_use_built_in">内蔵フォントを使用</string>
     <!-- EN: Import a font.bmp… -->
-    <string name="font_import">Import a font.bmp…</string>
+    <string name="font_import">font.bmp をインポート…</string>
     <!-- EN: A font.bmp is at most 1 MB; that file is larger -->
-    <string name="font_too_large">A font.bmp is at most 1 MB; that file is larger</string>
+    <string name="font_too_large">font.bmp は最大 1 MB です。このファイルはそれより大きいです</string>
     <!-- EN: This game\'s font is no longer in the app: choose or import another in Game settings › Font -->
-    <string name="font_missing">This game\'s font is no longer in the app: choose or import another in Game settings › Font</string>
+    <string name="font_missing">このゲームのフォントはアプリ内にありません。ゲーム設定 › フォント で別のフォントを選択またはインポートしてください</string>
     <!-- EN: FONT.BMP must be a 2048x2048 monochrome BMP -->
-    <string name="font_invalid">FONT.BMP must be a 2048x2048 monochrome BMP</string>
+    <string name="font_invalid">FONT.BMP は 2048x2048 のモノクロ BMP である必要があります</string>
     <!-- A game's own FONT.BMP. %1$s is its path in the game's archive or folder. -->
     <!-- EN: Archive has more than one %1$s -->
-    <string name="game_font_several_in_archive">Archive has more than one %1$s</string>
+    <string name="game_font_several_in_archive">アーカイブに %1$s が複数あります</string>
     <!-- EN: Game %1$s is not a valid FONT.BMP -->
-    <string name="game_font_invalid">Game %1$s is not a valid FONT.BMP</string>
+    <string name="game_font_invalid">ゲームの %1$s は有効な FONT.BMP ではありません</string>
     <!-- EN: More than one FONT.BMP in %1$s -->
-    <string name="game_font_several_in_folder">More than one FONT.BMP in %1$s</string>
+    <string name="game_font_several_in_folder">%1$s に FONT.BMP が複数あります</string>
     <!-- EN: the games folder -->
-    <string name="game_font_games_folder">the games folder</string>
+    <string name="game_font_games_folder">ゲームフォルダ</string>
     <!-- EN: Game folder %1$s is missing or ambiguous; refresh the library -->
-    <string name="game_font_folder_missing">Game folder %1$s is missing or ambiguous; refresh the library</string>
+    <string name="game_font_folder_missing">ゲームフォルダ %1$s が見つからないか、特定できません。ライブラリを更新してください</string>
     <!-- EN: Game %1$s is too large -->
-    <string name="game_font_too_large">Game %1$s is too large</string>
+    <string name="game_font_too_large">ゲームの %1$s が大きすぎます</string>
     <!-- %2$s says what is wrong with it. -->
     <!-- EN: Game %1$s: %2$s -->
-    <string name="game_font_rejected">Game %1$s: %2$s</string>
+    <string name="game_font_rejected">ゲームの %1$s: %2$s</string>
     <!-- A firmware file's description: %1$s is its file name; %2$s what it does. -->
     <!-- EN: %1$s · %2$s -->
     <string name="firmware_part">%1$s · %2$s</string>
     <!-- %1$s is the machine's name, PC-98; %2$s the app's name, Kairo98. -->
     <!-- EN: the %1$s\'s own BIOS; %2$s has a built-in one -->
-    <string name="firmware_bios_description">the %1$s\'s own BIOS; %2$s has a built-in one</string>
+    <string name="firmware_bios_description">%1$s 本体の BIOS（%2$s には内蔵版があります）</string>
     <!-- %1$s is the app's name, Kairo98. -->
     <!-- EN: the text and kanji font; %1$s has a built-in one -->
-    <string name="firmware_font_description">the text and kanji font; %1$s has a built-in one</string>
+    <string name="firmware_font_description">文字・漢字フォント（%1$s には内蔵版があります）</string>
     <!-- EN: Rhythm samples -->
-    <string name="firmware_rhythm">Rhythm samples</string>
+    <string name="firmware_rhythm">リズム音源</string>
     <!-- EN: the sound board\'s drum sounds -->
-    <string name="firmware_rhythm_description">the sound board\'s drum sounds</string>
+    <string name="firmware_rhythm_description">サウンドボードのドラム音</string>
     <!-- %1$s is the game's title; %2$s why its catalog data could not be read. -->
     <!-- EN: %1$s can\'t start: its catalog launch data is unreadable (%2$s) -->
-    <string name="launch_data_unreadable">%1$s can\'t start: its catalog launch data is unreadable (%2$s)</string>
+    <string name="launch_data_unreadable">%1$s を起動できません: カタログの起動データを読み込めません（%2$s）</string>
     <!-- %1$s is the app's name, Kairo98. -->
     <!-- EN: %1$s enters your choice when the game reaches this screen. Play manually leaves it to you. -->
-    <string name="startup_choice_foot">%1$s enters your choice when the game reaches this screen. Play manually leaves it to you.</string>
+    <string name="startup_choice_foot">ゲームがこの画面に来ると、%1$s が選択内容を入力します。「手動でプレイ」を選ぶと自分で操作できます。</string>
     <!-- EN: Play manually -->
-    <string name="play_manually">Play manually</string>
+    <string name="play_manually">手動でプレイ</string>
     <!-- EN: Unable to start machine -->
-    <string name="start_failed">Unable to start machine</string>
+    <string name="start_failed">マシンを起動できません</string>
     <!-- EN: Machine startup timed out -->
-    <string name="start_timed_out">Machine startup timed out</string>
+    <string name="start_timed_out">マシンの起動がタイムアウトしました</string>
     <!-- The content ID's first characters name the disk. -->
     <!-- EN: Required floppy %1$s is missing from the library -->
-    <string name="required_floppy_missing">Required floppy %1$s is missing from the library</string>
+    <string name="required_floppy_missing">必要なフロッピー %1$s がライブラリにありません</string>
     <!-- EN: Required boot disk %1$s is missing from the library -->
-    <string name="required_boot_disk_missing">Required boot disk %1$s is missing from the library</string>
+    <string name="required_boot_disk_missing">必要な起動ディスク %1$s がライブラリにありません</string>
     <!-- %1$s is a CD image's name. -->
     <!-- EN: %1$s needs a boot disk; start the game\'s hard disk or floppy instead -->
-    <string name="cd_needs_boot_disk">%1$s needs a boot disk; start the game\'s hard disk or floppy instead</string>
+    <string name="cd_needs_boot_disk">%1$s には起動ディスクが必要です。代わりにゲームのハードディスクかフロッピーを起動してください</string>
     <!-- EN: %1$s has several disks beside it; start the one that boots -->
-    <string name="cd_several_boot_disks">%1$s has several disks beside it; start the one that boots</string>
+    <string name="cd_several_boot_disks">%1$s と同じ場所に複数のディスクがあります。起動できるものを起動してください</string>
     <!-- EN: Matching hard disk is missing from the library -->
-    <string name="hard_disk_missing">Matching hard disk is missing from the library</string>
+    <string name="hard_disk_missing">対応するハードディスクがライブラリにありません</string>
     <!-- EN: Matching hard disk is missing or ambiguous in this archive -->
-    <string name="hard_disk_missing_in_archive">Matching hard disk is missing or ambiguous in this archive</string>
+    <string name="hard_disk_missing_in_archive">このアーカイブに対応するハードディスクがないか、特定できません</string>
     <!-- EN: machine not running -->
-    <string name="state_error_not_running">machine not running</string>
+    <string name="state_error_not_running">マシンが動作していません</string>
     <!-- EN: state is missing or from another version -->
-    <string name="state_error_missing">state is missing or from another version</string>
+    <string name="state_error_missing">ステートがないか、別のバージョンのものです</string>
     <!-- EN: storage unavailable -->
-    <string name="state_error_storage">storage unavailable</string>
+    <string name="state_error_storage">ストレージを使用できません</string>
     <!-- EN: disk image copy failed -->
-    <string name="state_error_disk_copy">disk image copy failed</string>
+    <string name="state_error_disk_copy">ディスクイメージのコピーに失敗しました</string>
     <!-- EN: state file unreadable -->
-    <string name="state_error_unreadable">state file unreadable</string>
+    <string name="state_error_unreadable">ステートファイルを読み込めません</string>
     <!-- EN: machine did not respond -->
-    <string name="state_error_no_response">machine did not respond</string>
+    <string name="state_error_no_response">マシンが応答しませんでした</string>
     <!-- EN: the game\'s save path is too long -->
-    <string name="state_error_path_too_long">the game\'s save path is too long</string>
+    <string name="state_error_path_too_long">ゲームのセーブパスが長すぎます</string>
     <!-- %1$d is the emulator's error code. -->
     <!-- EN: code %1$d -->
-    <string name="state_error_code">code %1$d</string>
+    <string name="state_error_code">コード %1$d</string>
     <!-- EN: Audio profile -->
-    <string name="diagnostics_audio_profile">Audio profile</string>
+    <string name="diagnostics_audio_profile">オーディオプロファイル</string>
     <!-- What the startup typer is waiting for: %1$d is the command's number; %2$s the command. -->
     <!-- EN: Launch command %1$d: %2$s -->
-    <string name="startup_step_command">Launch command %1$d: %2$s</string>
+    <string name="startup_step_command">起動コマンド %1$d: %2$s</string>
     <!-- %1$s is a startup choice's title; %2$s the option picked; %3$d of %4$d the key being entered. -->
     <!-- EN: %1$s: %2$s (%3$d/%4$d) -->
-    <string name="startup_step_choice">%1$s: %2$s (%3$d/%4$d)</string>
+    <string name="startup_step_choice">%1$s: %2$s（%3$d/%4$d）</string>
     <!-- EN: Startup screen not recognized -->
-    <string name="startup_not_recognized">Startup screen not recognized</string>
+    <string name="startup_not_recognized">起動画面を認識できません</string>
     <!-- %1$s is the startup step being waited for. -->
     <!-- EN: Waiting for %1$s. The game is still running. -->
-    <string name="startup_waiting">Waiting for %1$s. The game is still running.</string>
+    <string name="startup_waiting">%1$s を待っています。ゲームは実行中です。</string>
     <!-- EN: Open keyboard -->
-    <string name="open_keyboard">Open keyboard</string>
+    <string name="open_keyboard">キーボードを開く</string>
     <!-- EN: Retry -->
-    <string name="retry">Retry</string>
+    <string name="retry">再試行</string>
     <!-- %1$s is the floppy drive's letter; %2$s the disk going in. -->
     <!-- EN: Swapping Floppy %1$s: %2$s -->
-    <string name="disk_swapping">Swapping Floppy %1$s: %2$s</string>
+    <string name="disk_swapping">フロッピー %1$s を交換中: %2$s</string>
     <!-- EN: Automatic disk swap failed -->
-    <string name="disk_swap_failed">Automatic disk swap failed</string>
+    <string name="disk_swap_failed">ディスクの自動交換に失敗しました</string>
     <!-- %1$s says why the swap failed. -->
     <!-- EN: %1$s. The game is still running. -->
-    <string name="disk_swap_failed_message">%1$s. The game is still running.</string>
+    <string name="disk_swap_failed_message">%1$s。ゲームは実行中です。</string>
     <!-- %1$s is the floppy drive's letter; %2$s says why the swap failed. -->
     <!-- EN: Floppy %1$s: %2$s. The game is still running. -->
-    <string name="disk_swap_failed_drive_message">Floppy %1$s: %2$s. The game is still running.</string>
+    <string name="disk_swap_failed_drive_message">フロッピー %1$s: %2$s。ゲームは実行中です。</string>
     <!-- EN: Unknown error -->
-    <string name="unknown_error">Unknown error</string>
+    <string name="unknown_error">不明なエラー</string>
     <!-- EN: Continue manually -->
-    <string name="continue_manually">Continue manually</string>
+    <string name="continue_manually">手動で続行</string>
     <!-- EN: Choose floppy -->
-    <string name="choose_floppy">Choose floppy</string>
+    <string name="choose_floppy">フロッピーを選択</string>
     <!-- EN: Starting another disk image ends this game. Progress since your last save is lost. -->
-    <string name="hard_disk_change_warning">Starting another disk image ends this game. Progress since your last save is lost.</string>
+    <string name="hard_disk_change_warning">別のディスクイメージを起動するとこのゲームは終了します。最後にセーブしてからの進行状況は失われます。</string>
     <!-- EN: Start a game before inserting a CD -->
-    <string name="cd_start_first">Start a game before inserting a CD</string>
+    <string name="cd_start_first">CD を挿入する前にゲームを起動してください</string>
     <!-- EN: No CDs for this game in the library. -->
-    <string name="cd_none_for_game">No CDs for this game in the library.</string>
+    <string name="cd_none_for_game">ライブラリにこのゲームの CD はありません。</string>
     <!-- EN: FOR THIS GAME -->
-    <string name="for_this_game">FOR THIS GAME</string>
+    <string name="for_this_game">このゲーム用</string>
     <!-- EN: Ejecting CD… -->
-    <string name="cd_ejecting">Ejecting CD…</string>
+    <string name="cd_ejecting">CD を取り出しています…</string>
     <!-- %1$s is the disk image's name. -->
     <!-- EN: Preparing %1$s… -->
-    <string name="disk_preparing">Preparing %1$s…</string>
+    <string name="disk_preparing">%1$s を準備しています…</string>
     <!-- EN: CD could not be mounted -->
-    <string name="cd_mount_failed">CD could not be mounted</string>
+    <string name="cd_mount_failed">CD をマウントできませんでした</string>
     <!-- EN: CD change failed -->
-    <string name="cd_change_failed">CD change failed</string>
+    <string name="cd_change_failed">CD の交換に失敗しました</string>
     <!-- EN: Wait for the floppy change to finish -->
-    <string name="floppy_wait">Wait for the floppy change to finish</string>
+    <string name="floppy_wait">フロッピーの交換が終わるまでお待ちください</string>
     <!-- EN: Start a game before inserting a floppy -->
-    <string name="floppy_start_first">Start a game before inserting a floppy</string>
+    <string name="floppy_start_first">フロッピーを挿入する前にゲームを起動してください</string>
     <!-- %1$s is the floppy drive's letter. -->
     <!-- EN: Ejecting floppy %1$s… -->
-    <string name="floppy_ejecting">Ejecting floppy %1$s…</string>
+    <string name="floppy_ejecting">フロッピー %1$s を取り出しています…</string>
     <!-- EN: Floppy could not be mounted -->
-    <string name="floppy_mount_failed">Floppy could not be mounted</string>
+    <string name="floppy_mount_failed">フロッピーをマウントできませんでした</string>
     <!-- EN: Floppy change failed -->
-    <string name="floppy_change_failed">Floppy change failed</string>
+    <string name="floppy_change_failed">フロッピーの交換に失敗しました</string>
     <!-- %1$s is the picked file's name. -->
     <!-- EN: Importing %1$s… -->
-    <string name="floppy_importing">Importing %1$s…</string>
+    <string name="floppy_importing">%1$s をインポートしています…</string>
     <!-- EN: Floppy import failed -->
-    <string name="floppy_import_failed">Floppy import failed</string>
+    <string name="floppy_import_failed">フロッピーのインポートに失敗しました</string>
     <!-- EN: Could not read selected file -->
-    <string name="file_unreadable">Could not read selected file</string>
+    <string name="file_unreadable">選択したファイルを読み込めませんでした</string>
     <!-- EN: Select a supported floppy image -->
-    <string name="select_floppy_image">Select a supported floppy image</string>
+    <string name="select_floppy_image">対応しているフロッピーイメージを選択してください</string>
     <!-- EN: Select a supported disk image -->
-    <string name="select_disk_image">Select a supported disk image</string>
+    <string name="select_disk_image">対応しているディスクイメージを選択してください</string>
     <!-- EN: CLOCK -->
-    <string name="clock_group">CLOCK</string>
+    <string name="clock_group">クロック</string>
     <!-- EN: Base clock -->
-    <string name="base_clock">Base clock</string>
+    <string name="base_clock">ベースクロック</string>
     <!-- %1$s is a clock speed in megahertz, such as 2.5. -->
     <!-- EN: %1$s MHz -->
     <string name="clock_mhz">%1$s MHz</string>
     <!-- EN: Changing the base clock restarts a running game. Games with their own clock keep it. -->
-    <string name="base_clock_foot">Changing the base clock restarts a running game. Games with their own clock keep it.</string>
+    <string name="base_clock_foot">ベースクロックを変更すると実行中のゲームは再起動します。独自のクロックを持つゲームはそれを使います。</string>
     <!-- EN: BOOT -->
-    <string name="boot_group">BOOT</string>
+    <string name="boot_group">起動</string>
     <!-- EN: Clock change resets the machine -->
-    <string name="clock_reset">Clock change resets the machine</string>
+    <string name="clock_reset">クロックの変更でマシンがリセットされます</string>
     <!-- EN: Global clock saved; this game uses its own clock -->
-    <string name="clock_saved_game_own">Global clock saved; this game uses its own clock</string>
+    <string name="clock_saved_game_own">全体のクロックを保存しました。このゲームは独自のクロックを使います</string>
     <!-- EN: Machine clock -->
-    <string name="machine_clock">Machine clock</string>
+    <string name="machine_clock">マシンクロック</string>
     <!-- EN: GDC clock -->
-    <string name="gdc_clock">GDC clock</string>
+    <string name="gdc_clock">GDC クロック</string>
     <!-- EN: CPU speed -->
-    <string name="cpu_speed">CPU speed</string>
+    <string name="cpu_speed">CPU 速度</string>
     <!-- %1$.1f is the CPU's speed in megahertz. -->
     <!-- EN: %1$.1f MHz -->
     <string name="cpu_mhz">%1$.1f MHz</string>
@@ -239,17 +239,17 @@
     <!-- EN: ×%1$d -->
     <string name="cpu_multiple">×%1$d</string>
     <!-- EN: %1$.1f MHz (×%2$d) -->
-    <string name="cpu_mhz_multiple">%1$.1f MHz (×%2$d)</string>
+    <string name="cpu_mhz_multiple">%1$.1f MHz（×%2$d）</string>
     <!-- EN: Startup command -->
-    <string name="startup_command">Startup command</string>
+    <string name="startup_command">起動コマンド</string>
     <!-- EN: DOS command, such as GAME -->
-    <string name="startup_command_hint">DOS command, such as GAME</string>
+    <string name="startup_command_hint">DOS コマンド（例: GAME）</string>
     <!-- EN: Startup choices -->
-    <string name="startup_choices">Startup choices</string>
+    <string name="startup_choices">起動時の選択</string>
     <!-- EN: Ask -->
-    <string name="startup_choices_on">Ask</string>
+    <string name="startup_choices_on">確認する</string>
     <!-- EN: Disk swaps -->
-    <string name="disk_swaps">Disk swaps</string>
+    <string name="disk_swaps">ディスク交換</string>
     <!-- EN: Automatic -->
-    <string name="disk_swaps_on">Automatic</string>
+    <string name="disk_swaps_on">自動</string>
 </resources>

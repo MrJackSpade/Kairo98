@@ -3,235 +3,235 @@
 <resources>
     <!-- %1$s is the app's name, Kairo98; %2$s and %3$s the emulators it runs; %4$s its GitHub repository. -->
     <!-- EN: %1$s uses %2$s and %3$s. Source and provenance: github.com/%4$s. -->
-    <string name="credits">%1$s uses %2$s and %3$s. Source and provenance: github.com/%4$s.</string>
+    <string name="credits">يستخدم %1$s كلًا من %2$s و%3$s. المصدر والمنشأ: github.com/%4$s.</string>
     <!-- EN: Choose a games folder to find disk images and ZIP games -->
-    <string name="library_empty">Choose a games folder to find disk images and ZIP games</string>
+    <string name="library_empty">اختر مجلد ألعاب للعثور على صور الأقراص وألعاب ZIP</string>
     <!-- EN: Folder access expired. Select the games folder again. -->
-    <string name="library_expired">Folder access expired. Select the games folder again.</string>
+    <string name="library_expired">انتهت صلاحية الوصول إلى المجلد. اختر مجلد الألعاب مرة أخرى.</string>
     <!-- EN: Choose a games folder -->
-    <string name="folder_title">Choose a games folder</string>
+    <string name="folder_title">اختر مجلد ألعاب</string>
     <!-- %1$s is the machine's name, PC-98; %2$s the app's name, Kairo98. -->
     <!-- EN: Select the folder containing your %1$s games. %2$s will scan its disk images and ZIP files. -->
-    <string name="folder_description">Select the folder containing your %1$s games. %2$s will scan its disk images and ZIP files.</string>
+    <string name="folder_description">اختر المجلد الذي يحتوي على ألعاب %1$s. سيفحص %2$s صور الأقراص وملفات ZIP فيه.</string>
     <!-- EN: Choose games folder… -->
-    <string name="folder_button">Choose games folder…</string>
+    <string name="folder_button">اختيار مجلد الألعاب…</string>
     <!-- EN: SAVE STATES -->
-    <string name="saves_group">SAVE STATES</string>
+    <string name="saves_group">الحالات المحفوظة</string>
     <!-- EN: Uses the joystick input on the emulated sound board. Games must support joystick 1. -->
-    <string name="joystick_help">Uses the joystick input on the emulated sound board. Games must support joystick 1.</string>
+    <string name="joystick_help">يستخدم مدخل عصا الألعاب في بطاقة الصوت المُحاكاة. يجب أن تدعم الألعاب عصا الألعاب 1.</string>
     <!-- EN: Button 1 -->
-    <string name="joystick_button_1">Button 1</string>
+    <string name="joystick_button_1">الزر 1</string>
     <!-- EN: Button 2 -->
-    <string name="joystick_button_2">Button 2</string>
+    <string name="joystick_button_2">الزر 2</string>
     <!-- EN: Symbols -->
-    <string name="keyboard_symbols">Symbols</string>
+    <string name="keyboard_symbols">الرموز</string>
     <!-- EN: Floppy disk -->
-    <string name="floppy_disk">Floppy disk</string>
+    <string name="floppy_disk">قرص مرن</string>
     <!-- EN: Hard disk -->
-    <string name="hard_disk">Hard disk</string>
+    <string name="hard_disk">قرص صلب</string>
     <!-- EN: CD-ROM -->
     <string name="cd_rom">CD-ROM</string>
     <!-- The disc a game needs, as "The %1$s this game needs is not in the library" names it. -->
     <!-- EN: CD -->
-    <string name="companion_cd">CD</string>
+    <string name="companion_cd">القرص المضغوط</string>
     <!-- EN: Boot floppy -->
-    <string name="boot_floppy">Boot floppy</string>
+    <string name="boot_floppy">قرص الإقلاع المرن</string>
     <!-- EN: Drive 2 -->
-    <string name="drive_2">Drive 2</string>
+    <string name="drive_2">المحرك 2</string>
     <!-- EN: Boot disk -->
-    <string name="boot_disk">Boot disk</string>
+    <string name="boot_disk">قرص الإقلاع</string>
     <!-- A floppy drive: %1$s is its letter, A or B. -->
     <!-- EN: Floppy %1$s -->
-    <string name="floppy_drive">Floppy %1$s</string>
+    <string name="floppy_drive">القرص المرن %1$s</string>
     <!-- Names a picked floppy image in import errors, such as "Floppy is too large". -->
     <!-- EN: Floppy -->
-    <string name="floppy">Floppy</string>
+    <string name="floppy">القرص المرن</string>
     <!-- EN: Font -->
-    <string name="option_font">Font</string>
+    <string name="option_font">الخط</string>
     <!-- EN: Game folder -->
-    <string name="font_game_folder">Game folder</string>
+    <string name="font_game_folder">مجلد اللعبة</string>
     <!-- EN: Your font.bmp -->
-    <string name="font_yours">Your font.bmp</string>
+    <string name="font_yours">ملف font.bmp الخاص بك</string>
     <!-- EN: Built-in -->
-    <string name="font_built_in">Built-in</string>
+    <string name="font_built_in">مدمج</string>
     <!-- EN: Game setting -->
-    <string name="font_game_setting">Game setting</string>
+    <string name="font_game_setting">إعداد اللعبة</string>
     <!-- EN: Use built-in -->
-    <string name="font_use_built_in">Use built-in</string>
+    <string name="font_use_built_in">استخدام المدمج</string>
     <!-- EN: Import a font.bmp… -->
-    <string name="font_import">Import a font.bmp…</string>
+    <string name="font_import">استيراد ملف font.bmp…</string>
     <!-- EN: A font.bmp is at most 1 MB; that file is larger -->
-    <string name="font_too_large">A font.bmp is at most 1 MB; that file is larger</string>
+    <string name="font_too_large">لا يتجاوز حجم font.bmp 1 MB؛ وهذا الملف أكبر</string>
     <!-- EN: This game\'s font is no longer in the app: choose or import another in Game settings › Font -->
-    <string name="font_missing">This game\'s font is no longer in the app: choose or import another in Game settings › Font</string>
+    <string name="font_missing">لم يعد خط هذه اللعبة موجودًا في التطبيق: اختر خطًا آخر أو استورده من إعدادات اللعبة › الخط</string>
     <!-- EN: FONT.BMP must be a 2048x2048 monochrome BMP -->
-    <string name="font_invalid">FONT.BMP must be a 2048x2048 monochrome BMP</string>
+    <string name="font_invalid">يجب أن يكون FONT.BMP صورة BMP أحادية اللون بمقاس 2048x2048</string>
     <!-- A game's own FONT.BMP. %1$s is its path in the game's archive or folder. -->
     <!-- EN: Archive has more than one %1$s -->
-    <string name="game_font_several_in_archive">Archive has more than one %1$s</string>
+    <string name="game_font_several_in_archive">يحتوي الأرشيف على أكثر من %1$s واحد</string>
     <!-- EN: Game %1$s is not a valid FONT.BMP -->
-    <string name="game_font_invalid">Game %1$s is not a valid FONT.BMP</string>
+    <string name="game_font_invalid">%1$s الخاص باللعبة ليس ملف FONT.BMP صالحًا</string>
     <!-- EN: More than one FONT.BMP in %1$s -->
-    <string name="game_font_several_in_folder">More than one FONT.BMP in %1$s</string>
+    <string name="game_font_several_in_folder">يوجد أكثر من FONT.BMP في %1$s</string>
     <!-- EN: the games folder -->
-    <string name="game_font_games_folder">the games folder</string>
+    <string name="game_font_games_folder">مجلد الألعاب</string>
     <!-- EN: Game folder %1$s is missing or ambiguous; refresh the library -->
-    <string name="game_font_folder_missing">Game folder %1$s is missing or ambiguous; refresh the library</string>
+    <string name="game_font_folder_missing">مجلد اللعبة %1$s مفقود أو ملتبس؛ حدّث المكتبة</string>
     <!-- EN: Game %1$s is too large -->
-    <string name="game_font_too_large">Game %1$s is too large</string>
+    <string name="game_font_too_large">%1$s الخاص باللعبة كبير جدًا</string>
     <!-- %2$s says what is wrong with it. -->
     <!-- EN: Game %1$s: %2$s -->
-    <string name="game_font_rejected">Game %1$s: %2$s</string>
+    <string name="game_font_rejected">%1$s الخاص باللعبة: %2$s</string>
     <!-- A firmware file's description: %1$s is its file name; %2$s what it does. -->
     <!-- EN: %1$s · %2$s -->
     <string name="firmware_part">%1$s · %2$s</string>
     <!-- %1$s is the machine's name, PC-98; %2$s the app's name, Kairo98. -->
     <!-- EN: the %1$s\'s own BIOS; %2$s has a built-in one -->
-    <string name="firmware_bios_description">the %1$s\'s own BIOS; %2$s has a built-in one</string>
+    <string name="firmware_bios_description">BIOS الخاص بجهاز %1$s؛ يتضمن %2$s واحدًا مدمجًا</string>
     <!-- %1$s is the app's name, Kairo98. -->
     <!-- EN: the text and kanji font; %1$s has a built-in one -->
-    <string name="firmware_font_description">the text and kanji font; %1$s has a built-in one</string>
+    <string name="firmware_font_description">خط النصوص والكانجي؛ يتضمن %1$s واحدًا مدمجًا</string>
     <!-- EN: Rhythm samples -->
-    <string name="firmware_rhythm">Rhythm samples</string>
+    <string name="firmware_rhythm">عينات الإيقاع</string>
     <!-- EN: the sound board\'s drum sounds -->
-    <string name="firmware_rhythm_description">the sound board\'s drum sounds</string>
+    <string name="firmware_rhythm_description">أصوات الطبول في بطاقة الصوت</string>
     <!-- %1$s is the game's title; %2$s why its catalog data could not be read. -->
     <!-- EN: %1$s can\'t start: its catalog launch data is unreadable (%2$s) -->
-    <string name="launch_data_unreadable">%1$s can\'t start: its catalog launch data is unreadable (%2$s)</string>
+    <string name="launch_data_unreadable">لا يمكن بدء %1$s: تعذّرت قراءة بيانات التشغيل في الكتالوج (%2$s)</string>
     <!-- %1$s is the app's name, Kairo98. -->
     <!-- EN: %1$s enters your choice when the game reaches this screen. Play manually leaves it to you. -->
-    <string name="startup_choice_foot">%1$s enters your choice when the game reaches this screen. Play manually leaves it to you.</string>
+    <string name="startup_choice_foot">يُدخل %1$s اختيارك عندما تصل اللعبة إلى هذه الشاشة. يترك لك «اللعب يدويًا» الأمر.</string>
     <!-- EN: Play manually -->
-    <string name="play_manually">Play manually</string>
+    <string name="play_manually">اللعب يدويًا</string>
     <!-- EN: Unable to start machine -->
-    <string name="start_failed">Unable to start machine</string>
+    <string name="start_failed">يتعذّر بدء الجهاز</string>
     <!-- EN: Machine startup timed out -->
-    <string name="start_timed_out">Machine startup timed out</string>
+    <string name="start_timed_out">انتهت مهلة بدء الجهاز</string>
     <!-- The content ID's first characters name the disk. -->
     <!-- EN: Required floppy %1$s is missing from the library -->
-    <string name="required_floppy_missing">Required floppy %1$s is missing from the library</string>
+    <string name="required_floppy_missing">القرص المرن المطلوب %1$s مفقود من المكتبة</string>
     <!-- EN: Required boot disk %1$s is missing from the library -->
-    <string name="required_boot_disk_missing">Required boot disk %1$s is missing from the library</string>
+    <string name="required_boot_disk_missing">قرص الإقلاع المطلوب %1$s مفقود من المكتبة</string>
     <!-- %1$s is a CD image's name. -->
     <!-- EN: %1$s needs a boot disk; start the game\'s hard disk or floppy instead -->
-    <string name="cd_needs_boot_disk">%1$s needs a boot disk; start the game\'s hard disk or floppy instead</string>
+    <string name="cd_needs_boot_disk">يحتاج %1$s إلى قرص إقلاع؛ ابدأ القرص الصلب أو القرص المرن الخاص باللعبة بدلًا منه</string>
     <!-- EN: %1$s has several disks beside it; start the one that boots -->
-    <string name="cd_several_boot_disks">%1$s has several disks beside it; start the one that boots</string>
+    <string name="cd_several_boot_disks">توجد عدة أقراص بجانب %1$s؛ ابدأ القرص الذي يُقلع</string>
     <!-- EN: Matching hard disk is missing from the library -->
-    <string name="hard_disk_missing">Matching hard disk is missing from the library</string>
+    <string name="hard_disk_missing">القرص الصلب المطابق مفقود من المكتبة</string>
     <!-- EN: Matching hard disk is missing or ambiguous in this archive -->
-    <string name="hard_disk_missing_in_archive">Matching hard disk is missing or ambiguous in this archive</string>
+    <string name="hard_disk_missing_in_archive">القرص الصلب المطابق مفقود أو ملتبس في هذا الأرشيف</string>
     <!-- EN: machine not running -->
-    <string name="state_error_not_running">machine not running</string>
+    <string name="state_error_not_running">الجهاز لا يعمل</string>
     <!-- EN: state is missing or from another version -->
-    <string name="state_error_missing">state is missing or from another version</string>
+    <string name="state_error_missing">الحالة مفقودة أو من إصدار آخر</string>
     <!-- EN: storage unavailable -->
-    <string name="state_error_storage">storage unavailable</string>
+    <string name="state_error_storage">التخزين غير متاح</string>
     <!-- EN: disk image copy failed -->
-    <string name="state_error_disk_copy">disk image copy failed</string>
+    <string name="state_error_disk_copy">فشل نسخ صورة القرص</string>
     <!-- EN: state file unreadable -->
-    <string name="state_error_unreadable">state file unreadable</string>
+    <string name="state_error_unreadable">تعذّرت قراءة ملف الحالة</string>
     <!-- EN: machine did not respond -->
-    <string name="state_error_no_response">machine did not respond</string>
+    <string name="state_error_no_response">لم يستجب الجهاز</string>
     <!-- EN: the game\'s save path is too long -->
-    <string name="state_error_path_too_long">the game\'s save path is too long</string>
+    <string name="state_error_path_too_long">مسار حفظ اللعبة طويل جدًا</string>
     <!-- %1$d is the emulator's error code. -->
     <!-- EN: code %1$d -->
-    <string name="state_error_code">code %1$d</string>
+    <string name="state_error_code">الرمز %1$d</string>
     <!-- EN: Audio profile -->
-    <string name="diagnostics_audio_profile">Audio profile</string>
+    <string name="diagnostics_audio_profile">ملف تعريف الصوت</string>
     <!-- What the startup typer is waiting for: %1$d is the command's number; %2$s the command. -->
     <!-- EN: Launch command %1$d: %2$s -->
-    <string name="startup_step_command">Launch command %1$d: %2$s</string>
+    <string name="startup_step_command">أمر التشغيل %1$d: %2$s</string>
     <!-- %1$s is a startup choice's title; %2$s the option picked; %3$d of %4$d the key being entered. -->
     <!-- EN: %1$s: %2$s (%3$d/%4$d) -->
     <string name="startup_step_choice">%1$s: %2$s (%3$d/%4$d)</string>
     <!-- EN: Startup screen not recognized -->
-    <string name="startup_not_recognized">Startup screen not recognized</string>
+    <string name="startup_not_recognized">لم يتم التعرّف على شاشة البدء</string>
     <!-- %1$s is the startup step being waited for. -->
     <!-- EN: Waiting for %1$s. The game is still running. -->
-    <string name="startup_waiting">Waiting for %1$s. The game is still running.</string>
+    <string name="startup_waiting">في انتظار %1$s. لا تزال اللعبة تعمل.</string>
     <!-- EN: Open keyboard -->
-    <string name="open_keyboard">Open keyboard</string>
+    <string name="open_keyboard">فتح لوحة المفاتيح</string>
     <!-- EN: Retry -->
-    <string name="retry">Retry</string>
+    <string name="retry">إعادة المحاولة</string>
     <!-- %1$s is the floppy drive's letter; %2$s the disk going in. -->
     <!-- EN: Swapping Floppy %1$s: %2$s -->
-    <string name="disk_swapping">Swapping Floppy %1$s: %2$s</string>
+    <string name="disk_swapping">جارٍ تبديل القرص المرن %1$s: %2$s</string>
     <!-- EN: Automatic disk swap failed -->
-    <string name="disk_swap_failed">Automatic disk swap failed</string>
+    <string name="disk_swap_failed">فشل التبديل التلقائي للقرص</string>
     <!-- %1$s says why the swap failed. -->
     <!-- EN: %1$s. The game is still running. -->
-    <string name="disk_swap_failed_message">%1$s. The game is still running.</string>
+    <string name="disk_swap_failed_message">%1$s. لا تزال اللعبة تعمل.</string>
     <!-- %1$s is the floppy drive's letter; %2$s says why the swap failed. -->
     <!-- EN: Floppy %1$s: %2$s. The game is still running. -->
-    <string name="disk_swap_failed_drive_message">Floppy %1$s: %2$s. The game is still running.</string>
+    <string name="disk_swap_failed_drive_message">القرص المرن %1$s: %2$s. لا تزال اللعبة تعمل.</string>
     <!-- EN: Unknown error -->
-    <string name="unknown_error">Unknown error</string>
+    <string name="unknown_error">خطأ غير معروف</string>
     <!-- EN: Continue manually -->
-    <string name="continue_manually">Continue manually</string>
+    <string name="continue_manually">المتابعة يدويًا</string>
     <!-- EN: Choose floppy -->
-    <string name="choose_floppy">Choose floppy</string>
+    <string name="choose_floppy">اختيار قرص مرن</string>
     <!-- EN: Starting another disk image ends this game. Progress since your last save is lost. -->
-    <string name="hard_disk_change_warning">Starting another disk image ends this game. Progress since your last save is lost.</string>
+    <string name="hard_disk_change_warning">يؤدي بدء صورة قرص أخرى إلى إنهاء هذه اللعبة. سيضيع التقدم منذ آخر حفظ.</string>
     <!-- EN: Start a game before inserting a CD -->
-    <string name="cd_start_first">Start a game before inserting a CD</string>
+    <string name="cd_start_first">ابدأ لعبة قبل إدخال قرص مضغوط</string>
     <!-- EN: No CDs for this game in the library. -->
-    <string name="cd_none_for_game">No CDs for this game in the library.</string>
+    <string name="cd_none_for_game">لا توجد أقراص مضغوطة لهذه اللعبة في المكتبة.</string>
     <!-- EN: FOR THIS GAME -->
-    <string name="for_this_game">FOR THIS GAME</string>
+    <string name="for_this_game">لهذه اللعبة</string>
     <!-- EN: Ejecting CD… -->
-    <string name="cd_ejecting">Ejecting CD…</string>
+    <string name="cd_ejecting">جارٍ إخراج القرص المضغوط…</string>
     <!-- %1$s is the disk image's name. -->
     <!-- EN: Preparing %1$s… -->
-    <string name="disk_preparing">Preparing %1$s…</string>
+    <string name="disk_preparing">جارٍ تجهيز %1$s…</string>
     <!-- EN: CD could not be mounted -->
-    <string name="cd_mount_failed">CD could not be mounted</string>
+    <string name="cd_mount_failed">تعذّر تحميل القرص المضغوط</string>
     <!-- EN: CD change failed -->
-    <string name="cd_change_failed">CD change failed</string>
+    <string name="cd_change_failed">فشل تغيير القرص المضغوط</string>
     <!-- EN: Wait for the floppy change to finish -->
-    <string name="floppy_wait">Wait for the floppy change to finish</string>
+    <string name="floppy_wait">انتظر حتى ينتهي تغيير القرص المرن</string>
     <!-- EN: Start a game before inserting a floppy -->
-    <string name="floppy_start_first">Start a game before inserting a floppy</string>
+    <string name="floppy_start_first">ابدأ لعبة قبل إدخال قرص مرن</string>
     <!-- %1$s is the floppy drive's letter. -->
     <!-- EN: Ejecting floppy %1$s… -->
-    <string name="floppy_ejecting">Ejecting floppy %1$s…</string>
+    <string name="floppy_ejecting">جارٍ إخراج القرص المرن %1$s…</string>
     <!-- EN: Floppy could not be mounted -->
-    <string name="floppy_mount_failed">Floppy could not be mounted</string>
+    <string name="floppy_mount_failed">تعذّر تحميل القرص المرن</string>
     <!-- EN: Floppy change failed -->
-    <string name="floppy_change_failed">Floppy change failed</string>
+    <string name="floppy_change_failed">فشل تغيير القرص المرن</string>
     <!-- %1$s is the picked file's name. -->
     <!-- EN: Importing %1$s… -->
-    <string name="floppy_importing">Importing %1$s…</string>
+    <string name="floppy_importing">جارٍ استيراد %1$s…</string>
     <!-- EN: Floppy import failed -->
-    <string name="floppy_import_failed">Floppy import failed</string>
+    <string name="floppy_import_failed">فشل استيراد القرص المرن</string>
     <!-- EN: Could not read selected file -->
-    <string name="file_unreadable">Could not read selected file</string>
+    <string name="file_unreadable">تعذّرت قراءة الملف المحدد</string>
     <!-- EN: Select a supported floppy image -->
-    <string name="select_floppy_image">Select a supported floppy image</string>
+    <string name="select_floppy_image">اختر صورة قرص مرن مدعومة</string>
     <!-- EN: Select a supported disk image -->
-    <string name="select_disk_image">Select a supported disk image</string>
+    <string name="select_disk_image">اختر صورة قرص مدعومة</string>
     <!-- EN: CLOCK -->
-    <string name="clock_group">CLOCK</string>
+    <string name="clock_group">الساعة</string>
     <!-- EN: Base clock -->
-    <string name="base_clock">Base clock</string>
+    <string name="base_clock">الساعة الأساسية</string>
     <!-- %1$s is a clock speed in megahertz, such as 2.5. -->
     <!-- EN: %1$s MHz -->
     <string name="clock_mhz">%1$s MHz</string>
     <!-- EN: Changing the base clock restarts a running game. Games with their own clock keep it. -->
-    <string name="base_clock_foot">Changing the base clock restarts a running game. Games with their own clock keep it.</string>
+    <string name="base_clock_foot">يؤدي تغيير الساعة الأساسية إلى إعادة تشغيل اللعبة الجارية. تحتفظ الألعاب التي لها ساعتها الخاصة بها.</string>
     <!-- EN: BOOT -->
-    <string name="boot_group">BOOT</string>
+    <string name="boot_group">الإقلاع</string>
     <!-- EN: Clock change resets the machine -->
-    <string name="clock_reset">Clock change resets the machine</string>
+    <string name="clock_reset">تغيير الساعة يعيد تعيين الجهاز</string>
     <!-- EN: Global clock saved; this game uses its own clock -->
-    <string name="clock_saved_game_own">Global clock saved; this game uses its own clock</string>
+    <string name="clock_saved_game_own">تم حفظ الساعة العامة؛ تستخدم هذه اللعبة ساعتها الخاصة</string>
     <!-- EN: Machine clock -->
-    <string name="machine_clock">Machine clock</string>
+    <string name="machine_clock">ساعة الجهاز</string>
     <!-- EN: GDC clock -->
-    <string name="gdc_clock">GDC clock</string>
+    <string name="gdc_clock">ساعة GDC</string>
     <!-- EN: CPU speed -->
-    <string name="cpu_speed">CPU speed</string>
+    <string name="cpu_speed">سرعة المعالج</string>
     <!-- %1$.1f is the CPU's speed in megahertz. -->
     <!-- EN: %1$.1f MHz -->
     <string name="cpu_mhz">%1$.1f MHz</string>
@@ -241,15 +241,15 @@
     <!-- EN: %1$.1f MHz (×%2$d) -->
     <string name="cpu_mhz_multiple">%1$.1f MHz (×%2$d)</string>
     <!-- EN: Startup command -->
-    <string name="startup_command">Startup command</string>
+    <string name="startup_command">أمر التشغيل</string>
     <!-- EN: DOS command, such as GAME -->
-    <string name="startup_command_hint">DOS command, such as GAME</string>
+    <string name="startup_command_hint">أمر DOS، مثل GAME</string>
     <!-- EN: Startup choices -->
-    <string name="startup_choices">Startup choices</string>
+    <string name="startup_choices">خيارات البدء</string>
     <!-- EN: Ask -->
-    <string name="startup_choices_on">Ask</string>
+    <string name="startup_choices_on">السؤال</string>
     <!-- EN: Disk swaps -->
-    <string name="disk_swaps">Disk swaps</string>
+    <string name="disk_swaps">تبديل الأقراص</string>
     <!-- EN: Automatic -->
-    <string name="disk_swaps_on">Automatic</string>
+    <string name="disk_swaps_on">تلقائي</string>
 </resources>
