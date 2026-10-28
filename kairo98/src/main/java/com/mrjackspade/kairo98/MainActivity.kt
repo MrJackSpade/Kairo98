@@ -192,7 +192,7 @@ class MainActivity : MachineActivity<DiskImageEntry>() {
         claiming = entries
         val errors = gameKeyMigration.claim(entries.map { GameKeyMigration.Claim(it, Pc98Media.legacyEntryId(it)) })
         return if (errors.isEmpty()) entries else entries.map { entry ->
-            errors[entry.key]?.let { entry.copy(error = it) } ?: entry
+            errors[entry.key]?.let { entry.copy(error = text(it)) } ?: entry
         }
     }
 

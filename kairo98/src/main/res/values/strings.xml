@@ -19,6 +19,8 @@
     <string name="floppy_disk">Floppy disk</string>
     <string name="hard_disk">Hard disk</string>
     <string name="cd_rom">CD-ROM</string>
+    <!-- The disc a game needs, as "The %1$s this game needs is not in the library" names it. -->
+    <string name="companion_cd">CD</string>
     <string name="boot_floppy">Boot floppy</string>
     <string name="drive_2">Drive 2</string>
     <string name="boot_disk">Boot disk</string>

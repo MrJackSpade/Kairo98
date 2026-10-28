@@ -141,7 +141,7 @@ fun requiredMediaFor(context: Context, contentId: String, source: DiskImageEntry
  * A CD entry is its own disc.
  */
 fun cdFor(entry: DiskImageEntry, catalogCdId: String?, entries: List<DiskImageEntry>): DiskImageEntry? =
-    if (entry.isCd) entry else companionFor(catalogCdId, entry, entries, "CD") { it.isCd }
+    if (entry.isCd) entry else companionFor(catalogCdId, entry, entries, UiText.res(R.string.companion_cd)) { it.isCd }
 
 /**
  * What a CD boots from: the disk its catalog names, else the one hard disk or floppy beside it.
