@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Build the downloadable catalog: core-v4.zip, the bundled catalog documents (the assets'
 catalog folder) as shared catalog_documents.update_archive packs them, with each language's
-descriptions in core-v4-<language>.zip; and core-v3.json, the English pack app versions before v4
-read, from the reviewed source and name index.
+descriptions in core-v4-<language>.zip. App versions before v4 read catalog/core-v3.json, which stays
+published as it was last built (Kairo#77).
 
 Usage: build_online_catalog.py <source-v1.json> <assets catalog folder> <output folder>"""
 
@@ -18,7 +18,6 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "shared/tools"))
 import catalog_documents
 
 # Disk records name their game's shared name index record instead of repeating it.
-CORE_VERSION = 3
 
 
 def build_pack(source, name_index):
@@ -34,9 +33,9 @@ def main():
     source = json.loads(args.source.read_text(encoding="utf-8"))
     documents = {path.relative_to(args.catalog).as_posix(): json.loads(path.read_text(encoding="utf-8"))
                  for path in sorted(args.catalog.rglob("*.json"))}
-    pack = compact({**build_pack(source, documents["name-index-v1.json"]), "coreVersion": CORE_VERSION})
+    build_pack(source, documents["name-index-v1.json"])
     translations = {name for name in documents if name.startswith("descriptions/")}
-    outputs = {"core-v3.json": pack, "core-v4.zip": catalog_documents.update_archive(
+    outputs = {"core-v4.zip": catalog_documents.update_archive(
         {name: document for name, document in documents.items() if name not in translations})}
     for name in sorted(translations):
         language = name.removeprefix("descriptions/").removesuffix(".json")
@@ -48,8 +47,7 @@ def main():
                     "size": len(content)}
         (args.output / (name.rsplit(".", 1)[0] + ".meta.json")).write_text(
             json.dumps(metadata, separators=(",", ":")) + "\n", encoding="utf-8")
-    print(f"{len(pack)} bytes, {len(json.loads(pack)['games'])} content IDs; "
-          f"{len(outputs) - 1} update archives")
+    print(f"{len(outputs)} update archives")
 
 
 if __name__ == "__main__":

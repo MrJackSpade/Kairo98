@@ -32,7 +32,7 @@ User catalog additions and explicit overrides live in app-private storage. Overr
 
 ## Updating the catalog
 
-The bundled catalog is sharded by content ID. Kairo98 checks the small [revision file](../catalog/core-v3.meta.json) before fetching [the online metadata snapshot](../catalog/core-v3.json), and offers **Update catalogs** in Menu › Manage library. An unchanged SHA-256 skips the catalog download. An invalid or unavailable update leaves the existing catalog in place. Artwork downloads are separate. Lookup order is bundled catalog, downloaded catalog, user additions, then explicit overrides.
+The bundled catalog is sharded by content ID. Kairo98 checks the small [revision file](../catalog/core-v4.meta.json) before fetching [the update archive](../catalog/core-v4.zip) and the device language's descriptions (`core-v4-<language>.zip`), and offers **Update catalogs** in Menu › Manage library. An unchanged SHA-256 skips the catalog download. An invalid or unavailable update leaves the existing catalog in place. App versions before v4 read `catalog/core-v3.json`, which is no longer rebuilt (Kairo#77). Artwork downloads are separate. Lookup order is bundled catalog, downloaded catalog, user additions, then explicit overrides.
 
 The source records are in [catalog research](../catalog/research/README.md). To generate the Android shards and online metadata snapshot after reviewing a source change:
 

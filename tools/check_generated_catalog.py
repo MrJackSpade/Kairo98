@@ -20,12 +20,12 @@ SOURCE_FILES = (
 # The translated descriptions, each optional: the build reads those that exist.
 TRANSLATIONS = tuple(f"catalog/research/descriptions-{language}-v1.json"
                      for language in ("es", "pt-BR", "de", "ru", "ja", "ko", "ar", "id"))
+# The name index is also an input: the review builder reads it beside the sources.
+NAME_INDEX = "kairo98/src/main/assets/catalog/name-index-v1.json"
 GENERATED_FILES = (
     "catalog/source-v1.json",
-    "catalog/core-v3.json",
     "kairo98/src/main/assets/catalog/manifest-v1.json",
     "kairo98/src/main/assets/catalog/name-index-v1.json",
-    "catalog/core-v3.meta.json",
     "catalog/core-v4.zip",
     "catalog/core-v4.meta.json",
 )
@@ -79,7 +79,7 @@ def main():
 
     with tempfile.TemporaryDirectory(prefix="kairo98-catalog-check-") as directory:
         work = Path(directory)
-        for path in (*SOURCE_FILES, GENERATED_FILES[3], SYSTEM, BASE):
+        for path in (*SOURCE_FILES, NAME_INDEX, SYSTEM, BASE):
             content = staged(path)
             if content is None:
                 print(f"Missing staged catalog input: {path}", file=sys.stderr)
