@@ -1,140 +1,545 @@
 {
  "descriptions": {
-  "pc98:122360": "Reimu untersucht die Zerstörung des Hakurei-Schreins im ersten Touhou-Spiel. Schlage den Yin-Yang-Orb durch Gegner und Hindernisse – eine Block-Breaker-Action aus Sicht einer Schreinjungfrau.",
-  "pc98:125780": "Reimu kehrt zu einem von Geistern heimgesuchten Schrein zurück und macht sich auf die Suche nach deren Ursprung. Das zweite Touhou-Spiel wechselt zu vertikalem Shooter-Gameplay mit Stages, Bossen und den Yin-Yang-Orbs.",
-  "pc98:125781": "Eine seltsame Ruine verspricht, einem Besucher einen Wunsch zu erfüllen, und lockt Reimu und weitere Rivalen in einen Wettstreit. Dieser Touhou-Teil bietet einen kompetitiven Splitscreen-Shooter gegen einen zweiten Spieler oder den Computer.",
-  "pc98:125782": "Wähle Reimu oder Marisa und kämpfe dich durch einen vertikalen Shooter mit charakterspezifischen Angriffen und Bomben. Das vierte Touhou-Spiel schickt sie dem Aufruhr nach, der sich aus der Traumwelt ausbreitet.",
-  "pc98:125783": "Dämonen strömen aus Makai nach Gensokyo, und Reimu und weitere spielbare Figuren machen sich auf die Suche nach der Ursache. Das fünfte Touhou-Spiel ist ein vertikaler Shooter mit individuellen Waffen und Bosskämpfen.",
-  "pc98:133232": "Eine übernatürliche Katastrophe verwandelt Tokio und legt es in Trümmer. Erkunde die Stadt, sprich mit Überlebenden und folge den Auserwählten, die die Zerstörung vielleicht aufhalten können.",
-  "pc98:134846": "Eine Macross-Sammlung aus Visual Novel und Strategie, die Skull Leader mit Love Stories verbindet. Sie erzählt bekannte Ereignisse mit den Designs des Films nach und greift für zusätzlichen Handlungsstoff auf die Fernsehserie zurück.",
-  "pc98:139265": "Kämpfe dich als Gady und zeitweise als Sephina durch miteinander verbundene Side-Scrolling-Stages. Das Action-RPG kombiniert Nahkampf, Jump-and-Run, Bosskämpfe und eine Stadt, in der sich die Gruppe erholen und speichern kann.",
-  "pc98:142443": "Rusty Springcul betritt Schloss Bloodthorne, nachdem Dorfbewohner entführt und in Monster verwandelt wurden. Kämpfe dich mit Peitsche und anderen Waffen durch Side-Scrolling-Stages, um Bloody Mary zu stellen.",
-  "pc98:156032": "Takuya findet ein Gerät, mit dem er auf der Suche nach seinem verschwundenen Vater zwischen Parallelwelten reisen kann. Das verzweigte Adventure verknüpft Hinweise über Zeitlinien hinweg und folgt mehreren verflochtenen Leben.",
-  "pc98:156033": "Kämpferinnen, die Familienrestaurants vertreten, nehmen an einem landesweiten Kampfsportturnier teil. Wähle eine Teilnehmerin und kämpfe dich in Duellen durch das Aufgebot von Variable Geo.",
-  "pc98:156050": "Ein Journalist recherchiert in einer abgelegenen Forschungseinrichtung auf einer Insel, die möglicherweise Verbindungen zum Militär hat. Seine Nachforschungen kreuzen sich mit einem Mädchen mit Gedächtnisverlust und einem Leiter, der vermutet, dass die Experimente etwas Gefährliches verbergen.",
-  "pc98:156054": "Wechsle zwischen dem Detektiv Kojiroh und der Geheimdienstagentin Marina, während getrennte Fälle in einem Serienmord-Rätsel zusammenlaufen. Die Multi-Sight-Struktur enthüllt Hinweise aus der Sicht beider Hauptfiguren.",
-  "pc98:156056": "Rei, Pilot der Staffel Steel Fox, greift in einem schwer bewaffneten Anzug die Terroristenbasis Slave Dog an. Night Slave verbindet Side-Scrolling-Shooter-Action und Bosskämpfe mit einer animierten Science-Fiction-Geschichte.",
-  "pc98:156059": "Der Schüler Kouji träumt immer wieder von einer geheimnisvollen Raumstation und ihrer Besatzung. Sein Lehrer drängt ihn, der Sache nachzugehen, und die Grenze zwischen Traum und Wachleben beginnt zu verschwimmen.",
-  "pc98:156060": "Blondia und Fallandia fliegen Kampfflugzeuge gegen die Kriegsmaschinen von Herrschern, die ein Virus in den Wahnsinn getrieben hat. Dieser Scrolling-Shooter schickt die Geschwister in jedes Herrschaftsgebiet, um ein Gegenmittel zu überbringen.",
-  "pc98:156061": "Beginne als frühes Lebewesen und überlebe eine Abfolge vorgeschichtlicher Zeitalter auf dem Weg nach Eden. Gib Evolutionspunkte aus, um Körper und Fähigkeiten umzuformen, und speichere bevorzugte Designs im Book of Life.",
-  "pc98:156062": "Der Krieger Gento und sein katzenartiger Gefährte Benimaru reisen durch Japan, nachdem Soldaten aus Edo sie angegriffen haben. Ihre Suche führt zu einem Plan, einen vor langer Zeit versiegelten Drachengott zu befreien.",
-  "pc98:156065": "Führe eine Söldnertruppe durch Missionen, die von Infiltration bis zum Attentat auf einen Putschführer reichen. Pausiere die Echtzeit-Action, um Befehle zu geben, und wähle für jeden Auftrag Mechs vom Typ Attacker, Defender, Sniper oder Commander.",
-  "pc98:156066": "Ein Wiederbelebungsmittel verwandelt seine Probanden in Zombies, und Cole und der Erfinder Dr. Cooger versuchen, den Ausbruch einzudämmen. Untersuche die sich ausbreitende Katastrophe in Grafik-Adventure-Szenen und Entscheidungen.",
-  "pc98:156067": "Cole und Sheila hielten die Zombie-Krise für überstanden, doch ein neuer Todesfall deutet darauf hin, dass das Wiederbelebungsmittel noch existiert. Die Fortsetzung führt ihre Ermittlungen weiter, während sich die Gewalt in der Stadt ausbreitet.",
-  "pc98:156122": "Der Ritter Arc und sein Freund Randia kehren zurück und finden ihre Stadt besetzt und die Priesterin Ferio entführt. Führe eine Gruppe über rundenbasierte taktische Karten, um sie aus den Händen der Truppen des Schwarzen Ritters zu befreien.",
-  "pc98:156124": "Die Hexe Mesaana hat die Bewohner von Strawberry Fields verflucht und manche in Monster verwandelt. Takeru sucht in drei Dungeons nach heiligen Schriften, die den Zauber aufheben können, in dieser Fantasy-RPG-Fortsetzung.",
-  "pc98:156125": "Königin Luna schickt einen Abenteurer in den Göttinnenturm, nachdem ein Drache und seine Ritter Strawberry Fields bedrohen. Erkunde Ebenen in der Ego-Perspektive, bekämpfe Monster und arbeite dich zur Quelle des Bösen im Turm vor.",
-  "pc98:156145": "Entkomme den Palastverliesen Jaffars und erreiche die gefangene Prinzessin, bevor die Zeit abläuft. Präzise Sprünge, Fallen, Wachenkämpfe und rotoskopierte Bewegungen prägen dieses filmische Jump-and-Run.",
-  "pc98:156156": "Verbringe einen Sommer damit, Kommilitonen, Freunde und weitere mögliche Partner kennenzulernen – in einer Dating-Simulation im Studentenleben. Plane Aktivitäten und triff Entscheidungen, die bestimmen, welche Beziehung sich entwickelt.",
-  "pc98:156671": "Betritt BIAS, den gefährlichen Komplex unter Beast City, nachdem Kreaturen das System gestört haben, von dem die Stadt abhängt. Der Screamer wechselt zwischen Dungeon-Erkundung in der Ego-Perspektive und Side-Scrolling-Kämpfen.",
-  "pc98:157675": "Wieder einmal pleite, nimmt Rance einen Rettungsauftrag nahe dem Königreich Leazas an. Ein Ausflug in eine monsterverseuchte Höhle wächst sich zu einem größeren Fantasy-Abenteuer mit Erkundung und Kämpfen aus.",
-  "pc98:168776": "Führe Tuned Heart an, eine Verbrecherjagd-Einheit, die es auf den Straßen der Stadt mit gedankenkontrollierten Banden zu tun bekommt. Wähle Missionen, entwickle Teammitglieder und rüste ihre Fahrzeuge für rundenbasierte taktische Kämpfe aus.",
-  "pc98:175461": "Am Krönungstag von Arc stehlen Dämonen das heilige Schwert aus seinem Schrein. Der neue König und seine Gefährten verfolgen es in einer taktischen RPG-Kampagne, die an das erste Farland Story anschließt.",
-  "pc98:175462": "Arc und Ferio nehmen ein Mädchen mit Gedächtnisverlust namens Fana auf, deren Albträume auf eine gefährliche Vergangenheit hindeuten. Geleite sie zu einem Erzbischof und bestehe die taktischen Kämpfe, die darauf folgen.",
-  "pc98:175463": "Die Rebellen Darland und Phir fliehen vor dem Despoten Pepper und sammeln Unterstützung, um seine Herrschaft zu beenden. Diese neue Besetzung der Farland Story bestreitet eine Abfolge rundenbasierter Kartenschlachten.",
-  "pc98:175465": "Prinzessin Kushna flieht vor einer ungewollten Heiratsentscheidung und wird in einen Konflikt jenseits ihres Schlosses hineingezogen. Führe ihre Verbündeten über rundenbasierte taktische Karten in dieser eigenständigen Kampagne der Farland Story.",
-  "pc98:175466": "Der Dieb Grey hilft den Schwestern Elicia und ihrer Schwester, ihren Verfolgern zu entkommen, und deckt dabei eine größere Verschwörung auf. Die sechste Farland Story wechselt in eine Welt mit Western- und Science-Fiction-Elementen und behält die taktischen Kämpfe bei.",
-  "pc98:179035": "Die Zauberin Lina und der Schwertkämpfer Gourry jagen einem wertvollen Drachenzahn nach und stolpern dabei in ein größeres Abenteuer. Erkunde die Fantasywelt, triff bekannte Slayers-Figuren und kämpfe.",
-  "pc98:179041": "Absolviere eine Reihe von Pop-Kultur- und Science-Fiction-Quizzen, um in die Cybernetic Hi-School aufgenommen zu werden. Version 2.0 überarbeitet das Original mit eigenem Bootsystem, größerer Grafik und schnellerer Präsentation.",
-  "pc98:180890": "Zwei Jahrzehnte nach den Atomschlägen, die Tokio zerstörten, leben Überlebende in unterirdischen Schutzräumen, während oben Dämonen umherstreifen. Schließe dich den Devil Busters an, um die Schutzräume zu verteidigen und die zerstörte Stadt zu erkunden, in diesem Megami-Tensei-RPG.",
-  "pc98:181173": "Fahre in einem Grand-Prix-Spiel für den PC-98 von West Side, erschienen 1990. Tritt auf Rennstrecken an und meistere die Anforderungen schneller Fahrten, statt eine Adventure-Geschichte zu durchlaufen.",
-  "pc98:182453": "Steuere einen Motor-Shell-Mech für eine Söldnereinheit an Bord der Dragonet. Routine-Weltraummissionen münden in einen größeren Kampf gegen eine Invasionsmacht in diesem story-getriebenen Kampfspiel.",
-  "pc98:183054": "Wähle einen von fünf Zauberern und kämpfe um ein herrscherloses Reich. Beschwöre Monster, um Türme auf Hex-Karten einzunehmen; überlebende Einheiten können durch eine ganze Kampagne mitgenommen werden.",
-  "pc98:183085": "Der Kendo-Kapitän und Asuka geraten in eine angespannte Beziehung, als sein Cousin Miki einzieht. Diese animierte Viper-Fortsetzung nutzt gelegentliche Entscheidungen, um ihr Drama zu lenken.",
-  "pc98:183088": "Ogawa beschwört erneut die Dämonin Carrera, doch sie erscheint mit Mercedes, und bald unterbricht ein Engel die beiden. Die Viper-Fortsetzung ist eine animierte Geschichte mit wenig Spielereingriff.",
-  "pc98:183093": "Zwei animierte Geschichten, Rise und Imagine, bilden diesen Viper-Band. Rise folgt der Kampfsportlerin Akira, nachdem sie und ihre Freunde von einer verborgenen unterirdischen Gruppe verschleppt wurden.",
-  "pc98:183171": "Prinz Selios entkommt der Gefangenschaft, nachdem ihn ein vertrauter Verbündeter verraten hat. Sammle Gefährten, durchquere das Königreich und bestreite rundenbasierte Kämpfe auf seinem Weg, den Thron zurückzuerobern.",
-  "pc98:183256": "Stelle in Utsuro eine Abenteurergruppe zusammen und steige in den Schwarzen Turm hinab, um nach einem Artefakt zu suchen, das ewige Jugend verleihen soll. Kartiere sein Labyrinth in der Ego-Perspektive, verwalte die Gruppe und überlebe rundenbasierte Begegnungen.",
-  "pc98:183306": "Führe einen Geheimauftrag für Prinzessin Leticia aus, während du Vagrand und seine Intrigen in einem menügesteuerten Adventure erkundest.",
-  "pc98:183307": "Doktor Tanchi ermittelt gegen ein mit der Vergangenheit seiner Familie verbundenes Verbrechersyndikat, während ein Auftragsmörder sein Krankenhaus bedroht. Dieses Adventure wechselt zwischen befehlsbasierten Ermittlungen und rundenbasierten Zweikämpfen.",
-  "pc98:183344": "Befehlige die Blaue Armee bei der Verteidigung ihrer Hauptstadt gegen eine Invasion der Roten Nation. Diese Kampagne führt direkt von einem taktischen Gefecht zum nächsten, in denen Einheiten Stadtpositionen halten und Gefangene befreien.",
-  "pc98:183374": "Jage Gorgus, den Mörder deines Vaters, durch Städte und monsterverseuchte Dungeons. Dieses Top-Down-RPG nutzt rundenbasierte Kämpfe, Ausrüstung und Nebenquests, um die Stärke des Helden aufzubauen.",
-  "pc98:183384": "Der Ritter Eagle Windeed sucht nach einem Weg, das Gleichgewicht einer Welt wiederherzustellen, deren vier Elemente in Konflikt geraten sind. Reise zwischen Königreichen, triff Verbündete und bekämpfe Bedrohungen in diesem Fantasy-RPG.",
-  "pc98:183431": "Drei freie Generäle müssen die Burgen von Hyunckel zurückerobern und von dunklen Mächten gefangene Gefährten befreien. Die Fortsetzung konzentriert sich auf rundenbasierte taktische Feldzüge durch ein Fantasy-Königreich.",
-  "pc98:183445": "Stelle eine Gruppe zusammen und reise durch Forcelia, die Fantasywelt des Pen-and-Paper-Rollenspiels Sword World. Nimm Quests an, erkunde Siedlungen und Dungeons und löse Begegnungen mit den Rollenspielregeln des Spiels.",
-  "pc98:183448": "Custom betritt nahe gelegene Dungeons, um für die Battling Gods Championship zu trainieren. Sammle Erfahrung und Ausrüstung in rundenbasierten Kämpfen, bevor du dich dem Turnier stellst.",
-  "pc98:183481": "Latok und die Fee Pixie jagen einen Nekromanten, der einen neuen Dämon nach Xak beschwören will. Erkunde verbundene Regionen, werde stärker und bekämpfe Monster in Echtzeit in dieser Action-RPG-Fortsetzung.",
-  "pc98:183493": "Ein widerwilliger Nachfahre eines legendären Helden erbt ein magisches Schwert, während der Dämonenfürst Gargantua mit der Rückkehr droht. Erkunde eine Fantasywelt und kämpfe, um seine Wiedererweckung zu verhindern.",
-  "pc98:183567": "Der Schüler Yusuke erlebt gewaltsame Visionen, die Traum und Wirklichkeit verschwimmen lassen. Diese psychologische Horror-Visual-Novel folgt seinem Versuch, ihre Quelle aufzudecken und die Gefahr um ihn herum zu überleben.",
-  "pc98:183795": "Adol sucht sechs gestohlene Bücher, die das Geheimnis des antiken Ys bewahren. Erkunde Städte und Wildnis, verbessere deine Ausrüstung und besiege Gegner im Echtzeit-Rammkampf der Serie.",
-  "pc98:184546": "Lenke einen Zug durch Echtzeit-Schienenrätsel und sammle Passagiere ein, bevor du den Ausgang erreichst. Stelle Weichen, um Zusammenstöße zu vermeiden; mehrere Karten sind von Anfang an verfügbar.",
-  "pc98:186488": "Ein Jäger im Weltraum stellt sich den geheimnisvollen VOID-Angriffen inmitten wachsender Spannungen zwischen menschlichen Fraktionen und der Galaxy Alliance. Die Fortsetzung mischt 3D-Shooter-Action in der Ego-Perspektive mit Erkundung und Story-Sequenzen.",
-  "pc98:186567": "Luna verfolgt die Wahrheit hinter einem Laborunglück und dem Verschwinden ihrer Schwester. Eine experimentelle Bioloader-Rüstung und Val-Kaizer ziehen sie in eine rasante Science-Fiction-Action-Geschichte hinein.",
-  "pc98:186976": "Fliege einen BD-5J-Jet in zehn Kunstflug-Wettbewerben, darunter Pylonenrennen, Slaloms und Bandschneide-Stunts. Bis zu vier Spieler können in vier Schwierigkeitsgraden gegeneinander antreten.",
-  "pc98:187084": "Wähle oder gestalte einen Abenteurer, nimm von Mareen einen Auftrag an und erkunde Dungeons in der Ego-Perspektive auf der Suche nach einem Zielmonster und einem magischen Gegenstand. Charakterwerte, Ausrüstung und rundenbasierte Begegnungen prägen jede Expedition.",
-  "pc98:187132": "Ritter Landis betritt einen Turm am See, um eine entführte Prinzessin zu retten. Erkunde allein vektorgezeichnete Labyrinthe in der Ego-Perspektive, kaufe zwischen den Ausflügen Ausrüstung und überstehe zufällige rundenbasierte Kämpfe.",
-  "pc98:187207": "Erklimme den monsterverseuchten Turm von Gage in einer Roguelike-Quest gegen den Dunklen Lord Mick Albert. Rekrutiere Verbündete und sammle Ausrüstung, während die Gruppe durch die Stockwerke vordringt.",
-  "pc98:187220": "Der Schüler Yuuji nimmt ein Mädchen mit Katzenohren und Gedächtnisverlust auf, das er nach Nachrichten über einen gestohlenen Tiger findet. Das erste GaoGao-Adventure begleitet ihre wachsende Beziehung durch illustrierte Story-Szenen und Entscheidungen.",
-  "pc98:187222": "Ein gescheitertes biologisches Experiment hinterlässt die Erde der Zukunft geteilt zwischen geschützten Menschenkuppeln und einer gefährlichen Mutantenwildnis. Erlebe die zweite GaoGao-Geschichte in illustrierten Szenen und Entscheidungen.",
-  "pc98:187301": "Kazuya schließt sich dem Anführer eines Roboter-Widerstands an, der gegen eine Regierung kämpft, die Menschen mit der PSYCO-Technologie kontrolliert. Bekämpfe gehirngewaschene Gegner und verfolge das Regime in diesem Science-Fiction-Spiel.",
-  "pc98:187303": "Nach der Revolte des ersten Spiels entdeckt Kazuya, dass das PSYCO-Gedankenkontrollprogramm an einer Schule wieder aufgetaucht ist. Die Fortsetzung stellt ihn einer weiteren Gruppe betroffener Gegner entgegen.",
-  "pc98:187371": "Bei seiner Rückkehr in eine Stadt mit einem ungelösten Rätsel wird ein junger Mann ausgeraubt. Er steigt in die dortige Mahjong-Szene ein, um Geld zu verdienen und herauszufinden, was mit einer Frau geschah, die er einst angegriffen sah.",
-  "pc98:187422": "Begleite die angehende Zauberin Arle durch drei verbundene Dungeon-RPGs in der Ego-Perspektive in verschiedenen Lebensphasen. Zauberwahl und über Porträts vermittelter Status ersetzen die übliche sichtbare Werteanzeige.",
-  "pc98:187450": "Die angehende Magierin Marble setzt mit dem Wunschstab ihres Meisters versehentlich einen Dämon frei. Meistere Rätsel-Stages auf einem einzigen Bildschirm mit Hilfe des Stabgeistes Sirius, um den Schaden zu beheben.",
-  "pc98:187467": "In einem alternativen Japan, das von der Wissenschaft der Meta-Topologie geprägt ist, rückt eine Schule für begabte junge Frauen in den Mittelpunkt eines alten politischen Konflikts. Dieses illustrierte Adventure verbindet Science-Fiction-Geschichte mit Campus-Drama.",
-  "pc98:187543": "Der Söldner Rance wird angeheuert, um Probleme in einer Fabrik zu untersuchen, die Happiness Medicine entwickelt. Säubere das Gelände von Monstern, mit Menübefehlen und rundenbasierten Kämpfen in dieser Nebengeschichte.",
-  "pc98:187544": "Rance und das Angel Team setzen die in Rance 4.1 begonnene Untersuchung der Happiness-Medicine-Fabrik fort. Die zweite Hälfte behält die menübasierte Erkundung und die rundenbasierten Kämpfe bei.",
-  "pc98:187546": "Rance und Sill werden angeheuert, um vier gestohlene magische Ringe zurückzuholen und die Zauberinnen aufzuhalten, die Custom Town terrorisieren. Erkunde, ermittle und kämpfe dich durch dieses Fantasy-Abenteuer-RPG.",
-  "pc98:187547": "Rance und Sill werden in das Erbe eines jahrzehntelangen Krieges zwischen Menschheit und Dämonen verwickelt. Das vierte Hauptabenteuer erweitert die Fantasy-Erkundung und die Gruppenkämpfe der Serie.",
-  "pc98:187563": "Der Privatdetektiv Rance wird losgeschickt, um Hikari zu finden, eine Schülerin, die von der Paris High School verschwunden ist. Bewege dich über Menüs in der Ego-Perspektive zwischen Schauplätzen, sammle Hinweise und kämpfe dich durch den Auftakt der Serie.",
-  "pc98:187601": "Akira versammelt fünf Mädchen mit besonderen Kräften, um die Laker Crystals gegen das Gadram-Imperium zu verteidigen. Das erste Lakers-Spiel verbindet Story-Szenen mit rundenbasierten taktischen Kämpfen.",
-  "pc98:187602": "Akira und die Lakers stellen sich Rayott, einem neuen Feind, der die Kristalle sucht, um die Erde zu überfallen. Die Fortsetzung führt ihre Geschichte mit Zwischensequenzen und rundenbasierten Teamkämpfen weiter.",
-  "pc98:187603": "Ein maskierter Feind namens Neos Bullard greift die Lakers an, um die Kraft der Kristalle zu erlangen. Der dritte Teil behält die taktischen Fernkämpfe bei und konfrontiert Akiras Team mit neuen Bedrohungen.",
-  "pc98:187676": "Spiele Triton in einer Fantasy-Quest per Point-and-Click in der Ego-Perspektive, um vier Schwerter zurückzuholen. Reise zwischen surrealen Reichen und löse Umgebungsrätsel in einem PC-98-Adventure mit Anime-Grafik.",
-  "pc98:187678": "Die vierte GaoGao-Geschichte kehrt in eine Welt zurück, die zwischen menschlichen Schutzräumen und mutierten Stämmen geteilt ist. Zwei Hauptfiguren suchen Canaan, eine versprochene Zuflucht, während die verbliebene Zivilisation ums Überleben kämpft.",
-  "pc98:187687": "Die Kriegerin Ramy mit Hasenohren beschützt Menschen und Tiere vor feindlichen Kreaturen, beginnend auf einem Schiff voller Pinguine. Springe, sprinte und setze ihr Schwert in Side-Scrolling-Action-Stages ein.",
-  "pc98:187703": "Das Zerbrechen der Words-Worth-Tafel löst Krieg zwischen den Stämmen der Oberfläche und der Unterwelt aus. Führe Astral durch Dungeons in der Ego-Perspektive, um den Schuldigen zu finden und den Frieden wiederherzustellen.",
-  "pc98:189246": "Wähle einen von drei Helden für eine Reise in einem brettbasierten Strategie-RPG. Der Computer steuert die anderen beiden, während die Gruppe umherziehenden Monstern und rivalisierenden Kräften begegnet.",
-  "pc98:189256": "Ares verliert das magische Schwert Planet Buster, als ihn ein Hexenmeister in der Wüste gefangen nimmt. Entkomme dem Gefängnis, hole die Waffe zurück und setze die Dungeon-Crawler-Fortsetzung in dieser überarbeiteten Ausgabe fort.",
-  "pc98:189268": "Der Weltraumpirat Kenny sucht auf mehr als einem Dutzend Planeten nach seinem verschwundenen Vater. Kaufe und verkaufe Waren, nimm Aufträge an und reagiere auf wechselnde lokale Preise in einem Weltraum-Abenteuer mit Strategieelementen.",
-  "pc98:189332": "Entdecke die frühen Arbeiten von AliceSoft in einem Quiz, einer CG-Galerie, Nutzerrückmeldungen und zwei kurzen Adventures. Diese Sammlung spielt sich wie ein interaktives Studio-Album und nicht wie ein durchgehendes Spiel.",
-  "pc98:189333": "Die zweite interaktive Sammlung von AliceSoft enthält drei kurze Spiele, ein großes Quiz und Leserbeiträge. Stöbere im Menü nach Entwicklerkommentaren, Musik, Artwork und weiteren Extras.",
-  "pc98:189337": "Drei unabhängige illustrierte Adventures werden als Cartridges für ein fiktives Dream Program System präsentiert. Jedes kurze Szenario bietet die Wahl einer Hauptfigur oder Persönlichkeit, die den Verlauf der Geschichte verändert.",
-  "pc98:189374": "Setze bewegte Bilder wieder zusammen, indem du ihre Kacheln verschiebst, bevor die Zeit abläuft. FlixMix bietet mehrere Rätselmodi, die ändern, wie Teile bewegt und gruppiert werden.",
-  "pc98:189394": "Ein kurzes Befehls-Adventure von AliceSoft mit einer Polizistin in der Hauptrolle. Ursprünglich mit frühen Ausgaben von Rance verteilt, ist es eine kompakte Nebengeschichte und kein vollwertiges RPG.",
-  "pc98:189396": "Kentarou und Miki setzen ihre Reise fort, nachdem sie in Little Princess aus Draculas Schloss entkommen sind. Dieses frühe Champion-Soft-Adventure begleitet ihren Versuch, in illustrierten Szenen einen Weg nach Hause zu finden.",
-  "pc98:189697": "Lege die Bedingungen für ein neues Universum fest und sieh zu, wie sich das Leben von seinem Anfang an entwickelt. Diese Simulation lässt den Spieler die kosmische Struktur formen und die Folgen über gewaltige Zeiträume verfolgen.",
-  "pc98:189715": "Bewege dich und kämpfe in einem surrealen Fantasy-RPG, indem du seine ungewöhnlichen Tastaturbefehle lernst. Begegnungen werden zu Tippaufgaben, sodass Zehnfingerfertigkeit ebenso wichtig ist wie der Charakterfortschritt.",
-  "pc98:189844": "Erwache in der Kryokammer eines Raumschiffs mit kaum Erinnerung und Anzeichen, dass an Bord etwas nicht stimmt. Erkunde die Räume, triff Besatzungsmitglieder und wähle Dialoge, während sich das Rätsel entwickelt.",
-  "pc98:190331": "Saiko reist über eine brettartige Karte und fordert magische Wesen beim Mahjong heraus. Läden, Schätze und andere Felder geben den Partien einen leichten Rollenspielrahmen.",
-  "pc98:190347": "Eimmy sucht ihren verschwundenen Stiefbruder, nachdem Geldeintreiber ihr Familienleben zerstört haben. Dieses illustrierte Adventure begleitet ihre Ermittlungen und die gegensätzliche Persönlichkeit, die sie in sich entdeckt.",
-  "pc98:190873": "Der Avatar strandet auf Pagan, einer Welt unter der Kontrolle des Guardian. Erkunde ihre Siedlungen und Wildnis, meistere die Elementarkräfte und finde an den Titanen vorbei einen Weg nach Hause.",
-  "pc98:190913": "Organisiere einen Wettlauf, um auf ein notleidendes Dorf aufmerksam zu machen. Dieses Side-Scrolling-Rennspiel bietet Computergegner und einen Zweispielermodus mit wählbaren Stages.",
-  "pc98:191004": "Führe Dante durch zehn vom Inferno inspirierte Stages, bekämpfe Dämonen und überwinde Jump-and-Run-Gefahren. Vergil gibt Hinweise, während ein aufladbares Kruzifix Dantes Hauptwaffe ist.",
-  "pc98:191573": "Die Soldatin Kiyomi wird in einem kriegsgezeichneten Tokio der Zukunft auf vier entflohene Gefangene angesetzt. Untersuche Schauplätze und Personen per Point-and-Click in diesem Science-Fiction-Adventure.",
-  "pc98:195490": "Die Austauschschülerin Nanako untersucht verdächtige Prüfungen an der St. Belloncho Academy. Das Schul-Adventure verbindet Dialoge und Rätsellösen mit Kämpfen gegen eine exzentrische Schülergruppe.",
-  "pc98:195517": "Ayayo nimmt in dieser kurzen illustrierten Geschichte einen Nebenjob in Herrn Suzukis Laden an. Gelegentliche Entscheidungen verändern Teile der Handlung, die auch animierte Szenen enthält.",
-  "pc98:195536": "Die Dämonenjäger Lime und Bass betreten die Menschenwelt, um von BEM-Kreaturen gestohlene Juwelen zurückzuholen. Die erste Episode präsentiert ihre Mission als kurzes animiertes Adventure mit gelegentlichen Befehlswahlen.",
-  "pc98:197578": "Nachdem ein Traum und ein Erdbeben Shounosuke in eine andere Welt versetzen, muss er sechs Mädchen in getrennten Szenarien helfen. Erkundung und Story-Szenen sind mit Rätseln verknüpft, bei denen Wegstücke platziert werden.",
-  "pc98:197630": "Die Polizistin der Zukunft Milk und die Schülerin Kurumi müssen sich nach einer seltsamen Begegnung einen Körper teilen. In ihrem kurzen illustrierten Adventure treten sie gegen Amon an, der Pflanzen in Monster verwandelt.",
-  "pc98:197631": "Milk und Kurumi setzen ihre Mission im gemeinsamen Körper gegen Amons Pflanzenmonster fort. Die zweite kurze Episode führt ihr animiertes Science-Fiction-Adventure weiter.",
-  "pc98:197770": "Der Student Hiroaki versucht, das seltsame Glück zu verstehen, das seine Begegnungen zu lenken und seine Wünsche zu erfüllen scheint. Dieses illustrierte Adventure begleitet seine Untersuchung dieser Kraft.",
-  "pc98:197833": "Der neue Schüler Shuji beginnt an der Kotobuki Preparatory School und lernt seine Mitschüler kennen. Dieses Schulleben-Adventure begleitet Gespräche und Beziehungsentscheidungen über das ganze Schuljahr.",
-  "pc98:197834": "Koichis Bruder plant Rache an der Familie, die er für den Niedergang ihres Vaters verantwortlich macht. Koichi zieht in die Nähe, um ihr Vertrauen zu gewinnen, und wird in ein Drama aus Familiengeheimnissen und widerstreitenden Loyalitäten gezogen.",
-  "pc98:197860": "Detektivin Shinobu Aiba schleust sich in eine angesehene Privatschule ein, um eine Reihe von Verschwinden zu untersuchen. Bringe dieses Orange-House-Rätsel von 1991 voran, indem du Befehle wählst und Hinweisen auf dem Campus folgst.",
-  "pc98:198815": "Erkunde ein ägyptisches Grab in einem Horror-RPG, das mit RPG Maker Dante98 II gebaut wurde. Archäologische Hinweise und eine festsitzende Expedition führen die Gruppe tiefer in eine vom Totenbuch inspirierte Geschichte.",
-  "pc98:198820": "Führe eine rosahaarige Heldin über ein Brett voller feindlicher Begegnungen. Kämpfe prüfen das Gedächtnis, indem sie das richtige Antwortpaar verlangen, während falsche Entscheidungen zu alternativen Ausgängen führen.",
-  "pc98:198821": "Ein früherer Gegner aus Réserve will ein Mensch werden. Durchquere eine kurze Brettspielroute, besiege drei Rivalen und sammle die Essenzen, die für das gewünschte Ende nötig sind.",
-  "pc98:198823": "Eine komische Besetzung tritt in einem übersetzten Doujin-Prügelspiel gegeneinander an. Wähle einen Charakter und kämpfe dich mit übertriebenen Angriffen und Humor durch die Yugekitai-Serie.",
-  "pc98:198851": "Wähle aus fünf Kämpfern für Duelle in der Arena aus der Vogelperspektive. Jeder Charakter führt zwei Angriffsobjekte, die auch blocken können; gewinne, indem du die Gesundheit des Gegners aufzehrst oder ihn aus dem Ring wirfst.",
-  "pc98:198852": "Die Punkband Yugekitai entdeckt einen Plan, den zerstörerischen Gott Susanoo wiederzuerwecken. Ihr komisches Abenteuer begleitet die Gruppe bei dem Versuch, das Vorhaben zu verhindern.",
-  "pc98:203804": "Die SIS-Crew untersucht ein verlassenes Raumschiff, nachdem zwei Mitglieder an einer rätselhaften Krankheit erkrankt sind. Dieses kurze, stark animierte Science-Fiction-Adventure folgt den Folgen ihrer Begegnung.",
-  "pc98:219471": "Yumi untersucht eine abgeschiedene Akademie, nachdem eine dorthin geschickte Freundin verschwunden ist. Dieses illustrierte Adventure folgt einem einzigen Handlungspfad mit gelegentlichen kontextabhängigen Entscheidungen.",
-  "pc98:440344": "Ein psychologisches Horror-RPG, gebaut mit Dante98. Eine Entscheidung auf einem Bahnsteig führt die Hauptfigur in einen unheimlichen Waggon, wo das Kontrollieren der Fahrkarten der Fahrgäste Teil einer verstörenden Reise wird.",
-  "pc98:440348": "Die Geschwister Meena und Otto können spirituelle Energie in Magie umwandeln. Ein Auftrag, Heilpflanzen zu sammeln, führt sie in einem Wald in eine Falle und eröffnet eine Fantasy-RPG-Reise.",
-  "pc98:442277": "Der verwaiste Ken zieht in das Haus einer wohlhabenden Frau, die seinen Vater kannte. Erkunde den Haushalt und seine verworrenen Beziehungen in illustrierten Szenen und mit Entscheidungen wie in einem Adventure.",
-  "pc98:470408": "Lime kehrt in einem kurzen animierten Adventure zurück, das in drei Gebiete gegliedert ist, die in beliebiger Reihenfolge besucht werden können. Story-Szenen tragen den Großteil der Episode, mit wenig Interaktion.",
-  "pc98:470410": "Lime und Bass jagen in der dritten Episode weiter juwelenstehlende BEM-Kreaturen. Sie spielt sich wie ein interaktiver Cartoon, dessen animierte Geschichte durch einfache Befehlswahlen voranschreitet.",
-  "pc98:470413": "Die vierte Episode versetzt Lime in ein Restaurant, wo Bass und ein ungewöhnlicher Oktopus ihren Tag durcheinanderbringen. Ihre kurzen animierten Szenen führen das leicht interaktive Format der Serie fort.",
-  "pc98:470421": "Der donnerschwingende Abenteurer Raidy untersucht einen Turm, dessen Monster Dorfbewohner entführt haben. Erkunde die Korridore in der Ego-Perspektive, sammle Ausrüstung und kämpfe dich durch den Dungeon.",
-  "pc98:470837": "Auf einer Kostümmesse begegnet Lime einer lebenden Tasche, die Outfits stiehlt. Dieser fünfte Teil ist eine kurze animierte Geschichte mit den bekannten Figuren der Serie und spärlicher Interaktion.",
-  "pc98:470838": "Ein Ausflug ins Schwimmbad wird seltsam, als ein Mondfisch die Besucher betäubt. Bass stellt sich in der sechsten kurzen, animierten Episode dem dämonischen Besitzer des Wesens.",
-  "pc98:470839": "Bass' Magen reißt von selbst aus und schickt die Gruppe in der siebten Episode von Jewel Bem Hunter Lime hinter ihm her. Die Geschichte entfaltet sich in kurzen animierten Szenen.",
-  "pc98:470840": "Lime und ihre Gefährten besuchen im achten Teil einen Zirkus, wo der Ausflug schnell aus dem Ruder läuft. Dies ist eine weitere kurze, von Animation getragene Episode.",
-  "pc98:470841": "Lime stellt sich einem Doppelgänger, der sich als Bass ausgibt und Ärger macht. Die neunte Episode führt die Serie mit animierten Story-Szenen und leichter Interaktion fort.",
-  "pc98:470842": "Lime wird entführt, und Bass muss sie im zwölften und letzten Teil der Serie retten. Das animierte Finale beschließt das lange Abenteuer der Gruppe.",
-  "pc98:470843": "Der zehnte Teil ist eine etwa zehnminütige animierte Geschichte in einem Badehaus. Anders als die früheren Episoden bietet er im Grunde keine Spielerinteraktion.",
-  "pc98:470844": "Bass und die Gruppe besuchen eine Idol-Veranstaltung und stoßen auf eine lästige Schildkröte, als die Mädchen beim Auftritt mitmachen. Die elfte Episode ist eine kurze animierte Geschichte."
+  "pc98:122360": {
+   "en": "Reimu investigates the destruction of the Hakurei Shrine in the first Touhou game. Bat the Yin-Yang Orb through enemies and obstacles in a shrine-maiden take on block-breaking action.",
+   "text": "Reimu untersucht die Zerstörung des Hakurei-Schreins im ersten Touhou-Spiel. Schlage den Yin-Yang-Orb durch Gegner und Hindernisse – eine Block-Breaker-Action aus Sicht einer Schreinjungfrau."
+  },
+  "pc98:125780": {
+   "en": "Reimu returns to a shrine overrun by ghosts and heads out to find their source. The second Touhou game changes the series to vertical shooting, with stages, bosses, and the Yin-Yang Orbs.",
+   "text": "Reimu kehrt zu einem von Geistern heimgesuchten Schrein zurück und macht sich auf die Suche nach deren Ursprung. Das zweite Touhou-Spiel wechselt zu vertikalem Shooter-Gameplay mit Stages, Bossen und den Yin-Yang-Orbs."
+  },
+  "pc98:125781": {
+   "en": "A strange ruin promises to grant one visitor's wish, drawing Reimu and other rivals into a contest. This Touhou entry uses competitive split-screen shooting against another player or the computer.",
+   "text": "Eine seltsame Ruine verspricht, einem Besucher einen Wunsch zu erfüllen, und lockt Reimu und weitere Rivalen in einen Wettstreit. Dieser Touhou-Teil bietet einen kompetitiven Splitscreen-Shooter gegen einen zweiten Spieler oder den Computer."
+  },
+  "pc98:125782": {
+   "en": "Choose Reimu or Marisa and fight through a vertical shooter with character-specific attacks and bombs. The fourth Touhou game sends them after the disturbance spreading from the dream world.",
+   "text": "Wähle Reimu oder Marisa und kämpfe dich durch einen vertikalen Shooter mit charakterspezifischen Angriffen und Bomben. Das vierte Touhou-Spiel schickt sie dem Aufruhr nach, der sich aus der Traumwelt ausbreitet."
+  },
+  "pc98:125783": {
+   "en": "Demons flow from Makai into Gensokyo, prompting Reimu and other playable characters to seek the source. The fifth Touhou game is a vertical shooter with individual weapons and boss encounters.",
+   "text": "Dämonen strömen aus Makai nach Gensokyo, und Reimu und weitere spielbare Figuren machen sich auf die Suche nach der Ursache. Das fünfte Touhou-Spiel ist ein vertikaler Shooter mit individuellen Waffen und Bosskämpfen."
+  },
+  "pc98:133232": {
+   "en": "A supernatural catastrophe mutates and ruins Tokyo. Explore the city, speak with survivors, and follow the chosen people who may be able to stop the destruction.",
+   "text": "Eine übernatürliche Katastrophe verwandelt Tokio und legt es in Trümmer. Erkunde die Stadt, sprich mit Überlebenden und folge den Auserwählten, die die Zerstörung vielleicht aufhalten können."
+  },
+  "pc98:134846": {
+   "en": "A Macross visual novel and strategy collection that combines Skull Leader with Love Stories. It retells familiar events using the film's designs while drawing on the television series for additional story material.",
+   "text": "Eine Macross-Sammlung aus Visual Novel und Strategie, die Skull Leader mit Love Stories verbindet. Sie erzählt bekannte Ereignisse mit den Designs des Films nach und greift für zusätzlichen Handlungsstoff auf die Fernsehserie zurück."
+  },
+  "pc98:139265": {
+   "en": "Fight through connected side-scrolling stages as Gady and, at times, Sephina. The action RPG combines melee combat, platforming, boss fights, and a town where the party can recover and save.",
+   "text": "Kämpfe dich als Gady und zeitweise als Sephina durch miteinander verbundene Side-Scrolling-Stages. Das Action-RPG kombiniert Nahkampf, Jump-and-Run, Bosskämpfe und eine Stadt, in der sich die Gruppe erholen und speichern kann."
+  },
+  "pc98:142443": {
+   "en": "Rusty Springcul enters Bloodthorne Castle after villagers are abducted and transformed into monsters. Fight through side-scrolling stages with a whip and other weapons to confront Bloody Mary.",
+   "text": "Rusty Springcul betritt Schloss Bloodthorne, nachdem Dorfbewohner entführt und in Monster verwandelt wurden. Kämpfe dich mit Peitsche und anderen Waffen durch Side-Scrolling-Stages, um Bloody Mary zu stellen."
+  },
+  "pc98:156032": {
+   "en": "Takuya finds a device that lets him travel between parallel worlds while searching for his missing father. The branching adventure links clues across timelines and follows several intertwined lives.",
+   "text": "Takuya findet ein Gerät, mit dem er auf der Suche nach seinem verschwundenen Vater zwischen Parallelwelten reisen kann. Das verzweigte Adventure verknüpft Hinweise über Zeitlinien hinweg und folgt mehreren verflochtenen Leben."
+  },
+  "pc98:156033": {
+   "en": "Women fighters representing family restaurants enter a national martial-arts tournament. Choose a competitor and fight through the Variable Geo roster in one-on-one matches.",
+   "text": "Kämpferinnen, die Familienrestaurants vertreten, nehmen an einem landesweiten Kampfsportturnier teil. Wähle eine Teilnehmerin und kämpfe dich in Duellen durch das Aufgebot von Variable Geo."
+  },
+  "pc98:156050": {
+   "en": "A journalist investigates a remote island research facility with possible military ties. His inquiry intersects with an amnesiac girl and a manager who suspects the experiments hide something dangerous.",
+   "text": "Ein Journalist recherchiert in einer abgelegenen Forschungseinrichtung auf einer Insel, die möglicherweise Verbindungen zum Militär hat. Seine Nachforschungen kreuzen sich mit einem Mädchen mit Gedächtnisverlust und einem Leiter, der vermutet, dass die Experimente etwas Gefährliches verbergen."
+  },
+  "pc98:156054": {
+   "en": "Switch between detective Kojiroh and intelligence agent Marina as separate cases converge on a serial murder mystery. The Multi-Sight structure reveals clues from each protagonist's perspective.",
+   "text": "Wechsle zwischen dem Detektiv Kojiroh und der Geheimdienstagentin Marina, während getrennte Fälle in einem Serienmord-Rätsel zusammenlaufen. Die Multi-Sight-Struktur enthüllt Hinweise aus der Sicht beider Hauptfiguren."
+  },
+  "pc98:156056": {
+   "en": "Rei, a pilot in the Steel Fox squad, assaults the Slave Dog terrorist base in a heavily armed suit. Night Slave pairs side-scrolling shooting and boss fights with an animated science-fiction story.",
+   "text": "Rei, Pilot der Staffel Steel Fox, greift in einem schwer bewaffneten Anzug die Terroristenbasis Slave Dog an. Night Slave verbindet Side-Scrolling-Shooter-Action und Bosskämpfe mit einer animierten Science-Fiction-Geschichte."
+  },
+  "pc98:156059": {
+   "en": "Student Kouji repeatedly dreams of a mysterious space station and its crew. His teacher urges him to investigate, and the line between the dream and his waking life begins to dissolve.",
+   "text": "Der Schüler Kouji träumt immer wieder von einer geheimnisvollen Raumstation und ihrer Besatzung. Sein Lehrer drängt ihn, der Sache nachzugehen, und die Grenze zwischen Traum und Wachleben beginnt zu verschwimmen."
+  },
+  "pc98:156060": {
+   "en": "Blondia and Fallandia fly fighter craft against the war machines of rulers driven mad by a virus. This scrolling shooter sends the siblings into each domain to deliver an antidote.",
+   "text": "Blondia und Fallandia fliegen Kampfflugzeuge gegen die Kriegsmaschinen von Herrschern, die ein Virus in den Wahnsinn getrieben hat. Dieser Scrolling-Shooter schickt die Geschwister in jedes Herrschaftsgebiet, um ein Gegenmittel zu überbringen."
+  },
+  "pc98:156061": {
+   "en": "Begin as an early creature and survive a succession of prehistoric eras on the way to Eden. Spend evolution points to reshape its body and abilities, then save favored designs in the Book of Life.",
+   "text": "Beginne als frühes Lebewesen und überlebe eine Abfolge vorgeschichtlicher Zeitalter auf dem Weg nach Eden. Gib Evolutionspunkte aus, um Körper und Fähigkeiten umzuformen, und speichere bevorzugte Designs im Book of Life."
+  },
+  "pc98:156062": {
+   "en": "Warrior Gento and his feline companion Benimaru journey across Japan after Edo soldiers attack them. Their search leads to a plot to release a dragon god sealed long ago.",
+   "text": "Der Krieger Gento und sein katzenartiger Gefährte Benimaru reisen durch Japan, nachdem Soldaten aus Edo sie angegriffen haben. Ihre Suche führt zu einem Plan, einen vor langer Zeit versiegelten Drachengott zu befreien."
+  },
+  "pc98:156065": {
+   "en": "Command a mercenary squad through missions ranging from infiltration to a coup leader's assassination. Pause the real-time action to give orders and choose Attacker, Defender, Sniper, or Commander mechs for each job.",
+   "text": "Führe eine Söldnertruppe durch Missionen, die von Infiltration bis zum Attentat auf einen Putschführer reichen. Pausiere die Echtzeit-Action, um Befehle zu geben, und wähle für jeden Auftrag Mechs vom Typ Attacker, Defender, Sniper oder Commander."
+  },
+  "pc98:156066": {
+   "en": "A resurrection drug turns its subjects into zombies, and Cole and its inventor Dr. Cooger race to contain the outbreak. Investigate the spreading disaster through graphic-adventure scenes and choices.",
+   "text": "Ein Wiederbelebungsmittel verwandelt seine Probanden in Zombies, und Cole und der Erfinder Dr. Cooger versuchen, den Ausbruch einzudämmen. Untersuche die sich ausbreitende Katastrophe in Grafik-Adventure-Szenen und Entscheidungen."
+  },
+  "pc98:156067": {
+   "en": "Cole and Sheila thought the zombie crisis was over, but a new death suggests the resurrection drug survived. The sequel returns to their investigation as violence spreads through the city.",
+   "text": "Cole und Sheila hielten die Zombie-Krise für überstanden, doch ein neuer Todesfall deutet darauf hin, dass das Wiederbelebungsmittel noch existiert. Die Fortsetzung führt ihre Ermittlungen weiter, während sich die Gewalt in der Stadt ausbreitet."
+  },
+  "pc98:156122": {
+   "en": "Knight Arc and his friend Randia return to find their town invaded and priestess Ferio abducted. Lead a party through turn-based tactical maps to rescue her from the Black Knight's forces.",
+   "text": "Der Ritter Arc und sein Freund Randia kehren zurück und finden ihre Stadt besetzt und die Priesterin Ferio entführt. Führe eine Gruppe über rundenbasierte taktische Karten, um sie aus den Händen der Truppen des Schwarzen Ritters zu befreien."
+  },
+  "pc98:156124": {
+   "en": "Witch Mesaana has cursed the people of Strawberry Fields, turning some into monsters. Takeru searches three dungeons for sacred writings that can undo the spell in this fantasy RPG sequel.",
+   "text": "Die Hexe Mesaana hat die Bewohner von Strawberry Fields verflucht und manche in Monster verwandelt. Takeru sucht in drei Dungeons nach heiligen Schriften, die den Zauber aufheben können, in dieser Fantasy-RPG-Fortsetzung."
+  },
+  "pc98:156125": {
+   "en": "Queen Luna sends an adventurer into the Goddess Tower after a dragon and its knights threaten Strawberry Fields. Explore first-person levels, fight monsters, and work down toward the tower's source of evil.",
+   "text": "Königin Luna schickt einen Abenteurer in den Göttinnenturm, nachdem ein Drache und seine Ritter Strawberry Fields bedrohen. Erkunde Ebenen in der Ego-Perspektive, bekämpfe Monster und arbeite dich zur Quelle des Bösen im Turm vor."
+  },
+  "pc98:156145": {
+   "en": "Escape Jaffar's palace dungeons and reach the imprisoned princess before time runs out. Precise jumps, traps, guard fights, and rotoscoped movement define this cinematic platformer.",
+   "text": "Entkomme den Palastverliesen Jaffars und erreiche die gefangene Prinzessin, bevor die Zeit abläuft. Präzise Sprünge, Fallen, Wachenkämpfe und rotoskopierte Bewegungen prägen dieses filmische Jump-and-Run."
+  },
+  "pc98:156156": {
+   "en": "Spend a summer meeting classmates, friends, and other potential partners in a college-life dating simulation. Schedule activities and make choices that shape which relationship develops.",
+   "text": "Verbringe einen Sommer damit, Kommilitonen, Freunde und weitere mögliche Partner kennenzulernen – in einer Dating-Simulation im Studentenleben. Plane Aktivitäten und triff Entscheidungen, die bestimmen, welche Beziehung sich entwickelt."
+  },
+  "pc98:156671": {
+   "en": "Enter BIAS, the dangerous complex beneath Beast City, after creatures disrupt the system the city depends on. The Screamer alternates first-person dungeon exploration with side-scrolling battles.",
+   "text": "Betritt BIAS, den gefährlichen Komplex unter Beast City, nachdem Kreaturen das System gestört haben, von dem die Stadt abhängt. Der Screamer wechselt zwischen Dungeon-Erkundung in der Ego-Perspektive und Side-Scrolling-Kämpfen."
+  },
+  "pc98:157675": {
+   "en": "Out of money again, Rance accepts a rescue job near the Kingdom of Leazas. A trip into a monster-filled cave grows into a larger fantasy adventure with exploration and combat.",
+   "text": "Wieder einmal pleite, nimmt Rance einen Rettungsauftrag nahe dem Königreich Leazas an. Ein Ausflug in eine monsterverseuchte Höhle wächst sich zu einem größeren Fantasy-Abenteuer mit Erkundung und Kämpfen aus."
+  },
+  "pc98:168776": {
+   "en": "Lead Tuned Heart, a crime-fighting squad confronting mind-controlled gangs in city streets. Choose missions, develop team members, and customize their vehicles for turn-based tactical battles.",
+   "text": "Führe Tuned Heart an, eine Verbrecherjagd-Einheit, die es auf den Straßen der Stadt mit gedankenkontrollierten Banden zu tun bekommt. Wähle Missionen, entwickle Teammitglieder und rüste ihre Fahrzeuge für rundenbasierte taktische Kämpfe aus."
+  },
+  "pc98:175461": {
+   "en": "On Arc's coronation day, demons steal the sacred sword from its shrine. The new king and his companions pursue it through a tactical RPG campaign that follows the first Farland Story.",
+   "text": "Am Krönungstag von Arc stehlen Dämonen das heilige Schwert aus seinem Schrein. Der neue König und seine Gefährten verfolgen es in einer taktischen RPG-Kampagne, die an das erste Farland Story anschließt."
+  },
+  "pc98:175462": {
+   "en": "Arc and Ferio shelter an amnesiac girl called Fana, whose nightmares hint at a dangerous past. Escort her to an archbishop and fight through the tactical battles that follow.",
+   "text": "Arc und Ferio nehmen ein Mädchen mit Gedächtnisverlust namens Fana auf, deren Albträume auf eine gefährliche Vergangenheit hindeuten. Geleite sie zu einem Erzbischof und bestehe die taktischen Kämpfe, die darauf folgen."
+  },
+  "pc98:175463": {
+   "en": "Rebels Darland and Phir flee the despot Pepper and gather support to end his rule. This new Farland Story cast fights a succession of turn-based map battles.",
+   "text": "Die Rebellen Darland und Phir fliehen vor dem Despoten Pepper und sammeln Unterstützung, um seine Herrschaft zu beenden. Diese neue Besetzung der Farland Story bestreitet eine Abfolge rundenbasierter Kartenschlachten."
+  },
+  "pc98:175465": {
+   "en": "Princess Kushna flees an unwanted marriage decision and is drawn into a conflict beyond her castle. Lead her allies across turn-based tactical maps in this separate Farland Story campaign.",
+   "text": "Prinzessin Kushna flieht vor einer ungewollten Heiratsentscheidung und wird in einen Konflikt jenseits ihres Schlosses hineingezogen. Führe ihre Verbündeten über rundenbasierte taktische Karten in dieser eigenständigen Kampagne der Farland Story."
+  },
+  "pc98:175466": {
+   "en": "Thief Grey helps sisters Elicia and her sibling escape their pursuers, uncovering a wider conspiracy. The sixth Farland Story shifts to a world with Western and science-fiction touches while retaining tactical battles.",
+   "text": "Der Dieb Grey hilft den Schwestern Elicia und ihrer Schwester, ihren Verfolgern zu entkommen, und deckt dabei eine größere Verschwörung auf. Die sechste Farland Story wechselt in eine Welt mit Western- und Science-Fiction-Elementen und behält die taktischen Kämpfe bei."
+  },
+  "pc98:179035": {
+   "en": "Sorceress Lina and swordsman Gourry pursue a valuable dragon fang, only to stumble into a larger adventure. Explore, meet familiar Slayers characters, and battle across the fantasy world.",
+   "text": "Die Zauberin Lina und der Schwertkämpfer Gourry jagen einem wertvollen Drachenzahn nach und stolpern dabei in ein größeres Abenteuer. Erkunde die Fantasywelt, triff bekannte Slayers-Figuren und kämpfe."
+  },
+  "pc98:179041": {
+   "en": "Take a series of pop-culture and science-fiction quizzes to gain entry to Cybernetic Hi-School. Version 2.0 revises the original with its own boot system, larger graphics, and faster presentation.",
+   "text": "Absolviere eine Reihe von Pop-Kultur- und Science-Fiction-Quizzen, um in die Cybernetic Hi-School aufgenommen zu werden. Version 2.0 überarbeitet das Original mit eigenem Bootsystem, größerer Grafik und schnellerer Präsentation."
+  },
+  "pc98:180890": {
+   "en": "Two decades after nuclear strikes destroy Tokyo, survivors live in underground shelters while demons roam above. Join the Devil Busters to defend the shelters and explore the ruined city in this Megami Tensei RPG.",
+   "text": "Zwei Jahrzehnte nach den Atomschlägen, die Tokio zerstörten, leben Überlebende in unterirdischen Schutzräumen, während oben Dämonen umherstreifen. Schließe dich den Devil Busters an, um die Schutzräume zu verteidigen und die zerstörte Stadt zu erkunden, in diesem Megami-Tensei-RPG."
+  },
+  "pc98:181173": {
+   "en": "Race in a PC-98 Grand Prix game from West Side, released in 1990. Compete on circuits and manage the demands of high-speed driving rather than navigating an adventure story.",
+   "text": "Fahre in einem Grand-Prix-Spiel für den PC-98 von West Side, erschienen 1990. Tritt auf Rennstrecken an und meistere die Anforderungen schneller Fahrten, statt eine Adventure-Geschichte zu durchlaufen."
+  },
+  "pc98:182453": {
+   "en": "Pilot a Motor Shell mech for a mercenary squad stationed aboard the Dragonet. Routine space missions turn into a wider fight against an invading force in this story-driven combat game.",
+   "text": "Steuere einen Motor-Shell-Mech für eine Söldnereinheit an Bord der Dragonet. Routine-Weltraummissionen münden in einen größeren Kampf gegen eine Invasionsmacht in diesem story-getriebenen Kampfspiel."
+  },
+  "pc98:183054": {
+   "en": "Choose one of five wizards and compete for a leaderless realm. Summon monsters to seize towers on hex-grid maps; surviving units can carry over through a full campaign.",
+   "text": "Wähle einen von fünf Zauberern und kämpfe um ein herrscherloses Reich. Beschwöre Monster, um Türme auf Hex-Karten einzunehmen; überlebende Einheiten können durch eine ganze Kampagne mitgenommen werden."
+  },
+  "pc98:183085": {
+   "en": "Kendo captain and Asuka face a strained relationship when his cousin Miki moves in. This animated Viper follow-up uses occasional choices to steer its drama.",
+   "text": "Der Kendo-Kapitän und Asuka geraten in eine angespannte Beziehung, als sein Cousin Miki einzieht. Diese animierte Viper-Fortsetzung nutzt gelegentliche Entscheidungen, um ihr Drama zu lenken."
+  },
+  "pc98:183088": {
+   "en": "Ogawa summons the demon Carrera again, but she arrives with Mercedes and an angel soon interrupts them. The Viper sequel is an animated story with limited player input.",
+   "text": "Ogawa beschwört erneut die Dämonin Carrera, doch sie erscheint mit Mercedes, und bald unterbricht ein Engel die beiden. Die Viper-Fortsetzung ist eine animierte Geschichte mit wenig Spielereingriff."
+  },
+  "pc98:183093": {
+   "en": "Two animated stories, Rise and Imagine, make up this Viper volume. Rise follows martial artist Akira after she and her friends are taken by a hidden subterranean group.",
+   "text": "Zwei animierte Geschichten, Rise und Imagine, bilden diesen Viper-Band. Rise folgt der Kampfsportlerin Akira, nachdem sie und ihre Freunde von einer verborgenen unterirdischen Gruppe verschleppt wurden."
+  },
+  "pc98:183171": {
+   "en": "Prince Selios escapes imprisonment after a trusted ally betrays him. Gather companions, cross the kingdom, and fight turn-based battles on his quest to reclaim the throne.",
+   "text": "Prinz Selios entkommt der Gefangenschaft, nachdem ihn ein vertrauter Verbündeter verraten hat. Sammle Gefährten, durchquere das Königreich und bestreite rundenbasierte Kämpfe auf seinem Weg, den Thron zurückzuerobern."
+  },
+  "pc98:183256": {
+   "en": "Assemble adventurers in Utsuro and descend the Black Tower to seek an artifact said to grant eternal youth. Map its first-person maze, manage the party, and survive turn-based encounters.",
+   "text": "Stelle in Utsuro eine Abenteurergruppe zusammen und steige in den Schwarzen Turm hinab, um nach einem Artefakt zu suchen, das ewige Jugend verleihen soll. Kartiere sein Labyrinth in der Ego-Perspektive, verwalte die Gruppe und überlebe rundenbasierte Begegnungen."
+  },
+  "pc98:183306": {
+   "en": "Carry out a secret mission for Princess Leticia while exploring Vagrand and its intrigues in a menu-driven adventure.",
+   "text": "Führe einen Geheimauftrag für Prinzessin Leticia aus, während du Vagrand und seine Intrigen in einem menügesteuerten Adventure erkundest."
+  },
+  "pc98:183307": {
+   "en": "Doctor Tanchi investigates a crime syndicate tied to his family's past while an assassin threatens his hospital. This adventure alternates command-based investigation with one-on-one turn-based battles.",
+   "text": "Doktor Tanchi ermittelt gegen ein mit der Vergangenheit seiner Familie verbundenes Verbrechersyndikat, während ein Auftragsmörder sein Krankenhaus bedroht. Dieses Adventure wechselt zwischen befehlsbasierten Ermittlungen und rundenbasierten Zweikämpfen."
+  },
+  "pc98:183344": {
+   "en": "Command the Blue army as it defends its capital from an invasion by the Red nation. This campaign moves directly between tactical battles, with units fighting to hold city positions and rescue captives.",
+   "text": "Befehlige die Blaue Armee bei der Verteidigung ihrer Hauptstadt gegen eine Invasion der Roten Nation. Diese Kampagne führt direkt von einem taktischen Gefecht zum nächsten, in denen Einheiten Stadtpositionen halten und Gefangene befreien."
+  },
+  "pc98:183374": {
+   "en": "Hunt Gorgus, the man who killed your father, across towns and monster-filled dungeons. This top-down RPG uses turn-based battles, equipment, and side quests to build the hero's strength.",
+   "text": "Jage Gorgus, den Mörder deines Vaters, durch Städte und monsterverseuchte Dungeons. Dieses Top-Down-RPG nutzt rundenbasierte Kämpfe, Ausrüstung und Nebenquests, um die Stärke des Helden aufzubauen."
+  },
+  "pc98:183384": {
+   "en": "Knight Eagle Windeed pursues a way to restore balance to a world whose four elements have fallen into conflict. Travel between kingdoms, meet allies, and battle threats in this fantasy RPG.",
+   "text": "Der Ritter Eagle Windeed sucht nach einem Weg, das Gleichgewicht einer Welt wiederherzustellen, deren vier Elemente in Konflikt geraten sind. Reise zwischen Königreichen, triff Verbündete und bekämpfe Bedrohungen in diesem Fantasy-RPG."
+  },
+  "pc98:183431": {
+   "en": "Three free generals must reclaim Hyunckel's castles and rescue companions captured by dark forces. The sequel focuses on turn-based tactical campaigns across a fantasy kingdom.",
+   "text": "Drei freie Generäle müssen die Burgen von Hyunckel zurückerobern und von dunklen Mächten gefangene Gefährten befreien. Die Fortsetzung konzentriert sich auf rundenbasierte taktische Feldzüge durch ein Fantasy-Königreich."
+  },
+  "pc98:183445": {
+   "en": "Create a party and travel through Forcelia, the fantasy setting of the Sword World tabletop RPG. Take quests, explore settlements and dungeons, and resolve encounters using the game's role-playing rules.",
+   "text": "Stelle eine Gruppe zusammen und reise durch Forcelia, die Fantasywelt des Pen-and-Paper-Rollenspiels Sword World. Nimm Quests an, erkunde Siedlungen und Dungeons und löse Begegnungen mit den Rollenspielregeln des Spiels."
+  },
+  "pc98:183448": {
+   "en": "Custom enters nearby dungeons to train for the Battling Gods Championship. Gain experience and equipment through turn-based fights before taking on the tournament.",
+   "text": "Custom betritt nahe gelegene Dungeons, um für die Battling Gods Championship zu trainieren. Sammle Erfahrung und Ausrüstung in rundenbasierten Kämpfen, bevor du dich dem Turnier stellst."
+  },
+  "pc98:183481": {
+   "en": "Latok and fairy Pixie hunt a necromancer trying to summon a new demon into Xak. Explore connected regions, gain strength, and fight monsters in real time in this action RPG sequel.",
+   "text": "Latok und die Fee Pixie jagen einen Nekromanten, der einen neuen Dämon nach Xak beschwören will. Erkunde verbundene Regionen, werde stärker und bekämpfe Monster in Echtzeit in dieser Action-RPG-Fortsetzung."
+  },
+  "pc98:183493": {
+   "en": "A reluctant descendant of a legendary hero inherits a magical sword as the demon lord Gargantua threatens to return. Explore a fantasy world and fight to stop his revival.",
+   "text": "Ein widerwilliger Nachfahre eines legendären Helden erbt ein magisches Schwert, während der Dämonenfürst Gargantua mit der Rückkehr droht. Erkunde eine Fantasywelt und kämpfe, um seine Wiedererweckung zu verhindern."
+  },
+  "pc98:183567": {
+   "en": "Student Yusuke experiences violent visions that blur dream and reality. This psychological horror visual novel follows his efforts to uncover their source and survive the danger around him.",
+   "text": "Der Schüler Yusuke erlebt gewaltsame Visionen, die Traum und Wirklichkeit verschwimmen lassen. Diese psychologische Horror-Visual-Novel folgt seinem Versuch, ihre Quelle aufzudecken und die Gefahr um ihn herum zu überleben."
+  },
+  "pc98:183795": {
+   "en": "Adol searches for six stolen books that preserve the secret of ancient Ys. Explore towns and wilderness, upgrade equipment, and defeat enemies through the series' real-time bump combat.",
+   "text": "Adol sucht sechs gestohlene Bücher, die das Geheimnis des antiken Ys bewahren. Erkunde Städte und Wildnis, verbessere deine Ausrüstung und besiege Gegner im Echtzeit-Rammkampf der Serie."
+  },
+  "pc98:184546": {
+   "en": "Route a train through real-time rail puzzles, collecting passengers before reaching the exit. Switch junctions to avoid collisions, with several maps available from the start.",
+   "text": "Lenke einen Zug durch Echtzeit-Schienenrätsel und sammle Passagiere ein, bevor du den Ausgang erreichst. Stelle Weichen, um Zusammenstöße zu vermeiden; mehrere Karten sind von Anfang an verfügbar."
+  },
+  "pc98:186488": {
+   "en": "A spacefaring hunter confronts the mysterious VOID attacks amid growing tension between human factions and the Galaxy Alliance. The sequel mixes first-person 3D shooting with exploration and story sequences.",
+   "text": "Ein Jäger im Weltraum stellt sich den geheimnisvollen VOID-Angriffen inmitten wachsender Spannungen zwischen menschlichen Fraktionen und der Galaxy Alliance. Die Fortsetzung mischt 3D-Shooter-Action in der Ego-Perspektive mit Erkundung und Story-Sequenzen."
+  },
+  "pc98:186567": {
+   "en": "Luna pursues the truth behind a laboratory disaster and her sister's disappearance. Experimental bioloader armor and Val-Kaizer draw her into a fast-moving science-fiction action story.",
+   "text": "Luna verfolgt die Wahrheit hinter einem Laborunglück und dem Verschwinden ihrer Schwester. Eine experimentelle Bioloader-Rüstung und Val-Kaizer ziehen sie in eine rasante Science-Fiction-Action-Geschichte hinein."
+  },
+  "pc98:186976": {
+   "en": "Pilot a BD-5J jet in ten aerobatic events, including pylon races, slaloms, and ribbon-cutting stunts. Up to four players can compete across four difficulty levels.",
+   "text": "Fliege einen BD-5J-Jet in zehn Kunstflug-Wettbewerben, darunter Pylonenrennen, Slaloms und Bandschneide-Stunts. Bis zu vier Spieler können in vier Schwierigkeitsgraden gegeneinander antreten."
+  },
+  "pc98:187084": {
+   "en": "Choose or customize an adventurer, accept a quest from Mareen, and explore first-person dungeons for a target monster and magical item. Character statistics, equipment, and turn-based encounters shape each expedition.",
+   "text": "Wähle oder gestalte einen Abenteurer, nimm von Mareen einen Auftrag an und erkunde Dungeons in der Ego-Perspektive auf der Suche nach einem Zielmonster und einem magischen Gegenstand. Charakterwerte, Ausrüstung und rundenbasierte Begegnungen prägen jede Expedition."
+  },
+  "pc98:187132": {
+   "en": "Knight Landis enters a lakeside tower to rescue a kidnapped princess. Explore vector-drawn first-person mazes alone, buy equipment between trips, and survive random turn-based battles.",
+   "text": "Ritter Landis betritt einen Turm am See, um eine entführte Prinzessin zu retten. Erkunde allein vektorgezeichnete Labyrinthe in der Ego-Perspektive, kaufe zwischen den Ausflügen Ausrüstung und überstehe zufällige rundenbasierte Kämpfe."
+  },
+  "pc98:187207": {
+   "en": "Climb the monster-filled Tower of Gage in a roguelike quest against the Dark Lord Mick Albert. Recruit allies and collect equipment as the party advances through its floors.",
+   "text": "Erklimme den monsterverseuchten Turm von Gage in einer Roguelike-Quest gegen den Dunklen Lord Mick Albert. Rekrutiere Verbündete und sammle Ausrüstung, während die Gruppe durch die Stockwerke vordringt."
+  },
+  "pc98:187220": {
+   "en": "Student Yuuji shelters an amnesiac cat-eared girl he finds after news of a stolen tiger. The first GaoGao adventure follows their growing relationship through illustrated story scenes and choices.",
+   "text": "Der Schüler Yuuji nimmt ein Mädchen mit Katzenohren und Gedächtnisverlust auf, das er nach Nachrichten über einen gestohlenen Tiger findet. Das erste GaoGao-Adventure begleitet ihre wachsende Beziehung durch illustrierte Story-Szenen und Entscheidungen."
+  },
+  "pc98:187222": {
+   "en": "A failed biological experiment leaves the future Earth divided between protected human domes and a dangerous mutant wilderness. Explore the second GaoGao story through illustrated scenes and decisions.",
+   "text": "Ein gescheitertes biologisches Experiment hinterlässt die Erde der Zukunft geteilt zwischen geschützten Menschenkuppeln und einer gefährlichen Mutantenwildnis. Erlebe die zweite GaoGao-Geschichte in illustrierten Szenen und Entscheidungen."
+  },
+  "pc98:187301": {
+   "en": "Kazuya joins a robotic resistance leader against a government that controls people with PSYCO technology. Fight brainwashed opponents and pursue the regime in this science-fiction game.",
+   "text": "Kazuya schließt sich dem Anführer eines Roboter-Widerstands an, der gegen eine Regierung kämpft, die Menschen mit der PSYCO-Technologie kontrolliert. Bekämpfe gehirngewaschene Gegner und verfolge das Regime in diesem Science-Fiction-Spiel."
+  },
+  "pc98:187303": {
+   "en": "After the first game's revolt, Kazuya discovers that the PSYCO mind-control program has resurfaced at a school. The sequel sends him against another group of affected opponents.",
+   "text": "Nach der Revolte des ersten Spiels entdeckt Kazuya, dass das PSYCO-Gedankenkontrollprogramm an einer Schule wieder aufgetaucht ist. Die Fortsetzung stellt ihn einer weiteren Gruppe betroffener Gegner entgegen."
+  },
+  "pc98:187371": {
+   "en": "Robbed on his return to a town with an unresolved mystery, a young man enters its mahjong circuit to earn money and uncover what happened to a woman he once saw attacked.",
+   "text": "Bei seiner Rückkehr in eine Stadt mit einem ungelösten Rätsel wird ein junger Mann ausgeraubt. Er steigt in die dortige Mahjong-Szene ein, um Geld zu verdienen und herauszufinden, was mit einer Frau geschah, die er einst angegriffen sah."
+  },
+  "pc98:187422": {
+   "en": "Follow apprentice sorceress Arle through three linked first-person dungeon RPGs at different stages of her life. Spell choices and status conveyed through portraits replace the usual visible statistic display.",
+   "text": "Begleite die angehende Zauberin Arle durch drei verbundene Dungeon-RPGs in der Ego-Perspektive in verschiedenen Lebensphasen. Zauberwahl und über Porträts vermittelter Status ersetzen die übliche sichtbare Werteanzeige."
+  },
+  "pc98:187450": {
+   "en": "Apprentice magician Marble accidentally releases a demon with her master's Wand of Wishes. Cross single-screen puzzle stages with help from the wand's spirit, Sirius, to repair the damage.",
+   "text": "Die angehende Magierin Marble setzt mit dem Wunschstab ihres Meisters versehentlich einen Dämon frei. Meistere Rätsel-Stages auf einem einzigen Bildschirm mit Hilfe des Stabgeistes Sirius, um den Schaden zu beheben."
+  },
+  "pc98:187467": {
+   "en": "In an alternate Japan shaped by the science of meta-topology, a school of gifted young women becomes central to an old political conflict. This illustrated adventure mixes science-fiction history with campus drama.",
+   "text": "In einem alternativen Japan, das von der Wissenschaft der Meta-Topologie geprägt ist, rückt eine Schule für begabte junge Frauen in den Mittelpunkt eines alten politischen Konflikts. Dieses illustrierte Adventure verbindet Science-Fiction-Geschichte mit Campus-Drama."
+  },
+  "pc98:187543": {
+   "en": "Mercenary Rance is hired to investigate trouble at a factory developing Happiness Medicine. Clear monsters from the premises while using menu commands and turn-based combat in this side story.",
+   "text": "Der Söldner Rance wird angeheuert, um Probleme in einer Fabrik zu untersuchen, die Happiness Medicine entwickelt. Säubere das Gelände von Monstern, mit Menübefehlen und rundenbasierten Kämpfen in dieser Nebengeschichte."
+  },
+  "pc98:187544": {
+   "en": "Rance and the Angel Team continue the Happiness Medicine factory investigation begun in Rance 4.1. The second half keeps its menu-based exploration and turn-based battles.",
+   "text": "Rance und das Angel Team setzen die in Rance 4.1 begonnene Untersuchung der Happiness-Medicine-Fabrik fort. Die zweite Hälfte behält die menübasierte Erkundung und die rundenbasierten Kämpfe bei."
+  },
+  "pc98:187546": {
+   "en": "Rance and Sill are hired to recover four stolen magic rings and stop the sorceresses terrorizing Custom Town. Explore, investigate, and fight through this fantasy adventure RPG.",
+   "text": "Rance und Sill werden angeheuert, um vier gestohlene magische Ringe zurückzuholen und die Zauberinnen aufzuhalten, die Custom Town terrorisieren. Erkunde, ermittle und kämpfe dich durch dieses Fantasy-Abenteuer-RPG."
+  },
+  "pc98:187547": {
+   "en": "Rance and Sill become involved in the legacy of a decades-long war between humanity and demons. The fourth main adventure expands the series' fantasy exploration and party battles.",
+   "text": "Rance und Sill werden in das Erbe eines jahrzehntelangen Krieges zwischen Menschheit und Dämonen verwickelt. Das vierte Hauptabenteuer erweitert die Fantasy-Erkundung und die Gruppenkämpfe der Serie."
+  },
+  "pc98:187563": {
+   "en": "Private investigator Rance is sent to find Hikari, a student missing from Paris High School. Navigate locations through first-person menus, gather clues, and fight through the opening game of the series.",
+   "text": "Der Privatdetektiv Rance wird losgeschickt, um Hikari zu finden, eine Schülerin, die von der Paris High School verschwunden ist. Bewege dich über Menüs in der Ego-Perspektive zwischen Schauplätzen, sammle Hinweise und kämpfe dich durch den Auftakt der Serie."
+  },
+  "pc98:187601": {
+   "en": "Akira gathers five girls with special powers to defend the Laker Crystals from the Gadram Empire. The first Lakers game combines story scenes with turn-based tactical battles.",
+   "text": "Akira versammelt fünf Mädchen mit besonderen Kräften, um die Laker Crystals gegen das Gadram-Imperium zu verteidigen. Das erste Lakers-Spiel verbindet Story-Szenen mit rundenbasierten taktischen Kämpfen."
+  },
+  "pc98:187602": {
+   "en": "Akira and the Lakers face Rayott, a new enemy seeking the crystals to invade Earth. The sequel continues their story through cutscenes and turn-based team battles.",
+   "text": "Akira und die Lakers stellen sich Rayott, einem neuen Feind, der die Kristalle sucht, um die Erde zu überfallen. Die Fortsetzung führt ihre Geschichte mit Zwischensequenzen und rundenbasierten Teamkämpfen weiter."
+  },
+  "pc98:187603": {
+   "en": "A masked enemy called Neos Bullard attacks the Lakers for the crystals' power. The third installment retains ranged tactical battles while adding new threats to Akira's team.",
+   "text": "Ein maskierter Feind namens Neos Bullard greift die Lakers an, um die Kraft der Kristalle zu erlangen. Der dritte Teil behält die taktischen Fernkämpfe bei und konfrontiert Akiras Team mit neuen Bedrohungen."
+  },
+  "pc98:187676": {
+   "en": "Play as Triton in a first-person, point-and-click fantasy quest to recover four swords. Travel between surreal realms and solve environmental puzzles in a PC-98 adventure with anime-style art.",
+   "text": "Spiele Triton in einer Fantasy-Quest per Point-and-Click in der Ego-Perspektive, um vier Schwerter zurückzuholen. Reise zwischen surrealen Reichen und löse Umgebungsrätsel in einem PC-98-Adventure mit Anime-Grafik."
+  },
+  "pc98:187678": {
+   "en": "The fourth GaoGao story returns to a world split between human shelters and mutated tribes. Two protagonists search for Canaan, a promised refuge, as the remaining civilization struggles to survive.",
+   "text": "Die vierte GaoGao-Geschichte kehrt in eine Welt zurück, die zwischen menschlichen Schutzräumen und mutierten Stämmen geteilt ist. Zwei Hauptfiguren suchen Canaan, eine versprochene Zuflucht, während die verbliebene Zivilisation ums Überleben kämpft."
+  },
+  "pc98:187687": {
+   "en": "Bunny-eared warrior Ramy protects people and animals from hostile creatures, beginning aboard a penguin-filled ship. Jump, dash, and use her sword through side-scrolling action stages.",
+   "text": "Die Kriegerin Ramy mit Hasenohren beschützt Menschen und Tiere vor feindlichen Kreaturen, beginnend auf einem Schiff voller Pinguine. Springe, sprinte und setze ihr Schwert in Side-Scrolling-Action-Stages ein."
+  },
+  "pc98:187703": {
+   "en": "The shattering of the Words Worth tablet sparks war between the surface and underground tribes. Guide Astral through first-person dungeons to discover the culprit and restore peace.",
+   "text": "Das Zerbrechen der Words-Worth-Tafel löst Krieg zwischen den Stämmen der Oberfläche und der Unterwelt aus. Führe Astral durch Dungeons in der Ego-Perspektive, um den Schuldigen zu finden und den Frieden wiederherzustellen."
+  },
+  "pc98:189246": {
+   "en": "Choose one of three heroes for a board-based strategy RPG journey. The computer directs the other two as the group faces roaming monsters and rival forces.",
+   "text": "Wähle einen von drei Helden für eine Reise in einem brettbasierten Strategie-RPG. Der Computer steuert die anderen beiden, während die Gruppe umherziehenden Monstern und rivalisierenden Kräften begegnet."
+  },
+  "pc98:189256": {
+   "en": "Ares loses the magical Planet Buster sword when a warlock captures him in the desert. Escape the prison, recover the weapon, and continue the dungeon-crawling sequel in this revised release.",
+   "text": "Ares verliert das magische Schwert Planet Buster, als ihn ein Hexenmeister in der Wüste gefangen nimmt. Entkomme dem Gefängnis, hole die Waffe zurück und setze die Dungeon-Crawler-Fortsetzung in dieser überarbeiteten Ausgabe fort."
+  },
+  "pc98:189268": {
+   "en": "Space pirate Kenny searches for his missing father across more than a dozen planets. Buy and sell goods, take jobs, and respond to changing local prices in a space adventure with strategy elements.",
+   "text": "Der Weltraumpirat Kenny sucht auf mehr als einem Dutzend Planeten nach seinem verschwundenen Vater. Kaufe und verkaufe Waren, nimm Aufträge an und reagiere auf wechselnde lokale Preise in einem Weltraum-Abenteuer mit Strategieelementen."
+  },
+  "pc98:189332": {
+   "en": "Explore AliceSoft's early work through a quiz, a CG gallery, user feedback, and two short adventures. This collection plays like an interactive studio scrapbook rather than one continuous game.",
+   "text": "Entdecke die frühen Arbeiten von AliceSoft in einem Quiz, einer CG-Galerie, Nutzerrückmeldungen und zwei kurzen Adventures. Diese Sammlung spielt sich wie ein interaktives Studio-Album und nicht wie ein durchgehendes Spiel."
+  },
+  "pc98:189333": {
+   "en": "AliceSoft's second interactive collection includes three short games, a large quiz, and reader submissions. Browse its menu for developer commentary, music, artwork, and other extras.",
+   "text": "Die zweite interaktive Sammlung von AliceSoft enthält drei kurze Spiele, ein großes Quiz und Leserbeiträge. Stöbere im Menü nach Entwicklerkommentaren, Musik, Artwork und weiteren Extras."
+  },
+  "pc98:189337": {
+   "en": "Three independent illustrated adventures are presented as cartridges for a fictional Dream Program System. Each short scenario offers a choice of protagonist or personality that changes how its story unfolds.",
+   "text": "Drei unabhängige illustrierte Adventures werden als Cartridges für ein fiktives Dream Program System präsentiert. Jedes kurze Szenario bietet die Wahl einer Hauptfigur oder Persönlichkeit, die den Verlauf der Geschichte verändert."
+  },
+  "pc98:189374": {
+   "en": "Reassemble moving pictures by sliding their tiles before time runs out. FlixMix offers several puzzle modes that change how pieces are moved and grouped.",
+   "text": "Setze bewegte Bilder wieder zusammen, indem du ihre Kacheln verschiebst, bevor die Zeit abläuft. FlixMix bietet mehrere Rätselmodi, die ändern, wie Teile bewegt und gruppiert werden."
+  },
+  "pc98:189394": {
+   "en": "A short AliceSoft command adventure starring a policewoman. Originally distributed with early releases of Rance, it stands as a compact side story rather than a full-length RPG.",
+   "text": "Ein kurzes Befehls-Adventure von AliceSoft mit einer Polizistin in der Hauptrolle. Ursprünglich mit frühen Ausgaben von Rance verteilt, ist es eine kompakte Nebengeschichte und kein vollwertiges RPG."
+  },
+  "pc98:189396": {
+   "en": "Kentarou and Miki continue their journey after escaping Dracula's castle in Little Princess. This early Champion Soft adventure follows their attempt to find a way home through illustrated scenes.",
+   "text": "Kentarou und Miki setzen ihre Reise fort, nachdem sie in Little Princess aus Draculas Schloss entkommen sind. Dieses frühe Champion-Soft-Adventure begleitet ihren Versuch, in illustrierten Szenen einen Weg nach Hause zu finden."
+  },
+  "pc98:189697": {
+   "en": "Set the conditions for a new universe and watch life evolve from its beginning. This simulation lets the player shape cosmic structure and follow the consequences across immense spans of time.",
+   "text": "Lege die Bedingungen für ein neues Universum fest und sieh zu, wie sich das Leben von seinem Anfang an entwickelt. Diese Simulation lässt den Spieler die kosmische Struktur formen und die Folgen über gewaltige Zeiträume verfolgen."
+  },
+  "pc98:189715": {
+   "en": "Move and fight through a surreal fantasy RPG by learning its unusual keyboard commands. Encounters become typing challenges, making touch-typing skill as important as character progress.",
+   "text": "Bewege dich und kämpfe in einem surrealen Fantasy-RPG, indem du seine ungewöhnlichen Tastaturbefehle lernst. Begegnungen werden zu Tippaufgaben, sodass Zehnfingerfertigkeit ebenso wichtig ist wie der Charakterfortschritt."
+  },
+  "pc98:189844": {
+   "en": "Wake in a spaceship's cryogenic chamber with little memory and signs that something is wrong aboard. Explore its rooms, meet crew members, and choose dialogue as the mystery develops.",
+   "text": "Erwache in der Kryokammer eines Raumschiffs mit kaum Erinnerung und Anzeichen, dass an Bord etwas nicht stimmt. Erkunde die Räume, triff Besatzungsmitglieder und wähle Dialoge, während sich das Rätsel entwickelt."
+  },
+  "pc98:190331": {
+   "en": "Saiko travels across a board-like map and challenges magical creatures at mahjong. Shops, treasure, and other spaces give the matches a light role-playing framework.",
+   "text": "Saiko reist über eine brettartige Karte und fordert magische Wesen beim Mahjong heraus. Läden, Schätze und andere Felder geben den Partien einen leichten Rollenspielrahmen."
+  },
+  "pc98:190347": {
+   "en": "Eimmy searches for her missing stepbrother after debt collectors tear apart her family life. This illustrated adventure follows her investigation and the contrasting personality she discovers within herself.",
+   "text": "Eimmy sucht ihren verschwundenen Stiefbruder, nachdem Geldeintreiber ihr Familienleben zerstört haben. Dieses illustrierte Adventure begleitet ihre Ermittlungen und die gegensätzliche Persönlichkeit, die sie in sich entdeckt."
+  },
+  "pc98:190873": {
+   "en": "The Avatar is stranded on Pagan, a world under the Guardian's control. Explore its settlements and wilderness, master the elemental powers, and find a route home past the Titans.",
+   "text": "Der Avatar strandet auf Pagan, einer Welt unter der Kontrolle des Guardian. Erkunde ihre Siedlungen und Wildnis, meistere die Elementarkräfte und finde an den Titanen vorbei einen Weg nach Hause."
+  },
+  "pc98:190913": {
+   "en": "Organize a footrace to bring attention to a struggling village. This side-scrolling racing game supports computer opponents and a two-player mode with selectable stages.",
+   "text": "Organisiere einen Wettlauf, um auf ein notleidendes Dorf aufmerksam zu machen. Dieses Side-Scrolling-Rennspiel bietet Computergegner und einen Zweispielermodus mit wählbaren Stages."
+  },
+  "pc98:191004": {
+   "en": "Guide Dante through ten stages inspired by the Inferno, fighting demons and crossing platforming hazards. Virgil offers guidance while a chargeable crucifix serves as Dante's main weapon.",
+   "text": "Führe Dante durch zehn vom Inferno inspirierte Stages, bekämpfe Dämonen und überwinde Jump-and-Run-Gefahren. Vergil gibt Hinweise, während ein aufladbares Kruzifix Dantes Hauptwaffe ist."
+  },
+  "pc98:191573": {
+   "en": "Soldier Kiyomi is sent after four escaped prisoners in a war-scarred future Tokyo. Investigate scenes and people through point-and-click interactions in this science-fiction adventure.",
+   "text": "Die Soldatin Kiyomi wird in einem kriegsgezeichneten Tokio der Zukunft auf vier entflohene Gefangene angesetzt. Untersuche Schauplätze und Personen per Point-and-Click in diesem Science-Fiction-Adventure."
+  },
+  "pc98:195490": {
+   "en": "Transfer student Nanako investigates suspicious examinations at St. Belloncho Academy. The school adventure mixes dialogue and mystery solving with fights against an eccentric group of students.",
+   "text": "Die Austauschschülerin Nanako untersucht verdächtige Prüfungen an der St. Belloncho Academy. Das Schul-Adventure verbindet Dialoge und Rätsellösen mit Kämpfen gegen eine exzentrische Schülergruppe."
+  },
+  "pc98:195517": {
+   "en": "Ayayo takes a part-time job in Mr. Suzuki's shop in this short illustrated story. Occasional choices alter parts of the narrative, which includes animated scenes.",
+   "text": "Ayayo nimmt in dieser kurzen illustrierten Geschichte einen Nebenjob in Herrn Suzukis Laden an. Gelegentliche Entscheidungen verändern Teile der Handlung, die auch animierte Szenen enthält."
+  },
+  "pc98:195536": {
+   "en": "Demon hunters Lime and Bass enter the human world to recover jewels stolen by BEM creatures. The first episode presents their mission as a short animated adventure with occasional command choices.",
+   "text": "Die Dämonenjäger Lime und Bass betreten die Menschenwelt, um von BEM-Kreaturen gestohlene Juwelen zurückzuholen. Die erste Episode präsentiert ihre Mission als kurzes animiertes Adventure mit gelegentlichen Befehlswahlen."
+  },
+  "pc98:197578": {
+   "en": "After a dream and an earthquake carry Shounosuke into another world, he must help six girls across separate scenarios. Exploration and story scenes are tied to puzzles built by placing path pieces.",
+   "text": "Nachdem ein Traum und ein Erdbeben Shounosuke in eine andere Welt versetzen, muss er sechs Mädchen in getrennten Szenarien helfen. Erkundung und Story-Szenen sind mit Rätseln verknüpft, bei denen Wegstücke platziert werden."
+  },
+  "pc98:197630": {
+   "en": "Future police officer Milk and schoolgirl Kurumi are forced to share a body after a strange encounter. Their short illustrated adventure pits them against Amon, who turns plants into monsters.",
+   "text": "Die Polizistin der Zukunft Milk und die Schülerin Kurumi müssen sich nach einer seltsamen Begegnung einen Körper teilen. In ihrem kurzen illustrierten Adventure treten sie gegen Amon an, der Pflanzen in Monster verwandelt."
+  },
+  "pc98:197631": {
+   "en": "Milk and Kurumi continue their shared-body mission against Amon's plant monsters. The second short episode advances their animated science-fiction adventure.",
+   "text": "Milk und Kurumi setzen ihre Mission im gemeinsamen Körper gegen Amons Pflanzenmonster fort. Die zweite kurze Episode führt ihr animiertes Science-Fiction-Adventure weiter."
+  },
+  "pc98:197770": {
+   "en": "College student Hiroaki tries to understand the strange luck that seems to shape his encounters and grant his wishes. This illustrated adventure follows his investigation of that power.",
+   "text": "Der Student Hiroaki versucht, das seltsame Glück zu verstehen, das seine Begegnungen zu lenken und seine Wünsche zu erfüllen scheint. Dieses illustrierte Adventure begleitet seine Untersuchung dieser Kraft."
+  },
+  "pc98:197833": {
+   "en": "New student Shuji starts at Kotobuki Preparatory School and gets to know his classmates. This school-life adventure follows conversations and relationship choices across the term.",
+   "text": "Der neue Schüler Shuji beginnt an der Kotobuki Preparatory School und lernt seine Mitschüler kennen. Dieses Schulleben-Adventure begleitet Gespräche und Beziehungsentscheidungen über das ganze Schuljahr."
+  },
+  "pc98:197834": {
+   "en": "Koichi's brother plans revenge against the family he blames for their father's downfall. Koichi moves nearby to win their trust, pulling him into a drama of family secrets and conflicting loyalties.",
+   "text": "Koichis Bruder plant Rache an der Familie, die er für den Niedergang ihres Vaters verantwortlich macht. Koichi zieht in die Nähe, um ihr Vertrauen zu gewinnen, und wird in ein Drama aus Familiengeheimnissen und widerstreitenden Loyalitäten gezogen."
+  },
+  "pc98:197860": {
+   "en": "Detective Shinobu Aiba infiltrates a prestigious private school to investigate a series of disappearances. Advance this 1991 Orange House mystery by choosing commands and following clues around campus.",
+   "text": "Detektivin Shinobu Aiba schleust sich in eine angesehene Privatschule ein, um eine Reihe von Verschwinden zu untersuchen. Bringe dieses Orange-House-Rätsel von 1991 voran, indem du Befehle wählst und Hinweisen auf dem Campus folgst."
+  },
+  "pc98:198815": {
+   "en": "Explore an Egyptian tomb in a horror RPG built with RPG Maker Dante98 II. Archaeological clues and a trapped expedition lead the party deeper into a story inspired by the Book of the Dead.",
+   "text": "Erkunde ein ägyptisches Grab in einem Horror-RPG, das mit RPG Maker Dante98 II gebaut wurde. Archäologische Hinweise und eine festsitzende Expedition führen die Gruppe tiefer in eine vom Totenbuch inspirierte Geschichte."
+  },
+  "pc98:198820": {
+   "en": "Guide a pink-haired heroine across a board of hostile encounters. Battles test memory by asking for the right pair of answers, while wrong choices lead to alternate outcomes.",
+   "text": "Führe eine rosahaarige Heldin über ein Brett voller feindlicher Begegnungen. Kämpfe prüfen das Gedächtnis, indem sie das richtige Antwortpaar verlangen, während falsche Entscheidungen zu alternativen Ausgängen führen."
+  },
+  "pc98:198821": {
+   "en": "A former opponent from Réserve sets out to become human. Cross a short board-game route, defeat three rivals, and collect the essences needed for the desired ending.",
+   "text": "Ein früherer Gegner aus Réserve will ein Mensch werden. Durchquere eine kurze Brettspielroute, besiege drei Rivalen und sammle die Essenzen, die für das gewünschte Ende nötig sind."
+  },
+  "pc98:198823": {
+   "en": "A comic cast faces off in a translated doujin fighting game. Choose a character and battle through exaggerated attacks and humor in the Yugekitai series.",
+   "text": "Eine komische Besetzung tritt in einem übersetzten Doujin-Prügelspiel gegeneinander an. Wähle einen Charakter und kämpfe dich mit übertriebenen Angriffen und Humor durch die Yugekitai-Serie."
+  },
+  "pc98:198851": {
+   "en": "Choose from five fighters for overhead arena duels. Each character wields two attack objects that can also block; win by draining an opponent's health or knocking them out of the ring.",
+   "text": "Wähle aus fünf Kämpfern für Duelle in der Arena aus der Vogelperspektive. Jeder Charakter führt zwei Angriffsobjekte, die auch blocken können; gewinne, indem du die Gesundheit des Gegners aufzehrst oder ihn aus dem Ring wirfst."
+  },
+  "pc98:198852": {
+   "en": "The Yugekitai punk band discovers a plot to revive the destructive god Susanoo. Their comedic adventure follows the group as it tries to stop the scheme.",
+   "text": "Die Punkband Yugekitai entdeckt einen Plan, den zerstörerischen Gott Susanoo wiederzuerwecken. Ihr komisches Abenteuer begleitet die Gruppe bei dem Versuch, das Vorhaben zu verhindern."
+  },
+  "pc98:203804": {
+   "en": "The SIS crew investigates an abandoned spacecraft after two members develop a mysterious illness. This short, heavily animated science-fiction adventure follows the consequences of their encounter.",
+   "text": "Die SIS-Crew untersucht ein verlassenes Raumschiff, nachdem zwei Mitglieder an einer rätselhaften Krankheit erkrankt sind. Dieses kurze, stark animierte Science-Fiction-Adventure folgt den Folgen ihrer Begegnung."
+  },
+  "pc98:219471": {
+   "en": "Yumi investigates a secluded academy after a friend sent there disappears. This illustrated adventure follows a single story path, with occasional context-sensitive choices.",
+   "text": "Yumi untersucht eine abgeschiedene Akademie, nachdem eine dorthin geschickte Freundin verschwunden ist. Dieses illustrierte Adventure folgt einem einzigen Handlungspfad mit gelegentlichen kontextabhängigen Entscheidungen."
+  },
+  "pc98:440344": {
+   "en": "A psychological horror RPG made with Dante98. A choice at a train platform leads the protagonist into an uncanny carriage, where checking passengers' tickets becomes part of a disturbing journey.",
+   "text": "Ein psychologisches Horror-RPG, gebaut mit Dante98. Eine Entscheidung auf einem Bahnsteig führt die Hauptfigur in einen unheimlichen Waggon, wo das Kontrollieren der Fahrkarten der Fahrgäste Teil einer verstörenden Reise wird."
+  },
+  "pc98:440348": {
+   "en": "Siblings Meena and Otto can channel spiritual energy into magic. A request to gather healing plants leads them into a trap in a forest, beginning a fantasy RPG journey.",
+   "text": "Die Geschwister Meena und Otto können spirituelle Energie in Magie umwandeln. Ein Auftrag, Heilpflanzen zu sammeln, führt sie in einem Wald in eine Falle und eröffnet eine Fantasy-RPG-Reise."
+  },
+  "pc98:442277": {
+   "en": "Orphaned Ken moves into the home of a wealthy woman who knew his father. Explore the household and its tangled relationships through illustrated scenes and adventure-game choices.",
+   "text": "Der verwaiste Ken zieht in das Haus einer wohlhabenden Frau, die seinen Vater kannte. Erkunde den Haushalt und seine verworrenen Beziehungen in illustrierten Szenen und mit Entscheidungen wie in einem Adventure."
+  },
+  "pc98:470408": {
+   "en": "Lime returns in a short animated adventure divided into three areas that can be visited in any order. Story scenes carry most of the episode, with limited interaction.",
+   "text": "Lime kehrt in einem kurzen animierten Adventure zurück, das in drei Gebiete gegliedert ist, die in beliebiger Reihenfolge besucht werden können. Story-Szenen tragen den Großteil der Episode, mit wenig Interaktion."
+  },
+  "pc98:470410": {
+   "en": "Lime and Bass continue hunting jewel-stealing BEM creatures in the third episode. It plays like an interactive cartoon, advancing its animated story through simple command selections.",
+   "text": "Lime und Bass jagen in der dritten Episode weiter juwelenstehlende BEM-Kreaturen. Sie spielt sich wie ein interaktiver Cartoon, dessen animierte Geschichte durch einfache Befehlswahlen voranschreitet."
+  },
+  "pc98:470413": {
+   "en": "The fourth episode places Lime at a restaurant, where Bass and an unusual octopus complicate her day. Its brief animated scenes continue the series' lightly interactive format.",
+   "text": "Die vierte Episode versetzt Lime in ein Restaurant, wo Bass und ein ungewöhnlicher Oktopus ihren Tag durcheinanderbringen. Ihre kurzen animierten Szenen führen das leicht interaktive Format der Serie fort."
+  },
+  "pc98:470421": {
+   "en": "Thunder-wielding adventurer Raidy investigates a tower whose monsters have been abducting villagers. Explore its first-person corridors, gather equipment, and fight through the dungeon.",
+   "text": "Der donnerschwingende Abenteurer Raidy untersucht einen Turm, dessen Monster Dorfbewohner entführt haben. Erkunde die Korridore in der Ego-Perspektive, sammle Ausrüstung und kämpfe dich durch den Dungeon."
+  },
+  "pc98:470837": {
+   "en": "At a costume convention, Lime encounters a living bag that steals outfits. This fifth installment is a short animated story with the series' familiar characters and sparse interaction.",
+   "text": "Auf einer Kostümmesse begegnet Lime einer lebenden Tasche, die Outfits stiehlt. Dieser fünfte Teil ist eine kurze animierte Geschichte mit den bekannten Figuren der Serie und spärlicher Interaktion."
+  },
+  "pc98:470838": {
+   "en": "A trip to the swimming pool turns strange when a sunfish stuns the visitors. Bass confronts the creature's demonic owner in the sixth short, animated episode.",
+   "text": "Ein Ausflug ins Schwimmbad wird seltsam, als ein Mondfisch die Besucher betäubt. Bass stellt sich in der sechsten kurzen, animierten Episode dem dämonischen Besitzer des Wesens."
+  },
+  "pc98:470839": {
+   "en": "Bass's stomach escapes on its own, sending the group after it in the seventh Jewel Bem Hunter Lime episode. The story unfolds through brief animated scenes.",
+   "text": "Bass' Magen reißt von selbst aus und schickt die Gruppe in der siebten Episode von Jewel Bem Hunter Lime hinter ihm her. Die Geschichte entfaltet sich in kurzen animierten Szenen."
+  },
+  "pc98:470840": {
+   "en": "Lime and her companions visit a circus in the eighth installment, where the outing quickly goes awry. This is another short, animation-led episode.",
+   "text": "Lime und ihre Gefährten besuchen im achten Teil einen Zirkus, wo der Ausflug schnell aus dem Ruder läuft. Dies ist eine weitere kurze, von Animation getragene Episode."
+  },
+  "pc98:470841": {
+   "en": "Lime faces a double who is impersonating Bass and causing trouble. The ninth episode continues the series through animated story scenes and light interaction.",
+   "text": "Lime stellt sich einem Doppelgänger, der sich als Bass ausgibt und Ärger macht. Die neunte Episode führt die Serie mit animierten Story-Szenen und leichter Interaktion fort."
+  },
+  "pc98:470842": {
+   "en": "Lime is kidnapped, leaving Bass to rescue her in the series' twelfth and final installment. The animated finale closes the group's long-running adventure.",
+   "text": "Lime wird entführt, und Bass muss sie im zwölften und letzten Teil der Serie retten. Das animierte Finale beschließt das lange Abenteuer der Gruppe."
+  },
+  "pc98:470843": {
+   "en": "The tenth installment is a roughly ten-minute animated story set at a bathhouse. Unlike the earlier episodes, it has essentially no player interaction.",
+   "text": "Der zehnte Teil ist eine etwa zehnminütige animierte Geschichte in einem Badehaus. Anders als die früheren Episoden bietet er im Grunde keine Spielerinteraktion."
+  },
+  "pc98:470844": {
+   "en": "Bass and the group attend an idol event, then run into a troublesome turtle when the girls join the performance. The eleventh episode is a short animated story.",
+   "text": "Bass und die Gruppe besuchen eine Idol-Veranstaltung und stoßen auf eine lästige Schildkröte, als die Mädchen beim Auftritt mitmachen. Die elfte Episode ist eine kurze animierte Geschichte."
+  }
  },
  "schemaVersion": 1
 }

@@ -16,6 +16,7 @@ from research_additions import name_matched
 import sys
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "shared/tools"))
 from catalog_package import build_package, image_paths, filter_artwork
+import catalog_descriptions
 from catalog_languages import LANGUAGES
 import catalog_documents
 
@@ -70,7 +71,7 @@ def generate(matches_path, gallery, assets, art_assets, ffmpeg, quality, reuse_a
         path = matches_path.parent / f"descriptions-{language}-v1.json"
         if not path.is_file():
             continue
-        for key, text in json.loads(path.read_text(encoding="utf-8"))["descriptions"].items():
+        for key, text in catalog_descriptions.texts(path).items():
             translations.setdefault(key, {})[language] = text
     stray = [key for key in translations if not descriptions.get(key)]
     if stray:
