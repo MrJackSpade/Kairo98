@@ -164,6 +164,12 @@ int kairo98_machine_set_cd(const char *image) {
     return sxsi_devopen(CD_DRIVE, length ? image : NULL) == SUCCESS ? 0 : 2;
 }
 
+/* The image in floppy drive 0 or 1, or the CD-ROM drive for 2; "" when it is empty. */
+const char *kairo98_machine_media_path(int drive) {
+    const OEMCHAR *path = drive == 2 ? sxsi_getfilename(CD_DRIVE) : fdd_getfileex((REG8) drive, NULL, NULL);
+    return path ? path : "";
+}
+
 int kairo98_machine_dos_prompt(void) {
     unsigned int cursor = LOADINTELWORD(gdc.m.para + GDC_CSRW) & 0x0fff;
     unsigned int previous = (cursor - 1) & 0x0fff;

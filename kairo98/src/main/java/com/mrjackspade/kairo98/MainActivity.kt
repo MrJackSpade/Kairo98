@@ -59,6 +59,8 @@ class MainActivity : MachineActivity<DiskImageEntry>() {
                                      secondFloppyPath: String?, cdPath: String?): Boolean
     private external fun nativeFloppy(drive: Int, path: String?): Boolean
     private external fun nativeCd(path: String?): Boolean
+    /** Floppy drives A and B and the CD-ROM drive's images, "" for an empty one; null when no machine runs. */
+    private external fun nativeMediaPaths(): Array<String>?
     private external fun nativeStop()
     private external fun nativePause(paused: Boolean)
     private external fun nativeReset()
@@ -780,6 +782,19 @@ class MainActivity : MachineActivity<DiskImageEntry>() {
         "media.CD-ROM" to (mountedCd ?: ""))
 
     private fun floppyLabel(drive: Int) = getString(R.string.floppy_drive, "${'A' + drive}")
+
+    /**
+     * A loaded state's drives, as np2 holds them now, for the Disks page (Kairo98#103): each image by
+     * its library disk, or its file name for one from outside the library.
+     */
+    override fun stateLoaded() {
+        val paths = nativeMediaPaths() ?: return
+        fun name(path: String) = path.takeIf { it.isNotEmpty() }
+            ?.let { disks.entryForWorkingImage(it, libraryEntries)?.displayName ?: File(it).name }
+        mountedFloppies[0] = name(paths[0])
+        mountedFloppies[1] = name(paths[1])
+        mountedCd = name(paths[2])
+    }
 
     private fun floppyRow(drive: Int) = SettingsRow.choice("floppy$drive", floppyLabel(drive), floppyChoice(drive),
         value = { mountedFloppies[drive] ?: empty() },

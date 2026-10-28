@@ -71,6 +71,7 @@ extern "C" void kairo98_machine_release_keys(void);
 extern "C" int kairo98_machine_set_disk(const char *image);
 extern "C" int kairo98_machine_set_floppy(int drive, const char *image);
 extern "C" int kairo98_machine_set_cd(const char *image);
+extern "C" const char *kairo98_machine_media_path(int drive);
 extern "C" int kairo98_machine_stop(void);
 extern "C" void kairo98_machine_location(unsigned short *cs, unsigned short *ip);
 extern "C" unsigned long long kairo98_machine_screen_signature(void);
@@ -87,8 +88,8 @@ namespace {
 // the audio queue holds this much so recoverable lateness never underruns.
 constexpr auto kFrameStall = std::chrono::milliseconds(50);
 constexpr int32_t kAudioStallFrames = 44100 * kFrameStall.count() / 1000;
-enum class CommandType { Pause, Resume, Reset, Stop, Key, Disk, Floppy, Cd, Clock, MouseMove, MouseWarp, MouseButton, Joystick, SaveState, LoadState,
-                         StartupStart, StartupAdd, StartupResume };
+enum class CommandType { Pause, Resume, Reset, Stop, Key, Disk, Floppy, Cd, MediaPaths, Clock, MouseMove, MouseWarp, MouseButton, Joystick,
+                         SaveState, LoadState, StartupStart, StartupAdd, StartupResume };
 struct Command {
     CommandType type;
     int key = 0;
@@ -100,6 +101,8 @@ struct Command {
     std::vector<kairo::StartupStep> steps;
     // LoadState: each disk path a state may name, and where that disk is now (kairo/state_paths.h).
     std::map<std::string, std::string> moved;
+    // MediaPaths: filled with each drive's image.
+    std::shared_ptr<std::vector<std::string>> media;
 };
 std::mutex command_mutex;
 std::condition_variable command_ready;
@@ -496,6 +499,10 @@ void run_machine(std::string image, std::string font_path, std::string bios_dir,
                     if (command.completion) command.completion->set_value(result);
                     break;
                 }
+                case CommandType::MediaPaths:
+                    for (int drive = 0; drive < 3; ++drive) command.media->push_back(kairo98_machine_media_path(drive));
+                    command.completion->set_value(0);
+                    break;
                 case CommandType::Clock:
                     kairo98_input_telemetry_reset();
                     kairo98_joy_release_all();
@@ -1000,6 +1007,31 @@ Java_com_mrjackspade_kairo98_MainActivity_nativeCd(JNIEnv *env, jobject, jstring
     } catch (const std::future_error &) {
         return JNI_FALSE;  // The machine stopped before changing the disc.
     }
+}
+
+// What floppy drives A and B and the CD-ROM drive hold, "" for an empty one; null when no machine runs.
+extern "C" JNIEXPORT jobjectArray JNICALL
+Java_com_mrjackspade_kairo98_MainActivity_nativeMediaPaths(JNIEnv *env, jobject) {
+    auto completion = std::make_shared<std::promise<int>>();
+    auto response = completion->get_future();
+    auto media = std::make_shared<std::vector<std::string>>();
+    {
+        std::lock_guard<std::mutex> guard(command_mutex);
+        if (!active) return nullptr;
+        Command command{CommandType::MediaPaths, 0, false, {}, 0, completion};
+        command.media = media;
+        commands.push_back(std::move(command));
+        command_ready.notify_one();
+    }
+    try {
+        response.get();
+    } catch (const std::future_error &) {
+        return nullptr;  // The machine stopped before answering.
+    }
+    jobjectArray array = env->NewObjectArray(static_cast<jsize>(media->size()), env->FindClass("java/lang/String"), nullptr);
+    for (size_t drive = 0; drive < media->size(); ++drive)
+        env->SetObjectArrayElement(array, static_cast<jsize>(drive), env->NewStringUTF((*media)[drive].c_str()));
+    return array;
 }
 
 extern "C" JNIEXPORT jstring JNICALL
