@@ -48,6 +48,10 @@ Future upstream changes are not merged automatically. Changes needed for this pr
 
 The first-party `shared/` commit supplies the RetroArch Slang runtime. Its pinned librashader v0.11.0 snapshot, Cargo.lock, and 129 checked Rust source archives are recorded in [shared source provenance](../shared/docs/source-import.md). Kairo98 builds that runtime from source through the shared frontend module. The shared frontend also packages two individually reviewed presets from `libretro/slang-shaders` commit `e1d75632a205c70f14a4cc947c46d5abb7b3f7f1`; [the pinned shader snapshot](../shared/third_party/slang-shaders/README.md) lists their exact files, hashes, and licenses.
 
+## Local changes
+
+The local changes below are recorded in `tools/patches.py`, which `shared/tools/local_patches.py .` applies to a fresh snapshot and checks in CI (`--check`: undoing and redoing them must give back the committed tree). Change the snapshot only through it: add or edit a group there, then apply it with `--group`.
+
 ## Local input observation patch
 
 The vendored rev104 snapshot has two Kairo98-only, additive observation hooks. `bios/bios18.c` records BIOS keyboard waits, completed reads, and polls; `io/mouseif.c` records reads of the PC-98 bus mouse data port. The hooks call project-owned `android_host/input_telemetry.c` and do not branch on telemetry values or change guest-visible results. The Android build replaces the imported SDL2 mouse stub with project-owned `android_host/mousemng.c` to accept guest mouse movement and buttons. These changes are local to this repository; the original archive and its provenance above remain the reference snapshot.
