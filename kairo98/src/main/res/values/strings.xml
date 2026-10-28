@@ -3,11 +3,11 @@
 <resources>
     <!-- %1$s is the app's name, Kairo98; %2$s and %3$s the emulators it runs; %4$s its GitHub repository. -->
     <string name="credits">%1$s uses %2$s and %3$s. Source and provenance: github.com/%4$s.</string>
-    <string name="library_empty">Choose a games folder to find disk images and ZIP games</string>
+    <string name="library_empty">Choose a games folder to find disk images and the ZIP and 7z archives holding them</string>
     <string name="library_expired">Folder access expired. Select the games folder again.</string>
     <string name="folder_title">Choose a games folder</string>
     <!-- %1$s is the machine's name, PC-98; %2$s the app's name, Kairo98. -->
-    <string name="folder_description">Select the folder containing your %1$s games. %2$s will scan its disk images and ZIP files.</string>
+    <string name="folder_description">Select the folder containing your %1$s games. %2$s will scan its disk images and the ZIP and 7z archives holding them.</string>
     <string name="folder_button">Choose games folder…</string>
     <string name="saves_group">SAVE STATES</string>
 

@@ -4,15 +4,15 @@
     <!-- %1$s is the app's name, Kairo98; %2$s and %3$s the emulators it runs; %4$s its GitHub repository. -->
     <!-- EN: %1$s uses %2$s and %3$s. Source and provenance: github.com/%4$s. -->
     <string name="credits">يستخدم %1$s كلًا من %2$s و%3$s. المصدر والمنشأ: github.com/%4$s.</string>
-    <!-- EN: Choose a games folder to find disk images and ZIP games -->
-    <string name="library_empty">اختر مجلد ألعاب للعثور على صور الأقراص وألعاب ZIP</string>
+    <!-- EN: Choose a games folder to find disk images and the ZIP and 7z archives holding them -->
+    <string name="library_empty">اختر مجلد ألعاب للعثور على صور الأقراص وأرشيفات ZIP و7z التي تحتويها</string>
     <!-- EN: Folder access expired. Select the games folder again. -->
     <string name="library_expired">انتهت صلاحية الوصول إلى المجلد. اختر مجلد الألعاب مرة أخرى.</string>
     <!-- EN: Choose a games folder -->
     <string name="folder_title">اختر مجلد ألعاب</string>
     <!-- %1$s is the machine's name, PC-98; %2$s the app's name, Kairo98. -->
-    <!-- EN: Select the folder containing your %1$s games. %2$s will scan its disk images and ZIP files. -->
-    <string name="folder_description">اختر المجلد الذي يحتوي على ألعاب %1$s. سيفحص %2$s صور الأقراص وملفات ZIP فيه.</string>
+    <!-- EN: Select the folder containing your %1$s games. %2$s will scan its disk images and the ZIP and 7z archives holding them. -->
+    <string name="folder_description">اختر المجلد الذي يحتوي على ألعاب %1$s. سيفحص %2$s صور الأقراص فيه وأرشيفات ZIP و7z التي تحتويها.</string>
     <!-- EN: Choose games folder… -->
     <string name="folder_button">اختيار مجلد الألعاب…</string>
     <!-- EN: SAVE STATES -->

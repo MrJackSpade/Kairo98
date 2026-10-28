@@ -4,15 +4,15 @@
     <!-- %1$s is the app's name, Kairo98; %2$s and %3$s the emulators it runs; %4$s its GitHub repository. -->
     <!-- EN: %1$s uses %2$s and %3$s. Source and provenance: github.com/%4$s. -->
     <string name="credits">%1$s は %2$s と %3$s を使用しています。ソースと出典: github.com/%4$s</string>
-    <!-- EN: Choose a games folder to find disk images and ZIP games -->
-    <string name="library_empty">ゲームフォルダを選択して、ディスクイメージと ZIP のゲームを探します</string>
+    <!-- EN: Choose a games folder to find disk images and the ZIP and 7z archives holding them -->
+    <string name="library_empty">ゲームフォルダを選択して、ディスクイメージとそれを含む ZIP・7z アーカイブを探します</string>
     <!-- EN: Folder access expired. Select the games folder again. -->
     <string name="library_expired">フォルダへのアクセス期限が切れました。ゲームフォルダを選択し直してください。</string>
     <!-- EN: Choose a games folder -->
     <string name="folder_title">ゲームフォルダを選択</string>
     <!-- %1$s is the machine's name, PC-98; %2$s the app's name, Kairo98. -->
-    <!-- EN: Select the folder containing your %1$s games. %2$s will scan its disk images and ZIP files. -->
-    <string name="folder_description">%1$s のゲームが入っているフォルダを選択してください。%2$s がディスクイメージと ZIP ファイルをスキャンします。</string>
+    <!-- EN: Select the folder containing your %1$s games. %2$s will scan its disk images and the ZIP and 7z archives holding them. -->
+    <string name="folder_description">%1$s のゲームが入っているフォルダを選択してください。%2$s がディスクイメージとそれを含む ZIP・7z アーカイブをスキャンします。</string>
     <!-- EN: Choose games folder… -->
     <string name="folder_button">ゲームフォルダを選択…</string>
     <!-- EN: SAVE STATES -->

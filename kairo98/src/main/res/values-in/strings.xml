@@ -4,15 +4,15 @@
     <!-- %1$s is the app's name, Kairo98; %2$s and %3$s the emulators it runs; %4$s its GitHub repository. -->
     <!-- EN: %1$s uses %2$s and %3$s. Source and provenance: github.com/%4$s. -->
     <string name="credits">%1$s menggunakan %2$s dan %3$s. Sumber dan asal-usul: github.com/%4$s.</string>
-    <!-- EN: Choose a games folder to find disk images and ZIP games -->
-    <string name="library_empty">Pilih folder game untuk menemukan image disk dan game ZIP</string>
+    <!-- EN: Choose a games folder to find disk images and the ZIP and 7z archives holding them -->
+    <string name="library_empty">Pilih folder game untuk menemukan image disk serta arsip ZIP dan 7z yang berisi image tersebut</string>
     <!-- EN: Folder access expired. Select the games folder again. -->
     <string name="library_expired">Akses folder kedaluwarsa. Pilih folder game lagi.</string>
     <!-- EN: Choose a games folder -->
     <string name="folder_title">Pilih folder game</string>
     <!-- %1$s is the machine's name, PC-98; %2$s the app's name, Kairo98. -->
-    <!-- EN: Select the folder containing your %1$s games. %2$s will scan its disk images and ZIP files. -->
-    <string name="folder_description">Pilih folder yang berisi game %1$s Anda. %2$s akan memindai image disk dan file ZIP di dalamnya.</string>
+    <!-- EN: Select the folder containing your %1$s games. %2$s will scan its disk images and the ZIP and 7z archives holding them. -->
+    <string name="folder_description">Pilih folder yang berisi game %1$s Anda. %2$s akan memindai image disk di dalamnya serta arsip ZIP dan 7z yang berisi image tersebut.</string>
     <!-- EN: Choose games folder… -->
     <string name="folder_button">Pilih folder game…</string>
     <!-- EN: SAVE STATES -->

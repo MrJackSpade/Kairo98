@@ -4,15 +4,15 @@
     <!-- %1$s is the app's name, Kairo98; %2$s and %3$s the emulators it runs; %4$s its GitHub repository. -->
     <!-- EN: %1$s uses %2$s and %3$s. Source and provenance: github.com/%4$s. -->
     <string name="credits">%1$s은(는) %2$s 및 %3$s을(를) 사용합니다. 소스 및 출처: github.com/%4$s</string>
-    <!-- EN: Choose a games folder to find disk images and ZIP games -->
-    <string name="library_empty">디스크 이미지와 ZIP 게임을 찾으려면 게임 폴더를 선택하세요</string>
+    <!-- EN: Choose a games folder to find disk images and the ZIP and 7z archives holding them -->
+    <string name="library_empty">디스크 이미지와 이를 담은 ZIP 및 7z 압축 파일을 찾으려면 게임 폴더를 선택하세요</string>
     <!-- EN: Folder access expired. Select the games folder again. -->
     <string name="library_expired">폴더 접근 권한이 만료되었습니다. 게임 폴더를 다시 선택하세요.</string>
     <!-- EN: Choose a games folder -->
     <string name="folder_title">게임 폴더 선택</string>
     <!-- %1$s is the machine's name, PC-98; %2$s the app's name, Kairo98. -->
-    <!-- EN: Select the folder containing your %1$s games. %2$s will scan its disk images and ZIP files. -->
-    <string name="folder_description">%1$s 게임이 들어 있는 폴더를 선택하세요. %2$s이(가) 디스크 이미지와 ZIP 파일을 스캔합니다.</string>
+    <!-- EN: Select the folder containing your %1$s games. %2$s will scan its disk images and the ZIP and 7z archives holding them. -->
+    <string name="folder_description">%1$s 게임이 들어 있는 폴더를 선택하세요. %2$s이(가) 디스크 이미지와 이를 담은 ZIP 및 7z 압축 파일을 스캔합니다.</string>
     <!-- EN: Choose games folder… -->
     <string name="folder_button">게임 폴더 선택…</string>
     <!-- EN: SAVE STATES -->

@@ -4,15 +4,15 @@
     <!-- %1$s is the app's name, Kairo98; %2$s and %3$s the emulators it runs; %4$s its GitHub repository. -->
     <!-- EN: %1$s uses %2$s and %3$s. Source and provenance: github.com/%4$s. -->
     <string name="credits">%1$s usa %2$s e %3$s. Código-fonte e procedência: github.com/%4$s.</string>
-    <!-- EN: Choose a games folder to find disk images and ZIP games -->
-    <string name="library_empty">Escolha uma pasta de jogos para encontrar imagens de disco e jogos em ZIP</string>
+    <!-- EN: Choose a games folder to find disk images and the ZIP and 7z archives holding them -->
+    <string name="library_empty">Escolha uma pasta de jogos para encontrar imagens de disco e os arquivos ZIP e 7z que as contêm</string>
     <!-- EN: Folder access expired. Select the games folder again. -->
     <string name="library_expired">O acesso à pasta expirou. Selecione a pasta de jogos de novo.</string>
     <!-- EN: Choose a games folder -->
     <string name="folder_title">Escolha uma pasta de jogos</string>
     <!-- %1$s is the machine's name, PC-98; %2$s the app's name, Kairo98. -->
-    <!-- EN: Select the folder containing your %1$s games. %2$s will scan its disk images and ZIP files. -->
-    <string name="folder_description">Selecione a pasta com seus jogos de %1$s. O %2$s vai verificar as imagens de disco e os arquivos ZIP dela.</string>
+    <!-- EN: Select the folder containing your %1$s games. %2$s will scan its disk images and the ZIP and 7z archives holding them. -->
+    <string name="folder_description">Selecione a pasta com seus jogos de %1$s. O %2$s vai verificar as imagens de disco dela e os arquivos ZIP e 7z que as contêm.</string>
     <!-- EN: Choose games folder… -->
     <string name="folder_button">Escolher pasta de jogos…</string>
     <!-- EN: SAVE STATES -->
