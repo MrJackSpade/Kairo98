@@ -16,6 +16,7 @@ from research_additions import name_matched
 import sys
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "shared/tools"))
 from catalog_package import build_package, image_paths, filter_artwork
+from catalog_languages import LANGUAGES
 
 
 def lookup_name(value):
@@ -62,6 +63,17 @@ def generate(matches_path, gallery, assets, art_assets, ffmpeg, quality, reuse_a
         and not descriptions.get(f'{entry["platform"]}:{entry["databaseId"]}')]
     if incomplete:
         raise ValueError(f"Translated games missing descriptions: {incomplete[:5]}")
+    # descriptions-<language>-v1.json: the descriptions translated (shared catalog_languages).
+    translations = {}
+    for language in LANGUAGES:
+        path = matches_path.parent / f"descriptions-{language}-v1.json"
+        if not path.is_file():
+            continue
+        for key, text in json.loads(path.read_text(encoding="utf-8"))["descriptions"].items():
+            translations.setdefault(key, {})[language] = text
+    stray = [key for key in translations if not descriptions.get(key)]
+    if stray:
+        raise ValueError(f"Translations of games without an English description: {sorted(stray)[:5]}")
     profiles_path = matches_path.parent.parent / "startup-profiles-v1.json"
     profiles = json.loads(profiles_path.read_text(encoding="utf-8"))["games"] if profiles_path.is_file() else {}
     policy = json.loads((matches_path.parent.parent / "core-review-v1.json").read_text(encoding="utf-8"))
@@ -90,6 +102,8 @@ def generate(matches_path, gallery, assets, art_assets, ffmpeg, quality, reuse_a
         description = descriptions.get(key, entry.get("description"))
         if description:
             metadata["description"] = description
+        if key in translations:
+            metadata["descriptions"] = translations[key]
         if entry.get("aliases"):
             metadata["aliases"] = entry["aliases"]
         metadata = reviewed_display(metadata, display_review, key)

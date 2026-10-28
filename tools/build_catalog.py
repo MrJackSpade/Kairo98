@@ -14,13 +14,14 @@ from artwork_references import SELF_HOSTED_BASE, expand as expand_artwork
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "shared/tools"))
 import catalog_documents
 from catalog_documents import compact, inherit, require
+from catalog_languages import valid_translations
 
 CONTENT_ID = re.compile(r"sha256-(?:hdi|fd|cd)-v1:[0-9a-f]{64}\Z")
 ART_PATH = re.compile(r"art/(?!.*\.\.)[A-Za-z0-9_./-]{1,252}\Z")
 # A disk record names its game's shared record, a name index entry, with "game"; its own
 # fields override the shared ones, so a game's metadata is stored once for all its disks.
 GAME_KEY = re.compile(r"(?:pc88|pc98):[A-Za-z0-9:._-]{1,64}\Z")
-FIELDS = {"game", "title", "description", "aliases", "artwork", "machine", "controller", "input", "media", "launch", "startupChoices", "diskSwaps", "heart", "hidden", "setDisks"}
+FIELDS = {"game", "title", "description", "descriptions", "aliases", "artwork", "machine", "controller", "input", "media", "launch", "startupChoices", "diskSwaps", "heart", "hidden", "setDisks"}
 SCREEN_HASH = re.compile(r"[0-9a-f]{16}\Z")
 SHORT_ID = re.compile(r"[a-z0-9-]{1,40}\Z")
 
@@ -182,6 +183,8 @@ def validate_record(record):
     require(description is None or
             (isinstance(description, str) and 0 < len(description.strip()) <= 8000),
             "invalid description")
+    require("descriptions" not in record or (description is not None and valid_translations(record["descriptions"])),
+            "invalid translated descriptions")
     aliases = record.get("aliases", [])
     require(isinstance(aliases, list) and len(aliases) <= 64 and
             all(isinstance(x, str) and 0 < len(x.strip()) <= 256 for x in aliases), "invalid aliases")
