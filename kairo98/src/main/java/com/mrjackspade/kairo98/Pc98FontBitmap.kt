@@ -1,5 +1,6 @@
 package com.mrjackspade.kairo98
 
+import android.content.Context
 import java.io.File
 import java.io.RandomAccessFile
 
@@ -8,8 +9,9 @@ internal object Pc98FontBitmap {
     const val MAX_BYTES = 1024 * 1024L
     private const val PIXEL_BYTES = 2048 * 2048 / 8L
 
-    fun validate(file: File) {
-        require(file.length() in 54L..MAX_BYTES) { "FONT.BMP must be a 2048x2048 monochrome BMP" }
+    /** Refuses [file], in [context]'s language, unless it is a FONT.BMP the loader reads. */
+    fun validate(context: Context, file: File) {
+        require(file.length() in 54L..MAX_BYTES) { context.getString(R.string.font_invalid) }
         val header = ByteArray(54)
         RandomAccessFile(file, "r").use { it.readFully(header) }
         fun word(offset: Int) = (header[offset].toInt() and 0xff) or
@@ -21,7 +23,7 @@ internal object Pc98FontBitmap {
             word(26) == 1 && word(28) == 1 && dword(30) == 0L &&
             dword(34) == PIXEL_BYTES && pixelOffset >= 54 &&
             pixelOffset + PIXEL_BYTES <= file.length()) {
-            "FONT.BMP must be a 2048x2048 monochrome BMP"
+            context.getString(R.string.font_invalid)
         }
     }
 }

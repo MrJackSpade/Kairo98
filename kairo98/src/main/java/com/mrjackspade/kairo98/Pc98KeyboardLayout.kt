@@ -5,6 +5,7 @@ import com.mrjackspade.kairo.frontend.JisKana
 import com.mrjackspade.kairo.frontend.GuestKeyboardPage
 import com.mrjackspade.kairo.frontend.KeyboardKey
 import com.mrjackspade.kairo.frontend.SymbolPage
+import com.mrjackspade.kairo.frontend.UiText
 
 /** PC-98 scan codes and legends supplied to the shared keyboard panel. */
 internal object Pc98KeyboardLayout {
@@ -12,7 +13,7 @@ internal object Pc98KeyboardLayout {
         brand = "KAIRO98",
         pages = listOf(
             GuestKeyboardPage("ABC", alphabetRows()),
-            GuestKeyboardPage("?123", symbolRows(), pickerLabel = "Symbols"),
+            GuestKeyboardPage("?123", symbolRows(), pickerLabel = UiText.res(R.string.keyboard_symbols)),
             GuestKeyboardPage("PC-98", pc98Rows())
         ),
         modifiers = setOf(0x70, 0x7d, 0x71, 0x72, 0x73, 0x74),

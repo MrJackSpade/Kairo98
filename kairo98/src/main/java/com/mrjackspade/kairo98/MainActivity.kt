@@ -33,8 +33,11 @@ import com.mrjackspade.kairo.frontend.SettingsRow
 import com.mrjackspade.kairo.frontend.StateSlotStore
 import com.mrjackspade.kairo.frontend.TrayButton
 import com.mrjackspade.kairo.frontend.TraySpec
+import com.mrjackspade.kairo.frontend.UiText
 import com.mrjackspade.kairo.frontend.ValueTone
 import com.mrjackspade.kairo.frontend.sameSource
+import com.mrjackspade.kairo.frontend.text
+import com.mrjackspade.kairo.frontend.R as FrontendR
 
 import android.content.Intent
 import android.net.Uri
@@ -92,12 +95,11 @@ class MainActivity : MachineActivity<DiskImageEntry>() {
     private external fun nativeSetFastForward(enabled: Boolean)
 
     override val identity = Identity("KAIRO98", 0xffF91CB6.toInt(), "Kairo98", "PC-98", "kairo98", LibraryStrings("KAIRO98", "Kairo98"),
-        "Kairo98 uses Neko Project 21/W and ymfm. Source and provenance: github.com/MrJackSpade/Kairo98.",
-        "Choose a games folder to find disk images and ZIP games",
-        "Folder access expired. Select the games folder again.",
-        MachineFirstRun.Folder("Choose a games folder", "Select the folder containing your PC-98 games. Kairo98 will " +
-            "scan its disk images and ZIP files.", "Choose games folder…"),
-        "SAVE STATES", "MrJackSpade/Kairo98")
+        UiText.res(R.string.credits, "Kairo98", "Neko Project 21/W", "ymfm", "MrJackSpade/Kairo98"),
+        UiText.res(R.string.library_empty), UiText.res(R.string.library_expired),
+        MachineFirstRun.Folder(UiText.res(R.string.folder_title), UiText.res(R.string.folder_description, "PC-98", "Kairo98"),
+            UiText.res(R.string.folder_button)),
+        UiText.res(R.string.saves_group), "MrJackSpade/Kairo98")
     override val machine = Machine(640, 400, 640.0 / 400.0, "state.np2")
 
     /** The 21/W machine. Its status line is "<state>[: error] | frames N | CS:IP | audio | xruns | config | profile". */
@@ -140,8 +142,10 @@ class MainActivity : MachineActivity<DiskImageEntry>() {
     override fun guestKey(androidKey: Int) = pc98ScanCode(androidKey)
     override val controllerSpec = ControllerGuestSpec("PC-98", (0..127).toList(),
         Pc98KeyNames::label, setOf(0x70, 0x71, 0x72, 0x73, 0x74, 0x7d),
-        ControllerBindings.JOYSTICK.zip(listOf("Up", "Down", "Left", "Right", "Button 1", "Button 2")),
-        "Uses the joystick input on the emulated sound board. Games must support joystick 1.",
+        ControllerBindings.JOYSTICK.zip(listOf(FrontendR.string.kairo_up, FrontendR.string.kairo_down,
+            FrontendR.string.kairo_left, FrontendR.string.kairo_right, R.string.joystick_button_1,
+            R.string.joystick_button_2).map { UiText.res(it) }),
+        UiText.res(R.string.joystick_help),
         ControllerGuestSpec.STANDARD_ACTIONS, Pc98KeyboardLayout.value)
     override val bindingsCodec = ControllerBindings.codec
     override val artworkDownloadsEnabled: Boolean get() = resources.getBoolean(R.bool.catalog_art_download_enabled)
@@ -305,18 +309,19 @@ class MainActivity : MachineActivity<DiskImageEntry>() {
     /** The disc in the CD-ROM drive, by file name. */
     private var mountedCd: String? = null
     /** Where the running game's FONT.BMP comes from when it is not the player's font.bmp (chooseFont). */
-    private var gameFontSource: String? = null
-    private val gameFonts by lazy { GameFontLocator(contentResolver, File(filesDir, "game-font.bmp")) }
+    private var gameFontSource: UiText? = null
+    private val gameFonts by lazy { GameFontLocator(this, File(filesDir, "game-font.bmp")) }
 
     /** The font.bmp files the player imported, for a game to pick by name (Pc98Catalog.font). */
     private val fontFiles by lazy {
         ImportedFiles(File(filesDir, "fonts"), "font", ".bmp", Pc98FontBitmap.MAX_BYTES,
-            "A font.bmp is at most 1 MB; that file is larger", Pc98FontBitmap::validate) { file, name ->
+            getString(R.string.font_too_large), { Pc98FontBitmap.validate(this, it) }) { file, name ->
             ImportedFiles.Described(name ?: file.name)
         }
     }
     private val fontImport by lazy {
-        ImportedFilePicker(this, fontFiles, FONT_IMPORT_REQUEST, "font-import", "Import a font.bmp…", "Font", ::toast)
+        ImportedFilePicker(this, fontFiles, FONT_IMPORT_REQUEST, "font-import", getString(R.string.font_import),
+            getString(R.string.option_font), ::toast)
     }
 
     // Font lists the player's fonts too, and imports more (Pc98Catalog.font).
@@ -326,7 +331,7 @@ class MainActivity : MachineActivity<DiskImageEntry>() {
     private var selectedStartup = emptyList<Pair<StartupChoice, StartupOption>>()
     /** Media a launch prepared, which the session takes once the game starts. */
     private class PreparedLaunch(val bootFloppy: DiskImageEntry?, val floppyB: DiskImageEntry?,
-                                 val swapSources: Map<String, DiskImageEntry>, val fontSource: String?,
+                                 val swapSources: Map<String, DiskImageEntry>, val fontSource: UiText?,
                                  val cd: DiskImageEntry?,
                                  /** What started: the launched entry, or a CD's boot disk. */
                                  val boot: DiskImageEntry)
@@ -352,7 +357,7 @@ class MainActivity : MachineActivity<DiskImageEntry>() {
             game.startupChoices
             game.diskSwaps
         } catch (failure: RuntimeException) {
-            toast("${game.title} can't start: its catalog launch data is unreadable (${failure.message})")
+            toast(getString(R.string.launch_data_unreadable, game.title, failure.message))
             return
         }
         debugStartupOption?.let { requested ->
@@ -388,7 +393,7 @@ class MainActivity : MachineActivity<DiskImageEntry>() {
         lateinit var page: ChoicePage
         page = ChoicePage(ChoiceSpec(choice.title, { game.title }, {
             listOf(ChoiceGroup(null, choice.options.map { ChoiceOption(it.id, it.label) },
-                "Kairo98 enters your choice when the game reaches this screen. Play manually leaves it to you."))
+                getString(R.string.startup_choice_foot, identity.appName)))
         }, { null }, { id ->
             val option = choice.options.first { it.id == id }
             pages.postDelayed({
@@ -397,7 +402,7 @@ class MainActivity : MachineActivity<DiskImageEntry>() {
                     selected + (choice to option), fromFrontend, replace = true)
             }, 150)
         }, actions = {
-            listOf(SettingsRow.action("manual", "Play manually") { startWithChoices(entry, game, selected, fromFrontend) })
+            listOf(SettingsRow.action("manual", getString(R.string.play_manually)) { startWithChoices(entry, game, selected, fromFrontend) })
         }, stay = true, cycles = false))
         if (replace) pages.replace(page) else pages.push(page)
     }
@@ -406,10 +411,12 @@ class MainActivity : MachineActivity<DiskImageEntry>() {
         val external = entry !in libraryEntries
         val sources = launchEntries
         val cd = cdFor(entry, game.cdId, sources)
-        val boot = if (entry.isCd) cdBootDiskFor(entry, game.bootDiskId, sources) else entry
-        val media = bootMediaFor(boot, sources, game.requiredBootFloppyId)
-        val swapSources = game.diskSwaps.associate { rule -> rule.contentId to requiredFloppyFor(rule.contentId, entry, sources) }
-        val floppyB = game.initialFloppyBId?.let { id -> requiredFloppyFor(id, entry, sources) }
+        val boot = if (entry.isCd) cdBootDiskFor(this, entry, game.bootDiskId, sources) else entry
+        val media = bootMediaFor(this, boot, sources, game.requiredBootFloppyId)
+        val swapSources = game.diskSwaps.associate { rule ->
+            rule.contentId to requiredFloppyFor(this, rule.contentId, entry, sources)
+        }
+        val floppyB = game.initialFloppyBId?.let { id -> requiredFloppyFor(this, id, entry, sources) }
         val primary = media?.hardDisk ?: boot
         nativeSkipMemoryCheck(preferences.getBoolean(SKIP_MEMORY_CHECK, true))
         val disk = disks.prepare(primary, cancelled, progress)
@@ -419,7 +426,7 @@ class MainActivity : MachineActivity<DiskImageEntry>() {
         val (font, fontSource) = chooseFont(optionValue(game, machineOptions.single()), primary, external, cancelled)
         check(startMachine(disk.absolutePath, font, game.baseClockTenthsMHz ?: clock, game.gdcClockTenthsMHz ?: 50,
             game.cpuMultiple ?: DEFAULT_CPU_MULTIPLE, primary.isFloppy, bootFloppy?.absolutePath,
-            secondFloppy?.absolutePath, disc?.absolutePath)) { "Unable to start machine" }
+            secondFloppy?.absolutePath, disc?.absolutePath)) { getString(R.string.start_failed) }
         awaitMachineReady()?.let(::error)
         prepared = PreparedLaunch(media?.bootFloppy, floppyB, swapSources, fontSource, cd, boot)
     }
@@ -431,7 +438,7 @@ class MainActivity : MachineActivity<DiskImageEntry>() {
             if (state.startsWith("Error")) return state.substringBefore(" | ")
             Thread.sleep(50)
         }
-        return "Machine startup timed out"
+        return getString(R.string.start_timed_out)
     }
 
     override fun gameStarted(entry: DiskImageEntry, game: CatalogGame) {
@@ -469,34 +476,35 @@ class MainActivity : MachineActivity<DiskImageEntry>() {
     }
 
     override fun stateError(code: Int) = when (code) {
-        1 -> "machine not running"
-        2 -> "state is missing or from another version"
-        3 -> "storage unavailable"
-        4 -> "disk image copy failed"
-        5 -> "state file unreadable"
-        6 -> "machine did not respond"
-        7 -> "the game's save path is too long"
-        else -> "code $code"
+        1 -> getString(R.string.state_error_not_running)
+        2 -> getString(R.string.state_error_missing)
+        3 -> getString(R.string.state_error_storage)
+        4 -> getString(R.string.state_error_disk_copy)
+        5 -> getString(R.string.state_error_unreadable)
+        6 -> getString(R.string.state_error_no_response)
+        7 -> getString(R.string.state_error_path_too_long)
+        else -> getString(R.string.state_error_code, code)
     }
 
     override fun sessionDetails() = listOfNotNull(when {
         currentEntry == null -> null
-        currentIsFloppy -> "Floppy disk"
-        else -> "Hard disk"
+        currentIsFloppy -> getString(R.string.floppy_disk)
+        else -> getString(R.string.hard_disk)
     })
 
     override fun diagnosticsRows(running: Boolean): List<SettingsRow> {
-        if (!running) return listOf(SettingsRow.info("state", "State") { "Stopped" })
+        val state = getString(FrontendR.string.kairo_diagnostics_state)
+        if (!running) return listOf(SettingsRow.info("state", state) { getString(FrontendR.string.kairo_diagnostics_stopped) })
         fun part(index: Int, prefix: String = "") =
             nativeStatus().split(" | ").getOrNull(index)?.removePrefix(prefix)?.trim() ?: ""
         return listOf(
-            SettingsRow.info("state", "State") { part(0) },
-            SettingsRow.info("frames", "Frames") { part(1, "frames") },
+            SettingsRow.info("state", state) { part(0) },
+            SettingsRow.info("frames", getString(FrontendR.string.kairo_diagnostics_frames)) { part(1, "frames") },
             SettingsRow.info("csip", "CS:IP") { part(2, "CS:IP") },
-            SettingsRow.info("audio", "Audio") { part(3, "audio") },
-            SettingsRow.info("xruns", "Xruns") { part(4, "xruns") },
-            SettingsRow.info("audio-config", "Audio config") { part(5) },
-            SettingsRow.info("audio-profile", "Audio profile") { part(6) })
+            SettingsRow.info("audio", getString(FrontendR.string.kairo_diagnostics_audio)) { part(3, "audio") },
+            SettingsRow.info("xruns", getString(FrontendR.string.kairo_diagnostics_xruns)) { part(4, "xruns") },
+            SettingsRow.info("audio-config", getString(FrontendR.string.kairo_diagnostics_audio_config)) { part(5) },
+            SettingsRow.info("audio-profile", getString(R.string.diagnostics_audio_profile)) { part(6) })
     }
 
     // Startup automation: typed commands and choices on recognized screens, and disk swaps ------------
@@ -510,11 +518,11 @@ class MainActivity : MachineActivity<DiskImageEntry>() {
         commandCancelled.set(true)
         if (game == null) return
         val steps = (if (skipDebugCommands) emptyList() else game.launchCommands).mapIndexed { index, command ->
-            StartupStep("Launch command ${index + 1}: $command", command, true,
+            StartupStep(getString(R.string.startup_step_command, index + 1, command), command, true,
                 game.launchScreenHashes.getOrNull(index) ?: emptySet(), game.launchTimeoutMs)
         } + choices.flatMap { (choice, option) ->
             option.inputs.mapIndexed { index, input ->
-                StartupStep("${choice.title}: ${option.label} (${index + 1}/${option.inputs.size})",
+                StartupStep(getString(R.string.startup_step_choice, choice.title, option.label, index + 1, option.inputs.size),
                     input.key.toString(), input.enter, input.screenHashes, 120000)
             }
         }
@@ -604,7 +612,7 @@ class MainActivity : MachineActivity<DiskImageEntry>() {
             if (!current(generation)) return
             Thread.sleep(100)
         }
-        val notice = GameNotice("Swapping Floppy ${'A' + rule.drive}: ${entry.displayName}", "")
+        val notice = GameNotice(getString(R.string.disk_swapping, "${'A' + rule.drive}", entry.displayName), "")
         try {
             runOnUiThread { if (current(generation)) overlay.showNotice(notice) }
             val disk = disks.prepare(entry, AtomicBoolean(false)) { message ->
@@ -614,7 +622,7 @@ class MainActivity : MachineActivity<DiskImageEntry>() {
                 }
             }
             if (!current(generation)) return
-            if (!nativeFloppy(rule.drive, disk.absolutePath)) error("Floppy could not be mounted")
+            if (!nativeFloppy(rule.drive, disk.absolutePath)) error(getString(R.string.floppy_mount_failed))
             runOnUiThread {
                 if (current(generation)) {
                     manualFloppies[rule.drive]?.delete()
@@ -638,24 +646,25 @@ class MainActivity : MachineActivity<DiskImageEntry>() {
     /** The game keeps running, so the prompt docks at the top instead of blocking it. */
     private fun showDiskSwapFailure(rule: DiskSwap?, error: Exception, rules: List<DiskSwap>,
                                     sources: Map<String, DiskImageEntry>) {
-        overlay.showNotice(GameNotice("Automatic disk swap failed",
-            "${rule?.let { "Floppy ${'A' + it.drive}: " } ?: ""}" +
-                (error.message ?: "Unknown error") + ". The game is still running.",
-            listOf(TrayButton("Continue manually"),
-                TrayButton("Choose floppy") {
+        val why = error.message ?: getString(R.string.unknown_error)
+        overlay.showNotice(GameNotice(getString(R.string.disk_swap_failed),
+            rule?.let { getString(R.string.disk_swap_failed_drive_message, "${'A' + it.drive}", why) }
+                ?: getString(R.string.disk_swap_failed_message, why),
+            listOf(TrayButton(getString(R.string.continue_manually)),
+                TrayButton(getString(R.string.choose_floppy)) {
                     openMenu()
                     pages.push(disksPage())
                     pages.push(ChoicePage(floppyChoice(rule?.drive ?: 0), "floppy${rule?.drive ?: 0}"))
                 },
-                TrayButton("Retry", ButtonTone.PRIMARY) { scheduleDiskSwaps(rules, sources) })))
+                TrayButton(getString(R.string.retry), ButtonTone.PRIMARY) { scheduleDiskSwaps(rules, sources) })))
     }
 
     private fun showStartupTimeout(steps: List<StartupStep>, step: StartupStep, cancelled: AtomicBoolean, generation: Int) {
-        overlay.showNotice(GameNotice("Startup screen not recognized",
-            "Waiting for ${step.label}. The game is still running.",
-            listOf(TrayButton("Restart") { openMenu("f-restart", confirm = true) },
-                TrayButton("Open keyboard") { showKeyboard() },
-                TrayButton("Retry", ButtonTone.PRIMARY) {
+        overlay.showNotice(GameNotice(getString(R.string.startup_not_recognized),
+            getString(R.string.startup_waiting, step.label),
+            listOf(TrayButton(getString(FrontendR.string.kairo_action_restart)) { openMenu("f-restart", confirm = true) },
+                TrayButton(getString(R.string.open_keyboard)) { showKeyboard() },
+                TrayButton(getString(R.string.retry), ButtonTone.PRIMARY) {
                     nativeStartupResume()
                     watchStartup(steps, cancelled, generation)
                 })))
@@ -695,27 +704,33 @@ class MainActivity : MachineActivity<DiskImageEntry>() {
 
     // Disks ------------------------------------------------------------------------------------------
 
-    override fun machineRows() = listOf(SettingsRow.nav("f-disks", "Disks") { pages.push(disksPage()) })
+    override fun machineRows() = listOf(SettingsRow.nav("f-disks", getString(FrontendR.string.kairo_media_disks)) {
+        pages.push(disksPage())
+    })
 
     /** Disks: the hard disk, which asks first because it ends the game, both floppy drives, and the CD-ROM. */
-    private fun disksPage() = GroupsPage("Disks", { currentGame?.title }, {
-        listOf(RowGroup("DRIVES", listOf(
-            SettingsRow.action("hdd", "Hard disk",
-                value = { if (currentIsFloppy) "Empty" else currentEntry?.displayName ?: "Empty" },
+    private fun disksPage() = GroupsPage(getString(FrontendR.string.kairo_media_disks), { currentGame?.title }, {
+        listOf(RowGroup(getString(FrontendR.string.kairo_media_drives_group), listOf(
+            SettingsRow.action("hdd", getString(R.string.hard_disk),
+                value = { if (currentIsFloppy) empty() else currentEntry?.displayName ?: empty() },
                 tone = { if (currentEntry == null || currentIsFloppy) ValueTone.EMPTY else ValueTone.CURRENT },
                 tray = {
-                    if (currentEntry == null) TraySpec(buttons = listOf(TrayButton("Choose file…", ButtonTone.PRIMARY) { chooseHdi() }))
-                    else TraySpec("Starting another disk image ends this game. Progress since your last save is lost.",
-                        listOf(TrayButton("Cancel"), TrayButton("Choose file…", ButtonTone.PRIMARY) { chooseHdi() }), focus = 0)
+                    val choose = getString(FrontendR.string.kairo_choose_file)
+                    if (currentEntry == null) TraySpec(buttons = listOf(TrayButton(choose, ButtonTone.PRIMARY) { chooseHdi() }))
+                    else TraySpec(getString(R.string.hard_disk_change_warning),
+                        listOf(TrayButton(getString(FrontendR.string.kairo_cancel)),
+                            TrayButton(choose, ButtonTone.PRIMARY) { chooseHdi() }), focus = 0)
                 }),
             floppyRow(0), floppyRow(1), cdRow())))
     })
 
-    private fun cdRow() = SettingsRow.choice("cd", "CD-ROM", cdChoice(),
-        value = { mountedCd ?: "Empty" },
+    private fun empty() = getString(FrontendR.string.kairo_empty)
+
+    private fun cdRow() = SettingsRow.choice("cd", getString(R.string.cd_rom), cdChoice(),
+        value = { mountedCd ?: empty() },
         tone = { if (mountedCd == null) ValueTone.EMPTY else ValueTone.CURRENT },
         enabled = { machineRunning && !floppyBusy },
-        disabledReason = { if (floppyBusy) "Wait for the disk change to finish" else "Start a game before inserting a CD" })
+        disabledReason = { getString(if (floppyBusy) FrontendR.string.kairo_media_wait else R.string.cd_start_first) })
 
     /** Empty ejects; otherwise the game's catalog disc and the CDs in its ZIP or folder. */
     private fun cdChoice(): ChoiceSpec {
@@ -726,12 +741,12 @@ class MainActivity : MachineActivity<DiskImageEntry>() {
                 entry.playable && entry.isCd && (catalog.matchId(entry) == named || sameSource(current, entry))
             }.distinctBy { it.contentId }
         }
-        return ChoiceSpec("CD-ROM", { currentGame?.title }, {
+        return ChoiceSpec(getString(R.string.cd_rom), { currentGame?.title }, {
             val found = candidates()
-            listOfNotNull(ChoiceGroup(null, listOf(ChoiceOption("empty", "Empty")),
-                if (found.isEmpty()) "No CDs for this game in the library." else null),
+            listOfNotNull(ChoiceGroup(null, listOf(ChoiceOption("empty", UiText.res(FrontendR.string.kairo_empty))),
+                if (found.isEmpty()) getString(R.string.cd_none_for_game) else null),
                 found.takeIf { it.isNotEmpty() }?.let { items ->
-                    ChoiceGroup("FOR THIS GAME", items.map { ChoiceOption(it.id, it.displayName) })
+                    ChoiceGroup(getString(R.string.for_this_game), items.map { ChoiceOption(it.id, it.displayName) })
                 })
         }, { candidates().firstOrNull { it.displayName == mountedCd }?.id
             ?: if (mountedCd == null) "empty" else null }, { id ->
@@ -742,18 +757,19 @@ class MainActivity : MachineActivity<DiskImageEntry>() {
 
     private fun changeCd(entry: DiskImageEntry?) {
         if (!beginFloppyChange()) return
-        toast(if (entry == null) "Ejecting CD…" else "Preparing ${entry.displayName}…")
+        toast(if (entry == null) getString(R.string.cd_ejecting) else getString(R.string.disk_preparing, entry.displayName))
         pages.refresh()
         Thread {
             val result = try {
                 val disc = entry?.let { disks.prepare(it, AtomicBoolean(false)) { } }
-                if (!nativeCd(disc?.absolutePath)) error("CD could not be mounted")
+                if (!nativeCd(disc?.absolutePath)) error(getString(R.string.cd_mount_failed))
                 null
-            } catch (error: Exception) { error.message ?: "CD change failed" }
+            } catch (error: Exception) { error.message ?: getString(R.string.cd_change_failed) }
             runOnUiThread {
                 endFloppyChange()
                 if (result == null) mountedCd = entry?.displayName
-                toast(result ?: "CD-ROM: ${entry?.displayName ?: "Empty"}")
+                toast(result ?: getString(FrontendR.string.kairo_media_changed, getString(R.string.cd_rom),
+                    entry?.displayName ?: empty()))
                 pages.refresh()
             }
         }.start()
@@ -764,11 +780,13 @@ class MainActivity : MachineActivity<DiskImageEntry>() {
         "media.Floppy A" to (mountedFloppies[0] ?: ""), "media.Floppy B" to (mountedFloppies[1] ?: ""),
         "media.CD-ROM" to (mountedCd ?: ""))
 
-    private fun floppyRow(drive: Int) = SettingsRow.choice("floppy$drive", "Floppy ${'A' + drive}", floppyChoice(drive),
-        value = { mountedFloppies[drive] ?: "Empty" },
+    private fun floppyLabel(drive: Int) = getString(R.string.floppy_drive, "${'A' + drive}")
+
+    private fun floppyRow(drive: Int) = SettingsRow.choice("floppy$drive", floppyLabel(drive), floppyChoice(drive),
+        value = { mountedFloppies[drive] ?: empty() },
         tone = { if (mountedFloppies[drive] == null) ValueTone.EMPTY else ValueTone.CURRENT },
         enabled = { machineRunning && !floppyBusy },
-        disabledReason = { if (floppyBusy) "Wait for the floppy change to finish" else "Start a game before inserting a floppy" })
+        disabledReason = { getString(if (floppyBusy) R.string.floppy_wait else R.string.floppy_start_first) })
 
     /**
      * Empty ejects; then the game's own disks (the shared GameDisks choice), Other for every floppy
@@ -781,11 +799,11 @@ class MainActivity : MachineActivity<DiskImageEntry>() {
             val inDrives = libraryEntries.filter { it.isFloppy && it.displayName in mountedFloppies }
             return GameDisks.own(current, libraryEntries, inDrives, catalog.setDisks(current).toSet(), catalog::matchId, ::takes)
         }
-        return GameDisks.choice("Floppy ${'A' + drive}", { currentGame?.title }, ::own, { libraryEntries.filter(::takes) }, {
+        return GameDisks.choice(this, floppyLabel(drive), { currentGame?.title }, ::own, { libraryEntries.filter(::takes) }, {
             own().firstOrNull { it.displayName == mountedFloppies[drive] }?.id
                 ?: if (mountedFloppies[drive] == null) GameDisks.EMPTY else null
         }, { entry -> changeFloppy(drive, entry) }) {
-            listOf(SettingsRow.action("choose", "Choose file…") {
+            listOf(SettingsRow.action("choose", getString(FrontendR.string.kairo_choose_file)) {
                 DocumentPicker.open(this, if (drive == 0) FLOPPY_A_REQUEST else FLOPPY_B_REQUEST, failed = ::toast)
             })
         }
@@ -793,14 +811,15 @@ class MainActivity : MachineActivity<DiskImageEntry>() {
 
     private fun changeFloppy(drive: Int, entry: DiskImageEntry?) {
         if (!beginFloppyChange()) return
-        toast(if (entry == null) "Ejecting floppy ${'A' + drive}…" else "Preparing ${entry.displayName}…")
+        toast(if (entry == null) getString(R.string.floppy_ejecting, "${'A' + drive}")
+            else getString(R.string.disk_preparing, entry.displayName))
         pages.refresh()
         Thread {
             val result = try {
                 val disk = entry?.let { disks.prepare(it, AtomicBoolean(false)) { } }
-                if (!nativeFloppy(drive, disk?.absolutePath)) error("Floppy could not be mounted")
+                if (!nativeFloppy(drive, disk?.absolutePath)) error(getString(R.string.floppy_mount_failed))
                 null
-            } catch (error: Exception) { error.message ?: "Floppy change failed" }
+            } catch (error: Exception) { error.message ?: getString(R.string.floppy_change_failed) }
             runOnUiThread {
                 endFloppyChange()
                 if (result == null) {
@@ -808,7 +827,7 @@ class MainActivity : MachineActivity<DiskImageEntry>() {
                     manualFloppies[drive] = null
                     mountedFloppies[drive] = entry?.displayName
                 }
-                toast(result ?: "Floppy ${'A' + drive}: ${entry?.displayName ?: "Empty"}")
+                toast(result ?: getString(FrontendR.string.kairo_media_changed, floppyLabel(drive), entry?.displayName ?: empty()))
                 pages.refresh()
             }
         }.start()
@@ -822,15 +841,15 @@ class MainActivity : MachineActivity<DiskImageEntry>() {
 
     private fun importFloppyFile(drive: Int, uri: Uri, name: String) {
         if (!beginFloppyChange()) return
-        toast("Importing $name…")
+        toast(getString(R.string.floppy_importing, name))
         pages.refresh()
         Thread {
             val disk = File(cacheDir, "manual-floppy-$drive-${System.nanoTime()}${Pc98Media.suffix(name)}")
             val result = try {
-                FirmwareSet.importFile(contentResolver, uri, disk, "Floppy", maxBytes = 64L * 1024 * 1024)
-                if (!nativeFloppy(drive, disk.absolutePath)) error("Floppy could not be mounted")
+                FirmwareSet.importFile(this, uri, disk, getString(R.string.floppy), maxBytes = 64L * 1024 * 1024)
+                if (!nativeFloppy(drive, disk.absolutePath)) error(getString(R.string.floppy_mount_failed))
                 null
-            } catch (error: Exception) { error.message ?: "Floppy import failed" }
+            } catch (error: Exception) { error.message ?: getString(R.string.floppy_import_failed) }
             runOnUiThread {
                 endFloppyChange()
                 if (result == null) {
@@ -838,7 +857,7 @@ class MainActivity : MachineActivity<DiskImageEntry>() {
                     manualFloppies[drive] = disk
                     mountedFloppies[drive] = name
                 } else disk.delete()
-                toast(result ?: "Floppy ${'A' + drive}: $name")
+                toast(result ?: getString(FrontendR.string.kairo_media_changed, floppyLabel(drive), name))
                 pages.refresh()
             }
         }.start()
@@ -849,33 +868,41 @@ class MainActivity : MachineActivity<DiskImageEntry>() {
 
     /** The PC-98's optional firmware, on the shared firmware rows; Kairo98 has a replacement for each. */
     override val firmwareSets by lazy {
-        listOf("PC-98 BIOS" to FirmwareSet(firmwareDir(), listOf(
-            FirmwareSet.Part("bios.rom", "BIOS", "bios.rom · the PC-98's own BIOS; Kairo98 has a built-in one",
+        fun description(name: String, what: UiText) = UiText.res(R.string.firmware_part, name, what)
+        listOf(UiText.res(FrontendR.string.kairo_firmware_title, "PC-98") to FirmwareSet(firmwareDir(), listOf(
+            FirmwareSet.Part("bios.rom", UiText.fixed("BIOS"),
+                description("bios.rom", UiText.res(R.string.firmware_bios_description, "PC-98", "Kairo98")),
                 setOf("bios.rom"), false, setOf(BIOS_ROM_BYTES)),
-            FirmwareSet.Part("font.bmp", "Font", "font.bmp · the text and kanji font; Kairo98 has a built-in one",
-                setOf("font.bmp"), false, maxBytes = Pc98FontBitmap.MAX_BYTES, validate = Pc98FontBitmap::validate,
-                status = { gameFontSource }, missing = "Built-in",
-                removeLabel = "Use built-in"),
-            FirmwareSet.Part("ym2608_adpcm_rom.bin", "Rhythm samples",
-                "ym2608_adpcm_rom.bin · the sound board's drum sounds", setOf("ym2608_adpcm_rom.bin"), false,
-                setOf(RHYTHM_ROM_BYTES)))))
+            FirmwareSet.Part("font.bmp", UiText.res(R.string.option_font),
+                description("font.bmp", UiText.res(R.string.firmware_font_description, "Kairo98")),
+                setOf("font.bmp"), false, maxBytes = Pc98FontBitmap.MAX_BYTES, validate = { Pc98FontBitmap.validate(this, it) },
+                status = { gameFontSource }, missing = UiText.res(R.string.font_built_in),
+                removeLabel = UiText.res(R.string.font_use_built_in)),
+            FirmwareSet.Part("ym2608_adpcm_rom.bin", UiText.res(R.string.firmware_rhythm),
+                description("ym2608_adpcm_rom.bin", UiText.res(R.string.firmware_rhythm_description)),
+                setOf("ym2608_adpcm_rom.bin"), false, setOf(RHYTHM_ROM_BYTES)))))
     }
 
     /** Machine: the base clock, then firmware, which only changes with no game running. */
-    override fun machinePage() = GroupsPage("Machine", { GameSource.ALL_GAMES }, {
+    override fun machinePage() = GroupsPage(getString(FrontendR.string.kairo_machine), { GameSource.ALL_GAMES }, {
+        val baseClock = getString(R.string.base_clock)
+        val skipMemoryCheck = getString(FrontendR.string.kairo_option_skip_memory_check)
         listOf(
-            RowGroup("CLOCK", listOf(SettingsRow.choice("base-clock", "Base clock", ChoiceSpec("Base clock",
-                { GameSource.ALL_GAMES }, { listOf(ChoiceGroup(null, listOf(
-                    ChoiceOption("25", "2.5 MHz"), ChoiceOption("20", "2 MHz")))) },
+            RowGroup(getString(R.string.clock_group), listOf(SettingsRow.choice("base-clock", baseClock, ChoiceSpec(baseClock,
+                { GameSource.ALL_GAMES }, { listOf(ChoiceGroup(null, listOf(mhz("25", "2.5"), mhz("20", "2")))) },
                 { clock.toString() }, select = { value -> setBaseClock(value.toInt()) }))),
-                "Changing the base clock restarts a running game. Games with their own clock keep it."),
-            RowGroup("BOOT", listOf(SettingsRow.choice(SKIP_MEMORY_CHECK, "Skip memory check", ChoiceSpec(
-                "Skip memory check", { GameSource.ALL_GAMES }, { listOf(ChoiceGroup(null, listOf(
-                    ChoiceOption("on", "On"), ChoiceOption("off", "Off")))) },
+                getString(R.string.base_clock_foot)),
+            RowGroup(getString(R.string.boot_group), listOf(SettingsRow.choice(SKIP_MEMORY_CHECK, skipMemoryCheck, ChoiceSpec(
+                skipMemoryCheck, { GameSource.ALL_GAMES }, { listOf(ChoiceGroup(null, listOf(
+                    ChoiceOption("on", UiText.res(FrontendR.string.kairo_on)),
+                    ChoiceOption("off", UiText.res(FrontendR.string.kairo_off))))) },
                 { if (preferences.getBoolean(SKIP_MEMORY_CHECK, true)) "on" else "off" },
                 select = { value -> preferences.edit().putBoolean(SKIP_MEMORY_CHECK, value == "on").apply() }))))
         ) + firmwareGroups()
     })
+
+    /** A clock choice: [id] in tenths of a MHz, shown as [mhz] MHz. */
+    private fun mhz(id: String, mhz: String) = ChoiceOption(id, UiText.res(R.string.clock_mhz, mhz))
 
     private fun setBaseClock(selected: Int) {
         if (clock == selected) return
@@ -885,37 +912,40 @@ class MainActivity : MachineActivity<DiskImageEntry>() {
         if (currentGame?.baseClockTenthsMHz == null) {
             inputRouter.resetLocks()
             nativeClock(clock)
-            toast("Clock change resets the machine")
-        } else toast("Global clock saved; this game uses its own clock")
+            toast(getString(R.string.clock_reset))
+        } else toast(getString(R.string.clock_saved_game_own))
     }
 
     /** The rows of Kairo98's own catalog settings (Pc98Catalog.settings). */
     override fun customSettingRow(entry: DiskImageEntry, setting: CatalogSetting.Custom,
                                   enabled: () -> Boolean): SettingsRow? {
         val id = entry.key.takeIf { entry.contentId != null }
-        val noHash = { GameSettingsRows.NO_HASH }
+        val noHash = { GameSettingsRows.noHash(this) }
         val scope = { titleOf(entry) }
         fun game() = catalog.resolve(entry)
         return when (setting.id) {
-            Pc98Catalog.BASE_CLOCK -> GameSettingsRows.choice("clock", "Machine clock", scope,
-                listOf(ChoiceOption("20", "2 MHz"), ChoiceOption("25", "2.5 MHz")),
+            Pc98Catalog.BASE_CLOCK -> GameSettingsRows.choice(this, "clock", getString(R.string.machine_clock), scope,
+                listOf(mhz("20", "2"), mhz("25", "2.5")),
                 machineValue(entry, "machine", "baseClockTenthsMHz", { it.baseClockTenthsMHz?.toString() },
                     { clock.toString() }, GameSource.ALL_GAMES) { it.toInt() }, enabled, noHash)
-            Pc98Catalog.GDC_CLOCK -> GameSettingsRows.choice("gdc", "GDC clock", scope,
-                listOf(ChoiceOption("25", "2.5 MHz"), ChoiceOption("50", "5 MHz")),
+            Pc98Catalog.GDC_CLOCK -> GameSettingsRows.choice(this, "gdc", getString(R.string.gdc_clock), scope,
+                listOf(mhz("25", "2.5"), mhz("50", "5")),
                 machineValue(entry, "machine", "gdcClockTenthsMHz", { it.gdcClockTenthsMHz?.toString() },
                     { "50" }, GameSource.BUILT_IN) { it.toInt() }, enabled, noHash)
             Pc98Catalog.CPU -> {
                 val base = { if ((game().baseClockTenthsMHz ?: clock) == 20) 1.9968 else 2.4576 }
                 val cpu = machineValue(entry, "machine", "cpuMultiple", { it.cpuMultiple?.toString() },
                     { DEFAULT_CPU_MULTIPLE.toString() }, GameSource.BUILT_IN) { it.toInt() }
-                GameSettingsRows.choice("cpu", "CPU speed", scope,
-                    Pc98Catalog.CPU_MULTIPLES.map { ChoiceOption("$it", "%.1f MHz".format(base() * it), "×$it") },
+                GameSettingsRows.choice(this, "cpu", getString(R.string.cpu_speed), scope,
+                    Pc98Catalog.CPU_MULTIPLES.map {
+                        ChoiceOption("$it", UiText.res(R.string.cpu_mhz, base() * it), UiText.res(R.string.cpu_multiple, it))
+                    },
                     cpu, enabled, noHash,
-                    defaultLabel = { cpu.fallback().toInt().let { "%.1f MHz (×%d)".format(base() * it, it) } })
+                    defaultLabel = { cpu.fallback().toInt().let { getString(R.string.cpu_mhz_multiple, base() * it, it) } })
             }
             // Saving no command types nothing, even where the catalog gives one; Reset returns to it.
-            Pc98Catalog.COMMAND -> GameSettingsRows.text("command", "Startup command", "DOS command, such as GAME",
+            Pc98Catalog.COMMAND -> GameSettingsRows.text(this, "command", getString(R.string.startup_command),
+                getString(R.string.startup_command_hint),
                 { game().launchCommand }, {
                     id != null && (catalog.sourceOf(entry, "launch", "text") == "User override" ||
                         catalog.sourceOf(entry, "launch", "commands") == "User override")
@@ -927,8 +957,9 @@ class MainActivity : MachineActivity<DiskImageEntry>() {
                     else mapOf("text" to value, "commands" to null, "screenHashes" to null))
                 } }, { saveGameSetting(entry) { catalog.resetOverride(id!!, "launch") } },
                 enabled = enabled, disabledReason = noHash)
-            Pc98Catalog.CHOICES -> automationRow(entry, "startupChoices", "Startup choices", "Ask", enabled)
-            Pc98Catalog.SWAPS -> automationRow(entry, "diskSwaps", "Disk swaps", "Automatic", enabled)
+            Pc98Catalog.CHOICES -> automationRow(entry, "startupChoices", R.string.startup_choices,
+                R.string.startup_choices_on, enabled)
+            Pc98Catalog.SWAPS -> automationRow(entry, "diskSwaps", R.string.disk_swaps, R.string.disk_swaps_on, enabled)
             else -> error("Kairo98 has no row for its catalog setting ${setting.id}")
         }
     }
@@ -937,7 +968,7 @@ class MainActivity : MachineActivity<DiskImageEntry>() {
      * On or Off for the catalog's startup automation in [field], for a game the catalog gives some;
      * Off keeps an empty list as the game's own.
      */
-    private fun automationRow(entry: DiskImageEntry, field: String, label: String, on: String,
+    private fun automationRow(entry: DiskImageEntry, field: String, label: Int, on: Int,
                               enabled: () -> Boolean): SettingsRow? {
         val id = entry.key.takeIf { entry.contentId != null }
         fun custom() = id != null && catalog.sourceOf(entry, field) == "User override"
@@ -947,8 +978,9 @@ class MainActivity : MachineActivity<DiskImageEntry>() {
             { picked -> saveGameSetting(entry) {
                 if (picked == OFF) catalog.setOverride(id!!, field, JSONArray()) else catalog.resetOverride(id!!, field)
             } })
-        return GameSettingsRows.choice(field, label, { titleOf(entry) },
-            listOf(ChoiceOption(ON, on), ChoiceOption(OFF, "Off")), value, enabled, { GameSettingsRows.NO_HASH })
+        return GameSettingsRows.choice(this, field, getString(label), { titleOf(entry) },
+            listOf(ChoiceOption(ON, UiText.res(on)), ChoiceOption(OFF, UiText.res(FrontendR.string.kairo_off))), value,
+            enabled, { GameSettingsRows.noHash(this) })
     }
 
     override fun handleProductResult(requestCode: Int, resultCode: Int, data: Intent?): Boolean {
@@ -960,13 +992,13 @@ class MainActivity : MachineActivity<DiskImageEntry>() {
             contentResolver.query(uri, arrayOf(OpenableColumns.DISPLAY_NAME), null, null, null)
                 ?.use { if (it.moveToFirst()) it.getString(0) else null }
         } catch (error: Exception) {
-            toast(error.message ?: "Could not read selected file")
+            toast(error.message ?: getString(R.string.file_unreadable))
             return true
         }
         val floppy = requestCode != HDI_REQUEST
         if (name == null || !Pc98Media.supported(name) || Pc98Media.isCd(name) ||
             (floppy && !Pc98Media.isFloppy(name))) {
-            toast(if (floppy) "Select a supported floppy image" else "Select a supported disk image")
+            toast(getString(if (floppy) R.string.select_floppy_image else R.string.select_disk_image))
         } else if (floppy) importFloppyFile(if (requestCode == FLOPPY_A_REQUEST) 0 else 1, uri, name)
         else openExternalFile(uri)
         return true
@@ -1052,15 +1084,15 @@ class MainActivity : MachineActivity<DiskImageEntry>() {
      * the firmware row shows it came from while the game runs: null for the player's font.bmp.
      */
     private fun chooseFont(choice: String, primary: DiskImageEntry, external: Boolean,
-                           cancelled: AtomicBoolean): Pair<String, String?> = when (choice) {
+                           cancelled: AtomicBoolean): Pair<String, UiText?> = when (choice) {
         Pc98Catalog.FONT_GAME_FOLDER -> gameFonts.prepare(primary, if (external) null else tree,
-            disks.takeIf { primary.zipEntry != null }, cancelled)?.let { it.absolutePath to "Game folder" }
+            disks.takeIf { primary.zipEntry != null }, cancelled)?.let { it.absolutePath to UiText.res(R.string.font_game_folder) }
             ?: (prepareFont() to null)
         Pc98Catalog.FONT_FIRMWARE -> prepareFont() to null
-        Pc98Catalog.FONT_BUILT_IN -> bundledFont() to "Built-in"
+        Pc98Catalog.FONT_BUILT_IN -> bundledFont() to UiText.res(R.string.font_built_in)
         else -> checkNotNull(fontFiles.file(choice)) {
-            "This game's font is no longer in the app: choose or import another in Game settings › Font"
-        }.absolutePath to "Game setting"
+            getString(R.string.font_missing)
+        }.absolutePath to UiText.res(R.string.font_game_setting)
     }
 
     /** The imported FONT.BMP, or the bundled Kairo98 font when none is imported. */

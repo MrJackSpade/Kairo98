@@ -2,7 +2,7 @@ package com.mrjackspade.kairo98
 
 import com.mrjackspade.kairo.frontend.DiskImageEntry
 import com.mrjackspade.kairo.frontend.DiskImageLibrary
-import android.content.ContentResolver
+import android.content.Context
 import android.net.Uri
 import android.provider.DocumentsContract
 import java.io.File
@@ -17,7 +17,8 @@ import java.util.concurrent.atomic.AtomicBoolean
  * Finds the FONT.BMP nearest a library game, as translated releases ship one beside the disk.
  * The game's own ZIP folders come first, then its library folders up to the library root.
  */
-internal class GameFontLocator(private val resolver: ContentResolver, private val target: File) {
+internal class GameFontLocator(private val context: Context, private val target: File) {
+    private val resolver = context.contentResolver
 
     /**
      * Copies and validates the nearest FONT.BMP into [target] and returns it, or null when
@@ -37,9 +38,9 @@ internal class GameFontLocator(private val resolver: ContentResolver, private va
         for (depth in folders.size downTo 0) {
             val path = (folders.take(depth) + FONT_NAME).joinToString("/").lowercase(Locale.ROOT)
             val matches = fonts[path] ?: continue
-            require(matches.size == 1) { "Archive has more than one $path" }
+            require(matches.size == 1) { context.getString(R.string.game_font_several_in_archive, path) }
             val (name, size) = matches.single()
-            require(size in 1..Pc98FontBitmap.MAX_BYTES) { "Game $name is not a valid FONT.BMP" }
+            require(size in 1..Pc98FontBitmap.MAX_BYTES) { context.getString(R.string.game_font_invalid, name) }
             return copy(name) { archive.open(name) }
         }
         return null
@@ -54,15 +55,19 @@ internal class GameFontLocator(private val resolver: ContentResolver, private va
             val prefix = folders.take(depth).joinToString("/")
             val children = list(tree, parentId)
             val fonts = children.filter { !it.directory && it.name.equals(FONT_NAME, ignoreCase = true) }
-            require(fonts.size <= 1) { "More than one FONT.BMP in ${prefix.ifEmpty { "the games folder" }}" }
+            require(fonts.size <= 1) {
+                context.getString(R.string.game_font_several_in_folder,
+                    prefix.ifEmpty { context.getString(R.string.game_font_games_folder) })
+            }
             fonts.singleOrNull()?.let {
                 nearest = DocumentsContract.buildDocumentUriUsingTree(tree, it.id) to
                     (if (prefix.isEmpty()) it.name else "$prefix/${it.name}")
             }
             if (depth == folders.size) break
             val next = children.filter { it.directory && it.name == folders[depth] }
-            require(next.size == 1) { "Game folder ${folders.take(depth + 1).joinToString("/")} " +
-                "is missing or ambiguous; refresh the library" }
+            require(next.size == 1) {
+                context.getString(R.string.game_font_folder_missing, folders.take(depth + 1).joinToString("/"))
+            }
             parentId = next.single().id
         }
         return nearest?.let { (uri, path) ->
@@ -99,15 +104,15 @@ internal class GameFontLocator(private val resolver: ContentResolver, private va
                         val count = input.read(buffer)
                         if (count < 0) break
                         size += count
-                        require(size <= Pc98FontBitmap.MAX_BYTES) { "Game $label is too large" }
+                        require(size <= Pc98FontBitmap.MAX_BYTES) { context.getString(R.string.game_font_too_large, label) }
                         output.write(buffer, 0, count)
                     }
                 }
             }
             try {
-                Pc98FontBitmap.validate(partial)
+                Pc98FontBitmap.validate(context, partial)
             } catch (error: IllegalArgumentException) {
-                throw IllegalArgumentException("Game $label: ${error.message}", error)
+                throw IllegalArgumentException(context.getString(R.string.game_font_rejected, label, error.message), error)
             }
             Files.move(partial.toPath(), target.toPath(), StandardCopyOption.REPLACE_EXISTING)
             return target

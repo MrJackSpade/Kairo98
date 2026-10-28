@@ -6,6 +6,7 @@ import com.mrjackspade.kairo.frontend.ChoiceOption
 import com.mrjackspade.kairo.frontend.LayeredGameCatalog
 import com.mrjackspade.kairo.frontend.MachineOption
 import com.mrjackspade.kairo.frontend.SettingsRow
+import com.mrjackspade.kairo.frontend.UiText
 import org.json.JSONArray
 import org.json.JSONObject
 
@@ -34,9 +35,9 @@ object Pc98Catalog : LayeredGameCatalog.Schema {
     val FONT_ID = Regex("font:[0-9a-f]{16}")
 
     val fixedFonts = listOf(
-        ChoiceOption(FONT_GAME_FOLDER, "Game folder"),
-        ChoiceOption(FONT_FIRMWARE, "Your font.bmp"),
-        ChoiceOption(FONT_BUILT_IN, "Built-in"))
+        ChoiceOption(FONT_GAME_FOLDER, UiText.res(R.string.font_game_folder)),
+        ChoiceOption(FONT_FIRMWARE, UiText.res(R.string.font_yours)),
+        ChoiceOption(FONT_BUILT_IN, UiText.res(R.string.font_built_in)))
 
     /**
      * The FONT.BMP a game starts with (`machine.font`, Kairo98#64): [fixedFonts], or one the
@@ -44,7 +45,7 @@ object Pc98Catalog : LayeredGameCatalog.Schema {
      */
     fun font(imported: () -> List<ChoiceOption> = { emptyList() },
              actions: (select: (String) -> Unit) -> List<SettingsRow> = { emptyList() }) =
-        MachineOption("font", "Font", { fixedFonts + imported() }, FONT_GAME_FOLDER,
+        MachineOption("font", UiText.res(R.string.option_font), { fixedFonts + imported() }, FONT_GAME_FOLDER,
             accepts = { value -> fixedFonts.any { it.id == value } || FONT_ID.matches(value) }, actions = actions)
 
     /** The Font option as the catalog reads it; MainActivity lists the player's fonts too. */
@@ -59,10 +60,10 @@ object Pc98Catalog : LayeredGameCatalog.Schema {
         CatalogSetting.Custom(COMMAND, "launch", setOf("type", "text", "commands", "ready", "timeoutMs", "screenHashes")),
         CatalogSetting.Custom(CHOICES, "startupChoices", null),
         CatalogSetting.Custom(SWAPS, "diskSwaps", null),
-        CatalogSetting.Drive("bootFloppy", "Boot floppy") { !it.startsWith(CD) },
-        CatalogSetting.Drive("floppyB", "Drive 2"),
-        CatalogSetting.Drive("cd", "CD-ROM"),
-        CatalogSetting.Drive("bootDisk", "Boot disk") { it.startsWith(CD) })
+        CatalogSetting.Drive("bootFloppy", UiText.res(R.string.boot_floppy)) { !it.startsWith(CD) },
+        CatalogSetting.Drive("floppyB", UiText.res(R.string.drive_2)),
+        CatalogSetting.Drive("cd", UiText.res(R.string.cd_rom)),
+        CatalogSetting.Drive("bootDisk", UiText.res(R.string.boot_disk)) { it.startsWith(CD) })
     override val fields = CatalogSetting.fields(settings)
     override val directTouch = true
 

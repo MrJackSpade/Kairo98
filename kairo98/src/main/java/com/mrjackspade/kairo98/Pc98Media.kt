@@ -4,6 +4,7 @@ import com.mrjackspade.kairo.frontend.DiskImageEntry
 import com.mrjackspade.kairo.frontend.DiskImageLibrary
 import com.mrjackspade.kairo.frontend.GameKey
 import com.mrjackspade.kairo.frontend.GameKeyMigration
+import com.mrjackspade.kairo.frontend.UiText
 import com.mrjackspade.kairo.frontend.VersionedLibraryCache
 import com.mrjackspade.kairo.frontend.companionFor
 import com.mrjackspade.kairo.frontend.mediaFor
@@ -24,7 +25,8 @@ object Pc98Media {
 
     val format = DiskImageLibrary.Format(
         kinds = floppyExtensions.associateWith { "fd" } + mapOf("hdi" to "hdi", "ccd" to "cd"),
-        labels = mapOf("fd" to "Floppy disk", "cd" to "CD-ROM", "hdi" to "Hard disk"),
+        labels = mapOf("fd" to UiText.res(R.string.floppy_disk), "cd" to UiText.res(R.string.cd_rom),
+            "hdi" to UiText.res(R.string.hard_disk)),
         maxBytes = mapOf("fd" to 64L * 1024 * 1024, "cd" to 2L * 1024 * 1024 * 1024, "hdi" to 4L * 1024 * 1024 * 1024),
         guestName = "PC-98",
         data = mapOf("ccd" to listOf("img")))
@@ -121,14 +123,18 @@ data class BootMedia(val hardDisk: DiskImageEntry, val bootFloppy: DiskImageEntr
 
 private val BOOT_DISK_NAME = Regex("(?i)\\bboot[ _-]*disk\\b")
 
-fun requiredFloppyFor(contentId: String, source: DiskImageEntry, entries: List<DiskImageEntry>): DiskImageEntry =
-    requiredMediaFor(contentId, source, entries, "floppy") { it.isFloppy }
+fun requiredFloppyFor(context: Context, contentId: String, source: DiskImageEntry,
+                      entries: List<DiskImageEntry>): DiskImageEntry =
+    requiredMediaFor(context, contentId, source, entries, R.string.required_floppy_missing) { it.isFloppy }
 
-/** A disk a game names by content ID, which the library must have (see [mediaFor]). */
-fun requiredMediaFor(contentId: String, source: DiskImageEntry, entries: List<DiskImageEntry>,
-                     label: String, kind: (DiskImageEntry) -> Boolean): DiskImageEntry =
+/**
+ * A disk a game names by content ID, which the library must have (see [mediaFor]); [missing] says
+ * it is not, of the content ID's first characters.
+ */
+fun requiredMediaFor(context: Context, contentId: String, source: DiskImageEntry, entries: List<DiskImageEntry>,
+                     missing: Int, kind: (DiskImageEntry) -> Boolean): DiskImageEntry =
     mediaFor(contentId, source, entries, kind)
-        ?: error("Required $label ${contentId.substringAfter(':').take(8)} is missing from the library")
+        ?: error(context.getString(missing, contentId.substringAfter(':').take(8)))
 
 /**
  * The disc for a game's CD-ROM drive: the CD its catalog names, else the one CD beside it.
@@ -141,24 +147,27 @@ fun cdFor(entry: DiskImageEntry, catalogCdId: String?, entries: List<DiskImageEn
  * What a CD boots from: the disk its catalog names, else the one hard disk or floppy beside it.
  * PC-98 CDs are not bootable, so a CD without one cannot start.
  */
-fun cdBootDiskFor(cd: DiskImageEntry, catalogBootId: String?, entries: List<DiskImageEntry>): DiskImageEntry {
-    catalogBootId?.let { id -> return requiredMediaFor(id, cd, entries, "boot disk") { !it.isCd } }
+fun cdBootDiskFor(context: Context, cd: DiskImageEntry, catalogBootId: String?,
+                  entries: List<DiskImageEntry>): DiskImageEntry {
+    catalogBootId?.let { id ->
+        return requiredMediaFor(context, id, cd, entries, R.string.required_boot_disk_missing) { !it.isCd }
+    }
     val beside = entries.filter { it.playable && !it.isCd && sameSource(cd, it) }
-    return beside.singleOrNull() ?: error(if (beside.isEmpty())
-        "${cd.displayName} needs a boot disk; start the game's hard disk or floppy instead"
-        else "${cd.displayName} has several disks beside it; start the one that boots")
+    return beside.singleOrNull() ?: error(context.getString(
+        if (beside.isEmpty()) R.string.cd_needs_boot_disk else R.string.cd_several_boot_disks, cd.displayName))
 }
 
 /** Resolve an explicit catalog dependency, or a clearly labelled pair in one archive. */
-fun bootMediaFor(entry: DiskImageEntry, entries: List<DiskImageEntry>, requiredFloppyId: String?): BootMedia? {
+fun bootMediaFor(context: Context, entry: DiskImageEntry, entries: List<DiskImageEntry>,
+                 requiredFloppyId: String?): BootMedia? {
     if (!entry.playable) return null
     if (!entry.isFloppy && requiredFloppyId != null) {
-        val floppy = requiredFloppyFor(requiredFloppyId, entry, entries)
+        val floppy = requiredFloppyFor(context, requiredFloppyId, entry, entries)
         return BootMedia(entry, floppy)
     }
     if (entry.zipEntry == null) {
         if (entry.isFloppy && requiredFloppyId != null && requiredFloppyId in setOf(entry.contentId, entry.catalogId))
-            error("Matching hard disk is missing from the library")
+            error(context.getString(R.string.hard_disk_missing))
         return null
     }
     val siblings = entries.filter { it.playable && it.zipEntry != null && it.uri == entry.uri }
@@ -166,7 +175,7 @@ fun bootMediaFor(entry: DiskImageEntry, entries: List<DiskImageEntry>, requiredF
     val bootFloppies = siblings.filter { it.isFloppy && BOOT_DISK_NAME.containsMatchIn(it.displayName) }
     if (hardDisks.size != 1 || bootFloppies.size != 1) {
         if (entry.isFloppy && requiredFloppyId != null && requiredFloppyId in setOf(entry.contentId, entry.catalogId))
-            error("Matching hard disk is missing or ambiguous in this archive")
+            error(context.getString(R.string.hard_disk_missing_in_archive))
         return null
     }
     val pair = BootMedia(hardDisks.single(), bootFloppies.single())
