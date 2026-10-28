@@ -1,0 +1,255 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Arabic (ar): the translation of values/strings.xml. Each EN comment is the English a string translates; update it with the translation. Check with shared/tools/translations.py check. -->
+<resources>
+    <!-- %1$s is the app's name, Kairo98; %2$s and %3$s the emulators it runs; %4$s its GitHub repository. -->
+    <!-- EN: %1$s uses %2$s and %3$s. Source and provenance: github.com/%4$s. -->
+    <string name="credits">%1$s uses %2$s and %3$s. Source and provenance: github.com/%4$s.</string>
+    <!-- EN: Choose a games folder to find disk images and ZIP games -->
+    <string name="library_empty">Choose a games folder to find disk images and ZIP games</string>
+    <!-- EN: Folder access expired. Select the games folder again. -->
+    <string name="library_expired">Folder access expired. Select the games folder again.</string>
+    <!-- EN: Choose a games folder -->
+    <string name="folder_title">Choose a games folder</string>
+    <!-- %1$s is the machine's name, PC-98; %2$s the app's name, Kairo98. -->
+    <!-- EN: Select the folder containing your %1$s games. %2$s will scan its disk images and ZIP files. -->
+    <string name="folder_description">Select the folder containing your %1$s games. %2$s will scan its disk images and ZIP files.</string>
+    <!-- EN: Choose games folder… -->
+    <string name="folder_button">Choose games folder…</string>
+    <!-- EN: SAVE STATES -->
+    <string name="saves_group">SAVE STATES</string>
+    <!-- EN: Uses the joystick input on the emulated sound board. Games must support joystick 1. -->
+    <string name="joystick_help">Uses the joystick input on the emulated sound board. Games must support joystick 1.</string>
+    <!-- EN: Button 1 -->
+    <string name="joystick_button_1">Button 1</string>
+    <!-- EN: Button 2 -->
+    <string name="joystick_button_2">Button 2</string>
+    <!-- EN: Symbols -->
+    <string name="keyboard_symbols">Symbols</string>
+    <!-- EN: Floppy disk -->
+    <string name="floppy_disk">Floppy disk</string>
+    <!-- EN: Hard disk -->
+    <string name="hard_disk">Hard disk</string>
+    <!-- EN: CD-ROM -->
+    <string name="cd_rom">CD-ROM</string>
+    <!-- The disc a game needs, as "The %1$s this game needs is not in the library" names it. -->
+    <!-- EN: CD -->
+    <string name="companion_cd">CD</string>
+    <!-- EN: Boot floppy -->
+    <string name="boot_floppy">Boot floppy</string>
+    <!-- EN: Drive 2 -->
+    <string name="drive_2">Drive 2</string>
+    <!-- EN: Boot disk -->
+    <string name="boot_disk">Boot disk</string>
+    <!-- A floppy drive: %1$s is its letter, A or B. -->
+    <!-- EN: Floppy %1$s -->
+    <string name="floppy_drive">Floppy %1$s</string>
+    <!-- Names a picked floppy image in import errors, such as "Floppy is too large". -->
+    <!-- EN: Floppy -->
+    <string name="floppy">Floppy</string>
+    <!-- EN: Font -->
+    <string name="option_font">Font</string>
+    <!-- EN: Game folder -->
+    <string name="font_game_folder">Game folder</string>
+    <!-- EN: Your font.bmp -->
+    <string name="font_yours">Your font.bmp</string>
+    <!-- EN: Built-in -->
+    <string name="font_built_in">Built-in</string>
+    <!-- EN: Game setting -->
+    <string name="font_game_setting">Game setting</string>
+    <!-- EN: Use built-in -->
+    <string name="font_use_built_in">Use built-in</string>
+    <!-- EN: Import a font.bmp… -->
+    <string name="font_import">Import a font.bmp…</string>
+    <!-- EN: A font.bmp is at most 1 MB; that file is larger -->
+    <string name="font_too_large">A font.bmp is at most 1 MB; that file is larger</string>
+    <!-- EN: This game\'s font is no longer in the app: choose or import another in Game settings › Font -->
+    <string name="font_missing">This game\'s font is no longer in the app: choose or import another in Game settings › Font</string>
+    <!-- EN: FONT.BMP must be a 2048x2048 monochrome BMP -->
+    <string name="font_invalid">FONT.BMP must be a 2048x2048 monochrome BMP</string>
+    <!-- A game's own FONT.BMP. %1$s is its path in the game's archive or folder. -->
+    <!-- EN: Archive has more than one %1$s -->
+    <string name="game_font_several_in_archive">Archive has more than one %1$s</string>
+    <!-- EN: Game %1$s is not a valid FONT.BMP -->
+    <string name="game_font_invalid">Game %1$s is not a valid FONT.BMP</string>
+    <!-- EN: More than one FONT.BMP in %1$s -->
+    <string name="game_font_several_in_folder">More than one FONT.BMP in %1$s</string>
+    <!-- EN: the games folder -->
+    <string name="game_font_games_folder">the games folder</string>
+    <!-- EN: Game folder %1$s is missing or ambiguous; refresh the library -->
+    <string name="game_font_folder_missing">Game folder %1$s is missing or ambiguous; refresh the library</string>
+    <!-- EN: Game %1$s is too large -->
+    <string name="game_font_too_large">Game %1$s is too large</string>
+    <!-- %2$s says what is wrong with it. -->
+    <!-- EN: Game %1$s: %2$s -->
+    <string name="game_font_rejected">Game %1$s: %2$s</string>
+    <!-- A firmware file's description: %1$s is its file name; %2$s what it does. -->
+    <!-- EN: %1$s · %2$s -->
+    <string name="firmware_part">%1$s · %2$s</string>
+    <!-- %1$s is the machine's name, PC-98; %2$s the app's name, Kairo98. -->
+    <!-- EN: the %1$s\'s own BIOS; %2$s has a built-in one -->
+    <string name="firmware_bios_description">the %1$s\'s own BIOS; %2$s has a built-in one</string>
+    <!-- %1$s is the app's name, Kairo98. -->
+    <!-- EN: the text and kanji font; %1$s has a built-in one -->
+    <string name="firmware_font_description">the text and kanji font; %1$s has a built-in one</string>
+    <!-- EN: Rhythm samples -->
+    <string name="firmware_rhythm">Rhythm samples</string>
+    <!-- EN: the sound board\'s drum sounds -->
+    <string name="firmware_rhythm_description">the sound board\'s drum sounds</string>
+    <!-- %1$s is the game's title; %2$s why its catalog data could not be read. -->
+    <!-- EN: %1$s can\'t start: its catalog launch data is unreadable (%2$s) -->
+    <string name="launch_data_unreadable">%1$s can\'t start: its catalog launch data is unreadable (%2$s)</string>
+    <!-- %1$s is the app's name, Kairo98. -->
+    <!-- EN: %1$s enters your choice when the game reaches this screen. Play manually leaves it to you. -->
+    <string name="startup_choice_foot">%1$s enters your choice when the game reaches this screen. Play manually leaves it to you.</string>
+    <!-- EN: Play manually -->
+    <string name="play_manually">Play manually</string>
+    <!-- EN: Unable to start machine -->
+    <string name="start_failed">Unable to start machine</string>
+    <!-- EN: Machine startup timed out -->
+    <string name="start_timed_out">Machine startup timed out</string>
+    <!-- The content ID's first characters name the disk. -->
+    <!-- EN: Required floppy %1$s is missing from the library -->
+    <string name="required_floppy_missing">Required floppy %1$s is missing from the library</string>
+    <!-- EN: Required boot disk %1$s is missing from the library -->
+    <string name="required_boot_disk_missing">Required boot disk %1$s is missing from the library</string>
+    <!-- %1$s is a CD image's name. -->
+    <!-- EN: %1$s needs a boot disk; start the game\'s hard disk or floppy instead -->
+    <string name="cd_needs_boot_disk">%1$s needs a boot disk; start the game\'s hard disk or floppy instead</string>
+    <!-- EN: %1$s has several disks beside it; start the one that boots -->
+    <string name="cd_several_boot_disks">%1$s has several disks beside it; start the one that boots</string>
+    <!-- EN: Matching hard disk is missing from the library -->
+    <string name="hard_disk_missing">Matching hard disk is missing from the library</string>
+    <!-- EN: Matching hard disk is missing or ambiguous in this archive -->
+    <string name="hard_disk_missing_in_archive">Matching hard disk is missing or ambiguous in this archive</string>
+    <!-- EN: machine not running -->
+    <string name="state_error_not_running">machine not running</string>
+    <!-- EN: state is missing or from another version -->
+    <string name="state_error_missing">state is missing or from another version</string>
+    <!-- EN: storage unavailable -->
+    <string name="state_error_storage">storage unavailable</string>
+    <!-- EN: disk image copy failed -->
+    <string name="state_error_disk_copy">disk image copy failed</string>
+    <!-- EN: state file unreadable -->
+    <string name="state_error_unreadable">state file unreadable</string>
+    <!-- EN: machine did not respond -->
+    <string name="state_error_no_response">machine did not respond</string>
+    <!-- EN: the game\'s save path is too long -->
+    <string name="state_error_path_too_long">the game\'s save path is too long</string>
+    <!-- %1$d is the emulator's error code. -->
+    <!-- EN: code %1$d -->
+    <string name="state_error_code">code %1$d</string>
+    <!-- EN: Audio profile -->
+    <string name="diagnostics_audio_profile">Audio profile</string>
+    <!-- What the startup typer is waiting for: %1$d is the command's number; %2$s the command. -->
+    <!-- EN: Launch command %1$d: %2$s -->
+    <string name="startup_step_command">Launch command %1$d: %2$s</string>
+    <!-- %1$s is a startup choice's title; %2$s the option picked; %3$d of %4$d the key being entered. -->
+    <!-- EN: %1$s: %2$s (%3$d/%4$d) -->
+    <string name="startup_step_choice">%1$s: %2$s (%3$d/%4$d)</string>
+    <!-- EN: Startup screen not recognized -->
+    <string name="startup_not_recognized">Startup screen not recognized</string>
+    <!-- %1$s is the startup step being waited for. -->
+    <!-- EN: Waiting for %1$s. The game is still running. -->
+    <string name="startup_waiting">Waiting for %1$s. The game is still running.</string>
+    <!-- EN: Open keyboard -->
+    <string name="open_keyboard">Open keyboard</string>
+    <!-- EN: Retry -->
+    <string name="retry">Retry</string>
+    <!-- %1$s is the floppy drive's letter; %2$s the disk going in. -->
+    <!-- EN: Swapping Floppy %1$s: %2$s -->
+    <string name="disk_swapping">Swapping Floppy %1$s: %2$s</string>
+    <!-- EN: Automatic disk swap failed -->
+    <string name="disk_swap_failed">Automatic disk swap failed</string>
+    <!-- %1$s says why the swap failed. -->
+    <!-- EN: %1$s. The game is still running. -->
+    <string name="disk_swap_failed_message">%1$s. The game is still running.</string>
+    <!-- %1$s is the floppy drive's letter; %2$s says why the swap failed. -->
+    <!-- EN: Floppy %1$s: %2$s. The game is still running. -->
+    <string name="disk_swap_failed_drive_message">Floppy %1$s: %2$s. The game is still running.</string>
+    <!-- EN: Unknown error -->
+    <string name="unknown_error">Unknown error</string>
+    <!-- EN: Continue manually -->
+    <string name="continue_manually">Continue manually</string>
+    <!-- EN: Choose floppy -->
+    <string name="choose_floppy">Choose floppy</string>
+    <!-- EN: Starting another disk image ends this game. Progress since your last save is lost. -->
+    <string name="hard_disk_change_warning">Starting another disk image ends this game. Progress since your last save is lost.</string>
+    <!-- EN: Start a game before inserting a CD -->
+    <string name="cd_start_first">Start a game before inserting a CD</string>
+    <!-- EN: No CDs for this game in the library. -->
+    <string name="cd_none_for_game">No CDs for this game in the library.</string>
+    <!-- EN: FOR THIS GAME -->
+    <string name="for_this_game">FOR THIS GAME</string>
+    <!-- EN: Ejecting CD… -->
+    <string name="cd_ejecting">Ejecting CD…</string>
+    <!-- %1$s is the disk image's name. -->
+    <!-- EN: Preparing %1$s… -->
+    <string name="disk_preparing">Preparing %1$s…</string>
+    <!-- EN: CD could not be mounted -->
+    <string name="cd_mount_failed">CD could not be mounted</string>
+    <!-- EN: CD change failed -->
+    <string name="cd_change_failed">CD change failed</string>
+    <!-- EN: Wait for the floppy change to finish -->
+    <string name="floppy_wait">Wait for the floppy change to finish</string>
+    <!-- EN: Start a game before inserting a floppy -->
+    <string name="floppy_start_first">Start a game before inserting a floppy</string>
+    <!-- %1$s is the floppy drive's letter. -->
+    <!-- EN: Ejecting floppy %1$s… -->
+    <string name="floppy_ejecting">Ejecting floppy %1$s…</string>
+    <!-- EN: Floppy could not be mounted -->
+    <string name="floppy_mount_failed">Floppy could not be mounted</string>
+    <!-- EN: Floppy change failed -->
+    <string name="floppy_change_failed">Floppy change failed</string>
+    <!-- %1$s is the picked file's name. -->
+    <!-- EN: Importing %1$s… -->
+    <string name="floppy_importing">Importing %1$s…</string>
+    <!-- EN: Floppy import failed -->
+    <string name="floppy_import_failed">Floppy import failed</string>
+    <!-- EN: Could not read selected file -->
+    <string name="file_unreadable">Could not read selected file</string>
+    <!-- EN: Select a supported floppy image -->
+    <string name="select_floppy_image">Select a supported floppy image</string>
+    <!-- EN: Select a supported disk image -->
+    <string name="select_disk_image">Select a supported disk image</string>
+    <!-- EN: CLOCK -->
+    <string name="clock_group">CLOCK</string>
+    <!-- EN: Base clock -->
+    <string name="base_clock">Base clock</string>
+    <!-- %1$s is a clock speed in megahertz, such as 2.5. -->
+    <!-- EN: %1$s MHz -->
+    <string name="clock_mhz">%1$s MHz</string>
+    <!-- EN: Changing the base clock restarts a running game. Games with their own clock keep it. -->
+    <string name="base_clock_foot">Changing the base clock restarts a running game. Games with their own clock keep it.</string>
+    <!-- EN: BOOT -->
+    <string name="boot_group">BOOT</string>
+    <!-- EN: Clock change resets the machine -->
+    <string name="clock_reset">Clock change resets the machine</string>
+    <!-- EN: Global clock saved; this game uses its own clock -->
+    <string name="clock_saved_game_own">Global clock saved; this game uses its own clock</string>
+    <!-- EN: Machine clock -->
+    <string name="machine_clock">Machine clock</string>
+    <!-- EN: GDC clock -->
+    <string name="gdc_clock">GDC clock</string>
+    <!-- EN: CPU speed -->
+    <string name="cpu_speed">CPU speed</string>
+    <!-- %1$.1f is the CPU's speed in megahertz. -->
+    <!-- EN: %1$.1f MHz -->
+    <string name="cpu_mhz">%1$.1f MHz</string>
+    <!-- %1$d is the CPU clock's multiple of the base clock. -->
+    <!-- EN: ×%1$d -->
+    <string name="cpu_multiple">×%1$d</string>
+    <!-- EN: %1$.1f MHz (×%2$d) -->
+    <string name="cpu_mhz_multiple">%1$.1f MHz (×%2$d)</string>
+    <!-- EN: Startup command -->
+    <string name="startup_command">Startup command</string>
+    <!-- EN: DOS command, such as GAME -->
+    <string name="startup_command_hint">DOS command, such as GAME</string>
+    <!-- EN: Startup choices -->
+    <string name="startup_choices">Startup choices</string>
+    <!-- EN: Ask -->
+    <string name="startup_choices_on">Ask</string>
+    <!-- EN: Disk swaps -->
+    <string name="disk_swaps">Disk swaps</string>
+    <!-- EN: Automatic -->
+    <string name="disk_swaps_on">Automatic</string>
+</resources>
