@@ -413,9 +413,9 @@ class MainActivity : MachineActivity<DiskImageEntry>() {
         val boot = if (entry.isCd) cdBootDiskFor(this, entry, game.bootDiskId, sources) else entry
         val media = bootMediaFor(this, boot, sources, game.requiredBootFloppyId)
         val swapSources = game.diskSwaps.associate { rule ->
-            rule.contentId to requiredFloppyFor(this, rule.contentId, entry, sources)
+            rule.contentId to requiredFloppyFor(rule.contentId, entry, sources)
         }
-        val floppyB = game.initialFloppyBId?.let { id -> requiredFloppyFor(this, id, entry, sources) }
+        val floppyB = game.initialFloppyBId?.let { id -> requiredFloppyFor(id, entry, sources) }
         val primary = media?.hardDisk ?: boot
         nativeSkipMemoryCheck(preferences.getBoolean(SKIP_MEMORY_CHECK, true))
         val disk = disks.prepare(primary, cancelled, progress)
