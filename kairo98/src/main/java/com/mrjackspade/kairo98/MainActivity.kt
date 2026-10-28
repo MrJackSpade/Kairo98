@@ -1,5 +1,12 @@
 package com.mrjackspade.kairo98
 
+
+import android.content.Intent
+import android.net.Uri
+import android.os.Bundle
+import android.provider.OpenableColumns
+import android.view.KeyEvent
+import android.view.Surface
 import com.mrjackspade.kairo.frontend.ButtonTone
 import com.mrjackspade.kairo.frontend.CatalogGame
 import com.mrjackspade.kairo.frontend.CatalogSetting
@@ -28,8 +35,11 @@ import com.mrjackspade.kairo.frontend.LibraryStrings
 import com.mrjackspade.kairo.frontend.MachineActivity
 import com.mrjackspade.kairo.frontend.MachineBridge
 import com.mrjackspade.kairo.frontend.MachineFirstRun
+import com.mrjackspade.kairo.frontend.R as FrontendR
 import com.mrjackspade.kairo.frontend.RowGroup
+import com.mrjackspade.kairo.frontend.ScanDepth
 import com.mrjackspade.kairo.frontend.SettingsRow
+import com.mrjackspade.kairo.frontend.ShippedAssets
 import com.mrjackspade.kairo.frontend.StateSlotStore
 import com.mrjackspade.kairo.frontend.TrayButton
 import com.mrjackspade.kairo.frontend.TraySpec
@@ -37,19 +47,8 @@ import com.mrjackspade.kairo.frontend.UiText
 import com.mrjackspade.kairo.frontend.ValueTone
 import com.mrjackspade.kairo.frontend.sameSource
 import com.mrjackspade.kairo.frontend.text
-import com.mrjackspade.kairo.frontend.R as FrontendR
-
-import android.content.Intent
-import android.net.Uri
-import android.os.Bundle
-import android.provider.OpenableColumns
-import android.view.KeyEvent
-import android.view.Surface
-import com.mrjackspade.kairo.frontend.ScanDepth
 import java.io.File
 import org.json.JSONArray
-import java.nio.file.Files
-import java.nio.file.StandardCopyOption
 import java.util.concurrent.atomic.AtomicBoolean
 
 /** Kairo98: the PC-98 on Neko Project 21/W, in the shared Kairo frontend. */
@@ -1105,16 +1104,7 @@ class MainActivity : MachineActivity<DiskImageEntry>() {
     /** The bundled Kairo98 font, written out of the app's assets when it is not already. */
     private fun bundledFont(): String {
         val bundled = File(filesDir, BUNDLED_FONT)
-        val data = assets.open("font/$BUNDLED_FONT").use { it.readBytes() }
-        if (!bundled.isFile || bundled.length() != data.size.toLong() || !bundled.readBytes().contentEquals(data)) {
-            val partial = File(filesDir, "$BUNDLED_FONT.part")
-            try {
-                partial.writeBytes(data)
-                Files.move(partial.toPath(), bundled.toPath(), StandardCopyOption.REPLACE_EXISTING)
-            } finally {
-                partial.delete()
-            }
-        }
+        ShippedAssets.install(this, "font/$BUNDLED_FONT", bundled)
         File(filesDir, "android-font.bin").delete()
         return bundled.absolutePath
     }
