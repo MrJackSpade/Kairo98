@@ -25,8 +25,19 @@ GENERATED_FILES = (
     "catalog/core-v3.json",
     "kairo98/src/main/assets/catalog/manifest-v1.json",
     "kairo98/src/main/assets/catalog/name-index-v1.json",
+    "catalog/core-v3.meta.json",
+    "catalog/core-v4.zip",
+    "catalog/core-v4.meta.json",
 )
 SHARDS = "kairo98/src/main/assets/catalog/shards/"
+# Each language's descriptions: a bundled document and an update archive of their own.
+LANGUAGE_FILES = tuple(path for language in ("es", "pt-BR", "de", "ru", "ja", "ko", "ar", "id") for path in (
+    f"kairo98/src/main/assets/catalog/descriptions/{language}.json",
+    f"catalog/core-v4-{language}.zip", f"catalog/core-v4-{language}.meta.json"))
+# The system's definition, which build_catalog_packages writes and the update archive packs.
+SYSTEM = "kairo98/src/main/assets/catalog/system-v1.json"
+# The base records, a fixed document the update archive also packs.
+BASE = "kairo98/src/main/assets/catalog/base-v1.json"
 BUILDERS = {
     "tools/build_review_catalog.py",
     "tools/build_catalog.py",
@@ -52,7 +63,7 @@ def staged(path):
 def main():
     changed = {name.decode("utf-8") for name in
                git("diff", "--cached", "--name-only", "-z").split(b"\0") if name}
-    watched = set(SOURCE_FILES) | set(TRANSLATIONS) | set(GENERATED_FILES) | BUILDERS
+    watched = set(SOURCE_FILES) | set(TRANSLATIONS) | set(GENERATED_FILES) | set(LANGUAGE_FILES) | {SYSTEM, BASE} | BUILDERS
     watched.update(name.decode("utf-8") for name in git("ls-files", "--cached", "-z", "--", "catalog/parts/", "catalog/artwork-exclusions-v1.json", "catalog/optional/kairo98-art.nsfw.meta.json").split(b"\0") if name)
     if "--all" not in sys.argv[1:] and not any(
             path in watched or path.startswith(SHARDS) for path in changed):
@@ -68,7 +79,7 @@ def main():
 
     with tempfile.TemporaryDirectory(prefix="kairo98-catalog-check-") as directory:
         work = Path(directory)
-        for path in (*SOURCE_FILES, GENERATED_FILES[3]):
+        for path in (*SOURCE_FILES, GENERATED_FILES[3], SYSTEM, BASE):
             content = staged(path)
             if content is None:
                 print(f"Missing staged catalog input: {path}", file=sys.stderr)
@@ -87,11 +98,11 @@ def main():
                         "--reuse-art"), cwd=ROOT, check=True, stdout=subprocess.DEVNULL)
         subprocess.run((sys.executable, str(ROOT / "tools/build_online_catalog.py"),
                         str(work / GENERATED_FILES[0]),
-                        str(work / GENERATED_FILES[3]),
-                        str(work / GENERATED_FILES[1])), cwd=ROOT, check=True,
+                        str(work / "kairo98/src/main/assets/catalog"),
+                        str(work / "catalog")), cwd=ROOT, check=True,
                        stdout=subprocess.DEVNULL)
 
-        expected = set(GENERATED_FILES) | {"catalog/excluded-ids-v1.json"}
+        expected = set(GENERATED_FILES) | set(LANGUAGE_FILES) | {"catalog/excluded-ids-v1.json"}
         expected.update(path.relative_to(work).as_posix()
                         for path in (work / SHARDS).glob("*.json"))
         tracked_shards = {name.decode("utf-8") for name in

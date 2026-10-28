@@ -17,6 +17,7 @@ import sys
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "shared/tools"))
 from catalog_package import build_package, image_paths, filter_artwork
 from catalog_languages import LANGUAGES
+import catalog_documents
 
 
 def lookup_name(value):
@@ -102,8 +103,6 @@ def generate(matches_path, gallery, assets, art_assets, ffmpeg, quality, reuse_a
         description = descriptions.get(key, entry.get("description"))
         if description:
             metadata["description"] = description
-        if key in translations:
-            metadata["descriptions"] = translations[key]
         if entry.get("aliases"):
             metadata["aliases"] = entry["aliases"]
         metadata = reviewed_display(metadata, display_review, key)
@@ -234,6 +233,16 @@ def generate(matches_path, gallery, assets, art_assets, ffmpeg, quality, reuse_a
         (shards_dir / f"{prefix}.json").write_bytes(compact({"schemaVersion": 1, "games": games}))
     for stale in shards_dir.glob("*.json"):
         if stale.stem not in shards:
+            stale.unlink()
+    # Each language's descriptions in a document of its own (shared catalog_documents), read only
+    # for the device's language.
+    descriptions_dir = catalog / "descriptions"
+    language_documents = catalog_documents.translation_documents(translations)
+    descriptions_dir.mkdir(parents=True, exist_ok=True)
+    for name, document in language_documents.items():
+        (catalog / name).write_bytes(compact(document))
+    for stale in descriptions_dir.glob("*.json"):
+        if f"descriptions/{stale.name}" not in language_documents:
             stale.unlink()
     (catalog / "manifest-v1.json").write_bytes(compact(manifest))
     (catalog / "name-index-v1.json").write_bytes(compact({"schemaVersion": 1,

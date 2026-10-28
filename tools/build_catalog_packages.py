@@ -19,8 +19,6 @@ from app_catalog import validate_system
 
 def generate():
     subprocess.run([sys.executable,str(ROOT/'tools/build_review_catalog.py'),'--reuse-art'],cwd=ROOT,check=True)
-    subprocess.run([sys.executable,str(ROOT/'tools/build_online_catalog.py'),'catalog/source-v1.json',
-        'kairo98/src/main/assets/catalog/name-index-v1.json','catalog/core-v3.json'],cwd=ROOT,check=True)
     policy=json.loads((ROOT/'catalog/core-review-v1.json').read_text('utf8'))
     art_root=ROOT/'catalog/artwork'
     for path,sha in policy['approvedArtwork'].items():
@@ -37,6 +35,9 @@ def generate():
     system = json.loads((ROOT/'catalog/system-v1.json').read_text('utf8'))
     validate_system(system)
     (assets/'system-v1.json').write_text(json.dumps(system,separators=(',',':')),'utf8')
+    # The update archives pack the bundled documents, the system's definition among them.
+    subprocess.run([sys.executable,str(ROOT/'tools/build_online_catalog.py'),'catalog/source-v1.json',
+        'kairo98/src/main/assets/catalog','catalog'],cwd=ROOT,check=True)
     documents = {p.relative_to(assets).as_posix():json.loads(p.read_text('utf8')) for p in assets.rglob('*.json')}
     documents['name-index-v1.json'] = full['nameIndex']
     for name, document in documents.items():
