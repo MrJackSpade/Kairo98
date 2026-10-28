@@ -95,10 +95,10 @@ class MainActivity : MachineActivity<DiskImageEntry>() {
 
     override val identity = Identity("KAIRO98", 0xffF91CB6.toInt(), "Kairo98", "PC-98", "kairo98", LibraryStrings("KAIRO98", "Kairo98"),
         UiText.res(R.string.credits, "Kairo98", "Neko Project 21/W", "ymfm", "MrJackSpade/Kairo98"),
-        UiText.res(R.string.library_empty), UiText.res(R.string.library_expired),
-        MachineFirstRun.Folder(UiText.res(R.string.folder_title), UiText.res(R.string.folder_description, "PC-98", "Kairo98"),
-            UiText.res(R.string.folder_button)),
-        UiText.res(R.string.saves_group), "MrJackSpade/Kairo98")
+        UiText.res(R.string.library_empty), UiText.res(FrontendR.string.kairo_library_expired),
+        MachineFirstRun.Folder(UiText.res(FrontendR.string.kairo_folder_title), UiText.res(R.string.folder_description, "PC-98", "Kairo98"),
+            UiText.res(FrontendR.string.kairo_folder_button)),
+        UiText.res(FrontendR.string.kairo_saves_group), "MrJackSpade/Kairo98")
     override val machine = Machine(640, 400, 640.0 / 400.0, "state.np2")
 
     /** The 21/W machine. Its status line is "<state>[: error] | frames N | CS:IP | audio | xruns | config | profile". */
@@ -487,8 +487,8 @@ class MainActivity : MachineActivity<DiskImageEntry>() {
 
     override fun sessionDetails() = listOfNotNull(when {
         currentEntry == null -> null
-        currentIsFloppy -> getString(R.string.floppy_disk)
-        else -> getString(R.string.hard_disk)
+        currentIsFloppy -> getString(FrontendR.string.kairo_floppy_disk)
+        else -> getString(FrontendR.string.kairo_hard_disk)
     })
 
     override fun diagnosticsRows(running: Boolean): List<SettingsRow> {
@@ -710,7 +710,7 @@ class MainActivity : MachineActivity<DiskImageEntry>() {
     /** Disks: the hard disk, which asks first because it ends the game, both floppy drives, and the CD-ROM. */
     private fun disksPage() = GroupsPage(getString(FrontendR.string.kairo_media_disks), { currentGame?.title }, {
         listOf(RowGroup(getString(FrontendR.string.kairo_media_drives_group), listOf(
-            SettingsRow.action("hdd", getString(R.string.hard_disk),
+            SettingsRow.action("hdd", getString(FrontendR.string.kairo_hard_disk),
                 value = { if (currentIsFloppy) empty() else currentEntry?.displayName ?: empty() },
                 tone = { if (currentEntry == null || currentIsFloppy) ValueTone.EMPTY else ValueTone.CURRENT },
                 tray = {
@@ -725,7 +725,7 @@ class MainActivity : MachineActivity<DiskImageEntry>() {
 
     private fun empty() = getString(FrontendR.string.kairo_empty)
 
-    private fun cdRow() = SettingsRow.choice("cd", getString(R.string.cd_rom), cdChoice(),
+    private fun cdRow() = SettingsRow.choice("cd", getString(FrontendR.string.kairo_cd_rom), cdChoice(),
         value = { mountedCd ?: empty() },
         tone = { if (mountedCd == null) ValueTone.EMPTY else ValueTone.CURRENT },
         enabled = { machineRunning && !floppyBusy },
@@ -740,7 +740,7 @@ class MainActivity : MachineActivity<DiskImageEntry>() {
                 entry.playable && entry.isCd && (catalog.matchId(entry) == named || sameSource(current, entry))
             }.distinctBy { it.contentId }
         }
-        return ChoiceSpec(getString(R.string.cd_rom), { currentGame?.title }, {
+        return ChoiceSpec(getString(FrontendR.string.kairo_cd_rom), { currentGame?.title }, {
             val found = candidates()
             listOfNotNull(ChoiceGroup(null, listOf(ChoiceOption("empty", UiText.res(FrontendR.string.kairo_empty))),
                 if (found.isEmpty()) getString(R.string.cd_none_for_game) else null),
@@ -767,7 +767,7 @@ class MainActivity : MachineActivity<DiskImageEntry>() {
             runOnUiThread {
                 endFloppyChange()
                 if (result == null) mountedCd = entry?.displayName
-                toast(result ?: getString(FrontendR.string.kairo_media_changed, getString(R.string.cd_rom),
+                toast(result ?: getString(FrontendR.string.kairo_media_changed, getString(FrontendR.string.kairo_cd_rom),
                     entry?.displayName ?: empty()))
                 pages.refresh()
             }
@@ -867,7 +867,7 @@ class MainActivity : MachineActivity<DiskImageEntry>() {
 
     /** The PC-98's optional firmware, on the shared firmware rows; Kairo98 has a replacement for each. */
     override val firmwareSets by lazy {
-        fun description(name: String, what: UiText) = UiText.res(R.string.firmware_part, name, what)
+        fun description(name: String, what: UiText) = UiText.res(FrontendR.string.kairo_firmware_part, name, what)
         listOf(UiText.res(FrontendR.string.kairo_firmware_title, "PC-98") to FirmwareSet(firmwareDir(), listOf(
             FirmwareSet.Part("bios.rom", UiText.fixed("BIOS"),
                 description("bios.rom", UiText.res(R.string.firmware_bios_description, "PC-98", "Kairo98")),
@@ -901,7 +901,7 @@ class MainActivity : MachineActivity<DiskImageEntry>() {
     })
 
     /** A clock choice: [id] in tenths of a MHz, shown as [mhz] MHz. */
-    private fun mhz(id: String, mhz: String) = ChoiceOption(id, UiText.res(R.string.clock_mhz, mhz))
+    private fun mhz(id: String, mhz: String) = ChoiceOption(id, UiText.res(FrontendR.string.kairo_clock_mhz, mhz))
 
     private fun setBaseClock(selected: Int) {
         if (clock == selected) return

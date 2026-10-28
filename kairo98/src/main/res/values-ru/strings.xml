@@ -6,38 +6,17 @@
     <string name="credits">%1$s использует %2$s и %3$s. Исходный код и происхождение: github.com/%4$s.</string>
     <!-- EN: Choose a games folder to find disk images and the ZIP and 7z archives holding them -->
     <string name="library_empty">Выберите папку с играми, чтобы найти образы дисков и содержащие их архивы ZIP и 7z</string>
-    <!-- EN: Folder access expired. Select the games folder again. -->
-    <string name="library_expired">Доступ к папке истек. Выберите папку с играми снова.</string>
-    <!-- EN: Choose a games folder -->
-    <string name="folder_title">Выберите папку с играми</string>
     <!-- %1$s is the machine's name, PC-98; %2$s the app's name, Kairo98. -->
     <!-- EN: Select the folder containing your %1$s games. %2$s will scan its disk images and the ZIP and 7z archives holding them. -->
     <string name="folder_description">Выберите папку с вашими играми для %1$s. %2$s просканирует ее образы дисков и содержащие их архивы ZIP и 7z.</string>
-    <!-- EN: Choose games folder… -->
-    <string name="folder_button">Выбрать папку с играми…</string>
-    <!-- EN: SAVE STATES -->
-    <string name="saves_group">СОХРАНЕННЫЕ СОСТОЯНИЯ</string>
     <!-- EN: Uses the joystick input on the emulated sound board. Games must support joystick 1. -->
     <string name="joystick_help">Использует вход джойстика эмулируемой звуковой карты. Игры должны поддерживать джойстик 1.</string>
     <!-- EN: Button 1 -->
     <string name="joystick_button_1">Кнопка 1</string>
     <!-- EN: Button 2 -->
     <string name="joystick_button_2">Кнопка 2</string>
-    <!-- EN: Symbols -->
-    <string name="keyboard_symbols">Символы</string>
-    <!-- EN: Floppy disk -->
-    <string name="floppy_disk">Дискета</string>
-    <!-- EN: Hard disk -->
-    <string name="hard_disk">Жесткий диск</string>
-    <!-- EN: CD-ROM -->
-    <string name="cd_rom">CD-ROM</string>
-    <!-- The disc a game needs, as "The %1$s this game needs is not in the library" names it. -->
-    <!-- EN: CD -->
-    <string name="companion_cd">CD</string>
     <!-- EN: Boot floppy -->
     <string name="boot_floppy">Загрузочная дискета</string>
-    <!-- EN: Drive 2 -->
-    <string name="drive_2">Дисковод 2</string>
     <!-- EN: Boot disk -->
     <string name="boot_disk">Загрузочный диск</string>
     <!-- A floppy drive: %1$s is its letter, A or B. -->
@@ -82,9 +61,6 @@
     <!-- %2$s says what is wrong with it. -->
     <!-- EN: Game %1$s: %2$s -->
     <string name="game_font_rejected">%1$s игры: %2$s</string>
-    <!-- A firmware file's description: %1$s is its file name; %2$s what it does. -->
-    <!-- EN: %1$s · %2$s -->
-    <string name="firmware_part">%1$s · %2$s</string>
     <!-- %1$s is the machine's name, PC-98; %2$s the app's name, Kairo98. -->
     <!-- EN: the %1$s\'s own BIOS; %2$s has a built-in one -->
     <string name="firmware_bios_description">собственный BIOS %1$s; в %2$s есть встроенный</string>
@@ -215,9 +191,6 @@
     <string name="clock_group">ТАКТОВАЯ ЧАСТОТА</string>
     <!-- EN: Base clock -->
     <string name="base_clock">Базовая частота</string>
-    <!-- %1$s is a clock speed in megahertz, such as 2.5. -->
-    <!-- EN: %1$s MHz -->
-    <string name="clock_mhz">%1$s МГц</string>
     <!-- EN: Changing the base clock restarts a running game. Games with their own clock keep it. -->
     <string name="base_clock_foot">Изменение базовой частоты перезапускает запущенную игру. Игры с собственной частотой сохраняют ее.</string>
     <!-- EN: BOOT -->

@@ -1,5 +1,6 @@
 package com.mrjackspade.kairo98
 
+import com.mrjackspade.kairo.frontend.R as FrontendR
 import com.mrjackspade.kairo.frontend.DiskImageEntry
 import com.mrjackspade.kairo.frontend.DiskImageLibrary
 import com.mrjackspade.kairo.frontend.GameKey
@@ -25,8 +26,8 @@ object Pc98Media {
 
     val format = DiskImageLibrary.Format(
         kinds = floppyExtensions.associateWith { "fd" } + mapOf("hdi" to "hdi", "ccd" to "cd"),
-        labels = mapOf("fd" to UiText.res(R.string.floppy_disk), "cd" to UiText.res(R.string.cd_rom),
-            "hdi" to UiText.res(R.string.hard_disk)),
+        labels = mapOf("fd" to UiText.res(FrontendR.string.kairo_floppy_disk), "cd" to UiText.res(FrontendR.string.kairo_cd_rom),
+            "hdi" to UiText.res(FrontendR.string.kairo_hard_disk)),
         maxBytes = mapOf("fd" to 64L * 1024 * 1024, "cd" to 2L * 1024 * 1024 * 1024, "hdi" to 4L * 1024 * 1024 * 1024),
         guestName = "PC-98",
         data = mapOf("ccd" to listOf("img")))
@@ -141,7 +142,7 @@ fun requiredMediaFor(context: Context, contentId: String, source: DiskImageEntry
  * A CD entry is its own disc.
  */
 fun cdFor(entry: DiskImageEntry, catalogCdId: String?, entries: List<DiskImageEntry>): DiskImageEntry? =
-    if (entry.isCd) entry else companionFor(catalogCdId, entry, entries, UiText.res(R.string.companion_cd)) { it.isCd }
+    if (entry.isCd) entry else companionFor(catalogCdId, entry, entries, UiText.res(FrontendR.string.kairo_companion_cd)) { it.isCd }
 
 /**
  * What a CD boots from: the disk its catalog names, else the one hard disk or floppy beside it.

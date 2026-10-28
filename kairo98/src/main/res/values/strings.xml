@@ -4,25 +4,14 @@
     <!-- %1$s is the app's name, Kairo98; %2$s and %3$s the emulators it runs; %4$s its GitHub repository. -->
     <string name="credits">%1$s uses %2$s and %3$s. Source and provenance: github.com/%4$s.</string>
     <string name="library_empty">Choose a games folder to find disk images and the ZIP and 7z archives holding them</string>
-    <string name="library_expired">Folder access expired. Select the games folder again.</string>
-    <string name="folder_title">Choose a games folder</string>
     <!-- %1$s is the machine's name, PC-98; %2$s the app's name, Kairo98. -->
     <string name="folder_description">Select the folder containing your %1$s games. %2$s will scan its disk images and the ZIP and 7z archives holding them.</string>
-    <string name="folder_button">Choose games folder…</string>
-    <string name="saves_group">SAVE STATES</string>
 
     <string name="joystick_help">Uses the joystick input on the emulated sound board. Games must support joystick 1.</string>
     <string name="joystick_button_1">Button 1</string>
     <string name="joystick_button_2">Button 2</string>
-    <string name="keyboard_symbols">Symbols</string>
 
-    <string name="floppy_disk">Floppy disk</string>
-    <string name="hard_disk">Hard disk</string>
-    <string name="cd_rom">CD-ROM</string>
-    <!-- The disc a game needs, as "The %1$s this game needs is not in the library" names it. -->
-    <string name="companion_cd">CD</string>
     <string name="boot_floppy">Boot floppy</string>
-    <string name="drive_2">Drive 2</string>
     <string name="boot_disk">Boot disk</string>
     <!-- A floppy drive: %1$s is its letter, A or B. -->
     <string name="floppy_drive">Floppy %1$s</string>
@@ -49,8 +38,6 @@
     <!-- %2$s says what is wrong with it. -->
     <string name="game_font_rejected">Game %1$s: %2$s</string>
 
-    <!-- A firmware file's description: %1$s is its file name; %2$s what it does. -->
-    <string name="firmware_part">%1$s · %2$s</string>
     <!-- %1$s is the machine's name, PC-98; %2$s the app's name, Kairo98. -->
     <string name="firmware_bios_description">the %1$s\'s own BIOS; %2$s has a built-in one</string>
     <!-- %1$s is the app's name, Kairo98. -->
@@ -130,8 +117,6 @@
 
     <string name="clock_group">CLOCK</string>
     <string name="base_clock">Base clock</string>
-    <!-- %1$s is a clock speed in megahertz, such as 2.5. -->
-    <string name="clock_mhz">%1$s MHz</string>
     <string name="base_clock_foot">Changing the base clock restarts a running game. Games with their own clock keep it.</string>
     <string name="boot_group">BOOT</string>
     <string name="clock_reset">Clock change resets the machine</string>

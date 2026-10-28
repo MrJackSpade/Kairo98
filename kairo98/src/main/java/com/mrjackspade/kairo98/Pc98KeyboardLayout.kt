@@ -1,5 +1,6 @@
 package com.mrjackspade.kairo98
 
+import com.mrjackspade.kairo.frontend.R as FrontendR
 import com.mrjackspade.kairo.frontend.GuestKeyboardLayout
 import com.mrjackspade.kairo.frontend.JisKana
 import com.mrjackspade.kairo.frontend.GuestKeyboardPage
@@ -13,7 +14,7 @@ internal object Pc98KeyboardLayout {
         brand = "KAIRO98",
         pages = listOf(
             GuestKeyboardPage("ABC", alphabetRows()),
-            GuestKeyboardPage("?123", symbolRows(), pickerLabel = UiText.res(R.string.keyboard_symbols)),
+            GuestKeyboardPage("?123", symbolRows(), pickerLabel = UiText.res(FrontendR.string.kairo_keyboard_symbols)),
             GuestKeyboardPage("PC-98", pc98Rows())
         ),
         modifiers = setOf(0x70, 0x7d, 0x71, 0x72, 0x73, 0x74),

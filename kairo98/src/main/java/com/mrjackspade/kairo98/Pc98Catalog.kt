@@ -1,5 +1,6 @@
 package com.mrjackspade.kairo98
 
+import com.mrjackspade.kairo.frontend.R as FrontendR
 import com.mrjackspade.kairo.frontend.CatalogGame
 import com.mrjackspade.kairo.frontend.CatalogSetting
 import com.mrjackspade.kairo.frontend.ChoiceOption
@@ -59,8 +60,8 @@ object Pc98Catalog : LayeredGameCatalog.Schema {
         CatalogSetting.Custom(CHOICES, "startupChoices", null),
         CatalogSetting.Custom(SWAPS, "diskSwaps", null),
         CatalogSetting.Drive("bootFloppy", UiText.res(R.string.boot_floppy)) { !it.startsWith(CD) },
-        CatalogSetting.Drive("floppyB", UiText.res(R.string.drive_2)),
-        CatalogSetting.Drive("cd", UiText.res(R.string.cd_rom)),
+        CatalogSetting.Drive("floppyB", UiText.res(FrontendR.string.kairo_drive_2)),
+        CatalogSetting.Drive("cd", UiText.res(FrontendR.string.kairo_cd_rom)),
         CatalogSetting.Drive("bootDisk", UiText.res(R.string.boot_disk)) { it.startsWith(CD) })
     override val fields = CatalogSetting.fields(settings)
     override val directTouch = true

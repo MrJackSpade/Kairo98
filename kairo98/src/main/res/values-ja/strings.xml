@@ -6,38 +6,17 @@
     <string name="credits">%1$s は %2$s と %3$s を使用しています。ソースと出典: github.com/%4$s</string>
     <!-- EN: Choose a games folder to find disk images and the ZIP and 7z archives holding them -->
     <string name="library_empty">ゲームフォルダを選択して、ディスクイメージとそれを含む ZIP・7z アーカイブを探します</string>
-    <!-- EN: Folder access expired. Select the games folder again. -->
-    <string name="library_expired">フォルダへのアクセス期限が切れました。ゲームフォルダを選択し直してください。</string>
-    <!-- EN: Choose a games folder -->
-    <string name="folder_title">ゲームフォルダを選択</string>
     <!-- %1$s is the machine's name, PC-98; %2$s the app's name, Kairo98. -->
     <!-- EN: Select the folder containing your %1$s games. %2$s will scan its disk images and the ZIP and 7z archives holding them. -->
     <string name="folder_description">%1$s のゲームが入っているフォルダを選択してください。%2$s がディスクイメージとそれを含む ZIP・7z アーカイブをスキャンします。</string>
-    <!-- EN: Choose games folder… -->
-    <string name="folder_button">ゲームフォルダを選択…</string>
-    <!-- EN: SAVE STATES -->
-    <string name="saves_group">ステートセーブ</string>
     <!-- EN: Uses the joystick input on the emulated sound board. Games must support joystick 1. -->
     <string name="joystick_help">エミュレートされたサウンドボードのジョイスティック入力を使用します。ゲームがジョイスティック1に対応している必要があります。</string>
     <!-- EN: Button 1 -->
     <string name="joystick_button_1">ボタン1</string>
     <!-- EN: Button 2 -->
     <string name="joystick_button_2">ボタン2</string>
-    <!-- EN: Symbols -->
-    <string name="keyboard_symbols">記号</string>
-    <!-- EN: Floppy disk -->
-    <string name="floppy_disk">フロッピーディスク</string>
-    <!-- EN: Hard disk -->
-    <string name="hard_disk">ハードディスク</string>
-    <!-- EN: CD-ROM -->
-    <string name="cd_rom">CD-ROM</string>
-    <!-- The disc a game needs, as "The %1$s this game needs is not in the library" names it. -->
-    <!-- EN: CD -->
-    <string name="companion_cd">CD</string>
     <!-- EN: Boot floppy -->
     <string name="boot_floppy">起動フロッピー</string>
-    <!-- EN: Drive 2 -->
-    <string name="drive_2">ドライブ2</string>
     <!-- EN: Boot disk -->
     <string name="boot_disk">起動ディスク</string>
     <!-- A floppy drive: %1$s is its letter, A or B. -->
@@ -82,9 +61,6 @@
     <!-- %2$s says what is wrong with it. -->
     <!-- EN: Game %1$s: %2$s -->
     <string name="game_font_rejected">ゲームの %1$s: %2$s</string>
-    <!-- A firmware file's description: %1$s is its file name; %2$s what it does. -->
-    <!-- EN: %1$s · %2$s -->
-    <string name="firmware_part">%1$s · %2$s</string>
     <!-- %1$s is the machine's name, PC-98; %2$s the app's name, Kairo98. -->
     <!-- EN: the %1$s\'s own BIOS; %2$s has a built-in one -->
     <string name="firmware_bios_description">%1$s 本体の BIOS（%2$s には内蔵版があります）</string>
@@ -215,9 +191,6 @@
     <string name="clock_group">クロック</string>
     <!-- EN: Base clock -->
     <string name="base_clock">ベースクロック</string>
-    <!-- %1$s is a clock speed in megahertz, such as 2.5. -->
-    <!-- EN: %1$s MHz -->
-    <string name="clock_mhz">%1$s MHz</string>
     <!-- EN: Changing the base clock restarts a running game. Games with their own clock keep it. -->
     <string name="base_clock_foot">ベースクロックを変更すると実行中のゲームは再起動します。独自のクロックを持つゲームはそれを使います。</string>
     <!-- EN: BOOT -->

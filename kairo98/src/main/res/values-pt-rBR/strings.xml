@@ -6,38 +6,17 @@
     <string name="credits">%1$s usa %2$s e %3$s. Código-fonte e procedência: github.com/%4$s.</string>
     <!-- EN: Choose a games folder to find disk images and the ZIP and 7z archives holding them -->
     <string name="library_empty">Escolha uma pasta de jogos para encontrar imagens de disco e os arquivos ZIP e 7z que as contêm</string>
-    <!-- EN: Folder access expired. Select the games folder again. -->
-    <string name="library_expired">O acesso à pasta expirou. Selecione a pasta de jogos de novo.</string>
-    <!-- EN: Choose a games folder -->
-    <string name="folder_title">Escolha uma pasta de jogos</string>
     <!-- %1$s is the machine's name, PC-98; %2$s the app's name, Kairo98. -->
     <!-- EN: Select the folder containing your %1$s games. %2$s will scan its disk images and the ZIP and 7z archives holding them. -->
     <string name="folder_description">Selecione a pasta com seus jogos de %1$s. O %2$s vai verificar as imagens de disco dela e os arquivos ZIP e 7z que as contêm.</string>
-    <!-- EN: Choose games folder… -->
-    <string name="folder_button">Escolher pasta de jogos…</string>
-    <!-- EN: SAVE STATES -->
-    <string name="saves_group">ESTADOS SALVOS</string>
     <!-- EN: Uses the joystick input on the emulated sound board. Games must support joystick 1. -->
     <string name="joystick_help">Usa a entrada de joystick da placa de som emulada. Os jogos precisam ser compatíveis com o joystick 1.</string>
     <!-- EN: Button 1 -->
     <string name="joystick_button_1">Botão 1</string>
     <!-- EN: Button 2 -->
     <string name="joystick_button_2">Botão 2</string>
-    <!-- EN: Symbols -->
-    <string name="keyboard_symbols">Símbolos</string>
-    <!-- EN: Floppy disk -->
-    <string name="floppy_disk">Disquete</string>
-    <!-- EN: Hard disk -->
-    <string name="hard_disk">Disco rígido</string>
-    <!-- EN: CD-ROM -->
-    <string name="cd_rom">CD-ROM</string>
-    <!-- The disc a game needs, as "The %1$s this game needs is not in the library" names it. -->
-    <!-- EN: CD -->
-    <string name="companion_cd">CD</string>
     <!-- EN: Boot floppy -->
     <string name="boot_floppy">Disquete de inicialização</string>
-    <!-- EN: Drive 2 -->
-    <string name="drive_2">Unidade 2</string>
     <!-- EN: Boot disk -->
     <string name="boot_disk">Disco de inicialização</string>
     <!-- A floppy drive: %1$s is its letter, A or B. -->
@@ -82,9 +61,6 @@
     <!-- %2$s says what is wrong with it. -->
     <!-- EN: Game %1$s: %2$s -->
     <string name="game_font_rejected">%1$s do jogo: %2$s</string>
-    <!-- A firmware file's description: %1$s is its file name; %2$s what it does. -->
-    <!-- EN: %1$s · %2$s -->
-    <string name="firmware_part">%1$s · %2$s</string>
     <!-- %1$s is the machine's name, PC-98; %2$s the app's name, Kairo98. -->
     <!-- EN: the %1$s\'s own BIOS; %2$s has a built-in one -->
     <string name="firmware_bios_description">a BIOS própria do %1$s; o %2$s tem uma integrada</string>
@@ -215,9 +191,6 @@
     <string name="clock_group">CLOCK</string>
     <!-- EN: Base clock -->
     <string name="base_clock">Clock base</string>
-    <!-- %1$s is a clock speed in megahertz, such as 2.5. -->
-    <!-- EN: %1$s MHz -->
-    <string name="clock_mhz">%1$s MHz</string>
     <!-- EN: Changing the base clock restarts a running game. Games with their own clock keep it. -->
     <string name="base_clock_foot">Mudar o clock base reinicia o jogo em execução. Jogos com clock próprio o mantêm.</string>
     <!-- EN: BOOT -->

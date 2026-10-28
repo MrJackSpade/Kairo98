@@ -6,38 +6,17 @@
     <string name="credits">%1$s menggunakan %2$s dan %3$s. Sumber dan asal-usul: github.com/%4$s.</string>
     <!-- EN: Choose a games folder to find disk images and the ZIP and 7z archives holding them -->
     <string name="library_empty">Pilih folder game untuk menemukan image disk serta arsip ZIP dan 7z yang berisi image tersebut</string>
-    <!-- EN: Folder access expired. Select the games folder again. -->
-    <string name="library_expired">Akses folder kedaluwarsa. Pilih folder game lagi.</string>
-    <!-- EN: Choose a games folder -->
-    <string name="folder_title">Pilih folder game</string>
     <!-- %1$s is the machine's name, PC-98; %2$s the app's name, Kairo98. -->
     <!-- EN: Select the folder containing your %1$s games. %2$s will scan its disk images and the ZIP and 7z archives holding them. -->
     <string name="folder_description">Pilih folder yang berisi game %1$s Anda. %2$s akan memindai image disk di dalamnya serta arsip ZIP dan 7z yang berisi image tersebut.</string>
-    <!-- EN: Choose games folder… -->
-    <string name="folder_button">Pilih folder game…</string>
-    <!-- EN: SAVE STATES -->
-    <string name="saves_group">STATUS TERSIMPAN</string>
     <!-- EN: Uses the joystick input on the emulated sound board. Games must support joystick 1. -->
     <string name="joystick_help">Menggunakan input joystick pada kartu suara yang diemulasikan. Game harus mendukung joystick 1.</string>
     <!-- EN: Button 1 -->
     <string name="joystick_button_1">Tombol 1</string>
     <!-- EN: Button 2 -->
     <string name="joystick_button_2">Tombol 2</string>
-    <!-- EN: Symbols -->
-    <string name="keyboard_symbols">Simbol</string>
-    <!-- EN: Floppy disk -->
-    <string name="floppy_disk">Disket</string>
-    <!-- EN: Hard disk -->
-    <string name="hard_disk">Hard disk</string>
-    <!-- EN: CD-ROM -->
-    <string name="cd_rom">CD-ROM</string>
-    <!-- The disc a game needs, as "The %1$s this game needs is not in the library" names it. -->
-    <!-- EN: CD -->
-    <string name="companion_cd">CD</string>
     <!-- EN: Boot floppy -->
     <string name="boot_floppy">Disket boot</string>
-    <!-- EN: Drive 2 -->
-    <string name="drive_2">Drive 2</string>
     <!-- EN: Boot disk -->
     <string name="boot_disk">Disk boot</string>
     <!-- A floppy drive: %1$s is its letter, A or B. -->
@@ -82,9 +61,6 @@
     <!-- %2$s says what is wrong with it. -->
     <!-- EN: Game %1$s: %2$s -->
     <string name="game_font_rejected">%1$s game: %2$s</string>
-    <!-- A firmware file's description: %1$s is its file name; %2$s what it does. -->
-    <!-- EN: %1$s · %2$s -->
-    <string name="firmware_part">%1$s · %2$s</string>
     <!-- %1$s is the machine's name, PC-98; %2$s the app's name, Kairo98. -->
     <!-- EN: the %1$s\'s own BIOS; %2$s has a built-in one -->
     <string name="firmware_bios_description">BIOS milik %1$s sendiri; %2$s memiliki versi bawaan</string>
@@ -215,9 +191,6 @@
     <string name="clock_group">CLOCK</string>
     <!-- EN: Base clock -->
     <string name="base_clock">Clock dasar</string>
-    <!-- %1$s is a clock speed in megahertz, such as 2.5. -->
-    <!-- EN: %1$s MHz -->
-    <string name="clock_mhz">%1$s MHz</string>
     <!-- EN: Changing the base clock restarts a running game. Games with their own clock keep it. -->
     <string name="base_clock_foot">Mengubah clock dasar akan memulai ulang game yang berjalan. Game dengan clock sendiri tetap menggunakannya.</string>
     <!-- EN: BOOT -->
