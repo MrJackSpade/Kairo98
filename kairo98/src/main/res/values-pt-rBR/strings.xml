@@ -64,6 +64,12 @@
     <!-- %1$s is the machine's name, PC-98; %2$s the app's name, Kairo98. -->
     <!-- EN: the %1$s\'s own BIOS; %2$s has a built-in one -->
     <string name="firmware_bios_description">a BIOS própria do %1$s; o %2$s tem uma integrada</string>
+    <!-- EN: Built-in BIOS -->
+    <string name="system_built_in_bios">BIOS integrada</string>
+    <!-- EN: Your BIOS -->
+    <string name="system_own_bios">Sua BIOS</string>
+    <!-- EN: This game starts on your own BIOS: import bios.rom in Menu › Machine -->
+    <string name="own_bios_missing">Este jogo inicia com a sua própria BIOS: importe bios.rom em Menu › Máquina</string>
     <!-- %1$s is the app's name, Kairo98. -->
     <!-- EN: the text and kanji font; %1$s has a built-in one -->
     <string name="firmware_font_description">a fonte de texto e kanji; o %1$s tem uma integrada</string>

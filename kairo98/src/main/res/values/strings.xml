@@ -40,6 +40,9 @@
 
     <!-- %1$s is the machine's name, PC-98; %2$s the app's name, Kairo98. -->
     <string name="firmware_bios_description">the %1$s\'s own BIOS; %2$s has a built-in one</string>
+    <string name="system_built_in_bios">Built-in BIOS</string>
+    <string name="system_own_bios">Your BIOS</string>
+    <string name="own_bios_missing">This game starts on your own BIOS: import bios.rom in Menu › Machine</string>
     <!-- %1$s is the app's name, Kairo98. -->
     <string name="firmware_font_description">the text and kanji font; %1$s has a built-in one</string>
     <string name="firmware_rhythm">Rhythm samples</string>

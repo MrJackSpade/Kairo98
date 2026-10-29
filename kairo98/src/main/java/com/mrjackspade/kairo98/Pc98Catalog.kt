@@ -56,11 +56,19 @@ object Pc98Catalog : LayeredGameCatalog.Schema {
             ChoiceOption("20", UiText.res(FrontendR.string.kairo_clock_mhz, "2"))), "25", numeric = true)
     val skipMemoryCheck = MachineOption.skipMemoryCheck()
 
+    const val BUILT_IN_BIOS = "builtin"
+    const val OWN_BIOS = "own"
+    /** The BIOS a game starts on: the built-in one, or the player's bios.rom. */
+    val system = MachineOption("system", UiText.res(FrontendR.string.kairo_option_system),
+        listOf(ChoiceOption(BUILT_IN_BIOS, UiText.res(R.string.system_built_in_bios)),
+            ChoiceOption(OWN_BIOS, UiText.res(R.string.system_own_bios))), BUILT_IN_BIOS, ownFirmware = OWN_BIOS)
+
     /** Each a row of the game's settings: MainActivity.customSettingRow builds the custom ones. */
     override val settings: List<CatalogSetting> = listOf(
         CatalogSetting.Choice(baseClock),
         CatalogSetting.Custom(GDC_CLOCK, "machine", setOf("gdcClockTenthsMHz")),
         CatalogSetting.Custom(CPU, "machine", setOf("cpuMultiple")),
+        CatalogSetting.Choice(system),
         CatalogSetting.Choice(skipMemoryCheck),
         CatalogSetting.Choice(font),
         CatalogSetting.Custom(COMMAND, "launch", setOf("type", "text", "commands", "ready", "timeoutMs", "screenHashes")),
@@ -102,7 +110,7 @@ object Pc98Catalog : LayeredGameCatalog.Schema {
             when (key) {
                 "gdcClockTenthsMHz" -> value.opt(key) is Int && value.optInt(key) in listOf(25, 50)
                 "cpuMultiple" -> value.opt(key) is Int && value.optInt(key) in CPU_MULTIPLES
-                else -> listOf(baseClock, skipMemoryCheck, font).firstOrNull { it.id == key }?.valid(value.opt(key)) == true
+                else -> listOf(system, baseClock, skipMemoryCheck, font).firstOrNull { it.id == key }?.valid(value.opt(key)) == true
             }
         }
         "launch" -> value is JSONObject && value.length() > 0 &&

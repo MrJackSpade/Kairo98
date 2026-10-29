@@ -66,6 +66,7 @@ class MainActivity : MachineActivity<DiskImageEntry>() {
     private external fun nativePause(paused: Boolean)
     private external fun nativeReset()
     private external fun nativeSkipMemoryCheck(skip: Boolean)
+    private external fun nativeOwnBios(own: Boolean)
     private external fun nativeLoadedLocks(): Int
     private external fun nativeKey(scanCode: Int, down: Boolean)
     private external fun nativeMouseMove(dx: Int, dy: Int)
@@ -340,7 +341,13 @@ class MainActivity : MachineActivity<DiskImageEntry>() {
 
     // Font lists the player's fonts too, and imports more (Pc98Catalog.font).
     private val fontOption = Pc98Catalog.font(::fontChoices, ::fontActions)
-    override val machineOptions = listOf(Pc98Catalog.baseClock, Pc98Catalog.skipMemoryCheck, fontOption)
+    override val machineOptions = listOf(Pc98Catalog.system, Pc98Catalog.baseClock, Pc98Catalog.skipMemoryCheck, fontOption)
+
+    /** Your BIOS: the player's bios.rom. A player who imported one keeps starting on it (optionDefault). */
+    override fun ownFirmwareInstalled(option: MachineOption, values: Map<String, String>): Boolean {
+        check(option.id == Pc98Catalog.system.id) { "${option.id} has no firmware of the player's" }
+        return biosFile().isFile
+    }
     private fun fontChoices() = fontFiles.items().map { ChoiceOption(it.id, it.label) }
     private fun fontActions(select: (String) -> Unit) = fontImport.actions(select)
     private var selectedStartup = emptyList<Pair<StartupChoice, StartupOption>>()
@@ -434,6 +441,9 @@ class MainActivity : MachineActivity<DiskImageEntry>() {
         val floppyB = game.initialFloppyBId?.let { id -> requiredFloppyFor(id, entry, sources) }
         val primary = media?.hardDisk ?: boot
         nativeSkipMemoryCheck(optionValue(game, Pc98Catalog.skipMemoryCheck) == "on")
+        val ownBios = optionValue(game, Pc98Catalog.system) == Pc98Catalog.OWN_BIOS
+        check(!ownBios || biosFile().isFile) { getString(R.string.own_bios_missing) }
+        nativeOwnBios(ownBios)
         val disk = disks.prepare(primary, cancelled, progress)
         val bootFloppy = media?.bootFloppy?.let { disks.prepare(it, cancelled, progress) }
         val secondFloppy = floppyB?.let { disks.prepare(it, cancelled, progress) }

@@ -50,6 +50,9 @@ static void apply_gdc_clock(void) {
 static volatile int skip_memory_check = 1;
 
 void kairo98_machine_skip_memory_check(int skip) { skip_memory_check = skip != 0; }
+/* Whether the next start runs the player's bios.rom from the BIOS folder instead of the built-in BIOS. */
+static volatile int own_bios = 0;
+void kairo98_machine_own_bios(int own) { own_bios = own != 0; }
 
 int kairo98_machine_start(const char *image, const char *font_path, const char *bios_dir,
                           int mhz_times_ten, int gdc_mhz_times_ten,
@@ -80,6 +83,7 @@ int kairo98_machine_start(const char *image, const char *font_path, const char *
      * the model they were written for. */
     np2cfg.multiple = (UINT32)cpu_multiple;
     np2cfg.memcheckspeed = skip_memory_check ? 255 : 1;
+    np2cfg.usebios = own_bios ? 1 : 0;
     np2cfg.sasihdd[0][0] = '\0';
     np2cfg.fddfile[0][0] = '\0';
     np2cfg.fddfile[1][0] = '\0';

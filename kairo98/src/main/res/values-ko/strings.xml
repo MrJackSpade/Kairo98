@@ -64,6 +64,12 @@
     <!-- %1$s is the machine's name, PC-98; %2$s the app's name, Kairo98. -->
     <!-- EN: the %1$s\'s own BIOS; %2$s has a built-in one -->
     <string name="firmware_bios_description">%1$s 자체 BIOS(%2$s에 기본 제공 버전 있음)</string>
+    <!-- EN: Built-in BIOS -->
+    <string name="system_built_in_bios">내장 BIOS</string>
+    <!-- EN: Your BIOS -->
+    <string name="system_own_bios">내 BIOS</string>
+    <!-- EN: This game starts on your own BIOS: import bios.rom in Menu › Machine -->
+    <string name="own_bios_missing">이 게임은 내 BIOS로 시작합니다. 메뉴 › 머신에서 bios.rom을 가져오세요</string>
     <!-- %1$s is the app's name, Kairo98. -->
     <!-- EN: the text and kanji font; %1$s has a built-in one -->
     <string name="firmware_font_description">텍스트 및 한자 글꼴(%1$s에 기본 제공 버전 있음)</string>

@@ -38,6 +38,7 @@ extern "C" int kairo98_machine_start(const char *image, const char *font_path,
                                       const char *cd_image);
 extern "C" int kairo98_machine_dos_prompt(void);
 extern "C" void kairo98_machine_skip_memory_check(int skip);
+extern "C" void kairo98_machine_own_bios(int own);
 extern "C" unsigned int kairo98_machine_exec(void);
 extern "C" void kairo98_machine_clock_rates(unsigned int *realclock, unsigned int *hzbase,
                                             unsigned int *clockbase);
@@ -860,6 +861,11 @@ Java_com_mrjackspade_kairo98_MainActivity_nativeReset(JNIEnv *, jobject) {
 extern "C" JNIEXPORT void JNICALL
 Java_com_mrjackspade_kairo98_MainActivity_nativeSkipMemoryCheck(JNIEnv *, jobject, jboolean skip) {
     kairo98_machine_skip_memory_check(skip == JNI_TRUE ? 1 : 0);
+}
+
+extern "C" JNIEXPORT void JNICALL
+Java_com_mrjackspade_kairo98_MainActivity_nativeOwnBios(JNIEnv *, jobject, jboolean own) {
+    kairo98_machine_own_bios(own == JNI_TRUE ? 1 : 0);
 }
 
 extern "C" JNIEXPORT void JNICALL
