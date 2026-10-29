@@ -307,6 +307,13 @@ class MainActivity : MachineActivity<DiskImageEntry>() {
         prepared = PreparedLaunch(fontSource, primary.isFloppy)
     }
 
+    // The DOS prompt of the game's own boot: the same media, with its launch commands not typed
+    // (MachineActivity.startAutomation types none at the prompt), as Kairo#89 asks.
+    override val commandLine = true
+
+    override fun startAtPrompt(entry: DiskImageEntry, game: CatalogGame, cancelled: AtomicBoolean,
+                               progress: (String) -> Unit) = startGame(entry, game, cancelled, progress)
+
     override fun gameStarted(entry: DiskImageEntry, game: CatalogGame) {
         val launched = checkNotNull(prepared) { "The launch prepared no media" }
         prepared = null
