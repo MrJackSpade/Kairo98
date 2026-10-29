@@ -23,8 +23,6 @@
     <!-- EN: Floppy %1$s -->
     <string name="floppy_drive">Дискета %1$s</string>
     <!-- Names a picked floppy image in import errors, such as "Floppy is too large". -->
-    <!-- EN: Floppy -->
-    <string name="floppy">Дискета</string>
     <!-- EN: Font -->
     <string name="option_font">Шрифт</string>
     <!-- EN: Game folder -->
@@ -87,8 +85,6 @@
     <string name="play_manually">Играть вручную</string>
     <!-- EN: Unable to start machine -->
     <string name="start_failed">Не удалось запустить машину</string>
-    <!-- EN: Machine startup timed out -->
-    <string name="start_timed_out">Время запуска машины истекло</string>
     <!-- The content ID's first characters name the disk. -->
     <!-- EN: Required floppy %1$s is missing from the library -->
     <string name="required_floppy_missing">Нужная дискета %1$s отсутствует в библиотеке</string>
@@ -103,25 +99,7 @@
     <string name="hard_disk_missing">Подходящий жесткий диск отсутствует в библиотеке</string>
     <!-- EN: Matching hard disk is missing or ambiguous in this archive -->
     <string name="hard_disk_missing_in_archive">Подходящий жесткий диск отсутствует в этом архиве или неоднозначен</string>
-    <!-- EN: machine not running -->
-    <string name="state_error_not_running">машина не запущена</string>
-    <!-- EN: state is missing or from another version -->
-    <string name="state_error_missing">состояние отсутствует или от другой версии</string>
-    <!-- EN: storage unavailable -->
-    <string name="state_error_storage">хранилище недоступно</string>
-    <!-- EN: disk image copy failed -->
-    <string name="state_error_disk_copy">ошибка копирования образа диска</string>
-    <!-- EN: state file unreadable -->
-    <string name="state_error_unreadable">файл состояния не читается</string>
-    <!-- EN: machine did not respond -->
-    <string name="state_error_no_response">машина не ответила</string>
-    <!-- EN: the game\'s save path is too long -->
-    <string name="state_error_path_too_long">путь сохранения игры слишком длинный</string>
     <!-- %1$d is the emulator's error code. -->
-    <!-- EN: code %1$d -->
-    <string name="state_error_code">код %1$d</string>
-    <!-- EN: Audio profile -->
-    <string name="diagnostics_audio_profile">Профиль звука</string>
     <!-- What the startup typer is waiting for: %1$d is the command's number; %2$s the command. -->
     <!-- EN: Launch command %1$d: %2$s -->
     <string name="startup_step_command">Команда запуска %1$d: %2$s</string>
@@ -154,45 +132,11 @@
     <string name="continue_manually">Продолжить вручную</string>
     <!-- EN: Choose floppy -->
     <string name="choose_floppy">Выбрать дискету</string>
-    <!-- EN: Starting another disk image ends this game. Progress since your last save is lost. -->
-    <string name="hard_disk_change_warning">Запуск другого образа диска завершит эту игру. Прогресс с момента последнего сохранения будет потерян.</string>
-    <!-- EN: Start a game before inserting a CD -->
-    <string name="cd_start_first">Запустите игру, прежде чем вставлять CD</string>
-    <!-- EN: No CDs for this game in the library. -->
-    <string name="cd_none_for_game">В библиотеке нет CD для этой игры.</string>
-    <!-- EN: FOR THIS GAME -->
-    <string name="for_this_game">ДЛЯ ЭТОЙ ИГРЫ</string>
-    <!-- EN: Ejecting CD… -->
-    <string name="cd_ejecting">Извлечение CD…</string>
     <!-- %1$s is the disk image's name. -->
-    <!-- EN: Preparing %1$s… -->
-    <string name="disk_preparing">Подготовка %1$s…</string>
-    <!-- EN: CD could not be mounted -->
-    <string name="cd_mount_failed">Не удалось подключить CD</string>
-    <!-- EN: CD change failed -->
-    <string name="cd_change_failed">Ошибка смены CD</string>
-    <!-- EN: Wait for the floppy change to finish -->
-    <string name="floppy_wait">Дождитесь завершения смены дискеты</string>
-    <!-- EN: Start a game before inserting a floppy -->
-    <string name="floppy_start_first">Запустите игру, прежде чем вставлять дискету</string>
     <!-- %1$s is the floppy drive's letter. -->
-    <!-- EN: Ejecting floppy %1$s… -->
-    <string name="floppy_ejecting">Извлечение дискеты %1$s…</string>
     <!-- EN: Floppy could not be mounted -->
     <string name="floppy_mount_failed">Не удалось подключить дискету</string>
-    <!-- EN: Floppy change failed -->
-    <string name="floppy_change_failed">Ошибка смены дискеты</string>
     <!-- %1$s is the picked file's name. -->
-    <!-- EN: Importing %1$s… -->
-    <string name="floppy_importing">Импорт %1$s…</string>
-    <!-- EN: Floppy import failed -->
-    <string name="floppy_import_failed">Ошибка импорта дискеты</string>
-    <!-- EN: Could not read selected file -->
-    <string name="file_unreadable">Не удалось прочитать выбранный файл</string>
-    <!-- EN: Select a supported floppy image -->
-    <string name="select_floppy_image">Выберите поддерживаемый образ дискеты</string>
-    <!-- EN: Select a supported disk image -->
-    <string name="select_disk_image">Выберите поддерживаемый образ диска</string>
     <!-- EN: Base clock -->
     <string name="base_clock">Базовая частота</string>
     <!-- EN: GDC clock -->

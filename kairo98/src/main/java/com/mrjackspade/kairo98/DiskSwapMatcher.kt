@@ -1,8 +1,11 @@
 package com.mrjackspade.kairo98
 
-/** Watches complete guest frames; a prompt must disappear before it can trigger again. */
+/**
+ * Watches the screen the guest shows, by its [signature] (null when no machine runs), every 100 ms;
+ * a prompt must disappear before it can trigger again.
+ */
 class DiskSwapMatcher(
-    private val snapshot: () -> LongArray,
+    private val signature: () -> Long?,
     private val running: () -> Boolean,
     private val cancelled: () -> Boolean,
     private val swap: (DiskSwap) -> Unit
@@ -11,13 +14,9 @@ class DiskSwapMatcher(
         if (rules.isEmpty()) return
         val armed = BooleanArray(rules.size) { true }
         val misses = IntArray(rules.size)
-        var lastSerial = snapshot().getOrNull(0) ?: 0L
         while (!cancelled()) {
-            val sample = snapshot()
-            val serial = sample.getOrNull(0) ?: 0L
-            if (running() && serial > lastSerial) {
-                lastSerial = serial
-                val hash = sample.getOrNull(1)
+            val hash = signature()
+            if (hash != null && running()) {
                 for ((index, rule) in rules.withIndex()) {
                     if (hash in rule.screenHashes) {
                         misses[index] = 0

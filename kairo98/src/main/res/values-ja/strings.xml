@@ -23,8 +23,6 @@
     <!-- EN: Floppy %1$s -->
     <string name="floppy_drive">フロッピー %1$s</string>
     <!-- Names a picked floppy image in import errors, such as "Floppy is too large". -->
-    <!-- EN: Floppy -->
-    <string name="floppy">フロッピー</string>
     <!-- EN: Font -->
     <string name="option_font">フォント</string>
     <!-- EN: Game folder -->
@@ -87,8 +85,6 @@
     <string name="play_manually">手動でプレイ</string>
     <!-- EN: Unable to start machine -->
     <string name="start_failed">マシンを起動できません</string>
-    <!-- EN: Machine startup timed out -->
-    <string name="start_timed_out">マシンの起動がタイムアウトしました</string>
     <!-- The content ID's first characters name the disk. -->
     <!-- EN: Required floppy %1$s is missing from the library -->
     <string name="required_floppy_missing">必要なフロッピー %1$s がライブラリにありません</string>
@@ -103,25 +99,7 @@
     <string name="hard_disk_missing">対応するハードディスクがライブラリにありません</string>
     <!-- EN: Matching hard disk is missing or ambiguous in this archive -->
     <string name="hard_disk_missing_in_archive">このアーカイブに対応するハードディスクがないか、特定できません</string>
-    <!-- EN: machine not running -->
-    <string name="state_error_not_running">マシンが動作していません</string>
-    <!-- EN: state is missing or from another version -->
-    <string name="state_error_missing">ステートがないか、別のバージョンのものです</string>
-    <!-- EN: storage unavailable -->
-    <string name="state_error_storage">ストレージを使用できません</string>
-    <!-- EN: disk image copy failed -->
-    <string name="state_error_disk_copy">ディスクイメージのコピーに失敗しました</string>
-    <!-- EN: state file unreadable -->
-    <string name="state_error_unreadable">ステートファイルを読み込めません</string>
-    <!-- EN: machine did not respond -->
-    <string name="state_error_no_response">マシンが応答しませんでした</string>
-    <!-- EN: the game\'s save path is too long -->
-    <string name="state_error_path_too_long">ゲームのセーブパスが長すぎます</string>
     <!-- %1$d is the emulator's error code. -->
-    <!-- EN: code %1$d -->
-    <string name="state_error_code">コード %1$d</string>
-    <!-- EN: Audio profile -->
-    <string name="diagnostics_audio_profile">オーディオプロファイル</string>
     <!-- What the startup typer is waiting for: %1$d is the command's number; %2$s the command. -->
     <!-- EN: Launch command %1$d: %2$s -->
     <string name="startup_step_command">起動コマンド %1$d: %2$s</string>
@@ -154,45 +132,11 @@
     <string name="continue_manually">手動で続行</string>
     <!-- EN: Choose floppy -->
     <string name="choose_floppy">フロッピーを選択</string>
-    <!-- EN: Starting another disk image ends this game. Progress since your last save is lost. -->
-    <string name="hard_disk_change_warning">別のディスクイメージを起動するとこのゲームは終了します。最後にセーブしてからの進行状況は失われます。</string>
-    <!-- EN: Start a game before inserting a CD -->
-    <string name="cd_start_first">CD を挿入する前にゲームを起動してください</string>
-    <!-- EN: No CDs for this game in the library. -->
-    <string name="cd_none_for_game">ライブラリにこのゲームの CD はありません。</string>
-    <!-- EN: FOR THIS GAME -->
-    <string name="for_this_game">このゲーム用</string>
-    <!-- EN: Ejecting CD… -->
-    <string name="cd_ejecting">CD を取り出しています…</string>
     <!-- %1$s is the disk image's name. -->
-    <!-- EN: Preparing %1$s… -->
-    <string name="disk_preparing">%1$s を準備しています…</string>
-    <!-- EN: CD could not be mounted -->
-    <string name="cd_mount_failed">CD をマウントできませんでした</string>
-    <!-- EN: CD change failed -->
-    <string name="cd_change_failed">CD の交換に失敗しました</string>
-    <!-- EN: Wait for the floppy change to finish -->
-    <string name="floppy_wait">フロッピーの交換が終わるまでお待ちください</string>
-    <!-- EN: Start a game before inserting a floppy -->
-    <string name="floppy_start_first">フロッピーを挿入する前にゲームを起動してください</string>
     <!-- %1$s is the floppy drive's letter. -->
-    <!-- EN: Ejecting floppy %1$s… -->
-    <string name="floppy_ejecting">フロッピー %1$s を取り出しています…</string>
     <!-- EN: Floppy could not be mounted -->
     <string name="floppy_mount_failed">フロッピーをマウントできませんでした</string>
-    <!-- EN: Floppy change failed -->
-    <string name="floppy_change_failed">フロッピーの交換に失敗しました</string>
     <!-- %1$s is the picked file's name. -->
-    <!-- EN: Importing %1$s… -->
-    <string name="floppy_importing">%1$s をインポートしています…</string>
-    <!-- EN: Floppy import failed -->
-    <string name="floppy_import_failed">フロッピーのインポートに失敗しました</string>
-    <!-- EN: Could not read selected file -->
-    <string name="file_unreadable">選択したファイルを読み込めませんでした</string>
-    <!-- EN: Select a supported floppy image -->
-    <string name="select_floppy_image">対応しているフロッピーイメージを選択してください</string>
-    <!-- EN: Select a supported disk image -->
-    <string name="select_disk_image">対応しているディスクイメージを選択してください</string>
     <!-- EN: Base clock -->
     <string name="base_clock">ベースクロック</string>
     <!-- EN: GDC clock -->

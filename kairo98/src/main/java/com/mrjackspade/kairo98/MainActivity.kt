@@ -4,9 +4,7 @@ package com.mrjackspade.kairo98
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
-import android.provider.OpenableColumns
 import android.view.KeyEvent
-import android.view.Surface
 import com.mrjackspade.kairo.frontend.ButtonTone
 import com.mrjackspade.kairo.frontend.CatalogGame
 import com.mrjackspade.kairo.frontend.CatalogSetting
@@ -18,35 +16,29 @@ import com.mrjackspade.kairo.frontend.ControllerGuestSpec
 import com.mrjackspade.kairo.frontend.ControllerLayout
 import com.mrjackspade.kairo.frontend.DiskImageEntry
 import com.mrjackspade.kairo.frontend.DiskImageLibrary
-import com.mrjackspade.kairo.frontend.DocumentPicker
 import com.mrjackspade.kairo.frontend.ExternalGameFile
 import com.mrjackspade.kairo.frontend.FirmwareSet
-import com.mrjackspade.kairo.frontend.GameDisks
 import com.mrjackspade.kairo.frontend.GameKeyMigration
 import com.mrjackspade.kairo.frontend.GameNotice
 import com.mrjackspade.kairo.frontend.GameSettingsRows
 import com.mrjackspade.kairo.frontend.GameSource
 import com.mrjackspade.kairo.frontend.GameValue
-import com.mrjackspade.kairo.frontend.GroupsPage
 import com.mrjackspade.kairo.frontend.ImportedFilePicker
 import com.mrjackspade.kairo.frontend.ImportedFiles
 import com.mrjackspade.kairo.frontend.LayeredGameCatalog
 import com.mrjackspade.kairo.frontend.LibraryStrings
 import com.mrjackspade.kairo.frontend.MachineOption
 import com.mrjackspade.kairo.frontend.MachineActivity
-import com.mrjackspade.kairo.frontend.MachineBridge
 import com.mrjackspade.kairo.frontend.MachineFirstRun
+import com.mrjackspade.kairo.frontend.MachineStatus
+import com.mrjackspade.kairo.frontend.NativeMachine
 import com.mrjackspade.kairo.frontend.R as FrontendR
-import com.mrjackspade.kairo.frontend.RowGroup
 import com.mrjackspade.kairo.frontend.ScanDepth
 import com.mrjackspade.kairo.frontend.SettingsRow
 import com.mrjackspade.kairo.frontend.ShippedAssets
 import com.mrjackspade.kairo.frontend.StateSlotStore
 import com.mrjackspade.kairo.frontend.TrayButton
-import com.mrjackspade.kairo.frontend.TraySpec
 import com.mrjackspade.kairo.frontend.UiText
-import com.mrjackspade.kairo.frontend.ValueTone
-import com.mrjackspade.kairo.frontend.sameSource
 import com.mrjackspade.kairo.frontend.text
 import java.io.File
 import org.json.JSONArray
@@ -54,48 +46,6 @@ import java.util.concurrent.atomic.AtomicBoolean
 
 /** Kairo98: the PC-98 on Neko Project 21/W, in the shared Kairo frontend. */
 class MainActivity : MachineActivity<DiskImageEntry>() {
-    private external fun nativeStart(path: String?, fontPath: String, biosDir: String,
-                                     mhzTimesTen: Int, gdcMhzTimesTen: Int,
-                                     cpuMultiple: Int, floppy: Boolean, bootFloppyPath: String?,
-                                     secondFloppyPath: String?, cdPath: String?): Boolean
-    private external fun nativeFloppy(drive: Int, path: String?): Boolean
-    private external fun nativeCd(path: String?): Boolean
-    /** Floppy drives A and B and the CD-ROM drive's images, "" for an empty one; null when no machine runs. */
-    private external fun nativeMediaPaths(): Array<String>?
-    private external fun nativeStop()
-    private external fun nativePause(paused: Boolean)
-    private external fun nativeReset()
-    private external fun nativeSkipMemoryCheck(skip: Boolean)
-    private external fun nativeOwnBios(own: Boolean)
-    private external fun nativeLoadedLocks(): Int
-    private external fun nativeKey(scanCode: Int, down: Boolean)
-    private external fun nativeMouseMove(dx: Int, dy: Int)
-    private external fun nativeMouseButton(button: Int, down: Boolean)
-    private external fun nativeMouseWarp(x: Int, y: Int)
-    private external fun nativeMouseWarpDone(): Boolean
-    private external fun nativeSaveState(dir: String): Int
-    private external fun nativeLoadState(dir: String, from: Array<String>, to: Array<String>): Int
-    private external fun nativeJoystick(control: Int, down: Boolean)
-    private external fun nativeInputTelemetry(): LongArray
-    private external fun nativeStatus(): String
-    private external fun nativeDosPromptReady(): Boolean
-    /** Types these steps with the shared typer (startup_typer.h), replacing any still to type; none stops it. */
-    private external fun nativeStartupStart(texts: Array<String>, enters: BooleanArray, screens: Array<LongArray>,
-                                            timeoutsMs: IntArray)
-    /** Types [text] at once, after the steps still to type. */
-    private external fun nativeStartupKeys(text: String, enter: Boolean)
-    /** Waits for the step the typer stalled on again. */
-    private external fun nativeStartupResume()
-    /** The typer's state (STARTUP_*) and the step it stalled on, or -1. */
-    private external fun nativeStartupStatus(): IntArray
-    private external fun nativeStartupError(): String
-    private external fun nativeSetScreenHashSampling(enabled: Boolean)
-    private external fun nativeScreenHashSnapshot(): LongArray
-    private external fun nativeSetSurface(surface: Surface?, width: Int, height: Int)
-    private external fun nativeSetShaderPreset(path: String?)
-    private external fun nativeSetMuted(muted: Boolean)
-    private external fun nativeSetFastForward(enabled: Boolean)
-
     override val identity = Identity("KAIRO98", 0xffF91CB6.toInt(), "Kairo98", "PC-98", "kairo98", LibraryStrings("KAIRO98", "Kairo98"),
         UiText.res(R.string.credits, "Kairo98", "Neko Project 21/W", "ymfm", "MrJackSpade/Kairo98"),
         UiText.res(R.string.library_empty), UiText.res(FrontendR.string.kairo_library_expired),
@@ -104,39 +54,9 @@ class MainActivity : MachineActivity<DiskImageEntry>() {
         UiText.res(FrontendR.string.kairo_saves_group), "MrJackSpade/Kairo98")
     override val machine = Machine(640, 400, 640.0 / 400.0, "state.np2")
 
-    /** The 21/W machine. Its status line is "<state>[: error] | frames N | CS:IP | audio | xruns | config | profile". */
-    override val bridge = object : MachineBridge {
-        override fun stop() = nativeStop()
-        override fun pause(paused: Boolean) = nativePause(paused)
-        override fun reset() {
-            inputRouter.resetLocks()
-            nativeReset()
-        }
-        override fun key(code: Int, down: Boolean) = nativeKey(code, down)
-        override fun joystick(control: Int, down: Boolean) = nativeJoystick(control, down)
-        override fun mouseMove(dx: Int, dy: Int) = nativeMouseMove(dx, dy)
-        override fun mouseButton(button: Int, down: Boolean) = nativeMouseButton(button, down)
-        override fun saveState(directory: String) = nativeSaveState(directory)
-        override fun loadState(directory: String, moved: Map<String, String>): Int {
-            val entries = moved.entries.toList()
-            return nativeLoadState(directory, entries.map { it.key }.toTypedArray(), entries.map { it.value }.toTypedArray())
-        }
-        override fun lockedKeys(): Set<Int> {
-            val locks = nativeLoadedLocks()
-            val layout = Pc98KeyboardLayout.value
-            return setOfNotNull(layout.capsCode.takeIf { locks and 1 != 0 }, layout.kanaCode.takeIf { locks and 2 != 0 })
-        }
-        override fun status(): String {
-            val parts = nativeStatus().split(" | ")
-            fun part(index: Int, prefix: String) = parts.getOrNull(index)?.removePrefix(prefix)?.trim() ?: ""
-            return listOf(parts[0].substringBefore(':').trim(), parts[0].substringAfter(':', "").trim(),
-                part(1, "frames"), part(3, "audio"), part(4, "xruns"), parts.getOrNull(5).orEmpty()).joinToString("|")
-        }
-        override fun setSurface(surface: Surface?) = nativeSetSurface(surface, 0, 0)
-        override fun setShaderPreset(path: String?) = nativeSetShaderPreset(path)
-        override fun setMuted(muted: Boolean) = nativeSetMuted(muted)
-        override fun setFastForward(enabled: Boolean) = nativeSetFastForward(enabled)
-        override fun inputTelemetry(): LongArray = nativeInputTelemetry()
+    /** The 21/W machine (pc98_core.cpp); its lock keys are Caps and Kana. */
+    override val bridge by lazy {
+        NativeMachine("kairo98", Pc98KeyboardLayout.value.let { listOf(checkNotNull(it.capsCode), checkNotNull(it.kanaCode)) })
     }
 
     override val keyboard = Pc98KeyboardLayout.value
@@ -219,23 +139,26 @@ class MainActivity : MachineActivity<DiskImageEntry>() {
     private var debugAutoAdvance: DebugAutoAdvance? = null
     private var pendingDebugGame: String? = null
     private var pendingDebugLaunch: String? = null
-    private var lastTraceSerial = 0L
 
-    private val traceHashes = object : Runnable {
-        override fun run() {
-            if (traceScreenHashes && !libraryVisible) {
-                val sample = nativeScreenHashSnapshot()
-                if (sample.size == 2 && sample[0] != 0L && sample[0] != lastTraceSerial) {
-                    lastTraceSerial = sample[0]
-                    File(filesDir, "startup-hash-trace.txt").appendText(
-                        "${android.os.SystemClock.elapsedRealtime()} ${sample[0]} " +
-                            "${java.lang.Long.toUnsignedString(sample[1], 16).padStart(16, '0')} " +
-                            "${nativeDosPromptReady()} ${nativeStatus()}\n")
-                }
+    /**
+     * Writes each new screen signature with the time, whether the DOS prompt stands and the machine's
+     * status, every 100 ms while a game shows, for a debug launch with kairo98.traceScreenHashes.
+     */
+    private fun traceScreenHashes() = Thread {
+        val trace = File(filesDir, "startup-hash-trace.txt").apply { writeText("") }
+        var last: Long? = null
+        while (!isDestroyed) {
+            val signature = if (libraryVisible) null else bridge.screenSignature()
+            if (signature != null && signature != last) {
+                last = signature
+                val status = bridge.status()
+                trace.appendText("${android.os.SystemClock.elapsedRealtime()} " +
+                    "${java.lang.Long.toUnsignedString(signature, 16).padStart(16, '0')} " +
+                    "${MachineStatus(status).core["prompt"] == "1"} $status\n")
             }
-            handler.postDelayed(this, 100)
+            Thread.sleep(100)
         }
-    }
+    }.apply { name = "Kairo98-screen-trace"; isDaemon = true; start() }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         if (applicationInfo.flags and android.content.pm.ApplicationInfo.FLAG_DEBUGGABLE != 0) {
@@ -254,16 +177,7 @@ class MainActivity : MachineActivity<DiskImageEntry>() {
         super.onCreate(savedInstanceState)
         if (isFinishing) return
         if (pendingDebugLaunch != null || pendingDebugGame != null) libraryScreen.entriesPublished = ::selectPendingDebugGame
-        if (traceScreenHashes) {
-            File(filesDir, "startup-hash-trace.txt").writeText("")
-            nativeSetScreenHashSampling(true)
-            handler.post(traceHashes)
-        }
-    }
-
-    override fun onDestroy() {
-        handler.removeCallbacks(traceHashes)
-        super.onDestroy()
+        if (traceScreenHashes) traceScreenHashes()
     }
 
     private fun decodeDebugGameQuery(encoded: String): String? = runCatching {
@@ -317,12 +231,8 @@ class MainActivity : MachineActivity<DiskImageEntry>() {
         }
         edit.apply()
     }
-    /** What each drive holds, for the Disks page. */
+    /** Whether the running game booted from a floppy rather than a hard disk. */
     private var currentIsFloppy = false
-    private val mountedFloppies = arrayOfNulls<String>(2)
-    private val manualFloppies = arrayOfNulls<File>(2)
-    /** The disc in the CD-ROM drive, by file name. */
-    private var mountedCd: String? = null
     /** Where the running game's FONT.BMP comes from when it is not the player's font.bmp (chooseFont). */
     private var gameFontSource: UiText? = null
     private val gameFonts by lazy { GameFontLocator(this, File(filesDir, "game-font.bmp")) }
@@ -351,17 +261,20 @@ class MainActivity : MachineActivity<DiskImageEntry>() {
     private fun fontChoices() = fontFiles.items().map { ChoiceOption(it.id, it.label) }
     private fun fontActions(select: (String) -> Unit) = fontImport.actions(select)
     private var selectedStartup = emptyList<Pair<StartupChoice, StartupOption>>()
-    /** Media a launch prepared, which the session takes once the game starts. */
-    private class PreparedLaunch(val bootFloppy: DiskImageEntry?, val floppyB: DiskImageEntry?,
-                                 val swapSources: Map<String, DiskImageEntry>, val fontSource: UiText?,
-                                 val cd: DiskImageEntry?,
-                                 /** What started: the launched entry, or a CD's boot disk. */
-                                 val boot: DiskImageEntry)
+    /** What a launch prepared, which the session takes once the game starts. */
+    private class PreparedLaunch(val swapSources: Map<String, DiskImageEntry>, val fontSource: UiText?,
+                                 /** Whether it booted from a floppy rather than a hard disk. */
+                                 val floppy: Boolean)
     @Volatile private var prepared: PreparedLaunch? = null
     @Volatile private var commandCancelled = AtomicBoolean(false)
-    @Volatile private var floppyBusy = false
-    private val samplingLock = Any()
-    private var samplingUsers = 0
+
+    /** The PC-98's drives, in the core's slot order (pc98_core.cpp). */
+    override val mediaSlots = listOf(
+        MediaSlot<DiskImageEntry>(UiText.res(R.string.floppy_drive, "A")) { it.isFloppy },
+        MediaSlot(UiText.res(R.string.floppy_drive, "B")) { it.isFloppy },
+        MediaSlot(UiText.res(FrontendR.string.kairo_cd_rom)) { it.isCd },
+        // A new hard disk starts the machine again from it.
+        MediaSlot(UiText.res(FrontendR.string.kairo_hard_disk)) { !it.isFloppy && !it.isCd })
 
     override fun cancelAutomation() {
         commandCancelled.set(true)
@@ -440,42 +353,30 @@ class MainActivity : MachineActivity<DiskImageEntry>() {
         }
         val floppyB = game.initialFloppyBId?.let { id -> requiredFloppyFor(id, entry, sources) }
         val primary = media?.hardDisk ?: boot
-        nativeSkipMemoryCheck(optionValue(game, Pc98Catalog.skipMemoryCheck) == "on")
         val ownBios = optionValue(game, Pc98Catalog.system) == Pc98Catalog.OWN_BIOS
         check(!ownBios || biosFile().isFile) { getString(R.string.own_bios_missing) }
-        nativeOwnBios(ownBios)
-        val disk = disks.prepare(primary, cancelled, progress)
-        val bootFloppy = media?.bootFloppy?.let { disks.prepare(it, cancelled, progress) }
-        val secondFloppy = floppyB?.let { disks.prepare(it, cancelled, progress) }
-        val disc = cd?.let { disks.prepare(it, cancelled, progress) }
         val (font, fontSource) = chooseFont(optionValue(game, fontOption), primary, external, cancelled)
-        check(startMachine(disk.absolutePath, font, optionValue(game, Pc98Catalog.baseClock).toInt(), game.gdcClockTenthsMHz ?: 50,
-            game.cpuMultiple ?: DEFAULT_CPU_MULTIPLE, primary.isFloppy, bootFloppy?.absolutePath,
-            secondFloppy?.absolutePath, disc?.absolutePath)) { getString(R.string.start_failed) }
-        awaitMachineReady()?.let(::error)
-        prepared = PreparedLaunch(media?.bootFloppy, floppyB, swapSources, fontSource, cd, boot)
-    }
-
-    private fun awaitMachineReady(): String? {
-        repeat(200) {
-            val state = nativeStatus()
-            if (state.startsWith("Running") || state.startsWith("Paused")) return null
-            if (state.startsWith("Error")) return state.substringBefore(" | ")
-            Thread.sleep(50)
-        }
-        return getString(R.string.start_timed_out)
+        // In the core's slot order (pc98_core.cpp): floppy A, floppy B, the CD-ROM and the hard disk.
+        val slots = listOf(if (primary.isFloppy) primary else media?.bootFloppy, floppyB, cd,
+            primary.takeUnless { it.isFloppy })
+        val images = slots.map { disk -> disk?.let { disks.prepare(it, cancelled, progress).absolutePath } }
+        check(bridge.start(firmwareDir().absolutePath, filesDir.absolutePath, images, mapOf(
+            "font" to font,
+            "baseClock" to optionValue(game, Pc98Catalog.baseClock),
+            "gdcClock" to (game.gdcClockTenthsMHz ?: 50).toString(),
+            "cpuMultiple" to (game.cpuMultiple ?: DEFAULT_CPU_MULTIPLE).toString(),
+            "skipMemoryCheck" to optionValue(game, Pc98Catalog.skipMemoryCheck),
+            "ownBios" to if (ownBios) "on" else "off"))) { getString(R.string.start_failed) }
+        awaitRunning()
+        mediaStarted(slots)
+        prepared = PreparedLaunch(swapSources, fontSource, primary.isFloppy)
     }
 
     override fun gameStarted(entry: DiskImageEntry, game: CatalogGame) {
         val launched = checkNotNull(prepared) { "The launch prepared no media" }
         prepared = null
         gameFontSource = launched.fontSource
-        val booted = launched.boot
-        currentIsFloppy = launched.bootFloppy == null && booted.isFloppy
-        mountedFloppies[0] = launched.bootFloppy?.displayName ?: if (booted.isFloppy) booted.displayName else null
-        mountedFloppies[1] = launched.floppyB?.displayName
-        manualFloppies.fill(null)
-        mountedCd = launched.cd?.displayName
+        currentIsFloppy = launched.floppy
         scheduleStartupQueue(game, selectedStartup)
         scheduleDiskSwaps(game.diskSwaps, launched.swapSources)
     }
@@ -485,30 +386,7 @@ class MainActivity : MachineActivity<DiskImageEntry>() {
         prepared = null
         gameFontSource = null
         currentIsFloppy = false
-        mountedFloppies.fill(null)
-        manualFloppies.fill(null)
-        mountedCd = null
         selectedStartup = emptyList()
-    }
-
-    /** Native media replacement may require restarting from the original disks. */
-    override fun loadRejected(code: Int) {
-        if (code in 4..6) currentEntry?.let { entry ->
-            userPaused = false
-            closeMenu()
-            launch(entry, sessionFromFrontend)
-        }
-    }
-
-    override fun stateError(code: Int) = when (code) {
-        1 -> getString(R.string.state_error_not_running)
-        2 -> getString(R.string.state_error_missing)
-        3 -> getString(R.string.state_error_storage)
-        4 -> getString(R.string.state_error_disk_copy)
-        5 -> getString(R.string.state_error_unreadable)
-        6 -> getString(R.string.state_error_no_response)
-        7 -> getString(R.string.state_error_path_too_long)
-        else -> getString(R.string.state_error_code, code)
     }
 
     override fun sessionDetails() = listOfNotNull(when {
@@ -517,20 +395,10 @@ class MainActivity : MachineActivity<DiskImageEntry>() {
         else -> getString(FrontendR.string.kairo_hard_disk)
     })
 
-    override fun diagnosticsRows(running: Boolean): List<SettingsRow> {
-        val state = getString(FrontendR.string.kairo_diagnostics_state)
-        if (!running) return listOf(SettingsRow.info("state", state) { getString(FrontendR.string.kairo_diagnostics_stopped) })
-        fun part(index: Int, prefix: String = "") =
-            nativeStatus().split(" | ").getOrNull(index)?.removePrefix(prefix)?.trim() ?: ""
-        return listOf(
-            SettingsRow.info("state", state) { part(0) },
-            SettingsRow.info("frames", getString(FrontendR.string.kairo_diagnostics_frames)) { part(1, "frames") },
-            SettingsRow.info("csip", "CS:IP") { part(2, "CS:IP") },
-            SettingsRow.info("audio", getString(FrontendR.string.kairo_diagnostics_audio)) { part(3, "audio") },
-            SettingsRow.info("xruns", getString(FrontendR.string.kairo_diagnostics_xruns)) { part(4, "xruns") },
-            SettingsRow.info("audio-config", getString(FrontendR.string.kairo_diagnostics_audio_config)) { part(5) },
-            SettingsRow.info("audio-profile", getString(R.string.diagnostics_audio_profile)) { part(6) })
-    }
+    /** The shared rows, and where the guest's CPU is. */
+    override fun diagnosticsRows(running: Boolean): List<SettingsRow> = super.diagnosticsRows(running) +
+        listOfNotNull(SettingsRow.info("csip", "CS:IP") { MachineStatus(bridge.status()).core["csip"].orEmpty() }
+            .takeIf { running })
 
     // Startup automation: typed commands and choices on recognized screens, and disk swaps ------------
 
@@ -556,38 +424,30 @@ class MainActivity : MachineActivity<DiskImageEntry>() {
             scheduleDebugAutoAdvance(generation)
             return
         }
-        nativeStartupStart(steps.map { it.text }.toTypedArray(), BooleanArray(steps.size) { steps[it].enter },
-            steps.map { it.screens.toLongArray() }.toTypedArray(), IntArray(steps.size) { steps[it].timeoutMs })
+        bridge.startupSteps(steps.map { NativeMachine.StartupStep(it.text, it.enter, it.screens, it.timeoutMs) })
         val cancelled = AtomicBoolean(false)
         commandCancelled = cancelled
         watchStartup(steps, cancelled, generation)
     }
 
-    private fun stopStartupTyping() = nativeStartupStart(emptyArray(), BooleanArray(0), emptyArray(), IntArray(0))
+    private fun stopStartupTyping() = bridge.startupSteps(emptyList())
 
-    /** Follows the typer until it is done, stalls on a step (a notice offers Retry) or cannot type one. */
+    /**
+     * Follows the typer until it is done or stalls on a step (a notice offers Retry). A step it cannot
+     * type stops the machine, which says why.
+     */
     private fun watchStartup(steps: List<StartupStep>, cancelled: AtomicBoolean, generation: Int) {
         handler.postDelayed(object : Runnable {
             override fun run() {
                 if (cancelled.get() || !current(generation)) return
-                val (state, stalled) = nativeStartupStatus()
-                when (state) {
-                    STARTUP_TYPING -> handler.postDelayed(this, 100)
-                    STARTUP_IDLE -> scheduleDebugAutoAdvance(generation)
-                    STARTUP_STALLED -> showStartupTimeout(steps, steps[stalled], cancelled, generation)
-                    STARTUP_FAILED -> toast(nativeStartupError())
-                    else -> error("Unknown startup typer state $state")
+                when (val status = bridge.startupStatus()) {
+                    NativeMachine.StartupStatus.Typing -> handler.postDelayed(this, 100)
+                    NativeMachine.StartupStatus.Idle -> scheduleDebugAutoAdvance(generation)
+                    is NativeMachine.StartupStatus.Stalled ->
+                        showStartupTimeout(steps, steps[status.index], cancelled, generation)
                 }
             }
         }, 100)
-    }
-
-    private fun acquireScreenHashes() = synchronized(samplingLock) {
-        if (samplingUsers++ == 0 && !traceScreenHashes) nativeSetScreenHashSampling(true)
-    }
-
-    private fun releaseScreenHashes() = synchronized(samplingLock) {
-        if (--samplingUsers == 0 && !traceScreenHashes) nativeSetScreenHashSampling(false)
     }
 
     private fun scheduleDebugAutoAdvance(generation: Int) {
@@ -595,7 +455,7 @@ class MainActivity : MachineActivity<DiskImageEntry>() {
         handler.postDelayed({
             if (!current(generation) || libraryVisible) return@postDelayed
             debugAutoAdvance?.cancel()
-            debugAutoAdvance = DebugAutoAdvance(inputRouter, ::nativeStatus,
+            debugAutoAdvance = DebugAutoAdvance(inputRouter, bridge::status,
                 File(filesDir, "performance-auto.txt"), debugAdvanceSeconds, debugAdvanceIntervalMs).also { it.start() }
         }, 2000)
     }
@@ -603,11 +463,10 @@ class MainActivity : MachineActivity<DiskImageEntry>() {
     private fun scheduleDiskSwaps(rules: List<DiskSwap>, sources: Map<String, DiskImageEntry>) {
         if (rules.isEmpty()) return
         val generation = sessionGeneration
-        acquireScreenHashes()
         Thread {
             var failedRule: DiskSwap? = null
             try {
-                DiskSwapMatcher(::nativeScreenHashSnapshot, { nativeStatus().startsWith("Running") },
+                DiskSwapMatcher(bridge::screenSignature, { MachineStatus(bridge.status()).state == "Running" },
                     { !current(generation) },
                     { rule ->
                         failedRule = rule
@@ -615,29 +474,20 @@ class MainActivity : MachineActivity<DiskImageEntry>() {
                     }).run(rules)
             } catch (error: Exception) {
                 runOnUiThread { if (current(generation)) showDiskSwapFailure(failedRule, error, rules, sources) }
-            } finally {
-                releaseScreenHashes()
             }
         }.start()
     }
-
-    @Synchronized private fun beginFloppyChange(): Boolean {
-        if (floppyBusy) return false
-        floppyBusy = true
-        return true
-    }
-
-    @Synchronized private fun endFloppyChange() { floppyBusy = false }
 
     /** The information notice for a swap in progress, replaced as its progress text changes. */
     private var swapping: GameNotice? = null
 
     private fun performDiskSwap(rule: DiskSwap, entry: DiskImageEntry, generation: Int) {
-        while (!beginFloppyChange()) {
+        while (!beginMediaChange()) {
             if (!current(generation)) return
             Thread.sleep(100)
         }
         val notice = GameNotice(getString(R.string.disk_swapping, "${'A' + rule.drive}", entry.displayName), "")
+        var changed = false
         try {
             runOnUiThread { if (current(generation)) overlay.showNotice(notice) }
             val disk = disks.prepare(entry, AtomicBoolean(false)) { message ->
@@ -647,20 +497,14 @@ class MainActivity : MachineActivity<DiskImageEntry>() {
                 }
             }
             if (!current(generation)) return
-            if (!nativeFloppy(rule.drive, disk.absolutePath)) error(getString(R.string.floppy_mount_failed))
-            runOnUiThread {
-                if (current(generation)) {
-                    manualFloppies[rule.drive]?.delete()
-                    manualFloppies[rule.drive] = null
-                    mountedFloppies[rule.drive] = entry.displayName
-                }
-            }
+            if (!bridge.media(rule.drive, disk.absolutePath)) error(getString(R.string.floppy_mount_failed))
+            changed = true
             if (rule.key.isNotEmpty() || rule.enter) {
                 Thread.sleep(150)
-                if (current(generation)) nativeStartupKeys(rule.key, rule.enter)
+                if (current(generation)) bridge.startupKeys(rule.key, rule.enter)
             }
         } finally {
-            endFloppyChange()
+            endMediaChange(rule.drive, entry, changed)
             runOnUiThread {
                 if (overlay.showing(notice) || swapping?.let(overlay::showing) == true) overlay.hideNotice()
                 swapping = null
@@ -676,11 +520,7 @@ class MainActivity : MachineActivity<DiskImageEntry>() {
             rule?.let { getString(R.string.disk_swap_failed_drive_message, "${'A' + it.drive}", why) }
                 ?: getString(R.string.disk_swap_failed_message, why),
             listOf(TrayButton(getString(R.string.continue_manually)),
-                TrayButton(getString(R.string.choose_floppy)) {
-                    openMenu()
-                    pages.push(disksPage())
-                    pages.push(ChoicePage(floppyChoice(rule?.drive ?: 0), "floppy${rule?.drive ?: 0}"))
-                },
+                TrayButton(getString(R.string.choose_floppy)) { chooseMedia(rule?.drive ?: 0) },
                 TrayButton(getString(R.string.retry), ButtonTone.PRIMARY) { scheduleDiskSwaps(rules, sources) })))
     }
 
@@ -690,190 +530,9 @@ class MainActivity : MachineActivity<DiskImageEntry>() {
             listOf(TrayButton(getString(FrontendR.string.kairo_action_restart)) { openMenu("f-restart", confirm = true) },
                 TrayButton(getString(R.string.open_keyboard)) { showKeyboard() },
                 TrayButton(getString(R.string.retry), ButtonTone.PRIMARY) {
-                    nativeStartupResume()
+                    bridge.startupResume()
                     watchStartup(steps, cancelled, generation)
                 })))
-    }
-
-    // Direct tap: the mouse warps to the touched point before a click ----------------------------------
-
-    /** The view is exactly the scaled frame, so the point already accounts for scaling and crop. */
-    override fun warpMouse(x: Int, y: Int) = nativeMouseWarp(x, y)
-
-    override fun mouseWarpDone(): Boolean = nativeMouseWarpDone()
-
-    // Disks ------------------------------------------------------------------------------------------
-
-    override fun machineRows() = listOf(SettingsRow.nav("f-disks", getString(FrontendR.string.kairo_media_disks)) {
-        pages.push(disksPage())
-    })
-
-    /** Disks: the hard disk, which asks first because it ends the game, both floppy drives, and the CD-ROM. */
-    private fun disksPage() = GroupsPage(getString(FrontendR.string.kairo_media_disks), { currentGame?.title }, {
-        listOf(RowGroup(getString(FrontendR.string.kairo_media_drives_group), listOf(
-            SettingsRow.action("hdd", getString(FrontendR.string.kairo_hard_disk),
-                value = { if (currentIsFloppy) empty() else currentEntry?.displayName ?: empty() },
-                tone = { if (currentEntry == null || currentIsFloppy) ValueTone.EMPTY else ValueTone.CURRENT },
-                tray = {
-                    val choose = getString(FrontendR.string.kairo_choose_file)
-                    if (currentEntry == null) TraySpec(buttons = listOf(TrayButton(choose, ButtonTone.PRIMARY) { chooseHdi() }))
-                    else TraySpec(getString(R.string.hard_disk_change_warning),
-                        listOf(TrayButton(getString(FrontendR.string.kairo_cancel)),
-                            TrayButton(choose, ButtonTone.PRIMARY) { chooseHdi() }), focus = 0)
-                }),
-            floppyRow(0), floppyRow(1), cdRow())))
-    })
-
-    private fun empty() = getString(FrontendR.string.kairo_empty)
-
-    private fun cdRow() = SettingsRow.choice("cd", getString(FrontendR.string.kairo_cd_rom), cdChoice(),
-        value = { mountedCd ?: empty() },
-        tone = { if (mountedCd == null) ValueTone.EMPTY else ValueTone.CURRENT },
-        enabled = { machineRunning && !floppyBusy },
-        disabledReason = { getString(if (floppyBusy) FrontendR.string.kairo_media_wait else R.string.cd_start_first) })
-
-    /** Empty ejects; otherwise the game's catalog disc and the CDs in its ZIP or folder. */
-    private fun cdChoice(): ChoiceSpec {
-        fun candidates(): List<DiskImageEntry> {
-            val current = currentEntry ?: return emptyList()
-            val named = currentGame?.cdId
-            return libraryEntries.filter { entry ->
-                entry.playable && entry.isCd && (catalog.matchId(entry) == named || sameSource(current, entry))
-            }.distinctBy { it.contentId }
-        }
-        return ChoiceSpec(getString(FrontendR.string.kairo_cd_rom), { currentGame?.title }, {
-            val found = candidates()
-            listOfNotNull(ChoiceGroup(null, listOf(ChoiceOption("empty", UiText.res(FrontendR.string.kairo_empty))),
-                if (found.isEmpty()) getString(R.string.cd_none_for_game) else null),
-                found.takeIf { it.isNotEmpty() }?.let { items ->
-                    ChoiceGroup(getString(R.string.for_this_game), items.map { ChoiceOption(it.id, it.displayName) })
-                })
-        }, { candidates().firstOrNull { it.displayName == mountedCd }?.id
-            ?: if (mountedCd == null) "empty" else null }, { id ->
-            if (id == "empty") changeCd(null)
-            else candidates().firstOrNull { it.id == id }?.let(::changeCd)
-        }, cycles = false)
-    }
-
-    private fun changeCd(entry: DiskImageEntry?) {
-        if (!beginFloppyChange()) return
-        toast(if (entry == null) getString(R.string.cd_ejecting) else getString(R.string.disk_preparing, entry.displayName))
-        pages.refresh()
-        Thread {
-            val result = try {
-                val disc = entry?.let { disks.prepare(it, AtomicBoolean(false)) { } }
-                if (!nativeCd(disc?.absolutePath)) error(getString(R.string.cd_mount_failed))
-                null
-            } catch (error: Exception) { error.message ?: getString(R.string.cd_change_failed) }
-            runOnUiThread {
-                endFloppyChange()
-                if (result == null) mountedCd = entry?.displayName
-                toast(result ?: getString(FrontendR.string.kairo_media_changed, getString(FrontendR.string.kairo_cd_rom),
-                    entry?.displayName ?: empty()))
-                pages.refresh()
-            }
-        }.start()
-    }
-
-    /** The floppies and CD, by drive, for the UI tests (KairoActivity.gameProbe). */
-    override fun probeDetails(): Map<String, String> = super.probeDetails() + mapOf(
-        "media.Floppy A" to (mountedFloppies[0] ?: ""), "media.Floppy B" to (mountedFloppies[1] ?: ""),
-        "media.CD-ROM" to (mountedCd ?: ""))
-
-    private fun floppyLabel(drive: Int) = getString(R.string.floppy_drive, "${'A' + drive}")
-
-    /**
-     * A loaded state's drives, as np2 holds them now, for the Disks page (Kairo98#103): each image by
-     * its library disk, or its file name for one from outside the library.
-     */
-    override fun stateLoaded() {
-        val paths = nativeMediaPaths() ?: return
-        fun name(path: String) = path.takeIf { it.isNotEmpty() }
-            ?.let { disks.entryForWorkingImage(it, libraryEntries)?.displayName ?: File(it).name }
-        mountedFloppies[0] = name(paths[0])
-        mountedFloppies[1] = name(paths[1])
-        mountedCd = name(paths[2])
-    }
-
-    private fun floppyRow(drive: Int) = SettingsRow.choice("floppy$drive", floppyLabel(drive), floppyChoice(drive),
-        value = { mountedFloppies[drive] ?: empty() },
-        tone = { if (mountedFloppies[drive] == null) ValueTone.EMPTY else ValueTone.CURRENT },
-        enabled = { machineRunning && !floppyBusy },
-        disabledReason = { getString(if (floppyBusy) R.string.floppy_wait else R.string.floppy_start_first) })
-
-    /**
-     * Empty ejects; then the game's own disks (the shared GameDisks choice), Other for every floppy
-     * in the library, or a file from the device.
-     */
-    private fun floppyChoice(drive: Int): ChoiceSpec {
-        fun takes(entry: DiskImageEntry) = entry.playable && entry.isFloppy
-        fun own(): List<DiskImageEntry> {
-            val current = currentEntry ?: return emptyList()
-            val inDrives = libraryEntries.filter { it.isFloppy && it.displayName in mountedFloppies }
-            return GameDisks.own(current, libraryEntries, inDrives, catalog.setDisks(current).toSet(), catalog::matchId, ::takes)
-        }
-        return GameDisks.choice(this, floppyLabel(drive), { currentGame?.title }, ::own, { libraryEntries.filter(::takes) }, {
-            own().firstOrNull { it.displayName == mountedFloppies[drive] }?.id
-                ?: if (mountedFloppies[drive] == null) GameDisks.EMPTY else null
-        }, { entry -> changeFloppy(drive, entry) }) {
-            listOf(SettingsRow.action("choose", getString(FrontendR.string.kairo_choose_file)) {
-                DocumentPicker.open(this, if (drive == 0) FLOPPY_A_REQUEST else FLOPPY_B_REQUEST, failed = ::toast)
-            })
-        }
-    }
-
-    private fun changeFloppy(drive: Int, entry: DiskImageEntry?) {
-        if (!beginFloppyChange()) return
-        toast(if (entry == null) getString(R.string.floppy_ejecting, "${'A' + drive}")
-            else getString(R.string.disk_preparing, entry.displayName))
-        pages.refresh()
-        Thread {
-            val result = try {
-                val disk = entry?.let { disks.prepare(it, AtomicBoolean(false)) { } }
-                if (!nativeFloppy(drive, disk?.absolutePath)) error(getString(R.string.floppy_mount_failed))
-                null
-            } catch (error: Exception) { error.message ?: getString(R.string.floppy_change_failed) }
-            runOnUiThread {
-                endFloppyChange()
-                if (result == null) {
-                    manualFloppies[drive]?.delete()
-                    manualFloppies[drive] = null
-                    mountedFloppies[drive] = entry?.displayName
-                }
-                toast(result ?: getString(FrontendR.string.kairo_media_changed, floppyLabel(drive), entry?.displayName ?: empty()))
-                pages.refresh()
-            }
-        }.start()
-    }
-
-    /** A disk picked on the device starts as a game outside the library, once it has been read. */
-    private fun chooseHdi() {
-        closeMenu()
-        DocumentPicker.open(this, HDI_REQUEST, failed = ::toast)
-    }
-
-    private fun importFloppyFile(drive: Int, uri: Uri, name: String) {
-        if (!beginFloppyChange()) return
-        toast(getString(R.string.floppy_importing, name))
-        pages.refresh()
-        Thread {
-            val disk = File(cacheDir, "manual-floppy-$drive-${System.nanoTime()}${Pc98Media.suffix(name)}")
-            val result = try {
-                FirmwareSet.importFile(this, uri, disk, getString(R.string.floppy), maxBytes = 64L * 1024 * 1024)
-                if (!nativeFloppy(drive, disk.absolutePath)) error(getString(R.string.floppy_mount_failed))
-                null
-            } catch (error: Exception) { error.message ?: getString(R.string.floppy_import_failed) }
-            runOnUiThread {
-                endFloppyChange()
-                if (result == null) {
-                    manualFloppies[drive]?.delete()
-                    manualFloppies[drive] = disk
-                    mountedFloppies[drive] = name
-                } else disk.delete()
-                toast(result ?: getString(FrontendR.string.kairo_media_changed, floppyLabel(drive), name))
-                pages.refresh()
-            }
-        }.start()
     }
 
     // Machine and firmware ---------------------------------------------------------------------------
@@ -962,34 +621,8 @@ class MainActivity : MachineActivity<DiskImageEntry>() {
             enabled, { GameSettingsRows.noHash(this) })
     }
 
-    override fun handleProductResult(requestCode: Int, resultCode: Int, data: Intent?): Boolean {
-        if (fontImport.handle(requestCode, resultCode, data)) return true
-        // Firmware picks belong to the shared firmware rows.
-        if (requestCode !in HDI_REQUEST..FLOPPY_B_REQUEST) return super.handleProductResult(requestCode, resultCode, data)
-        val uri = DocumentPicker.selectedUri(resultCode, data) ?: return true
-        val name = try {
-            contentResolver.query(uri, arrayOf(OpenableColumns.DISPLAY_NAME), null, null, null)
-                ?.use { if (it.moveToFirst()) it.getString(0) else null }
-        } catch (error: Exception) {
-            toast(error.message ?: getString(R.string.file_unreadable))
-            return true
-        }
-        val floppy = requestCode != HDI_REQUEST
-        if (name == null || !Pc98Media.supported(name) || Pc98Media.isCd(name) ||
-            (floppy && !Pc98Media.isFloppy(name))) {
-            toast(getString(if (floppy) R.string.select_floppy_image else R.string.select_disk_image))
-        } else if (floppy) importFloppyFile(if (requestCode == FLOPPY_A_REQUEST) 0 else 1, uri, name)
-        else openExternalFile(uri)
-        return true
-    }
-
-    /** Every machine start: the PC-98 keyboard starts with Caps and Kana off. */
-    private fun startMachine(path: String, fontPath: String, mhzTimesTen: Int, gdcMhzTimesTen: Int, cpuMultiple: Int,
-                             floppy: Boolean, bootFloppyPath: String?, secondFloppyPath: String?, cdPath: String?): Boolean {
-        inputRouter.resetLocks()
-        return nativeStart(path, fontPath, firmwareDir().absolutePath, mhzTimesTen, gdcMhzTimesTen, cpuMultiple, floppy,
-            bootFloppyPath, secondFloppyPath, cdPath)
-    }
+    override fun handleProductResult(requestCode: Int, resultCode: Int, data: Intent?): Boolean =
+        fontImport.handle(requestCode, resultCode, data) || super.handleProductResult(requestCode, resultCode, data)
 
     private fun pc98ScanCode(key: Int): Int? {
         if (key in KeyEvent.KEYCODE_1..KeyEvent.KEYCODE_9) return key - KeyEvent.KEYCODE_1 + 1
@@ -1095,24 +728,14 @@ class MainActivity : MachineActivity<DiskImageEntry>() {
     private fun rhythmRomFile() = File(firmwareDir(), "ym2608_adpcm_rom.bin")
 
     companion object {
-        /** The all-games Skip memory check preference, on unless the player turns it off. */
-        /** The native typer's states (native_bridge.cpp StartupState). */
-        private const val STARTUP_IDLE = 0
-        private const val STARTUP_TYPING = 1
-        private const val STARTUP_STALLED = 2
-        private const val STARTUP_FAILED = 3
         /** The core's standard CPU clock multiple, about 49 MHz on the 2.5 MHz base clock. */
         const val DEFAULT_CPU_MULTIPLE = 20
         private const val ON = "on"
         private const val OFF = "off"
         /** Bundled FONT.BMP built by tools/generate_font_bmp.py from redistributable fonts. */
         private const val BUNDLED_FONT = "kairo98-font.bmp"
-        private const val HDI_REQUEST = FIRST_PRODUCT_REQUEST
-        private const val FLOPPY_A_REQUEST = FIRST_PRODUCT_REQUEST + 1
-        private const val FLOPPY_B_REQUEST = FIRST_PRODUCT_REQUEST + 2
-        private const val FONT_IMPORT_REQUEST = FIRST_PRODUCT_REQUEST + 3
+        private const val FONT_IMPORT_REQUEST = FIRST_PRODUCT_REQUEST
         private const val BIOS_ROM_BYTES = 0x18000L
         private const val RHYTHM_ROM_BYTES = 0x2000L
-        init { System.loadLibrary("kairo98") }
     }
 }

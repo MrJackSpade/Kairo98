@@ -23,8 +23,6 @@
     <!-- EN: Floppy %1$s -->
     <string name="floppy_drive">Disket %1$s</string>
     <!-- Names a picked floppy image in import errors, such as "Floppy is too large". -->
-    <!-- EN: Floppy -->
-    <string name="floppy">Disket</string>
     <!-- EN: Font -->
     <string name="option_font">Font</string>
     <!-- EN: Game folder -->
@@ -87,8 +85,6 @@
     <string name="play_manually">Main manual</string>
     <!-- EN: Unable to start machine -->
     <string name="start_failed">Tidak dapat memulai mesin</string>
-    <!-- EN: Machine startup timed out -->
-    <string name="start_timed_out">Waktu memulai mesin habis</string>
     <!-- The content ID's first characters name the disk. -->
     <!-- EN: Required floppy %1$s is missing from the library -->
     <string name="required_floppy_missing">Disket wajib %1$s tidak ada di pustaka</string>
@@ -103,25 +99,7 @@
     <string name="hard_disk_missing">Hard disk yang cocok tidak ada di pustaka</string>
     <!-- EN: Matching hard disk is missing or ambiguous in this archive -->
     <string name="hard_disk_missing_in_archive">Hard disk yang cocok tidak ada atau ambigu di arsip ini</string>
-    <!-- EN: machine not running -->
-    <string name="state_error_not_running">mesin tidak berjalan</string>
-    <!-- EN: state is missing or from another version -->
-    <string name="state_error_missing">status tidak ada atau dari versi lain</string>
-    <!-- EN: storage unavailable -->
-    <string name="state_error_storage">penyimpanan tidak tersedia</string>
-    <!-- EN: disk image copy failed -->
-    <string name="state_error_disk_copy">penyalinan image disk gagal</string>
-    <!-- EN: state file unreadable -->
-    <string name="state_error_unreadable">file status tidak dapat dibaca</string>
-    <!-- EN: machine did not respond -->
-    <string name="state_error_no_response">mesin tidak merespons</string>
-    <!-- EN: the game\'s save path is too long -->
-    <string name="state_error_path_too_long">jalur simpanan game terlalu panjang</string>
     <!-- %1$d is the emulator's error code. -->
-    <!-- EN: code %1$d -->
-    <string name="state_error_code">kode %1$d</string>
-    <!-- EN: Audio profile -->
-    <string name="diagnostics_audio_profile">Profil audio</string>
     <!-- What the startup typer is waiting for: %1$d is the command's number; %2$s the command. -->
     <!-- EN: Launch command %1$d: %2$s -->
     <string name="startup_step_command">Perintah peluncuran %1$d: %2$s</string>
@@ -154,45 +132,11 @@
     <string name="continue_manually">Lanjutkan secara manual</string>
     <!-- EN: Choose floppy -->
     <string name="choose_floppy">Pilih disket</string>
-    <!-- EN: Starting another disk image ends this game. Progress since your last save is lost. -->
-    <string name="hard_disk_change_warning">Memulai image disk lain akan mengakhiri game ini. Progres sejak penyimpanan terakhir akan hilang.</string>
-    <!-- EN: Start a game before inserting a CD -->
-    <string name="cd_start_first">Mulai game sebelum memasukkan CD</string>
-    <!-- EN: No CDs for this game in the library. -->
-    <string name="cd_none_for_game">Tidak ada CD untuk game ini di pustaka.</string>
-    <!-- EN: FOR THIS GAME -->
-    <string name="for_this_game">UNTUK GAME INI</string>
-    <!-- EN: Ejecting CD… -->
-    <string name="cd_ejecting">Mengeluarkan CD…</string>
     <!-- %1$s is the disk image's name. -->
-    <!-- EN: Preparing %1$s… -->
-    <string name="disk_preparing">Menyiapkan %1$s…</string>
-    <!-- EN: CD could not be mounted -->
-    <string name="cd_mount_failed">CD tidak dapat dipasang</string>
-    <!-- EN: CD change failed -->
-    <string name="cd_change_failed">Penggantian CD gagal</string>
-    <!-- EN: Wait for the floppy change to finish -->
-    <string name="floppy_wait">Tunggu hingga penggantian disket selesai</string>
-    <!-- EN: Start a game before inserting a floppy -->
-    <string name="floppy_start_first">Mulai game sebelum memasukkan disket</string>
     <!-- %1$s is the floppy drive's letter. -->
-    <!-- EN: Ejecting floppy %1$s… -->
-    <string name="floppy_ejecting">Mengeluarkan disket %1$s…</string>
     <!-- EN: Floppy could not be mounted -->
     <string name="floppy_mount_failed">Disket tidak dapat dipasang</string>
-    <!-- EN: Floppy change failed -->
-    <string name="floppy_change_failed">Penggantian disket gagal</string>
     <!-- %1$s is the picked file's name. -->
-    <!-- EN: Importing %1$s… -->
-    <string name="floppy_importing">Mengimpor %1$s…</string>
-    <!-- EN: Floppy import failed -->
-    <string name="floppy_import_failed">Impor disket gagal</string>
-    <!-- EN: Could not read selected file -->
-    <string name="file_unreadable">Tidak dapat membaca file yang dipilih</string>
-    <!-- EN: Select a supported floppy image -->
-    <string name="select_floppy_image">Pilih image disket yang didukung</string>
-    <!-- EN: Select a supported disk image -->
-    <string name="select_disk_image">Pilih image disk yang didukung</string>
     <!-- EN: Base clock -->
     <string name="base_clock">Clock dasar</string>
     <!-- EN: GDC clock -->

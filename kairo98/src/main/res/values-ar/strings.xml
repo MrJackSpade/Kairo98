@@ -23,8 +23,6 @@
     <!-- EN: Floppy %1$s -->
     <string name="floppy_drive">القرص المرن %1$s</string>
     <!-- Names a picked floppy image in import errors, such as "Floppy is too large". -->
-    <!-- EN: Floppy -->
-    <string name="floppy">القرص المرن</string>
     <!-- EN: Font -->
     <string name="option_font">الخط</string>
     <!-- EN: Game folder -->
@@ -87,8 +85,6 @@
     <string name="play_manually">اللعب يدويًا</string>
     <!-- EN: Unable to start machine -->
     <string name="start_failed">يتعذّر بدء الجهاز</string>
-    <!-- EN: Machine startup timed out -->
-    <string name="start_timed_out">انتهت مهلة بدء الجهاز</string>
     <!-- The content ID's first characters name the disk. -->
     <!-- EN: Required floppy %1$s is missing from the library -->
     <string name="required_floppy_missing">القرص المرن المطلوب %1$s مفقود من المكتبة</string>
@@ -103,25 +99,7 @@
     <string name="hard_disk_missing">القرص الصلب المطابق مفقود من المكتبة</string>
     <!-- EN: Matching hard disk is missing or ambiguous in this archive -->
     <string name="hard_disk_missing_in_archive">القرص الصلب المطابق مفقود أو ملتبس في هذا الأرشيف</string>
-    <!-- EN: machine not running -->
-    <string name="state_error_not_running">الجهاز لا يعمل</string>
-    <!-- EN: state is missing or from another version -->
-    <string name="state_error_missing">الحالة مفقودة أو من إصدار آخر</string>
-    <!-- EN: storage unavailable -->
-    <string name="state_error_storage">التخزين غير متاح</string>
-    <!-- EN: disk image copy failed -->
-    <string name="state_error_disk_copy">فشل نسخ صورة القرص</string>
-    <!-- EN: state file unreadable -->
-    <string name="state_error_unreadable">تعذّرت قراءة ملف الحالة</string>
-    <!-- EN: machine did not respond -->
-    <string name="state_error_no_response">لم يستجب الجهاز</string>
-    <!-- EN: the game\'s save path is too long -->
-    <string name="state_error_path_too_long">مسار حفظ اللعبة طويل جدًا</string>
     <!-- %1$d is the emulator's error code. -->
-    <!-- EN: code %1$d -->
-    <string name="state_error_code">الرمز %1$d</string>
-    <!-- EN: Audio profile -->
-    <string name="diagnostics_audio_profile">ملف تعريف الصوت</string>
     <!-- What the startup typer is waiting for: %1$d is the command's number; %2$s the command. -->
     <!-- EN: Launch command %1$d: %2$s -->
     <string name="startup_step_command">أمر التشغيل %1$d: %2$s</string>
@@ -154,45 +132,11 @@
     <string name="continue_manually">المتابعة يدويًا</string>
     <!-- EN: Choose floppy -->
     <string name="choose_floppy">اختيار قرص مرن</string>
-    <!-- EN: Starting another disk image ends this game. Progress since your last save is lost. -->
-    <string name="hard_disk_change_warning">يؤدي بدء صورة قرص أخرى إلى إنهاء هذه اللعبة. سيضيع التقدم منذ آخر حفظ.</string>
-    <!-- EN: Start a game before inserting a CD -->
-    <string name="cd_start_first">ابدأ لعبة قبل إدخال قرص مضغوط</string>
-    <!-- EN: No CDs for this game in the library. -->
-    <string name="cd_none_for_game">لا توجد أقراص مضغوطة لهذه اللعبة في المكتبة.</string>
-    <!-- EN: FOR THIS GAME -->
-    <string name="for_this_game">لهذه اللعبة</string>
-    <!-- EN: Ejecting CD… -->
-    <string name="cd_ejecting">جارٍ إخراج القرص المضغوط…</string>
     <!-- %1$s is the disk image's name. -->
-    <!-- EN: Preparing %1$s… -->
-    <string name="disk_preparing">جارٍ تجهيز %1$s…</string>
-    <!-- EN: CD could not be mounted -->
-    <string name="cd_mount_failed">تعذّر تحميل القرص المضغوط</string>
-    <!-- EN: CD change failed -->
-    <string name="cd_change_failed">فشل تغيير القرص المضغوط</string>
-    <!-- EN: Wait for the floppy change to finish -->
-    <string name="floppy_wait">انتظر حتى ينتهي تغيير القرص المرن</string>
-    <!-- EN: Start a game before inserting a floppy -->
-    <string name="floppy_start_first">ابدأ لعبة قبل إدخال قرص مرن</string>
     <!-- %1$s is the floppy drive's letter. -->
-    <!-- EN: Ejecting floppy %1$s… -->
-    <string name="floppy_ejecting">جارٍ إخراج القرص المرن %1$s…</string>
     <!-- EN: Floppy could not be mounted -->
     <string name="floppy_mount_failed">تعذّر تحميل القرص المرن</string>
-    <!-- EN: Floppy change failed -->
-    <string name="floppy_change_failed">فشل تغيير القرص المرن</string>
     <!-- %1$s is the picked file's name. -->
-    <!-- EN: Importing %1$s… -->
-    <string name="floppy_importing">جارٍ استيراد %1$s…</string>
-    <!-- EN: Floppy import failed -->
-    <string name="floppy_import_failed">فشل استيراد القرص المرن</string>
-    <!-- EN: Could not read selected file -->
-    <string name="file_unreadable">تعذّرت قراءة الملف المحدد</string>
-    <!-- EN: Select a supported floppy image -->
-    <string name="select_floppy_image">اختر صورة قرص مرن مدعومة</string>
-    <!-- EN: Select a supported disk image -->
-    <string name="select_disk_image">اختر صورة قرص مدعومة</string>
     <!-- EN: Base clock -->
     <string name="base_clock">الساعة الأساسية</string>
     <!-- EN: GDC clock -->

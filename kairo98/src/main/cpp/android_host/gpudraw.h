@@ -63,6 +63,10 @@ typedef struct {
  * per-frame dirty state. */
 void kairo98_gpudraw_take(kairo98_gpu_frame_t *frame);
 
+/* Whether a packet kairo98_gpudraw_take just filled shows anything but black (every colour channel
+ * at most 16 of 255) in the rows it redrew. */
+int kairo98_gpudraw_pictured(const kairo98_gpu_frame_t *frame);
+
 #ifdef __cplusplus
 }
 #endif

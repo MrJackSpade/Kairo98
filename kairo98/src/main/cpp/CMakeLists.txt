@@ -4,7 +4,7 @@ project(kairo98 LANGUAGES C CXX)
 get_filename_component(NP21W_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/../../../../third_party/np21w" ABSOLUTE)
 get_filename_component(YMFM_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/../../../../third_party/ymfm" ABSOLUTE)
 include(np21w-sources.cmake)
-include("${CMAKE_CURRENT_SOURCE_DIR}/../../../../shared/cmake/KairoNativeDefaults.cmake")
+include("${CMAKE_CURRENT_SOURCE_DIR}/../../../../shared/cmake/KairoMachine.cmake")
 
 add_library(np21w_core OBJECT
     ${NP21W_CORE_SOURCES}
@@ -17,7 +17,6 @@ add_library(np21w_core OBJECT
     ${NP21W_ROOT}/statsave.c
     android_host/np2sysp.c
     android_host/platform.c
-    android_host/core_probe.c
     android_host/machine.c
     android_host/gpudraw.c
     android_host/input_telemetry.c
@@ -47,19 +46,16 @@ target_compile_definitions(np21w_core PRIVATE SUPPORT_LARGE_HDD SUPPORT_KAI_IMAG
 target_compile_options(np21w_core PRIVATE -fsigned-char -fno-strict-aliasing -flto=thin)
 kairo_native_debug_defaults(np21w_core)
 
-add_library(kairo98 SHARED
-    native_bridge.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/../../../../shared/frontend/src/main/cpp/kairo/state_paths.cpp
+# np2 as the shared machine host's core (pc98_core.cpp), with ymfm's sound.
+kairo_machine_library(kairo98
+    pc98_core.cpp
     android_host/ymfm_bridge.cpp
     ${YMFM_ROOT}/src/ymfm_opn.cpp
     ${YMFM_ROOT}/src/ymfm_adpcm.cpp
     ${YMFM_ROOT}/src/ymfm_ssg.cpp
     $<TARGET_OBJECTS:np21w_core>)
 target_include_directories(kairo98 PRIVATE ${YMFM_ROOT}/src)
-target_compile_features(kairo98 PRIVATE cxx_std_17)
 target_compile_options(kairo98 PRIVATE -flto=thin)
-kairo_native_debug_defaults(kairo98)
-target_link_libraries(kairo98 PRIVATE log android aaudio EGL GLESv3 dl)
 # Core calls stay inside this shared library. Bind them locally to avoid the
 # measured PLT cost in the interpreter's instruction-fetch path.
 target_link_options(kairo98 PRIVATE "-Wl,-Bsymbolic" -flto=thin)
@@ -106,6 +102,3 @@ if(KAIRO98_PGO_FLAGS)
     target_link_options(kairo98 PRIVATE ${KAIRO98_PGO_FLAGS})
 endif()
 
-# Common EGL lifecycle; guest palette composition stays in Kairo98.
-target_include_directories(kairo98 PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../../../../shared/frontend/src/main/cpp)
-target_include_directories(kairo98 PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../../../../shared/third_party/librashader/include)

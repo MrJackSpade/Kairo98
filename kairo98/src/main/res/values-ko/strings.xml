@@ -23,8 +23,6 @@
     <!-- EN: Floppy %1$s -->
     <string name="floppy_drive">플로피 %1$s</string>
     <!-- Names a picked floppy image in import errors, such as "Floppy is too large". -->
-    <!-- EN: Floppy -->
-    <string name="floppy">플로피</string>
     <!-- EN: Font -->
     <string name="option_font">글꼴</string>
     <!-- EN: Game folder -->
@@ -87,8 +85,6 @@
     <string name="play_manually">직접 플레이</string>
     <!-- EN: Unable to start machine -->
     <string name="start_failed">머신을 시작할 수 없습니다</string>
-    <!-- EN: Machine startup timed out -->
-    <string name="start_timed_out">머신 시작 시간이 초과되었습니다</string>
     <!-- The content ID's first characters name the disk. -->
     <!-- EN: Required floppy %1$s is missing from the library -->
     <string name="required_floppy_missing">필요한 플로피 %1$s이(가) 라이브러리에 없습니다</string>
@@ -103,25 +99,7 @@
     <string name="hard_disk_missing">일치하는 하드 디스크가 라이브러리에 없습니다</string>
     <!-- EN: Matching hard disk is missing or ambiguous in this archive -->
     <string name="hard_disk_missing_in_archive">이 압축 파일에 일치하는 하드 디스크가 없거나 모호합니다</string>
-    <!-- EN: machine not running -->
-    <string name="state_error_not_running">머신이 실행 중이 아님</string>
-    <!-- EN: state is missing or from another version -->
-    <string name="state_error_missing">상태가 없거나 다른 버전의 상태임</string>
-    <!-- EN: storage unavailable -->
-    <string name="state_error_storage">저장소를 사용할 수 없음</string>
-    <!-- EN: disk image copy failed -->
-    <string name="state_error_disk_copy">디스크 이미지 복사 실패</string>
-    <!-- EN: state file unreadable -->
-    <string name="state_error_unreadable">상태 파일을 읽을 수 없음</string>
-    <!-- EN: machine did not respond -->
-    <string name="state_error_no_response">머신이 응답하지 않음</string>
-    <!-- EN: the game\'s save path is too long -->
-    <string name="state_error_path_too_long">게임의 저장 경로가 너무 김</string>
     <!-- %1$d is the emulator's error code. -->
-    <!-- EN: code %1$d -->
-    <string name="state_error_code">코드 %1$d</string>
-    <!-- EN: Audio profile -->
-    <string name="diagnostics_audio_profile">오디오 프로필</string>
     <!-- What the startup typer is waiting for: %1$d is the command's number; %2$s the command. -->
     <!-- EN: Launch command %1$d: %2$s -->
     <string name="startup_step_command">실행 명령 %1$d: %2$s</string>
@@ -154,45 +132,11 @@
     <string name="continue_manually">직접 계속하기</string>
     <!-- EN: Choose floppy -->
     <string name="choose_floppy">플로피 선택</string>
-    <!-- EN: Starting another disk image ends this game. Progress since your last save is lost. -->
-    <string name="hard_disk_change_warning">다른 디스크 이미지를 시작하면 이 게임이 종료됩니다. 마지막 저장 이후의 진행 상황은 사라집니다.</string>
-    <!-- EN: Start a game before inserting a CD -->
-    <string name="cd_start_first">CD를 넣기 전에 게임을 시작하세요</string>
-    <!-- EN: No CDs for this game in the library. -->
-    <string name="cd_none_for_game">라이브러리에 이 게임의 CD가 없습니다.</string>
-    <!-- EN: FOR THIS GAME -->
-    <string name="for_this_game">이 게임용</string>
-    <!-- EN: Ejecting CD… -->
-    <string name="cd_ejecting">CD 꺼내는 중…</string>
     <!-- %1$s is the disk image's name. -->
-    <!-- EN: Preparing %1$s… -->
-    <string name="disk_preparing">%1$s 준비 중…</string>
-    <!-- EN: CD could not be mounted -->
-    <string name="cd_mount_failed">CD를 마운트할 수 없습니다</string>
-    <!-- EN: CD change failed -->
-    <string name="cd_change_failed">CD 교체 실패</string>
-    <!-- EN: Wait for the floppy change to finish -->
-    <string name="floppy_wait">플로피 교체가 끝날 때까지 기다리세요</string>
-    <!-- EN: Start a game before inserting a floppy -->
-    <string name="floppy_start_first">플로피를 넣기 전에 게임을 시작하세요</string>
     <!-- %1$s is the floppy drive's letter. -->
-    <!-- EN: Ejecting floppy %1$s… -->
-    <string name="floppy_ejecting">플로피 %1$s 꺼내는 중…</string>
     <!-- EN: Floppy could not be mounted -->
     <string name="floppy_mount_failed">플로피를 마운트할 수 없습니다</string>
-    <!-- EN: Floppy change failed -->
-    <string name="floppy_change_failed">플로피 교체 실패</string>
     <!-- %1$s is the picked file's name. -->
-    <!-- EN: Importing %1$s… -->
-    <string name="floppy_importing">%1$s 가져오는 중…</string>
-    <!-- EN: Floppy import failed -->
-    <string name="floppy_import_failed">플로피 가져오기 실패</string>
-    <!-- EN: Could not read selected file -->
-    <string name="file_unreadable">선택한 파일을 읽을 수 없습니다</string>
-    <!-- EN: Select a supported floppy image -->
-    <string name="select_floppy_image">지원되는 플로피 이미지를 선택하세요</string>
-    <!-- EN: Select a supported disk image -->
-    <string name="select_disk_image">지원되는 디스크 이미지를 선택하세요</string>
     <!-- EN: Base clock -->
     <string name="base_clock">기본 클럭</string>
     <!-- EN: GDC clock -->

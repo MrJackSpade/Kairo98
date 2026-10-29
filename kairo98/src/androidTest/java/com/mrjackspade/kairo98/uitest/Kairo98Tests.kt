@@ -39,7 +39,7 @@ object Kairo98App : AppUnderTest() {
     override val bootGameFile = "games/Acrojet [T-En by MrRichard999 v1.0].zip"
     override val otherGame = "The Black Onyx"
     // The Disks page's Floppy A takes The Black Onyx's disk from Other while Acrojet runs.
-    override val mediaSwap = MediaSwap("Acrojet", "Floppy A", "Black Onyx", filler = "d88", page = "f-disks")
+    override val mediaSwap = MediaSwap("Acrojet", "Floppy A", "Black Onyx", filler = "d88")
 }
 
 class Kairo98FirstRunTests : FirstRunTests() { override val app = Kairo98App }
@@ -63,7 +63,7 @@ class Pc98Tests : KairoUiTest() {
     private fun openDisks(): com.mrjackspade.kairo.uitest.Element {
         screens.completeFirstRun().open(Kairo98App.bootGame).play()
         driver.waitFrames(120)
-        screens.openGameMenu().find(By.item("f-disks")).tap()
+        screens.openGameMenu().find(By.item("f-media")).tap()
         return driver.page("Disks").waitUntilShown()
     }
 
@@ -71,16 +71,16 @@ class Pc98Tests : KairoUiTest() {
     fun theDisksPageShowsWhatIsInEachDrive() {
         val disks = openDisks()
         val probe = driver.probe()
-        val floppy = disks.find(By.item("floppy0")).find(By.id("value")).text()
+        val floppy = disks.find(By.item("media0")).find(By.id("value")).text()
         expect.equal("Floppy A's row", probe.details["media.Floppy A"].orEmpty().ifEmpty { "Empty" }, floppy)
     }
 
     @Test
     fun ejectingAFloppyEmptiesTheDrive() {
         val disks = openDisks()
-        screens.choose(disks, "floppy0", "empty")
+        screens.choose(disks, "media0", "empty")
         driver.waitUntil("floppy A to be empty") { driver.probeNow().details["media.Floppy A"].orEmpty().isEmpty() }
-        expect.equal("Floppy A's row after ejecting", "Empty", disks.find(By.item("floppy0")).find(By.id("value")).text())
+        expect.equal("Floppy A's row after ejecting", "Empty", disks.find(By.item("media0")).find(By.id("value")).text())
     }
 
     @Test

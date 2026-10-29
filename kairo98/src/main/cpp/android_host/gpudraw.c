@@ -92,6 +92,33 @@ void kairo98_gpudraw_range(SDRAW sdraw, int maxy) {
     sdraw->y = maxy;
 }
 
+/* Whether an RGB565 colour has a channel above 16 of 255, each widened to 8 bits as the GPU does. */
+static int bright(unsigned short colour) {
+    const unsigned r = colour >> 11, g = (colour >> 5) & 63, b = colour & 31;
+    return ((r << 3) | (r >> 2)) > 16 || ((g << 2) | (g >> 4)) > 16 || ((b << 3) | (b >> 2)) > 16;
+}
+
+int kairo98_gpudraw_pictured(const kairo98_gpu_frame_t *frame) {
+    int x, y;
+    if (frame->mode < 0) {
+        for (x = 0; x < KAIRO98_GPU_ROWS * KAIRO98_GPU_COLS; x++)
+            if (bright(frame->rgb[x])) return 1;
+        return 0;
+    }
+    /* The packet's palette updates are only the slots that changed; the recorded slots are whole. */
+    for (y = 0; y < KAIRO98_GPU_ROWS; y++) {
+        const unsigned short *palette = palette_slots[frame->line_palette[y]];
+        if (!frame->row_dirty[y]) continue;
+        for (x = 0; x < KAIRO98_GPU_COLS; x++) {
+            int index = frame->base;
+            if (frame->mode & 1) index += frame->text[y][x];
+            if (frame->mode & 2) index += frame->grph[y][x];
+            if (bright(palette[index])) return 1;
+        }
+    }
+    return 0;
+}
+
 void kairo98_gpudraw_take(kairo98_gpu_frame_t *frame) {
     int y, slot;
 

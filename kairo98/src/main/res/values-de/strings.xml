@@ -23,8 +23,6 @@
     <!-- EN: Floppy %1$s -->
     <string name="floppy_drive">Diskette %1$s</string>
     <!-- Names a picked floppy image in import errors, such as "Floppy is too large". -->
-    <!-- EN: Floppy -->
-    <string name="floppy">Diskette</string>
     <!-- EN: Font -->
     <string name="option_font">Schriftart</string>
     <!-- EN: Game folder -->
@@ -87,8 +85,6 @@
     <string name="play_manually">Manuell spielen</string>
     <!-- EN: Unable to start machine -->
     <string name="start_failed">Maschine kann nicht gestartet werden</string>
-    <!-- EN: Machine startup timed out -->
-    <string name="start_timed_out">Zeitüberschreitung beim Starten der Maschine</string>
     <!-- The content ID's first characters name the disk. -->
     <!-- EN: Required floppy %1$s is missing from the library -->
     <string name="required_floppy_missing">Die benötigte Diskette %1$s fehlt in der Bibliothek</string>
@@ -103,25 +99,7 @@
     <string name="hard_disk_missing">Die passende Festplatte fehlt in der Bibliothek</string>
     <!-- EN: Matching hard disk is missing or ambiguous in this archive -->
     <string name="hard_disk_missing_in_archive">Die passende Festplatte fehlt in diesem Archiv oder ist mehrdeutig</string>
-    <!-- EN: machine not running -->
-    <string name="state_error_not_running">Maschine läuft nicht</string>
-    <!-- EN: state is missing or from another version -->
-    <string name="state_error_missing">Speicherstand fehlt oder stammt aus einer anderen Version</string>
-    <!-- EN: storage unavailable -->
-    <string name="state_error_storage">Speicher nicht verfügbar</string>
-    <!-- EN: disk image copy failed -->
-    <string name="state_error_disk_copy">Kopieren des Datenträgerabbilds fehlgeschlagen</string>
-    <!-- EN: state file unreadable -->
-    <string name="state_error_unreadable">Speicherstanddatei nicht lesbar</string>
-    <!-- EN: machine did not respond -->
-    <string name="state_error_no_response">Maschine hat nicht reagiert</string>
-    <!-- EN: the game\'s save path is too long -->
-    <string name="state_error_path_too_long">der Speicherpfad des Spiels ist zu lang</string>
     <!-- %1$d is the emulator's error code. -->
-    <!-- EN: code %1$d -->
-    <string name="state_error_code">Code %1$d</string>
-    <!-- EN: Audio profile -->
-    <string name="diagnostics_audio_profile">Audioprofil</string>
     <!-- What the startup typer is waiting for: %1$d is the command's number; %2$s the command. -->
     <!-- EN: Launch command %1$d: %2$s -->
     <string name="startup_step_command">Startbefehl %1$d: %2$s</string>
@@ -154,45 +132,11 @@
     <string name="continue_manually">Manuell fortfahren</string>
     <!-- EN: Choose floppy -->
     <string name="choose_floppy">Diskette auswählen</string>
-    <!-- EN: Starting another disk image ends this game. Progress since your last save is lost. -->
-    <string name="hard_disk_change_warning">Das Starten eines anderen Datenträgerabbilds beendet dieses Spiel. Der Fortschritt seit dem letzten Speichern geht verloren.</string>
-    <!-- EN: Start a game before inserting a CD -->
-    <string name="cd_start_first">Starten Sie ein Spiel, bevor Sie eine CD einlegen</string>
-    <!-- EN: No CDs for this game in the library. -->
-    <string name="cd_none_for_game">Keine CDs für dieses Spiel in der Bibliothek.</string>
-    <!-- EN: FOR THIS GAME -->
-    <string name="for_this_game">FÜR DIESES SPIEL</string>
-    <!-- EN: Ejecting CD… -->
-    <string name="cd_ejecting">CD wird ausgeworfen…</string>
     <!-- %1$s is the disk image's name. -->
-    <!-- EN: Preparing %1$s… -->
-    <string name="disk_preparing">%1$s wird vorbereitet…</string>
-    <!-- EN: CD could not be mounted -->
-    <string name="cd_mount_failed">CD konnte nicht eingebunden werden</string>
-    <!-- EN: CD change failed -->
-    <string name="cd_change_failed">CD-Wechsel fehlgeschlagen</string>
-    <!-- EN: Wait for the floppy change to finish -->
-    <string name="floppy_wait">Warten Sie, bis der Diskettenwechsel abgeschlossen ist</string>
-    <!-- EN: Start a game before inserting a floppy -->
-    <string name="floppy_start_first">Starten Sie ein Spiel, bevor Sie eine Diskette einlegen</string>
     <!-- %1$s is the floppy drive's letter. -->
-    <!-- EN: Ejecting floppy %1$s… -->
-    <string name="floppy_ejecting">Diskette %1$s wird ausgeworfen…</string>
     <!-- EN: Floppy could not be mounted -->
     <string name="floppy_mount_failed">Diskette konnte nicht eingebunden werden</string>
-    <!-- EN: Floppy change failed -->
-    <string name="floppy_change_failed">Diskettenwechsel fehlgeschlagen</string>
     <!-- %1$s is the picked file's name. -->
-    <!-- EN: Importing %1$s… -->
-    <string name="floppy_importing">%1$s wird importiert…</string>
-    <!-- EN: Floppy import failed -->
-    <string name="floppy_import_failed">Disketten-Import fehlgeschlagen</string>
-    <!-- EN: Could not read selected file -->
-    <string name="file_unreadable">Die ausgewählte Datei konnte nicht gelesen werden</string>
-    <!-- EN: Select a supported floppy image -->
-    <string name="select_floppy_image">Wählen Sie ein unterstütztes Disketten-Abbild</string>
-    <!-- EN: Select a supported disk image -->
-    <string name="select_disk_image">Wählen Sie ein unterstütztes Datenträgerabbild</string>
     <!-- EN: Base clock -->
     <string name="base_clock">Grundtakt</string>
     <!-- EN: GDC clock -->
