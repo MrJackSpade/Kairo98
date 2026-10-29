@@ -122,8 +122,6 @@ val DiskImageEntry.isCd: Boolean get() = Pc98Media.isCd(displayName)
 
 data class BootMedia(val hardDisk: DiskImageEntry, val bootFloppy: DiskImageEntry)
 
-private val BOOT_DISK_NAME = Regex("(?i)\\bboot[ _-]*disk\\b")
-
 fun requiredFloppyFor(contentId: String, source: DiskImageEntry, entries: List<DiskImageEntry>): DiskImageEntry =
     requiredMediaFor(contentId, source, entries, R.string.required_floppy_missing) { it.isFloppy }
 
@@ -157,27 +155,14 @@ fun cdBootDiskFor(context: Context, cd: DiskImageEntry, catalogBootId: String?,
         if (beside.isEmpty()) R.string.cd_needs_boot_disk else R.string.cd_several_boot_disks, cd.displayName))
 }
 
-/** Resolve an explicit catalog dependency, or a clearly labelled pair in one archive. */
+/**
+ * A hard disk and the boot floppy its catalog record names (`bootFloppy`). The catalog decides the
+ * pair by content ID; file names never do. A boot floppy started on its own has no hard disk.
+ */
 fun bootMediaFor(context: Context, entry: DiskImageEntry, entries: List<DiskImageEntry>,
                  requiredFloppyId: String?): BootMedia? {
-    if (!entry.playable) return null
-    if (!entry.isFloppy && requiredFloppyId != null) {
-        val floppy = requiredFloppyFor(requiredFloppyId, entry, entries)
-        return BootMedia(entry, floppy)
-    }
-    if (entry.zipEntry == null) {
-        if (entry.isFloppy && requiredFloppyId != null && requiredFloppyId in setOf(entry.contentId, entry.catalogId))
-            error(context.getString(R.string.hard_disk_missing))
-        return null
-    }
-    val siblings = entries.filter { it.playable && it.zipEntry != null && it.uri == entry.uri }
-    val hardDisks = siblings.filter { !it.isFloppy && !it.isCd }
-    val bootFloppies = siblings.filter { it.isFloppy && BOOT_DISK_NAME.containsMatchIn(it.displayName) }
-    if (hardDisks.size != 1 || bootFloppies.size != 1) {
-        if (entry.isFloppy && requiredFloppyId != null && requiredFloppyId in setOf(entry.contentId, entry.catalogId))
-            error(context.getString(R.string.hard_disk_missing_in_archive))
-        return null
-    }
-    val pair = BootMedia(hardDisks.single(), bootFloppies.single())
-    return pair.takeIf { entry.id == it.hardDisk.id || entry.id == it.bootFloppy.id }
+    if (!entry.playable || requiredFloppyId == null) return null
+    if (!entry.isFloppy) return BootMedia(entry, requiredFloppyFor(requiredFloppyId, entry, entries))
+    if (requiredFloppyId in setOf(entry.contentId, entry.catalogId)) error(context.getString(R.string.hard_disk_missing))
+    return null
 }

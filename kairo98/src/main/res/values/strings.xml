@@ -57,7 +57,6 @@
     <string name="cd_needs_boot_disk">%1$s needs a boot disk; start the game\'s hard disk or floppy instead</string>
     <string name="cd_several_boot_disks">%1$s has several disks beside it; start the one that boots</string>
     <string name="hard_disk_missing">Matching hard disk is missing from the library</string>
-    <string name="hard_disk_missing_in_archive">Matching hard disk is missing or ambiguous in this archive</string>
 
     <!-- %1$d is the emulator's error code. -->
 

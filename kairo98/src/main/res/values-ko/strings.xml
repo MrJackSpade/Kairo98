@@ -92,7 +92,6 @@
     <!-- EN: Matching hard disk is missing from the library -->
     <string name="hard_disk_missing">일치하는 하드 디스크가 라이브러리에 없습니다</string>
     <!-- EN: Matching hard disk is missing or ambiguous in this archive -->
-    <string name="hard_disk_missing_in_archive">이 압축 파일에 일치하는 하드 디스크가 없거나 모호합니다</string>
     <!-- %1$d is the emulator's error code. -->
     <!-- What the startup typer is waiting for: %1$d is the command's number; %2$s the command. -->
     <!-- EN: Launch command %1$d: %2$s -->

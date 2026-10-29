@@ -118,9 +118,8 @@ class MainActivity : MachineActivity<DiskImageEntry>() {
     override fun inspectExternal(file: ExternalGameFile, cancelled: AtomicBoolean) =
         claimSavedData(super.inspectExternal(file, cancelled)).onEach { it.error?.let(::error) }
 
-    /** When the catalog does not settle it: the one hard disk, else the one boot disk; otherwise the player chooses. */
+    /** When the catalog does not settle it: the one hard disk; otherwise the player chooses. */
     override fun preferredExternal(playable: List<DiskImageEntry>) = playable.filter { !it.isFloppy }.singleOrNull()
-        ?: playable.filter { it.displayName.contains("boot", true) }.singleOrNull()
 
     // Debug launches over adb ------------------------------------------------------------------------
 

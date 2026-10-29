@@ -30,6 +30,21 @@ class SetTests(unittest.TestCase):
         self.assertEqual(entry_name([disk("Giten", "Giten (Boot Disk).fdi", "a"),
                                      disk("Giten", "Giten.hdi", "b")]), "Giten.hdi")
 
+    def test_hard_disk_records_its_boot_floppy(self):
+        (found,), _ = find_sets([disk("G", "G (Boot Disk) [Alt 1].fdi", "a"), disk("G", "G (Boot Disk).fdi", "b"),
+                                 disk("G", "G (Disk 2).fdi", "c"), disk("G", "G.hdi", "d")])
+        self.assertEqual(found["boot"], "sha256-fd-v1:" + "b" * 64)
+        (found,), _ = find_sets([disk("N", "N (Disk 1).fdi", "a"), disk("N", "N.hdi", "b")])
+        self.assertIsNone(found["boot"])
+        (found,), _ = find_sets([disk("F", "F (Boot Disk).fdi", "a"), disk("F", "F (Disk 2).fdi", "b")])
+        self.assertIsNone(found["boot"])
+
+    def test_several_boot_floppies_are_reported_not_chosen(self):
+        (found,), ambiguous = find_sets([disk("M", "M (MM1 Boot disk).hdm", "a"),
+                                         disk("M", "M (MM2 Boot disk).hdm", "b"), disk("M", "M.hdi", "c")])
+        self.assertIsNone(found["boot"])
+        self.assertEqual(len(ambiguous), 1)
+
     def test_roles_letters_and_unlabeled_disks(self):
         self.assertEqual(entry_name([disk("D", "D (Data disk).hdm", "a"),
                                      disk("D", "D (System disk).hdm", "b")]), "D (System disk).hdm")

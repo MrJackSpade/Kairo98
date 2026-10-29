@@ -9,7 +9,9 @@ A set is two or more images in one source (a ZIP, a NeoKobe release folder, or a
 files) that share a game name once disk numbers, user disks, boot disks, alternates, tags and
 extensions are removed. Its entry point is the set's only hard disk image, or else its lowest
 numbered disk. The entry point's startup profile gains `setDisks`, the content IDs of the set's
-other images, so the library shows one row with the catalog title. Edits keep the hand-formatted
+other images, so the library shows one row with the catalog title. A hard disk whose set holds a
+floppy labelled as its boot disk ("(Boot Disk)") gains that floppy as its `bootFloppy` medium, so
+the app mounts the pair by content ID and never by name. Edits keep the hand-formatted
 JSON layout of both inputs.
 
 Pull a library cache with: adb exec-out run-as com.loxifi.kairo98 cat files/library-v2.bin > library-v2.bin
@@ -167,8 +169,19 @@ def find_sets(disks):
             continue
         entry_point = candidates[0]
         disks = sorted({m["contentId"] for m in members} - {entry_point["contentId"]})
+        boot = None
+        if HARD_DISK.search(entry_point["name"]):
+            # The boot floppy a hard disk starts with; its copies in other formats rank after it.
+            floppies = [(rank, m) for rank, m in ranked
+                        if FLOPPY.search(m["name"]) and rank[1] == ENTRY_ROLES.index("boot")]
+            first = min((rank for rank, _ in floppies), default=None)
+            boots = [m for rank, m in floppies if rank == first]
+            if len(boots) > 1:
+                ambiguous.append(f"{source}: {key} has {len(boots)} possible boot floppies")
+            elif boots:
+                boot = boots[0]["contentId"]
         if disks:
-            sets.append({"source": source, "key": key, "entry": entry_point, "disks": disks})
+            sets.append({"source": source, "key": key, "entry": entry_point, "disks": disks, "boot": boot})
     return sets, ambiguous
 
 
@@ -380,6 +393,9 @@ def apply(matches_text, profiles_text, research_ids, set_profiles, cd_links=()):
         if "title" in profiles.get(found["entry"]["contentId"], {}):
             title = None
         profiles_text = set_profile(profiles_text, found["entry"]["contentId"], disks, title)
+    for found, _ in set_profiles:
+        if found["boot"]:
+            profiles_text = set_media(profiles_text, found["entry"]["contentId"], "bootFloppy", found["boot"])
     # A disc is mounted with the disk that runs it, and shows no row of its own beside it.
     for link in cd_links:
         profiles_text = set_media(profiles_text, link["target"], "cd", link["cd"])
