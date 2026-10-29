@@ -1,17 +1,17 @@
 #!/usr/bin/env python3
-"""Assemble Kairo98's catalog research into catalog/research/games-v1.json, which the shared
+"""Assemble Kairo98's catalog research into catalog/research/games-v1.json.gz, which the shared
 generator (shared/tools/app_catalog.py, with tools/catalog_config.py) builds the catalog from.
 
 Usage: catalog_research.py [--check]
 
 Kairo98's research is its own (catalog/research/README.md): matches-v1.json, one entry per game
-(LaunchBox, VNDB, MobyGames and NeoKobe inventory games); descriptions-v1.json and each language's
-descriptions-<language>-v1.json; display-text-v1.json, the reviewed titles, aliases and descriptions;
+(LaunchBox, VNDB, MobyGames and NeoKobe inventory games); descriptions-v1.json.gz and each language's
+descriptions-<language>-v1.json.gz (gzipped, shared catalog_files.py); display-text-v1.json, the reviewed titles, aliases and descriptions;
 adult-content-v1.json, the adult review; artwork-index-v1.json, each game's reviewed images in
 catalog/artwork; and catalog/startup-profiles-v1.json, each disk's own fields: its set's disks and
 media, its own title or description, and its startup choices and disk swaps. A profile's disk that
 no game lists becomes a game of its own. NeoKobe inventory games are recognized only by their disks,
-never by file name. --check fails if games-v1.json differs from what the research gives.
+never by file name. --check fails if games-v1.json.gz differs from what the research gives.
 """
 
 import argparse
@@ -23,13 +23,14 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "shared/tools"))
 sys.path.insert(0, str(ROOT / "tools"))
 import catalog_descriptions
+import catalog_files
 import japanese_titles
 from catalog_documents import compact, require
 from catalog_languages import LANGUAGES
 from research_additions import name_matched
 
 RESEARCH = ROOT / "catalog/research"
-OUTPUT = RESEARCH / "games-v1.json"
+OUTPUT = RESEARCH / "games-v1.json.gz"
 # A disk's startup automation, apart from the fields of its disk set.
 AUTOMATION = ("startupChoices", "diskSwaps")
 
@@ -57,7 +58,7 @@ def controller(value):
 def assemble():
     matches = json.loads((RESEARCH / "matches-v1.json").read_text(encoding="utf-8-sig"))["entries"]
     adult_review = json.loads((RESEARCH / "adult-content-v1.json").read_text(encoding="utf-8"))["games"]
-    description_notes = json.loads((RESEARCH / "descriptions-v1.json").read_text(encoding="utf-8"))
+    description_notes = catalog_files.read(RESEARCH / "descriptions-v1.json.gz")
     descriptions = description_notes["descriptions"]
     known = {f'{entry["platform"]}:{entry["databaseId"]}' for entry in matches}
     display_notes = json.loads((RESEARCH / "display-text-v1.json").read_text(encoding="utf-8"))
@@ -72,7 +73,7 @@ def assemble():
     require(not incomplete, f"Translated games missing descriptions: {incomplete[:5]}")
     translations = {}
     for language in LANGUAGES:
-        path = RESEARCH / f"descriptions-{language}-v1.json"
+        path = RESEARCH / f"descriptions-{language}-v1.json.gz"
         if path.is_file():
             for key, text in catalog_descriptions.texts(path).items():
                 translations.setdefault(key, {})[language] = text
@@ -149,6 +150,15 @@ def assemble():
         if any(field in profile for field in AUTOMATION):
             game["diskAutomation"] = {disk: {field: profile[field] for field in AUTOMATION if field in profile}}
         games[f"pc98:disk-{disk.split(':', 1)[1][:16]}"] = game
+    # Adult games' frank descriptions and their translations, as every app's research carries them
+    # (shared descriptions.py writes them; catalog_descriptions reads them; Kairo98#106).
+    for key, text in catalog_descriptions.read(RESEARCH / "descriptions-adult-v1.json.gz").items():
+        require(games.get(key, {}).get("adult"), f"Adult description of a game not marked adult: {key}")
+        games[key]["adultDescription"] = text
+    for language in LANGUAGES:
+        for key, text in catalog_descriptions.texts(RESEARCH / f"descriptions-adult-{language}-v1.json.gz").items():
+            require(games.get(key, {}).get("adultDescription"), f"Translated adult description of no adult description: {key}")
+            games[key].setdefault("adultDescriptions", {})[language] = text
     # Each game's Japanese title (titles-v1.json, shared japanese_titles.py; Kairo#61).
     japanese_titles.apply(RESEARCH, games)
     return {"schemaVersion": 1, "games": games}
@@ -160,9 +170,9 @@ def main():
     args = parser.parse_args()
     content = json.dumps(assemble(), ensure_ascii=False, indent=1, sort_keys=True).encode("utf-8") + b"\n"
     if args.check:
-        require(OUTPUT.read_bytes() == content, f"Stale {OUTPUT.relative_to(ROOT)}: run tools/catalog_research.py")
+        require(catalog_files.same(OUTPUT, content), f"Stale {OUTPUT.relative_to(ROOT)}: run tools/catalog_research.py")
     else:
-        OUTPUT.write_bytes(content)
+        catalog_files.write_bytes(OUTPUT, content)
         print(f"{len(json.loads(content)['games'])} games")
 
 

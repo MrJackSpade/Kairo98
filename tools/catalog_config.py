@@ -1,7 +1,7 @@
 """Kairo98's catalog settings for the shared generator (shared/tools/app_catalog.py): PC-98 hard disk,
 floppy and CD media, its self-hosted artwork references, the machine settings and launch fields a
 game can carry, and the drives its disk swaps use. tools/catalog_research.py assembles
-catalog/research/games-v1.json from Kairo98's research records."""
+catalog/research/games-v1.json.gz from Kairo98's research records."""
 import re
 import sys
 from pathlib import Path

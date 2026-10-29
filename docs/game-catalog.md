@@ -34,7 +34,7 @@ User catalog additions and explicit overrides live in app-private storage. Overr
 
 The bundled catalog is sharded by content ID. Kairo98 checks the small [revision file](../catalog/core-v4.meta.json) before fetching [the update archive](../catalog/core-v4.zip) and the device language's descriptions (`core-v4-<language>.zip`), and offers **Update catalogs** in Menu › Manage library. An unchanged SHA-256 skips the catalog download. An invalid or unavailable update leaves the existing catalog in place. App versions before v4 read `catalog/core-v3.json`, which is no longer rebuilt (Kairo#77). Artwork downloads are separate. Lookup order is bundled catalog, downloaded catalog, user additions, then explicit overrides.
 
-The source records are in [catalog research](../catalog/research/README.md). `tools/catalog_research.py` assembles them into `catalog/research/games-v1.json`, and the shared generator (`shared/tools/app_catalog.py`, with `tools/catalog_config.py`) builds the catalog from it as it does for every Kairo app: the parts the app bundles (`catalog/parts`), the update archives and the artwork package. After reviewing a source change:
+The source records are in [catalog research](../catalog/research/README.md). `tools/catalog_research.py` assembles them into `catalog/research/games-v1.json.gz`, and the shared generator (`shared/tools/app_catalog.py`, with `tools/catalog_config.py`) builds the catalog from it as it does for every Kairo app: the parts the app bundles (`catalog/parts`), the update archives and the artwork package. After reviewing a source change:
 
 ```sh
 python tools/catalog_research.py
