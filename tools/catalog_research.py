@@ -23,6 +23,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "shared/tools"))
 sys.path.insert(0, str(ROOT / "tools"))
 import catalog_descriptions
+import japanese_titles
 from catalog_documents import compact, require
 from catalog_languages import LANGUAGES
 from research_additions import name_matched
@@ -106,6 +107,9 @@ def assemble():
                 game[field] = entry[field]
         if entry.get("controller"):
             game["controller"] = controller(entry["controller"])
+        # Research only, as every app's research records it (japanese_titles.py reads it).
+        if entry.get("pageUrl", "").startswith("https://gamesdb.launchbox-app.com/"):
+            game["launchbox"] = entry["databaseId"]
         game["contentIds"] = entry["contentIds"]
         if entry.get("sourceGroups"):
             game["sourceGroups"] = entry["sourceGroups"]
@@ -145,6 +149,8 @@ def assemble():
         if any(field in profile for field in AUTOMATION):
             game["diskAutomation"] = {disk: {field: profile[field] for field in AUTOMATION if field in profile}}
         games[f"pc98:disk-{disk.split(':', 1)[1][:16]}"] = game
+    # Each game's Japanese title (titles-v1.json, shared japanese_titles.py; Kairo#61).
+    japanese_titles.apply(RESEARCH, games)
     return {"schemaVersion": 1, "games": games}
 
 
