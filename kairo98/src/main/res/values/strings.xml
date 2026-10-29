@@ -48,10 +48,7 @@
     <string name="firmware_rhythm_description">the sound board\'s drum sounds</string>
 
     <!-- %1$s is the game's title; %2$s why its catalog data could not be read. -->
-    <string name="launch_data_unreadable">%1$s can\'t start: its catalog launch data is unreadable (%2$s)</string>
     <!-- %1$s is the app's name, Kairo98. -->
-    <string name="startup_choice_foot">%1$s enters your choice when the game reaches this screen. Play manually leaves it to you.</string>
-    <string name="play_manually">Play manually</string>
     <string name="start_failed">Unable to start machine</string>
     <!-- The content ID's first characters name the disk. -->
     <string name="required_floppy_missing">Required floppy %1$s is missing from the library</string>
@@ -68,26 +65,13 @@
     <!-- What the startup typer is waiting for: %1$d is the command's number; %2$s the command. -->
     <string name="startup_step_command">Launch command %1$d: %2$s</string>
     <!-- %1$s is a startup choice's title; %2$s the option picked; %3$d of %4$d the key being entered. -->
-    <string name="startup_step_choice">%1$s: %2$s (%3$d/%4$d)</string>
-    <string name="startup_not_recognized">Startup screen not recognized</string>
     <!-- %1$s is the startup step being waited for. -->
-    <string name="startup_waiting">Waiting for %1$s. The game is still running.</string>
-    <string name="open_keyboard">Open keyboard</string>
-    <string name="retry">Retry</string>
     <!-- %1$s is the floppy drive's letter; %2$s the disk going in. -->
-    <string name="disk_swapping">Swapping Floppy %1$s: %2$s</string>
-    <string name="disk_swap_failed">Automatic disk swap failed</string>
     <!-- %1$s says why the swap failed. -->
-    <string name="disk_swap_failed_message">%1$s. The game is still running.</string>
     <!-- %1$s is the floppy drive's letter; %2$s says why the swap failed. -->
-    <string name="disk_swap_failed_drive_message">Floppy %1$s: %2$s. The game is still running.</string>
-    <string name="unknown_error">Unknown error</string>
-    <string name="continue_manually">Continue manually</string>
-    <string name="choose_floppy">Choose floppy</string>
 
     <!-- %1$s is the disk image's name. -->
     <!-- %1$s is the floppy drive's letter. -->
-    <string name="floppy_mount_failed">Floppy could not be mounted</string>
     <!-- %1$s is the picked file's name. -->
 
     <string name="base_clock">Base clock</string>
@@ -100,8 +84,4 @@
     <string name="cpu_mhz_multiple">%1$.1f MHz (×%2$d)</string>
     <string name="startup_command">Startup command</string>
     <string name="startup_command_hint">DOS command, such as GAME</string>
-    <string name="startup_choices">Startup choices</string>
-    <string name="startup_choices_on">Ask</string>
-    <string name="disk_swaps">Disk swaps</string>
-    <string name="disk_swaps_on">Automatic</string>
 </resources>

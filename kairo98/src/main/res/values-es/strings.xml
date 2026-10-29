@@ -76,13 +76,7 @@
     <!-- EN: the sound board\'s drum sounds -->
     <string name="firmware_rhythm_description">los sonidos de batería de la tarjeta de sonido</string>
     <!-- %1$s is the game's title; %2$s why its catalog data could not be read. -->
-    <!-- EN: %1$s can\'t start: its catalog launch data is unreadable (%2$s) -->
-    <string name="launch_data_unreadable">%1$s no puede iniciarse: sus datos de inicio del catálogo son ilegibles (%2$s)</string>
     <!-- %1$s is the app's name, Kairo98. -->
-    <!-- EN: %1$s enters your choice when the game reaches this screen. Play manually leaves it to you. -->
-    <string name="startup_choice_foot">%1$s introduce tu elección cuando el juego llega a esta pantalla. Jugar manualmente te lo deja a ti.</string>
-    <!-- EN: Play manually -->
-    <string name="play_manually">Jugar manualmente</string>
     <!-- EN: Unable to start machine -->
     <string name="start_failed">No se puede iniciar la máquina</string>
     <!-- The content ID's first characters name the disk. -->
@@ -104,38 +98,12 @@
     <!-- EN: Launch command %1$d: %2$s -->
     <string name="startup_step_command">Comando de inicio %1$d: %2$s</string>
     <!-- %1$s is a startup choice's title; %2$s the option picked; %3$d of %4$d the key being entered. -->
-    <!-- EN: %1$s: %2$s (%3$d/%4$d) -->
-    <string name="startup_step_choice">%1$s: %2$s (%3$d/%4$d)</string>
-    <!-- EN: Startup screen not recognized -->
-    <string name="startup_not_recognized">Pantalla de inicio no reconocida</string>
     <!-- %1$s is the startup step being waited for. -->
-    <!-- EN: Waiting for %1$s. The game is still running. -->
-    <string name="startup_waiting">Esperando %1$s. El juego sigue en marcha.</string>
-    <!-- EN: Open keyboard -->
-    <string name="open_keyboard">Abrir teclado</string>
-    <!-- EN: Retry -->
-    <string name="retry">Reintentar</string>
     <!-- %1$s is the floppy drive's letter; %2$s the disk going in. -->
-    <!-- EN: Swapping Floppy %1$s: %2$s -->
-    <string name="disk_swapping">Cambiando disquete %1$s: %2$s</string>
-    <!-- EN: Automatic disk swap failed -->
-    <string name="disk_swap_failed">Error en el cambio automático de disco</string>
     <!-- %1$s says why the swap failed. -->
-    <!-- EN: %1$s. The game is still running. -->
-    <string name="disk_swap_failed_message">%1$s. El juego sigue en marcha.</string>
     <!-- %1$s is the floppy drive's letter; %2$s says why the swap failed. -->
-    <!-- EN: Floppy %1$s: %2$s. The game is still running. -->
-    <string name="disk_swap_failed_drive_message">Disquete %1$s: %2$s. El juego sigue en marcha.</string>
-    <!-- EN: Unknown error -->
-    <string name="unknown_error">Error desconocido</string>
-    <!-- EN: Continue manually -->
-    <string name="continue_manually">Continuar manualmente</string>
-    <!-- EN: Choose floppy -->
-    <string name="choose_floppy">Elegir disquete</string>
     <!-- %1$s is the disk image's name. -->
     <!-- %1$s is the floppy drive's letter. -->
-    <!-- EN: Floppy could not be mounted -->
-    <string name="floppy_mount_failed">No se pudo montar el disquete</string>
     <!-- %1$s is the picked file's name. -->
     <!-- EN: Base clock -->
     <string name="base_clock">Reloj base</string>
@@ -155,12 +123,4 @@
     <string name="startup_command">Comando de inicio</string>
     <!-- EN: DOS command, such as GAME -->
     <string name="startup_command_hint">Comando de DOS, como GAME</string>
-    <!-- EN: Startup choices -->
-    <string name="startup_choices">Opciones de inicio</string>
-    <!-- EN: Ask -->
-    <string name="startup_choices_on">Preguntar</string>
-    <!-- EN: Disk swaps -->
-    <string name="disk_swaps">Cambios de disco</string>
-    <!-- EN: Automatic -->
-    <string name="disk_swaps_on">Automático</string>
 </resources>

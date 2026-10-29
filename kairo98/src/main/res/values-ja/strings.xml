@@ -76,13 +76,7 @@
     <!-- EN: the sound board\'s drum sounds -->
     <string name="firmware_rhythm_description">サウンドボードのドラム音</string>
     <!-- %1$s is the game's title; %2$s why its catalog data could not be read. -->
-    <!-- EN: %1$s can\'t start: its catalog launch data is unreadable (%2$s) -->
-    <string name="launch_data_unreadable">%1$s を起動できません: カタログの起動データを読み込めません（%2$s）</string>
     <!-- %1$s is the app's name, Kairo98. -->
-    <!-- EN: %1$s enters your choice when the game reaches this screen. Play manually leaves it to you. -->
-    <string name="startup_choice_foot">ゲームがこの画面に来ると、%1$s が選択内容を入力します。「手動でプレイ」を選ぶと自分で操作できます。</string>
-    <!-- EN: Play manually -->
-    <string name="play_manually">手動でプレイ</string>
     <!-- EN: Unable to start machine -->
     <string name="start_failed">マシンを起動できません</string>
     <!-- The content ID's first characters name the disk. -->
@@ -104,38 +98,12 @@
     <!-- EN: Launch command %1$d: %2$s -->
     <string name="startup_step_command">起動コマンド %1$d: %2$s</string>
     <!-- %1$s is a startup choice's title; %2$s the option picked; %3$d of %4$d the key being entered. -->
-    <!-- EN: %1$s: %2$s (%3$d/%4$d) -->
-    <string name="startup_step_choice">%1$s: %2$s（%3$d/%4$d）</string>
-    <!-- EN: Startup screen not recognized -->
-    <string name="startup_not_recognized">起動画面を認識できません</string>
     <!-- %1$s is the startup step being waited for. -->
-    <!-- EN: Waiting for %1$s. The game is still running. -->
-    <string name="startup_waiting">%1$s を待っています。ゲームは実行中です。</string>
-    <!-- EN: Open keyboard -->
-    <string name="open_keyboard">キーボードを開く</string>
-    <!-- EN: Retry -->
-    <string name="retry">再試行</string>
     <!-- %1$s is the floppy drive's letter; %2$s the disk going in. -->
-    <!-- EN: Swapping Floppy %1$s: %2$s -->
-    <string name="disk_swapping">フロッピー %1$s を交換中: %2$s</string>
-    <!-- EN: Automatic disk swap failed -->
-    <string name="disk_swap_failed">ディスクの自動交換に失敗しました</string>
     <!-- %1$s says why the swap failed. -->
-    <!-- EN: %1$s. The game is still running. -->
-    <string name="disk_swap_failed_message">%1$s。ゲームは実行中です。</string>
     <!-- %1$s is the floppy drive's letter; %2$s says why the swap failed. -->
-    <!-- EN: Floppy %1$s: %2$s. The game is still running. -->
-    <string name="disk_swap_failed_drive_message">フロッピー %1$s: %2$s。ゲームは実行中です。</string>
-    <!-- EN: Unknown error -->
-    <string name="unknown_error">不明なエラー</string>
-    <!-- EN: Continue manually -->
-    <string name="continue_manually">手動で続行</string>
-    <!-- EN: Choose floppy -->
-    <string name="choose_floppy">フロッピーを選択</string>
     <!-- %1$s is the disk image's name. -->
     <!-- %1$s is the floppy drive's letter. -->
-    <!-- EN: Floppy could not be mounted -->
-    <string name="floppy_mount_failed">フロッピーをマウントできませんでした</string>
     <!-- %1$s is the picked file's name. -->
     <!-- EN: Base clock -->
     <string name="base_clock">ベースクロック</string>
@@ -155,12 +123,4 @@
     <string name="startup_command">起動コマンド</string>
     <!-- EN: DOS command, such as GAME -->
     <string name="startup_command_hint">DOS コマンド（例: GAME）</string>
-    <!-- EN: Startup choices -->
-    <string name="startup_choices">起動時の選択</string>
-    <!-- EN: Ask -->
-    <string name="startup_choices_on">確認する</string>
-    <!-- EN: Disk swaps -->
-    <string name="disk_swaps">ディスク交換</string>
-    <!-- EN: Automatic -->
-    <string name="disk_swaps_on">自動</string>
 </resources>

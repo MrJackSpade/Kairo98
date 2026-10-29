@@ -7,6 +7,7 @@ import com.mrjackspade.kairo.frontend.ChoiceOption
 import com.mrjackspade.kairo.frontend.LayeredGameCatalog
 import com.mrjackspade.kairo.frontend.MachineOption
 import com.mrjackspade.kairo.frontend.SettingsRow
+import com.mrjackspade.kairo.frontend.StartupAutomation
 import com.mrjackspade.kairo.frontend.UiText
 import org.json.JSONArray
 import org.json.JSONObject
@@ -16,7 +17,7 @@ import org.json.JSONObject
  * command typed at startup with the screens it waits for (`launch`), startup choices, automatic
  * disk swaps, and the media a game needs besides itself (`media` roles bootFloppy, floppyB, cd and
  * bootDisk). Nothing in a catalog is executed by Android. An empty `launch.commands`, `startupChoices`
- * or `diskSwaps` is a player's setting that turns that automation off for the game.
+ * or `diskSwaps` (the shared StartupAutomation) is a player's setting that turns that automation off for the game.
  */
 object Pc98Catalog : LayeredGameCatalog.Schema {
     override val platform = "pc98"
@@ -72,8 +73,9 @@ object Pc98Catalog : LayeredGameCatalog.Schema {
         CatalogSetting.Choice(skipMemoryCheck),
         CatalogSetting.Choice(font),
         CatalogSetting.Custom(COMMAND, "launch", setOf("type", "text", "commands", "ready", "timeoutMs", "screenHashes")),
-        CatalogSetting.Custom(CHOICES, "startupChoices", null),
-        CatalogSetting.Custom(SWAPS, "diskSwaps", null),
+        CatalogSetting.StartupChoices,
+        // Floppies, in drives A and B.
+        CatalogSetting.DiskSwaps(2) { _, contentId -> contentId.startsWith("sha256-fd-v1:") },
         CatalogSetting.Drive("bootFloppy", UiText.res(R.string.boot_floppy)) { !it.startsWith(CD) },
         CatalogSetting.Drive("floppyB", UiText.res(FrontendR.string.kairo_drive_2)),
         CatalogSetting.Drive("cd", UiText.res(FrontendR.string.kairo_cd_rom)),
@@ -91,8 +93,6 @@ object Pc98Catalog : LayeredGameCatalog.Schema {
     const val GDC_CLOCK = "gdc"
     const val CPU = "cpu"
     const val COMMAND = "command"
-    const val CHOICES = "choices"
-    const val SWAPS = "swaps"
     private const val CD = "sha256-cd-v1:"
 
     override fun validBindings(bindings: JSONArray) = ControllerBindings.valid(bindings)
@@ -125,79 +125,20 @@ object Pc98Catalog : LayeredGameCatalog.Schema {
             (!value.has("text") || validCommand(value.optString("text"))) &&
             (!value.has("ready") || value.optString("ready") == "dosPrompt") &&
             (!value.has("screenHashes") || value.optJSONArray("screenHashes")?.let { groups ->
-                groups.length() in 1..4 && (0 until groups.length()).all { index -> validHashes(groups.optJSONArray(index)) }
+                groups.length() in 1..4 && (0 until groups.length()).all { index ->
+                    StartupAutomation.validHashes(groups.optJSONArray(index))
+                }
             } == true) &&
             (!value.has("timeoutMs") || (value.opt("timeoutMs") is Int && value.optInt("timeoutMs") in 1000..120000))
-        "startupChoices" -> value is JSONArray && value.length() in 0..4 &&
-            (0 until value.length()).all { index ->
-                value.optJSONObject(index)?.let { choice ->
-                    validShortId(choice.optString("id")) && validLabel(choice.optString("title")) &&
-                        validHashes(choice.optJSONArray("screenHashes")) &&
-                        choice.optJSONArray("options")?.let { options ->
-                            options.length() in 1..12 && (0 until options.length()).all { optionIndex ->
-                                options.optJSONObject(optionIndex)?.let { option ->
-                                    validShortId(option.optString("id")) && validLabel(option.optString("label")) &&
-                                        (if (option.has("steps")) {
-                                            !option.has("key") && !option.has("enter") &&
-                                                option.optJSONArray("steps")?.let { steps ->
-                                                    steps.length() in 2..4 && (0 until steps.length()).all { stepIndex ->
-                                                        steps.optJSONObject(stepIndex)?.let { step ->
-                                                            step.length() == 3 &&
-                                                                step.optString("key").matches(Regex("[A-Za-z0-9]")) &&
-                                                                step.opt("enter") is Boolean &&
-                                                                validHashes(step.optJSONArray("screenHashes"))
-                                                        } == true
-                                                    }
-                                                } == true
-                                        } else option.optString("key").matches(Regex("[A-Za-z0-9]")) &&
-                                            option.opt("enter") is Boolean)
-                                } == true
-                            } && (0 until options.length()).map { options.getJSONObject(it).getString("id") }
-                                .distinct().size == options.length()
-                        } == true
-                } == true
-            } && (0 until value.length()).map { value.getJSONObject(it).getString("id") }.distinct().size == value.length()
-        "diskSwaps" -> value is JSONArray && value.length() in 0..16 &&
-            (0 until value.length()).all { index ->
-                value.optJSONObject(index)?.let { swap ->
-                    swap.length() == 6 && listOf("id", "drive", "contentId", "screenHashes", "key", "enter").all(swap::has) &&
-                        validShortId(swap.optString("id")) &&
-                        swap.opt("drive") is Int && swap.optInt("drive") in 0..1 &&
-                        swap.optString("contentId").startsWith("sha256-fd-v1:") &&
-                        contentId.matches(swap.optString("contentId")) &&
-                        validHashes(swap.optJSONArray("screenHashes")) &&
-                        (swap.opt("key") as? String)?.matches(Regex("[A-Za-z0-9]?")) == true &&
-                        swap.opt("enter") is Boolean
-                } == true
-            } && (0 until value.length()).map { value.getJSONObject(it).getString("id") }.distinct().size == value.length() &&
-            (0 until value.length()).flatMap { index ->
-                value.getJSONObject(index).getJSONArray("screenHashes").let { hashes -> (0 until hashes.length()).map(hashes::getString) }
-            }.distinct().size == (0 until value.length()).sumOf { index ->
-                value.getJSONObject(index).getJSONArray("screenHashes").length()
-            }
+        StartupAutomation.CHOICES, StartupAutomation.SWAPS -> CatalogSetting.valid(settings, contentId, field, value)
         else -> false
     }
 
     /** CPU clock multiples a game can ask for, each a CPU speed choice; the app default is 20. */
     val CPU_MULTIPLES = listOf(1, 2, 3, 4, 6, 8, 10, 12, 16, 20)
-    private val SHORT_ID = Regex("[a-z0-9-]{1,40}")
     private fun validCommand(value: String) = value.isNotBlank() && value.length <= 128 &&
         value.all { it.code in 32..126 && (it.isLetterOrDigit() || it in " \\/._:-") }
-    private fun validShortId(value: String) = value.matches(SHORT_ID)
-    private fun validLabel(value: String) = value.isNotBlank() && value.length <= 100
-    private fun validHashes(value: JSONArray?): Boolean = value != null && value.length() in 1..16 &&
-        (0 until value.length()).all { (value.opt(it) as? String)?.matches(Regex("[0-9a-f]{16}")) == true }
-    internal fun parseHashes(value: JSONArray?): Set<Long> =
-        if (value == null) emptySet() else (0 until value.length()).map {
-            java.lang.Long.parseUnsignedLong(value.getString(it), 16)
-        }.toSet()
 }
-
-data class StartupInput(val key: Char, val enter: Boolean, val screenHashes: Set<Long>)
-data class StartupOption(val id: String, val label: String, val inputs: List<StartupInput>)
-data class StartupChoice(val id: String, val title: String, val screenHashes: Set<Long>, val options: List<StartupOption>)
-data class DiskSwap(val id: String, val drive: Int, val contentId: String, val screenHashes: Set<Long>,
-                    val key: String, val enter: Boolean)
 
 val CatalogGame.gdcClockTenthsMHz: Int?
     get() = section("machine")?.optInt("gdcClockTenthsMHz")?.takeIf { it == 25 || it == 50 }
@@ -226,42 +167,8 @@ val CatalogGame.launchScreenHashes: List<Set<Long>>
         val hashSource = sourceIndexOf("launch", "screenHashes") ?: -1
         return section("launch")?.optJSONArray("screenHashes")
             ?.takeIf { hashSource >= commandSource && it.length() == launchCommands.size }
-            ?.let { groups -> (0 until groups.length()).map { Pc98Catalog.parseHashes(groups.getJSONArray(it)) } }
+            ?.let { groups -> (0 until groups.length()).map { StartupAutomation.parseHashes(groups.getJSONArray(it)) } }
             ?: emptyList()
     }
 val CatalogGame.launchTimeoutMs: Int
     get() = section("launch")?.optInt("timeoutMs", 30000)?.coerceIn(1000, 120000) ?: 30000
-
-val CatalogGame.startupChoices: List<StartupChoice>
-    get() {
-        val array = record.optJSONArray("startupChoices") ?: return emptyList()
-        return (0 until array.length()).map { index ->
-            val item = array.getJSONObject(index)
-            val options = item.getJSONArray("options")
-            StartupChoice(item.getString("id"), item.getString("title"),
-                Pc98Catalog.parseHashes(item.getJSONArray("screenHashes")),
-                (0 until options.length()).map { optionIndex ->
-                    val option = options.getJSONObject(optionIndex)
-                    val steps = option.optJSONArray("steps")
-                    val inputs = if (steps == null) listOf(StartupInput(option.getString("key")[0],
-                        option.getBoolean("enter"), Pc98Catalog.parseHashes(item.getJSONArray("screenHashes"))))
-                    else (0 until steps.length()).map { stepIndex ->
-                        val step = steps.getJSONObject(stepIndex)
-                        StartupInput(step.getString("key")[0], step.getBoolean("enter"),
-                            Pc98Catalog.parseHashes(step.getJSONArray("screenHashes")))
-                    }
-                    StartupOption(option.getString("id"), option.getString("label"), inputs)
-                })
-        }
-    }
-
-val CatalogGame.diskSwaps: List<DiskSwap>
-    get() {
-        val array = record.optJSONArray("diskSwaps") ?: return emptyList()
-        return (0 until array.length()).map { index ->
-            val item = array.getJSONObject(index)
-            DiskSwap(item.getString("id"), item.getInt("drive"), item.getString("contentId"),
-                Pc98Catalog.parseHashes(item.getJSONArray("screenHashes")), item.getString("key"),
-                item.getBoolean("enter"))
-        }
-    }

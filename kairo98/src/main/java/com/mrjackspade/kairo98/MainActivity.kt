@@ -5,13 +5,9 @@ import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
 import android.view.KeyEvent
-import com.mrjackspade.kairo.frontend.ButtonTone
 import com.mrjackspade.kairo.frontend.CatalogGame
 import com.mrjackspade.kairo.frontend.CatalogSetting
-import com.mrjackspade.kairo.frontend.ChoiceGroup
 import com.mrjackspade.kairo.frontend.ChoiceOption
-import com.mrjackspade.kairo.frontend.ChoicePage
-import com.mrjackspade.kairo.frontend.ChoiceSpec
 import com.mrjackspade.kairo.frontend.ControllerGuestSpec
 import com.mrjackspade.kairo.frontend.ControllerLayout
 import com.mrjackspade.kairo.frontend.DiskImageEntry
@@ -19,10 +15,8 @@ import com.mrjackspade.kairo.frontend.DiskImageLibrary
 import com.mrjackspade.kairo.frontend.ExternalGameFile
 import com.mrjackspade.kairo.frontend.FirmwareSet
 import com.mrjackspade.kairo.frontend.GameKeyMigration
-import com.mrjackspade.kairo.frontend.GameNotice
 import com.mrjackspade.kairo.frontend.GameSettingsRows
 import com.mrjackspade.kairo.frontend.GameSource
-import com.mrjackspade.kairo.frontend.GameValue
 import com.mrjackspade.kairo.frontend.ImportedFilePicker
 import com.mrjackspade.kairo.frontend.ImportedFiles
 import com.mrjackspade.kairo.frontend.LayeredGameCatalog
@@ -32,12 +26,12 @@ import com.mrjackspade.kairo.frontend.MachineActivity
 import com.mrjackspade.kairo.frontend.MachineFirstRun
 import com.mrjackspade.kairo.frontend.MachineStatus
 import com.mrjackspade.kairo.frontend.NativeMachine
+import com.mrjackspade.kairo.frontend.StartupStep
 import com.mrjackspade.kairo.frontend.R as FrontendR
 import com.mrjackspade.kairo.frontend.ScanDepth
 import com.mrjackspade.kairo.frontend.SettingsRow
 import com.mrjackspade.kairo.frontend.ShippedAssets
 import com.mrjackspade.kairo.frontend.StateSlotStore
-import com.mrjackspade.kairo.frontend.TrayButton
 import com.mrjackspade.kairo.frontend.UiText
 import com.mrjackspade.kairo.frontend.text
 import java.io.File
@@ -130,42 +124,20 @@ class MainActivity : MachineActivity<DiskImageEntry>() {
 
     // Debug launches over adb ------------------------------------------------------------------------
 
-    private var traceScreenHashes = false
     private var skipDebugChoices = false
     private var skipDebugCommands = false
-    private var debugStartupOption: String? = null
+    private var debugOption: String? = null
     private var debugAdvanceSeconds = 0
     private var debugAdvanceIntervalMs = 100
     private var debugAutoAdvance: DebugAutoAdvance? = null
     private var pendingDebugGame: String? = null
     private var pendingDebugLaunch: String? = null
 
-    /**
-     * Writes each new screen signature with the time, whether the DOS prompt stands and the machine's
-     * status, every 100 ms while a game shows, for a debug launch with kairo98.traceScreenHashes.
-     */
-    private fun traceScreenHashes() = Thread {
-        val trace = File(filesDir, "startup-hash-trace.txt").apply { writeText("") }
-        var last: Long? = null
-        while (!isDestroyed) {
-            val signature = if (libraryVisible) null else bridge.screenSignature()
-            if (signature != null && signature != last) {
-                last = signature
-                val status = bridge.status()
-                trace.appendText("${android.os.SystemClock.elapsedRealtime()} " +
-                    "${java.lang.Long.toUnsignedString(signature, 16).padStart(16, '0')} " +
-                    "${MachineStatus(status).core["prompt"] == "1"} $status\n")
-            }
-            Thread.sleep(100)
-        }
-    }.apply { name = "Kairo98-screen-trace"; isDaemon = true; start() }
-
     override fun onCreate(savedInstanceState: Bundle?) {
         if (applicationInfo.flags and android.content.pm.ApplicationInfo.FLAG_DEBUGGABLE != 0) {
-            traceScreenHashes = intent.getBooleanExtra("kairo98.traceScreenHashes", false)
             skipDebugChoices = intent.getBooleanExtra("kairo98.skipStartupChoices", false)
             skipDebugCommands = intent.getBooleanExtra("kairo98.skipLaunchCommands", false)
-            debugStartupOption = intent.getStringExtra("kairo98.startupOption")
+            debugOption = intent.getStringExtra("kairo98.startupOption")
             debugAdvanceSeconds = intent.getIntExtra("kairo98.autoAdvanceSeconds", 0).coerceIn(0, 3600)
             debugAdvanceIntervalMs = intent.getIntExtra("kairo98.autoAdvanceIntervalMs", 100).coerceIn(75, 10000)
             pendingDebugLaunch = intent.getStringExtra("kairo98.launchGame64")
@@ -177,7 +149,6 @@ class MainActivity : MachineActivity<DiskImageEntry>() {
         super.onCreate(savedInstanceState)
         if (isFinishing) return
         if (pendingDebugLaunch != null || pendingDebugGame != null) libraryScreen.entriesPublished = ::selectPendingDebugGame
-        if (traceScreenHashes) traceScreenHashes()
     }
 
     private fun decodeDebugGameQuery(encoded: String): String? = runCatching {
@@ -260,13 +231,11 @@ class MainActivity : MachineActivity<DiskImageEntry>() {
     }
     private fun fontChoices() = fontFiles.items().map { ChoiceOption(it.id, it.label) }
     private fun fontActions(select: (String) -> Unit) = fontImport.actions(select)
-    private var selectedStartup = emptyList<Pair<StartupChoice, StartupOption>>()
     /** What a launch prepared, which the session takes once the game starts. */
-    private class PreparedLaunch(val swapSources: Map<String, DiskImageEntry>, val fontSource: UiText?,
+    private class PreparedLaunch(val fontSource: UiText?,
                                  /** Whether it booted from a floppy rather than a hard disk. */
                                  val floppy: Boolean)
     @Volatile private var prepared: PreparedLaunch? = null
-    @Volatile private var commandCancelled = AtomicBoolean(false)
 
     /** The PC-98's drives, in the core's slot order (pc98_core.cpp). */
     override val mediaSlots = listOf(
@@ -277,70 +246,39 @@ class MainActivity : MachineActivity<DiskImageEntry>() {
         MediaSlot(UiText.res(FrontendR.string.kairo_hard_disk)) { !it.isFloppy && !it.isCd })
 
     override fun cancelAutomation() {
-        commandCancelled.set(true)
-        stopStartupTyping()
+        super.cancelAutomation()
         debugAutoAdvance?.cancel()
         debugAutoAdvance = null
     }
 
+    /** Launching is where catalog launch data is used, so this is where bad data fails. */
     override fun launch(entry: DiskImageEntry, fromFrontend: Boolean) {
         val game = catalog.resolve(entry)
-        // Launching is where catalog launch data is used, so this is where bad data fails.
         try {
             game.launchCommands
             game.launchScreenHashes
-            game.startupChoices
-            game.diskSwaps
         } catch (failure: RuntimeException) {
-            toast(getString(R.string.launch_data_unreadable, game.title, failure.message))
+            toast(getString(FrontendR.string.kairo_launch_data_unreadable, game.title, failure.message))
             return
         }
-        debugStartupOption?.let { requested ->
-            val selected = game.startupChoices.mapNotNull { choice ->
-                choice.options.firstOrNull { it.id == requested }?.let { choice to it }
-            }
-            if (selected.size == game.startupChoices.size) {
-                startWithChoices(entry, game, selected, fromFrontend)
-                return
-            }
-            File(filesDir, "performance-auto.txt").writeText("state\terror\tstartup option $requested unavailable\n")
-            return
-        }
-        if (game.startupChoices.isNotEmpty() && !skipDebugChoices) chooseStartupOptions(entry, game, 0, emptyList(), fromFrontend)
-        else startWithChoices(entry, game, emptyList(), fromFrontend)
+        super.launch(entry, fromFrontend)
     }
 
-    private fun startWithChoices(entry: DiskImageEntry, game: CatalogGame,
-                                 choices: List<Pair<StartupChoice, StartupOption>>, fromFrontend: Boolean) {
-        selectedStartup = choices
-        startSession(entry, game, fromFrontend)
+    override val debugStartupOption: String? get() = debugOption
+    override val skipStartupChoices: Boolean get() = skipDebugChoices
+    /** The debug harness reads why its launch did not start from performance-auto.txt. */
+    override fun startupOptionMissing(game: CatalogGame, requested: String) {
+        File(filesDir, "performance-auto.txt").writeText("state\terror\tstartup option $requested unavailable\n")
     }
 
-    /** One choice page per startup choice; Play manually starts without the rest. Back cancels. */
-    private fun chooseStartupOptions(entry: DiskImageEntry, game: CatalogGame, index: Int,
-                                     selected: List<Pair<StartupChoice, StartupOption>>,
-                                     fromFrontend: Boolean, replace: Boolean = false) {
-        if (index == game.startupChoices.size) {
-            startWithChoices(entry, game, selected, fromFrontend)
-            return
+    /** The game's DOS commands, each typed at the prompt or on the screens it waits for. */
+    override fun launchSteps(game: CatalogGame) = (if (skipDebugCommands) emptyList() else game.launchCommands)
+        .mapIndexed { index, command ->
+            LabeledStep(getString(R.string.startup_step_command, index + 1, command),
+                StartupStep(command, true, game.launchScreenHashes.getOrNull(index) ?: emptySet(), game.launchTimeoutMs))
         }
-        val choice = game.startupChoices[index]
-        lateinit var page: ChoicePage
-        page = ChoicePage(ChoiceSpec(choice.title, { game.title }, {
-            listOf(ChoiceGroup(null, choice.options.map { ChoiceOption(it.id, it.label) },
-                getString(R.string.startup_choice_foot, identity.appName)))
-        }, { null }, { id ->
-            val option = choice.options.first { it.id == id }
-            pages.postDelayed({
-                // Back during the pause cancels, as it does on the page.
-                if (pages.top === page) chooseStartupOptions(entry, game, index + 1,
-                    selected + (choice to option), fromFrontend, replace = true)
-            }, 150)
-        }, actions = {
-            listOf(SettingsRow.action("manual", getString(R.string.play_manually)) { startWithChoices(entry, game, selected, fromFrontend) })
-        }, stay = true, cycles = false))
-        if (replace) pages.replace(page) else pages.push(page)
-    }
+
+    override fun startupTyped(generation: Int) = scheduleDebugAutoAdvance(generation)
 
     override fun startGame(entry: DiskImageEntry, game: CatalogGame, cancelled: AtomicBoolean, progress: (String) -> Unit) {
         val external = entry !in libraryEntries
@@ -348,9 +286,6 @@ class MainActivity : MachineActivity<DiskImageEntry>() {
         val cd = cdFor(entry, game.cdId, sources)
         val boot = if (entry.isCd) cdBootDiskFor(this, entry, game.bootDiskId, sources) else entry
         val media = bootMediaFor(this, boot, sources, game.requiredBootFloppyId)
-        val swapSources = game.diskSwaps.associate { rule ->
-            rule.contentId to requiredFloppyFor(rule.contentId, entry, sources)
-        }
         val floppyB = game.initialFloppyBId?.let { id -> requiredFloppyFor(id, entry, sources) }
         val primary = media?.hardDisk ?: boot
         val ownBios = optionValue(game, Pc98Catalog.system) == Pc98Catalog.OWN_BIOS
@@ -369,7 +304,7 @@ class MainActivity : MachineActivity<DiskImageEntry>() {
             "ownBios" to if (ownBios) "on" else "off"))) { getString(R.string.start_failed) }
         awaitRunning()
         mediaStarted(slots)
-        prepared = PreparedLaunch(swapSources, fontSource, primary.isFloppy)
+        prepared = PreparedLaunch(fontSource, primary.isFloppy)
     }
 
     override fun gameStarted(entry: DiskImageEntry, game: CatalogGame) {
@@ -377,8 +312,6 @@ class MainActivity : MachineActivity<DiskImageEntry>() {
         prepared = null
         gameFontSource = launched.fontSource
         currentIsFloppy = launched.floppy
-        scheduleStartupQueue(game, selectedStartup)
-        scheduleDiskSwaps(game.diskSwaps, launched.swapSources)
     }
 
     override fun sessionEnded() {
@@ -386,7 +319,6 @@ class MainActivity : MachineActivity<DiskImageEntry>() {
         prepared = null
         gameFontSource = null
         currentIsFloppy = false
-        selectedStartup = emptyList()
     }
 
     override fun sessionDetails() = listOfNotNull(when {
@@ -400,55 +332,7 @@ class MainActivity : MachineActivity<DiskImageEntry>() {
         listOfNotNull(SettingsRow.info("csip", "CS:IP") { MachineStatus(bridge.status()).core["csip"].orEmpty() }
             .takeIf { running })
 
-    // Startup automation: typed commands and choices on recognized screens, and disk swaps ------------
-
-    /** A step for the typer, and what the notice calls it when the typer stalls on it. */
-    private class StartupStep(val label: String, val text: String, val enter: Boolean,
-                              /** The screens it waits for; none waits for the DOS prompt. */
-                              val screens: Set<Long>, val timeoutMs: Int)
-
-    private fun scheduleStartupQueue(game: CatalogGame?, choices: List<Pair<StartupChoice, StartupOption>>) {
-        commandCancelled.set(true)
-        if (game == null) return
-        val steps = (if (skipDebugCommands) emptyList() else game.launchCommands).mapIndexed { index, command ->
-            StartupStep(getString(R.string.startup_step_command, index + 1, command), command, true,
-                game.launchScreenHashes.getOrNull(index) ?: emptySet(), game.launchTimeoutMs)
-        } + choices.flatMap { (choice, option) ->
-            option.inputs.mapIndexed { index, input ->
-                StartupStep(getString(R.string.startup_step_choice, choice.title, option.label, index + 1, option.inputs.size),
-                    input.key.toString(), input.enter, input.screenHashes, 120000)
-            }
-        }
-        val generation = sessionGeneration
-        if (steps.isEmpty()) {
-            scheduleDebugAutoAdvance(generation)
-            return
-        }
-        bridge.startupSteps(steps.map { NativeMachine.StartupStep(it.text, it.enter, it.screens, it.timeoutMs) })
-        val cancelled = AtomicBoolean(false)
-        commandCancelled = cancelled
-        watchStartup(steps, cancelled, generation)
-    }
-
-    private fun stopStartupTyping() = bridge.startupSteps(emptyList())
-
-    /**
-     * Follows the typer until it is done or stalls on a step (a notice offers Retry). A step it cannot
-     * type stops the machine, which says why.
-     */
-    private fun watchStartup(steps: List<StartupStep>, cancelled: AtomicBoolean, generation: Int) {
-        handler.postDelayed(object : Runnable {
-            override fun run() {
-                if (cancelled.get() || !current(generation)) return
-                when (val status = bridge.startupStatus()) {
-                    NativeMachine.StartupStatus.Typing -> handler.postDelayed(this, 100)
-                    NativeMachine.StartupStatus.Idle -> scheduleDebugAutoAdvance(generation)
-                    is NativeMachine.StartupStatus.Stalled ->
-                        showStartupTimeout(steps, steps[status.index], cancelled, generation)
-                }
-            }
-        }, 100)
-    }
+    // Debug runs -------------------------------------------------------------------------------------
 
     private fun scheduleDebugAutoAdvance(generation: Int) {
         if (debugAdvanceSeconds <= 0) return
@@ -458,81 +342,6 @@ class MainActivity : MachineActivity<DiskImageEntry>() {
             debugAutoAdvance = DebugAutoAdvance(inputRouter, bridge::status,
                 File(filesDir, "performance-auto.txt"), debugAdvanceSeconds, debugAdvanceIntervalMs).also { it.start() }
         }, 2000)
-    }
-
-    private fun scheduleDiskSwaps(rules: List<DiskSwap>, sources: Map<String, DiskImageEntry>) {
-        if (rules.isEmpty()) return
-        val generation = sessionGeneration
-        Thread {
-            var failedRule: DiskSwap? = null
-            try {
-                DiskSwapMatcher(bridge::screenSignature, { MachineStatus(bridge.status()).state == "Running" },
-                    { !current(generation) },
-                    { rule ->
-                        failedRule = rule
-                        performDiskSwap(rule, sources.getValue(rule.contentId), generation)
-                    }).run(rules)
-            } catch (error: Exception) {
-                runOnUiThread { if (current(generation)) showDiskSwapFailure(failedRule, error, rules, sources) }
-            }
-        }.start()
-    }
-
-    /** The information notice for a swap in progress, replaced as its progress text changes. */
-    private var swapping: GameNotice? = null
-
-    private fun performDiskSwap(rule: DiskSwap, entry: DiskImageEntry, generation: Int) {
-        while (!beginMediaChange()) {
-            if (!current(generation)) return
-            Thread.sleep(100)
-        }
-        val notice = GameNotice(getString(R.string.disk_swapping, "${'A' + rule.drive}", entry.displayName), "")
-        var changed = false
-        try {
-            runOnUiThread { if (current(generation)) overlay.showNotice(notice) }
-            val disk = disks.prepare(entry, AtomicBoolean(false)) { message ->
-                runOnUiThread {
-                    if (current(generation) && overlay.showing(notice))
-                        overlay.showNotice(GameNotice(notice.title, message).also { swapping = it })
-                }
-            }
-            if (!current(generation)) return
-            if (!bridge.media(rule.drive, disk.absolutePath)) error(getString(R.string.floppy_mount_failed))
-            changed = true
-            if (rule.key.isNotEmpty() || rule.enter) {
-                Thread.sleep(150)
-                if (current(generation)) bridge.startupKeys(rule.key, rule.enter)
-            }
-        } finally {
-            endMediaChange(rule.drive, entry, changed)
-            runOnUiThread {
-                if (overlay.showing(notice) || swapping?.let(overlay::showing) == true) overlay.hideNotice()
-                swapping = null
-            }
-        }
-    }
-
-    /** The game keeps running, so the prompt docks at the top instead of blocking it. */
-    private fun showDiskSwapFailure(rule: DiskSwap?, error: Exception, rules: List<DiskSwap>,
-                                    sources: Map<String, DiskImageEntry>) {
-        val why = error.message ?: getString(R.string.unknown_error)
-        overlay.showNotice(GameNotice(getString(R.string.disk_swap_failed),
-            rule?.let { getString(R.string.disk_swap_failed_drive_message, "${'A' + it.drive}", why) }
-                ?: getString(R.string.disk_swap_failed_message, why),
-            listOf(TrayButton(getString(R.string.continue_manually)),
-                TrayButton(getString(R.string.choose_floppy)) { chooseMedia(rule?.drive ?: 0) },
-                TrayButton(getString(R.string.retry), ButtonTone.PRIMARY) { scheduleDiskSwaps(rules, sources) })))
-    }
-
-    private fun showStartupTimeout(steps: List<StartupStep>, step: StartupStep, cancelled: AtomicBoolean, generation: Int) {
-        overlay.showNotice(GameNotice(getString(R.string.startup_not_recognized),
-            getString(R.string.startup_waiting, step.label),
-            listOf(TrayButton(getString(FrontendR.string.kairo_action_restart)) { openMenu("f-restart", confirm = true) },
-                TrayButton(getString(R.string.open_keyboard)) { showKeyboard() },
-                TrayButton(getString(R.string.retry), ButtonTone.PRIMARY) {
-                    bridge.startupResume()
-                    watchStartup(steps, cancelled, generation)
-                })))
     }
 
     // Machine and firmware ---------------------------------------------------------------------------
@@ -595,30 +404,8 @@ class MainActivity : MachineActivity<DiskImageEntry>() {
                     else mapOf("text" to value, "commands" to null, "screenHashes" to null))
                 } }, { saveGameSetting(entry) { catalog.resetOverride(id!!, "launch") } },
                 enabled = enabled, disabledReason = noHash)
-            Pc98Catalog.CHOICES -> automationRow(entry, "startupChoices", R.string.startup_choices,
-                R.string.startup_choices_on, enabled)
-            Pc98Catalog.SWAPS -> automationRow(entry, "diskSwaps", R.string.disk_swaps, R.string.disk_swaps_on, enabled)
             else -> error("Kairo98 has no row for its catalog setting ${setting.id}")
         }
-    }
-
-    /**
-     * On or Off for the catalog's startup automation in [field], for a game the catalog gives some;
-     * Off keeps an empty list as the game's own.
-     */
-    private fun automationRow(entry: DiskImageEntry, field: String, label: Int, on: Int,
-                              enabled: () -> Boolean): SettingsRow? {
-        val id = entry.key.takeIf { entry.contentId != null }
-        fun custom() = id != null && catalog.sourceOf(entry, field) == "User override"
-        if ((catalog.resolveDefault(entry).record.optJSONArray(field)?.length() ?: 0) == 0 && !custom()) return null
-        val value = GameValue({ if (custom()) OFF else null }, { ON },
-            { GameSource.label(catalog.defaultSourceOf(entry, field)) },
-            { picked -> saveGameSetting(entry) {
-                if (picked == OFF) catalog.setOverride(id!!, field, JSONArray()) else catalog.resetOverride(id!!, field)
-            } })
-        return GameSettingsRows.choice(this, field, getString(label), { titleOf(entry) },
-            listOf(ChoiceOption(ON, UiText.res(on)), ChoiceOption(OFF, UiText.res(FrontendR.string.kairo_off))), value,
-            enabled, { GameSettingsRows.noHash(this) })
     }
 
     override fun handleProductResult(requestCode: Int, resultCode: Int, data: Intent?): Boolean =
@@ -730,8 +517,6 @@ class MainActivity : MachineActivity<DiskImageEntry>() {
     companion object {
         /** The core's standard CPU clock multiple, about 49 MHz on the 2.5 MHz base clock. */
         const val DEFAULT_CPU_MULTIPLE = 20
-        private const val ON = "on"
-        private const val OFF = "off"
         /** Bundled FONT.BMP built by tools/generate_font_bmp.py from redistributable fonts. */
         private const val BUNDLED_FONT = "kairo98-font.bmp"
         private const val FONT_IMPORT_REQUEST = FIRST_PRODUCT_REQUEST

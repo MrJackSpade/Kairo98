@@ -76,13 +76,7 @@
     <!-- EN: the sound board\'s drum sounds -->
     <string name="firmware_rhythm_description">suara drum kartu suara</string>
     <!-- %1$s is the game's title; %2$s why its catalog data could not be read. -->
-    <!-- EN: %1$s can\'t start: its catalog launch data is unreadable (%2$s) -->
-    <string name="launch_data_unreadable">%1$s tidak dapat dimulai: data peluncuran katalognya tidak dapat dibaca (%2$s)</string>
     <!-- %1$s is the app's name, Kairo98. -->
-    <!-- EN: %1$s enters your choice when the game reaches this screen. Play manually leaves it to you. -->
-    <string name="startup_choice_foot">%1$s memasukkan pilihan Anda saat game mencapai layar ini. Main manual menyerahkannya kepada Anda.</string>
-    <!-- EN: Play manually -->
-    <string name="play_manually">Main manual</string>
     <!-- EN: Unable to start machine -->
     <string name="start_failed">Tidak dapat memulai mesin</string>
     <!-- The content ID's first characters name the disk. -->
@@ -104,38 +98,12 @@
     <!-- EN: Launch command %1$d: %2$s -->
     <string name="startup_step_command">Perintah peluncuran %1$d: %2$s</string>
     <!-- %1$s is a startup choice's title; %2$s the option picked; %3$d of %4$d the key being entered. -->
-    <!-- EN: %1$s: %2$s (%3$d/%4$d) -->
-    <string name="startup_step_choice">%1$s: %2$s (%3$d/%4$d)</string>
-    <!-- EN: Startup screen not recognized -->
-    <string name="startup_not_recognized">Layar startup tidak dikenali</string>
     <!-- %1$s is the startup step being waited for. -->
-    <!-- EN: Waiting for %1$s. The game is still running. -->
-    <string name="startup_waiting">Menunggu %1$s. Game masih berjalan.</string>
-    <!-- EN: Open keyboard -->
-    <string name="open_keyboard">Buka keyboard</string>
-    <!-- EN: Retry -->
-    <string name="retry">Coba lagi</string>
     <!-- %1$s is the floppy drive's letter; %2$s the disk going in. -->
-    <!-- EN: Swapping Floppy %1$s: %2$s -->
-    <string name="disk_swapping">Menukar Disket %1$s: %2$s</string>
-    <!-- EN: Automatic disk swap failed -->
-    <string name="disk_swap_failed">Penukaran disk otomatis gagal</string>
     <!-- %1$s says why the swap failed. -->
-    <!-- EN: %1$s. The game is still running. -->
-    <string name="disk_swap_failed_message">%1$s. Game masih berjalan.</string>
     <!-- %1$s is the floppy drive's letter; %2$s says why the swap failed. -->
-    <!-- EN: Floppy %1$s: %2$s. The game is still running. -->
-    <string name="disk_swap_failed_drive_message">Disket %1$s: %2$s. Game masih berjalan.</string>
-    <!-- EN: Unknown error -->
-    <string name="unknown_error">Error tidak dikenal</string>
-    <!-- EN: Continue manually -->
-    <string name="continue_manually">Lanjutkan secara manual</string>
-    <!-- EN: Choose floppy -->
-    <string name="choose_floppy">Pilih disket</string>
     <!-- %1$s is the disk image's name. -->
     <!-- %1$s is the floppy drive's letter. -->
-    <!-- EN: Floppy could not be mounted -->
-    <string name="floppy_mount_failed">Disket tidak dapat dipasang</string>
     <!-- %1$s is the picked file's name. -->
     <!-- EN: Base clock -->
     <string name="base_clock">Clock dasar</string>
@@ -155,12 +123,4 @@
     <string name="startup_command">Perintah startup</string>
     <!-- EN: DOS command, such as GAME -->
     <string name="startup_command_hint">Perintah DOS, seperti GAME</string>
-    <!-- EN: Startup choices -->
-    <string name="startup_choices">Pilihan startup</string>
-    <!-- EN: Ask -->
-    <string name="startup_choices_on">Tanyakan</string>
-    <!-- EN: Disk swaps -->
-    <string name="disk_swaps">Penukaran disk</string>
-    <!-- EN: Automatic -->
-    <string name="disk_swaps_on">Otomatis</string>
 </resources>
