@@ -961,10 +961,11 @@ Java_com_mrjackspade_kairo98_MainActivity_nativeInputTelemetry(JNIEnv *env, jobj
     uint64_t waits = 0, polls = 0, mouse_reads = 0;
     int waiting = 0;
     kairo98_input_telemetry_snapshot(&waits, &polls, &mouse_reads, &waiting);
-    jlong values[4] = {static_cast<jlong>(waits), static_cast<jlong>(polls),
-                       static_cast<jlong>(mouse_reads), static_cast<jlong>(waiting)};
-    jlongArray result = env->NewLongArray(4);
-    if (result) env->SetLongArrayRegion(result, 0, 4, values);
+    // np2 sees the guest's mouse reads themselves, so it never reports the mouse as set up instead.
+    jlong values[5] = {static_cast<jlong>(waits), static_cast<jlong>(polls),
+                       static_cast<jlong>(mouse_reads), static_cast<jlong>(waiting), 0};
+    jlongArray result = env->NewLongArray(5);
+    if (result) env->SetLongArrayRegion(result, 0, 5, values);
     return result;
 }
 
