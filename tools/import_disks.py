@@ -15,24 +15,24 @@ the app mounts the pair by content ID and never by name. Edits keep the hand-for
 JSON layout of both inputs.
 
 Pull a library cache with: adb exec-out run-as com.loxifi.kairo98 cat files/library-v2.bin > library-v2.bin
+(read by shared/tools/library_cache.py, in the layout the app writes)
 Scan the NeoKobe tree with: python tools/catalog_workbench.py scan <PC-98>/Untranslated/NeoKobe-2017 INDEX
 """
 
 import argparse
 import json
 import re
-import struct
 import sys
 from collections import defaultdict
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "tools"))
+sys.path.insert(0, str(ROOT / "shared/tools"))
 from catalog_index import lookup_name  # noqa: E402
+import library_cache  # noqa: E402
 from research_additions import name_matched  # noqa: E402
 
-CACHE_MAGIC = 0x4B4C4942
-CACHE_VERSION = 2
 FLOPPY = re.compile(r"\.(?:fdi|d88|88d|d98|98d|nfd|fdd|dcp|dcu|hdm|xdf)$", re.I)
 CD = re.compile(r"\.ccd$", re.I)
 HARD_DISK = re.compile(r"\.hdi$", re.I)
@@ -46,41 +46,6 @@ ALTERNATE = re.compile(r"alt\s*(\d*)", re.I)
 UNMODIFIED = re.compile(r"original|uncracked", re.I)
 # The same disk is often dumped in several formats; the set starts from the first of them.
 FORMATS = (".hdi", ".hdm", ".d88", ".fdi", ".nfd", ".fdd", ".88d", ".d98", ".98d", ".dcp", ".dcu", ".xdf", ".ccd")
-
-
-def read_cache(path):
-    data = Path(path).read_bytes()
-    position = 0
-
-    def take(fmt):
-        nonlocal position
-        value = struct.unpack_from(fmt, data, position)[0]
-        position += struct.calcsize(fmt)
-        return value
-
-    def text():
-        nonlocal position
-        size = take(">i")
-        value = data[position:position + size].decode("utf-8")
-        position += size
-        return value
-
-    def optional():
-        return text() if take(">?") else None
-
-    if take(">I") != CACHE_MAGIC or take(">i") != CACHE_VERSION:
-        raise ValueError(f"{path} is not a library-v{CACHE_VERSION} cache")
-    text()
-    text()
-    entries = []
-    for _ in range(take(">i")):
-        entry = {"id": text(), "uri": text(), "path": text(), "zipEntry": optional()}
-        for _ in range(4):
-            take(">q")
-        entry["contentId"] = optional()
-        entry["error"] = optional()
-        entries.append(entry)
-    return entries
 
 
 def library_disks(entries):
@@ -330,7 +295,7 @@ def import_library(cache, matches):
     """Research IDs and set profiles for the sets of a library cache."""
     names = research_keys(matches)
     research_ids, set_profiles, unreviewed = defaultdict(set), [], []
-    sets, ambiguous = find_sets(library_disks(read_cache(cache)))
+    sets, ambiguous = find_sets(library_disks(library_cache.read(cache)["entries"]))
     for found in sets:
         research, title = resolve_by_name(found, names)
         name = found["entry"]["name"]
