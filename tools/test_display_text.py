@@ -2,7 +2,8 @@ import json
 import unittest
 from pathlib import Path
 
-from build_review_catalog import lookup_name, reviewed_display
+from catalog_index import lookup_name, name_index
+from catalog_research import reviewed_display
 from research_additions import name_matched
 
 
@@ -10,7 +11,7 @@ class DisplayTextTests(unittest.TestCase):
     def test_review_changes_display_but_keeps_original_matching(self):
         review = json.loads(Path("catalog/research/display-text-v1.json").read_text(encoding="utf-8"))["games"]
         entries = json.loads(Path("catalog/research/matches-v1.json").read_text(encoding="utf-8-sig"))["entries"]
-        names = json.loads(Path("kairo98/src/main/assets/catalog/name-index-v1.json").read_text(encoding="utf-8"))
+        names = name_index()
         original_names = {}
         for entry in entries:
             if entry["platform"] != "pc98" or not name_matched(entry):

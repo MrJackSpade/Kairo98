@@ -3,6 +3,7 @@ import json
 import unittest
 from pathlib import Path
 from artwork_references import compact, expand
+from catalog_index import name_index
 
 
 class ArtworkReferenceTests(unittest.TestCase):
@@ -34,7 +35,7 @@ class ArtworkReferenceTests(unittest.TestCase):
 
     def test_generated_references_and_cached_assets(self):
         root = Path(__file__).resolve().parents[1]
-        index = json.loads((root / 'kairo98/src/main/assets/catalog/name-index-v1.json').read_text(encoding='utf-8'))
+        index = name_index()
         urls = set()
         paths = set()
         for record in index['games'].values():
@@ -45,5 +46,7 @@ class ArtworkReferenceTests(unittest.TestCase):
                     urls.add(value)
                 else:
                     paths.add(value)
-                    self.assertTrue((root / 'kairo98/src/withImages/assets' / value).is_file(), value)
-        self.assertEqual(paths, set(json.loads((root / "catalog/core-review-v1.json").read_text("utf8"))["approvedArtwork"]))
+                    self.assertTrue((root / 'catalog/artwork' / value).is_file(), value)
+        # Every reviewed image, the adult ones too: the art.nsfw part ships them.
+        approved = set(json.loads((root / "catalog/core-review-v1.json").read_text("utf8"))["approvedArtwork"])
+        self.assertTrue(approved <= paths)

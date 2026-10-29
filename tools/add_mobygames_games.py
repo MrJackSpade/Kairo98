@@ -25,12 +25,13 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "tools"))
 from artwork_references import SELF_HOSTED_BASE  # noqa: E402
 from audit_vndb_adult_content import review as vndb_review  # noqa: E402
-from build_catalog import compact  # noqa: E402
+from catalog_documents import compact  # noqa: E402
 from research_additions import ResearchInputs, entry_key  # noqa: E402
 
 PC98 = 95
 ARTWORK = ROOT / "catalog/artwork"
-PROVENANCE = ARTWORK / "art/catalog-provenance-v1.json"
+# Where each bundled image came from and its checksum, beside the research.
+PROVENANCE = ROOT / "catalog/research/artwork-provenance-v1.json"
 INDEX = ROOT / "catalog/research/artwork-index-v1.json"
 NOT_GAMEPLAY = re.compile(r"title|menu|intro|opening|logo|credits|ending|staff|copyright|loading|rules|"
                           r"options|select|story|sign in|profile|start|ago", re.I)

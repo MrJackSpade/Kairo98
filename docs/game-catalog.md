@@ -34,20 +34,20 @@ User catalog additions and explicit overrides live in app-private storage. Overr
 
 The bundled catalog is sharded by content ID. Kairo98 checks the small [revision file](../catalog/core-v4.meta.json) before fetching [the update archive](../catalog/core-v4.zip) and the device language's descriptions (`core-v4-<language>.zip`), and offers **Update catalogs** in Menu › Manage library. An unchanged SHA-256 skips the catalog download. An invalid or unavailable update leaves the existing catalog in place. App versions before v4 read `catalog/core-v3.json`, which is no longer rebuilt (Kairo#77). Artwork downloads are separate. Lookup order is bundled catalog, downloaded catalog, user additions, then explicit overrides.
 
-The source records are in [catalog research](../catalog/research/README.md). To generate the Android shards and online metadata snapshot after reviewing a source change:
+The source records are in [catalog research](../catalog/research/README.md). `tools/catalog_research.py` assembles them into `catalog/research/games-v1.json`, and the shared generator (`shared/tools/app_catalog.py`, with `tools/catalog_config.py`) builds the catalog from it as it does for every Kairo app: the parts the app bundles (`catalog/parts`), the update archives and the artwork package. After reviewing a source change:
 
 ```sh
-python tools/build_catalog.py catalog/source-v1.json kairo98/src/main/assets/catalog
-python tools/build_online_catalog.py catalog/source-v1.json kairo98/src/main/assets/catalog catalog
+python tools/catalog_research.py
+python shared/tools/app_catalog.py .
 ```
 
-Games LaunchBox lacks can come from VNDB: `tools/add_vndb_games.py` reads `catalog/research/vndb-additions-v1.json`, which names each NeoKobe folder's VNDB visual novel or release with an original description, and adds its research entry, adult review, and core-review exclusion from the VNDB dump. VNDB's descriptions and images are not covered by the dump's license, so neither is copied. `tools/add_mobygames_games.py` does the same from a `shared/tools/mobygames.py` dump with `catalog/research/mobygames-additions-v1.json`: MobyGames records are reference only, descriptions are original, and the PC-98 front cover and a mid-game screenshot are encoded at most 360 pixels high into `catalog/artwork/art/catalog/moby/` and served from this repository, a source the app accepts besides LaunchBox. A game MobyGames gives the Adult theme leaves the core catalog. `tools/add_inventory_games.py` reads `catalog/research/inventory-additions-v1.json` for the NeoKobe folders no database describes: each becomes a `neokobe-` entry titled after its folder, or joins an existing entry. Those entries are recognized only by their disks, never by file name. Run `tools/import_disks.py neokobe` after any of these. `tools/build_catalog_packages.py` regenerates everything at once. `core-v2.json`, `online-v1.json` and the v1 adult and artwork packages are frozen for app versions up to 1.1.1, which read records with each game's metadata repeated; they keep that catalog until they update. The builder validates identifiers, field bounds, paths, and collisions. Catalog source links and art provenance do not grant redistribution rights; see [licensing](licensing.md) and [artwork rights](art-rights.md).
+Games LaunchBox lacks can come from VNDB: `tools/add_vndb_games.py` reads `catalog/research/vndb-additions-v1.json`, which names each NeoKobe folder's VNDB visual novel or release with an original description, and adds its research entry, adult review, and core-review exclusion from the VNDB dump. VNDB's descriptions and images are not covered by the dump's license, so neither is copied. `tools/add_mobygames_games.py` does the same from a `shared/tools/mobygames.py` dump with `catalog/research/mobygames-additions-v1.json`: MobyGames records are reference only, descriptions are original, and the PC-98 front cover and a mid-game screenshot are encoded at most 360 pixels high into `catalog/artwork/art/catalog/moby/` and served from this repository, a source the app accepts besides LaunchBox. A game MobyGames gives the Adult theme leaves the core catalog. `tools/add_inventory_games.py` reads `catalog/research/inventory-additions-v1.json` for the NeoKobe folders no database describes: each becomes a `neokobe-` entry titled after its folder, or joins an existing entry. Those entries are recognized only by their disks, never by file name. Run `tools/import_disks.py neokobe` after any of these, then regenerate the catalog. `core-v2.json`, `online-v1.json` and the v1 adult and artwork packages are frozen for app versions up to 1.1.1, which read records with each game's metadata repeated; they keep that catalog until they update. The shared generator validates identifiers, field bounds, paths, and collisions. Catalog source links and art provenance do not grant redistribution rights; see [licensing](licensing.md) and [artwork rights](art-rights.md).
 
 ## Reviewed display language
 
 `catalog/research/display-text-v1.json` supplies reviewed title and alias spellings
-using `♥` within explicit words. The builder applies these only to display fields;
-the name index retains original names and also recognizes the edited spellings.
+using `♥` within explicit words. `tools/catalog_research.py` applies these only to display fields;
+the name index retains original names (the research's `lookupNames`) and also recognizes the edited spellings.
 Content IDs, disk names, launch settings, artwork, and user overrides are unchanged.
 The existing adult-content review still controls the separate heart tag. A missing
 heart is not an age rating. Existing descriptions were reviewed for graphic wording
@@ -56,12 +56,12 @@ and retained where they already describe the premise and gameplay in restrained 
 Regenerate after changing review inputs:
 
 ```sh
-python tools/build_review_catalog.py --reuse-art
-python tools/build_online_catalog.py catalog/source-v1.json kairo98/src/main/assets/catalog catalog
+python tools/catalog_research.py
+python shared/tools/app_catalog.py .
 ```
 
-The generated-catalog hook includes the display review input, preventing a later
-regeneration from restoring the original display wording.
+The pre-commit hook (`tools/pre-commit.sh`) checks that the research and the generated catalog match
+their inputs, so a later regeneration cannot restore the original display wording.
 
 ## Compact artwork references (0.9.5)
 

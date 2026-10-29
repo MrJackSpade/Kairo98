@@ -16,6 +16,6 @@ The shared RetroArch Slang integration uses librashader 0.11.0 under its GPL-3.0
 
 Some catalog metadata derives from the [VNDB database dump](https://vndb.org/d14). The derived review data is attributed to VNDB contributors under ODbL 1.0 and DbCL; its source checksum is recorded with the research data. The app does not bundle the VNDB dump.
 
-The optional artwork catalog contains downscaled cover and screenshot images, used under fair use, with their sources and checksums in `kairo98/src/withImages/assets/art/catalog-provenance-v1.json`. The `withoutImages` variant omits bundled artwork and downloads images for the games in a user's library.
+The optional artwork catalog contains downscaled cover and screenshot images, used under fair use, with their sources and checksums in `catalog/research/artwork-provenance-v1.json`. The `withoutImages` variant omits bundled artwork and downloads images for the games in a user's library.
 
 A distributor must review the exact binary and its corresponding source and notices before claiming that binary is ready for release. The audit script is `tools/audit_distribution.ps1`.

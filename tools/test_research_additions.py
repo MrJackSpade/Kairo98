@@ -5,7 +5,6 @@ import unittest
 from add_inventory_games import entry_for as inventory_entry
 from add_mobygames_games import entry_for as moby_entry, front_cover, gameplay_screenshot
 from artwork_references import SELF_HOSTED_BASE, compact
-from build_catalog import valid_image_url
 import research_additions
 from research_additions import ResearchInputs, name_matched
 
@@ -98,13 +97,10 @@ class SelfHostedArtworkTests(unittest.TestCase):
         path = "art/catalog/moby/109/screenshot-0123456789ab.webp"
         art = {"preview": path, "previewUrl": SELF_HOSTED_BASE + path}
         self.assertEqual(compact(art), art)
-        self.assertTrue(valid_image_url(SELF_HOSTED_BASE + path))
         for bad in ({"preview": path, "previewUrl": SELF_HOSTED_BASE + "art/catalog/moby/110/x.webp"},
                     {"boxArt": path, "boxArtUrl": SELF_HOSTED_BASE + path}):
             with self.subTest(bad=bad), self.assertRaises(ValueError):
                 compact(bad)
-        self.assertFalse(valid_image_url(SELF_HOSTED_BASE + "art/catalog/../../secret"))
-        self.assertFalse(valid_image_url("https://raw.githubusercontent.com/Other/Repo/main/catalog/artwork/art/catalog/x.webp"))
 
 
 if __name__ == "__main__":

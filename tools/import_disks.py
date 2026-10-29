@@ -26,7 +26,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "tools"))
-from build_review_catalog import lookup_name  # noqa: E402
+from catalog_index import lookup_name  # noqa: E402
 from research_additions import name_matched  # noqa: E402
 
 CACHE_MAGIC = 0x4B4C4942
