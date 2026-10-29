@@ -673,35 +673,10 @@ class MainActivity : MachineActivity<DiskImageEntry>() {
 
     // Direct tap: the mouse warps to the touched point before a click ----------------------------------
 
-    private var pendingMouseWarp: Runnable? = null
-
     /** The view is exactly the scaled frame, so the point already accounts for scaling and crop. */
     override fun warpMouse(x: Int, y: Int) = nativeMouseWarp(x, y)
 
-    override fun afterMouseWarp(action: () -> Unit) {
-        releaseMouseTouch()
-        if (nativeMouseWarpDone()) {
-            action()
-            return
-        }
-        val deadline = android.os.SystemClock.uptimeMillis() + 2000
-        val poll = object : Runnable {
-            override fun run() {
-                if (nativeMouseWarpDone()) {
-                    pendingMouseWarp = null
-                    action()
-                } else if (android.os.SystemClock.uptimeMillis() < deadline) handler.postDelayed(this, 8)
-                else pendingMouseWarp = null
-            }
-        }
-        pendingMouseWarp = poll
-        handler.postDelayed(poll, 8)
-    }
-
-    override fun releaseMouseTouch() {
-        pendingMouseWarp?.let(handler::removeCallbacks)
-        pendingMouseWarp = null
-    }
+    override fun mouseWarpDone(): Boolean = nativeMouseWarpDone()
 
     // Disks ------------------------------------------------------------------------------------------
 
