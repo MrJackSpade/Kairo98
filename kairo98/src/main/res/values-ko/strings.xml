@@ -187,20 +187,8 @@
     <string name="select_floppy_image">지원되는 플로피 이미지를 선택하세요</string>
     <!-- EN: Select a supported disk image -->
     <string name="select_disk_image">지원되는 디스크 이미지를 선택하세요</string>
-    <!-- EN: CLOCK -->
-    <string name="clock_group">클럭</string>
     <!-- EN: Base clock -->
     <string name="base_clock">기본 클럭</string>
-    <!-- EN: Changing the base clock restarts a running game. Games with their own clock keep it. -->
-    <string name="base_clock_foot">기본 클럭을 변경하면 실행 중인 게임이 다시 시작됩니다. 자체 클럭이 있는 게임은 그 클럭을 유지합니다.</string>
-    <!-- EN: BOOT -->
-    <string name="boot_group">부팅</string>
-    <!-- EN: Clock change resets the machine -->
-    <string name="clock_reset">클럭을 변경하면 머신이 재설정됩니다</string>
-    <!-- EN: Global clock saved; this game uses its own clock -->
-    <string name="clock_saved_game_own">전체 클럭을 저장했습니다. 이 게임은 자체 클럭을 사용합니다</string>
-    <!-- EN: Machine clock -->
-    <string name="machine_clock">머신 클럭</string>
     <!-- EN: GDC clock -->
     <string name="gdc_clock">GDC 클럭</string>
     <!-- EN: CPU speed -->

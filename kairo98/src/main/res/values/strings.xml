@@ -115,13 +115,7 @@
     <string name="select_floppy_image">Select a supported floppy image</string>
     <string name="select_disk_image">Select a supported disk image</string>
 
-    <string name="clock_group">CLOCK</string>
     <string name="base_clock">Base clock</string>
-    <string name="base_clock_foot">Changing the base clock restarts a running game. Games with their own clock keep it.</string>
-    <string name="boot_group">BOOT</string>
-    <string name="clock_reset">Clock change resets the machine</string>
-    <string name="clock_saved_game_own">Global clock saved; this game uses its own clock</string>
-    <string name="machine_clock">Machine clock</string>
     <string name="gdc_clock">GDC clock</string>
     <string name="cpu_speed">CPU speed</string>
     <!-- %1$.1f is the CPU's speed in megahertz. -->

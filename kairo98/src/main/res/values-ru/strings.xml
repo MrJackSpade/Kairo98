@@ -187,20 +187,8 @@
     <string name="select_floppy_image">Выберите поддерживаемый образ дискеты</string>
     <!-- EN: Select a supported disk image -->
     <string name="select_disk_image">Выберите поддерживаемый образ диска</string>
-    <!-- EN: CLOCK -->
-    <string name="clock_group">ТАКТОВАЯ ЧАСТОТА</string>
     <!-- EN: Base clock -->
     <string name="base_clock">Базовая частота</string>
-    <!-- EN: Changing the base clock restarts a running game. Games with their own clock keep it. -->
-    <string name="base_clock_foot">Изменение базовой частоты перезапускает запущенную игру. Игры с собственной частотой сохраняют ее.</string>
-    <!-- EN: BOOT -->
-    <string name="boot_group">ЗАГРУЗКА</string>
-    <!-- EN: Clock change resets the machine -->
-    <string name="clock_reset">Изменение частоты перезапускает машину</string>
-    <!-- EN: Global clock saved; this game uses its own clock -->
-    <string name="clock_saved_game_own">Общая частота сохранена; эта игра использует собственную частоту</string>
-    <!-- EN: Machine clock -->
-    <string name="machine_clock">Частота машины</string>
     <!-- EN: GDC clock -->
     <string name="gdc_clock">Частота GDC</string>
     <!-- EN: CPU speed -->

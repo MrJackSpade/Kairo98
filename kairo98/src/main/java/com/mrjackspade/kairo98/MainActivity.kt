@@ -32,6 +32,7 @@ import com.mrjackspade.kairo.frontend.ImportedFilePicker
 import com.mrjackspade.kairo.frontend.ImportedFiles
 import com.mrjackspade.kairo.frontend.LayeredGameCatalog
 import com.mrjackspade.kairo.frontend.LibraryStrings
+import com.mrjackspade.kairo.frontend.MachineOption
 import com.mrjackspade.kairo.frontend.MachineActivity
 import com.mrjackspade.kairo.frontend.MachineBridge
 import com.mrjackspade.kairo.frontend.MachineFirstRun
@@ -64,7 +65,6 @@ class MainActivity : MachineActivity<DiskImageEntry>() {
     private external fun nativeStop()
     private external fun nativePause(paused: Boolean)
     private external fun nativeReset()
-    private external fun nativeClock(mhzTimesTen: Int)
     private external fun nativeSkipMemoryCheck(skip: Boolean)
     private external fun nativeLoadedLocks(): Int
     private external fun nativeKey(scanCode: Int, down: Boolean)
@@ -249,7 +249,7 @@ class MainActivity : MachineActivity<DiskImageEntry>() {
             pendingDebugGame = intent.getStringExtra("kairo98.selectGame64")
                 ?.let(::decodeDebugGameQuery) ?: intent.getStringExtra("kairo98.selectGame")
         }
-        clock = preferences.getInt("base_clock", 25).let { if (it == 20) 20 else 25 }
+        moveMachinePreferences()
         super.onCreate(savedInstanceState)
         if (isFinishing) return
         if (pendingDebugLaunch != null || pendingDebugGame != null) libraryScreen.entriesPublished = ::selectPendingDebugGame
@@ -301,8 +301,21 @@ class MainActivity : MachineActivity<DiskImageEntry>() {
 
     // Launching --------------------------------------------------------------------------------------
 
-    /** The clock all games use unless they have their own: 25 for 2.5 MHz, 20 for 2 MHz. */
-    private var clock = 25
+    /**
+     * A player's all-games base clock and Skip memory check, from before they were machine options
+     * (Kairo98#105), moved once to the options' own keys.
+     */
+    private fun moveMachinePreferences() {
+        val edit = preferences.edit()
+        if (preferences.contains("base_clock")) {
+            edit.putInt(Pc98Catalog.baseClock.id, if (preferences.getInt("base_clock", 25) == 20) 20 else 25)
+            edit.remove("base_clock")
+        }
+        (preferences.all[MachineOption.SKIP_MEMORY_CHECK] as? Boolean)?.let { skip ->
+            edit.putString(MachineOption.SKIP_MEMORY_CHECK, if (skip) "on" else "off")
+        }
+        edit.apply()
+    }
     /** What each drive holds, for the Disks page. */
     private var currentIsFloppy = false
     private val mountedFloppies = arrayOfNulls<String>(2)
@@ -326,7 +339,8 @@ class MainActivity : MachineActivity<DiskImageEntry>() {
     }
 
     // Font lists the player's fonts too, and imports more (Pc98Catalog.font).
-    override val machineOptions = listOf(Pc98Catalog.font(::fontChoices, ::fontActions))
+    private val fontOption = Pc98Catalog.font(::fontChoices, ::fontActions)
+    override val machineOptions = listOf(Pc98Catalog.baseClock, Pc98Catalog.skipMemoryCheck, fontOption)
     private fun fontChoices() = fontFiles.items().map { ChoiceOption(it.id, it.label) }
     private fun fontActions(select: (String) -> Unit) = fontImport.actions(select)
     private var selectedStartup = emptyList<Pair<StartupChoice, StartupOption>>()
@@ -419,13 +433,13 @@ class MainActivity : MachineActivity<DiskImageEntry>() {
         }
         val floppyB = game.initialFloppyBId?.let { id -> requiredFloppyFor(id, entry, sources) }
         val primary = media?.hardDisk ?: boot
-        nativeSkipMemoryCheck(preferences.getBoolean(SKIP_MEMORY_CHECK, true))
+        nativeSkipMemoryCheck(optionValue(game, Pc98Catalog.skipMemoryCheck) == "on")
         val disk = disks.prepare(primary, cancelled, progress)
         val bootFloppy = media?.bootFloppy?.let { disks.prepare(it, cancelled, progress) }
         val secondFloppy = floppyB?.let { disks.prepare(it, cancelled, progress) }
         val disc = cd?.let { disks.prepare(it, cancelled, progress) }
-        val (font, fontSource) = chooseFont(optionValue(game, machineOptions.single()), primary, external, cancelled)
-        check(startMachine(disk.absolutePath, font, game.baseClockTenthsMHz ?: clock, game.gdcClockTenthsMHz ?: 50,
+        val (font, fontSource) = chooseFont(optionValue(game, fontOption), primary, external, cancelled)
+        check(startMachine(disk.absolutePath, font, optionValue(game, Pc98Catalog.baseClock).toInt(), game.gdcClockTenthsMHz ?: 50,
             game.cpuMultiple ?: DEFAULT_CPU_MULTIPLE, primary.isFloppy, bootFloppy?.absolutePath,
             secondFloppy?.absolutePath, disc?.absolutePath)) { getString(R.string.start_failed) }
         awaitMachineReady()?.let(::error)
@@ -872,38 +886,8 @@ class MainActivity : MachineActivity<DiskImageEntry>() {
                 setOf("ym2608_adpcm_rom.bin"), false, setOf(RHYTHM_ROM_BYTES)))))
     }
 
-    /** Machine: the base clock, then firmware, which only changes with no game running. */
-    override fun machinePage() = GroupsPage(getString(FrontendR.string.kairo_machine), { GameSource.ALL_GAMES }, {
-        val baseClock = getString(R.string.base_clock)
-        val skipMemoryCheck = getString(FrontendR.string.kairo_option_skip_memory_check)
-        listOf(
-            RowGroup(getString(R.string.clock_group), listOf(SettingsRow.choice("base-clock", baseClock, ChoiceSpec(baseClock,
-                { GameSource.ALL_GAMES }, { listOf(ChoiceGroup(null, listOf(mhz("25", "2.5"), mhz("20", "2")))) },
-                { clock.toString() }, select = { value -> setBaseClock(value.toInt()) }))),
-                getString(R.string.base_clock_foot)),
-            RowGroup(getString(R.string.boot_group), listOf(SettingsRow.choice(SKIP_MEMORY_CHECK, skipMemoryCheck, ChoiceSpec(
-                skipMemoryCheck, { GameSource.ALL_GAMES }, { listOf(ChoiceGroup(null, listOf(
-                    ChoiceOption("on", UiText.res(FrontendR.string.kairo_on)),
-                    ChoiceOption("off", UiText.res(FrontendR.string.kairo_off))))) },
-                { if (preferences.getBoolean(SKIP_MEMORY_CHECK, true)) "on" else "off" },
-                select = { value -> preferences.edit().putBoolean(SKIP_MEMORY_CHECK, value == "on").apply() }))))
-        ) + firmwareGroups()
-    })
-
     /** A clock choice: [id] in tenths of a MHz, shown as [mhz] MHz. */
     private fun mhz(id: String, mhz: String) = ChoiceOption(id, UiText.res(FrontendR.string.kairo_clock_mhz, mhz))
-
-    private fun setBaseClock(selected: Int) {
-        if (clock == selected) return
-        clock = selected
-        preferences.edit().putInt("base_clock", clock).apply()
-        if (currentEntry == null) return
-        if (currentGame?.baseClockTenthsMHz == null) {
-            inputRouter.resetLocks()
-            nativeClock(clock)
-            toast(getString(R.string.clock_reset))
-        } else toast(getString(R.string.clock_saved_game_own))
-    }
 
     /** The rows of Kairo98's own catalog settings (Pc98Catalog.settings). */
     override fun customSettingRow(entry: DiskImageEntry, setting: CatalogSetting.Custom,
@@ -913,16 +897,12 @@ class MainActivity : MachineActivity<DiskImageEntry>() {
         val scope = { titleOf(entry) }
         fun game() = catalog.resolve(entry)
         return when (setting.id) {
-            Pc98Catalog.BASE_CLOCK -> GameSettingsRows.choice(this, "clock", getString(R.string.machine_clock), scope,
-                listOf(mhz("20", "2"), mhz("25", "2.5")),
-                machineValue(entry, "machine", "baseClockTenthsMHz", { it.baseClockTenthsMHz?.toString() },
-                    { clock.toString() }, GameSource.ALL_GAMES) { it.toInt() }, enabled, noHash)
             Pc98Catalog.GDC_CLOCK -> GameSettingsRows.choice(this, "gdc", getString(R.string.gdc_clock), scope,
                 listOf(mhz("25", "2.5"), mhz("50", "5")),
                 machineValue(entry, "machine", "gdcClockTenthsMHz", { it.gdcClockTenthsMHz?.toString() },
                     { "50" }, GameSource.BUILT_IN) { it.toInt() }, enabled, noHash)
             Pc98Catalog.CPU -> {
-                val base = { if ((game().baseClockTenthsMHz ?: clock) == 20) 1.9968 else 2.4576 }
+                val base = { if (optionValue(game(), Pc98Catalog.baseClock) == "20") 1.9968 else 2.4576 }
                 val cpu = machineValue(entry, "machine", "cpuMultiple", { it.cpuMultiple?.toString() },
                     { DEFAULT_CPU_MULTIPLE.toString() }, GameSource.BUILT_IN) { it.toInt() }
                 GameSettingsRows.choice(this, "cpu", getString(R.string.cpu_speed), scope,
@@ -1106,7 +1086,6 @@ class MainActivity : MachineActivity<DiskImageEntry>() {
 
     companion object {
         /** The all-games Skip memory check preference, on unless the player turns it off. */
-        private const val SKIP_MEMORY_CHECK = "skipMemoryCheck"
         /** The native typer's states (native_bridge.cpp StartupState). */
         private const val STARTUP_IDLE = 0
         private const val STARTUP_TYPING = 1

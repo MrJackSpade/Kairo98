@@ -318,17 +318,6 @@ int kairo98_machine_reset(void) {
     return 0;
 }
 
-int kairo98_machine_set_clock(int mhz_times_ten) {
-    if (mhz_times_ten != 20 && mhz_times_ten != 25) return 2;
-    keystat_allrelease();
-    if (flush_disk() != 0) return 1;
-    np2cfg.baseclock = mhz_times_ten == 25 ? PCBASECLOCK25 : PCBASECLOCK20;
-    apply_gdc_dipswitch();
-    pccore_reset();
-    apply_gdc_clock();
-    return 0;
-}
-
 void kairo98_machine_key(unsigned char code, int down) {
     keystat_senddata((REG8)(code | (down ? 0 : 0x80)));
 }

@@ -187,20 +187,8 @@
     <string name="select_floppy_image">Pilih image disket yang didukung</string>
     <!-- EN: Select a supported disk image -->
     <string name="select_disk_image">Pilih image disk yang didukung</string>
-    <!-- EN: CLOCK -->
-    <string name="clock_group">CLOCK</string>
     <!-- EN: Base clock -->
     <string name="base_clock">Clock dasar</string>
-    <!-- EN: Changing the base clock restarts a running game. Games with their own clock keep it. -->
-    <string name="base_clock_foot">Mengubah clock dasar akan memulai ulang game yang berjalan. Game dengan clock sendiri tetap menggunakannya.</string>
-    <!-- EN: BOOT -->
-    <string name="boot_group">BOOT</string>
-    <!-- EN: Clock change resets the machine -->
-    <string name="clock_reset">Perubahan clock mereset mesin</string>
-    <!-- EN: Global clock saved; this game uses its own clock -->
-    <string name="clock_saved_game_own">Clock global disimpan; game ini menggunakan clock-nya sendiri</string>
-    <!-- EN: Machine clock -->
-    <string name="machine_clock">Clock mesin</string>
     <!-- EN: GDC clock -->
     <string name="gdc_clock">Clock GDC</string>
     <!-- EN: CPU speed -->

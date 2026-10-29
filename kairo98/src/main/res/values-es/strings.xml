@@ -187,20 +187,8 @@
     <string name="select_floppy_image">Selecciona una imagen de disquete compatible</string>
     <!-- EN: Select a supported disk image -->
     <string name="select_disk_image">Selecciona una imagen de disco compatible</string>
-    <!-- EN: CLOCK -->
-    <string name="clock_group">RELOJ</string>
     <!-- EN: Base clock -->
     <string name="base_clock">Reloj base</string>
-    <!-- EN: Changing the base clock restarts a running game. Games with their own clock keep it. -->
-    <string name="base_clock_foot">Cambiar el reloj base reinicia el juego en marcha. Los juegos con su propio reloj lo conservan.</string>
-    <!-- EN: BOOT -->
-    <string name="boot_group">ARRANQUE</string>
-    <!-- EN: Clock change resets the machine -->
-    <string name="clock_reset">Cambiar el reloj reinicia la máquina</string>
-    <!-- EN: Global clock saved; this game uses its own clock -->
-    <string name="clock_saved_game_own">Reloj global guardado; este juego usa su propio reloj</string>
-    <!-- EN: Machine clock -->
-    <string name="machine_clock">Reloj de la máquina</string>
     <!-- EN: GDC clock -->
     <string name="gdc_clock">Reloj de la GDC</string>
     <!-- EN: CPU speed -->

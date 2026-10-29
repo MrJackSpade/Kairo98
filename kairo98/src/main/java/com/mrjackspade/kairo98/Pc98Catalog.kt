@@ -50,11 +50,18 @@ object Pc98Catalog : LayeredGameCatalog.Schema {
     /** The Font option as the catalog reads it; MainActivity lists the player's fonts too. */
     val font = font()
 
+    /** The base clock in tenths of a MHz (`machine.baseClockTenthsMHz`): 2.5 MHz, or 2 MHz. */
+    val baseClock = MachineOption("baseClockTenthsMHz", UiText.res(R.string.base_clock),
+        listOf(ChoiceOption("25", UiText.res(FrontendR.string.kairo_clock_mhz, "2.5")),
+            ChoiceOption("20", UiText.res(FrontendR.string.kairo_clock_mhz, "2"))), "25", numeric = true)
+    val skipMemoryCheck = MachineOption.skipMemoryCheck()
+
     /** Each a row of the game's settings: MainActivity.customSettingRow builds the custom ones. */
     override val settings: List<CatalogSetting> = listOf(
-        CatalogSetting.Custom(BASE_CLOCK, "machine", setOf("baseClockTenthsMHz")),
+        CatalogSetting.Choice(baseClock),
         CatalogSetting.Custom(GDC_CLOCK, "machine", setOf("gdcClockTenthsMHz")),
         CatalogSetting.Custom(CPU, "machine", setOf("cpuMultiple")),
+        CatalogSetting.Choice(skipMemoryCheck),
         CatalogSetting.Choice(font),
         CatalogSetting.Custom(COMMAND, "launch", setOf("type", "text", "commands", "ready", "timeoutMs", "screenHashes")),
         CatalogSetting.Custom(CHOICES, "startupChoices", null),
@@ -73,7 +80,6 @@ object Pc98Catalog : LayeredGameCatalog.Schema {
         else -> false
     }
 
-    const val BASE_CLOCK = "clock"
     const val GDC_CLOCK = "gdc"
     const val CPU = "cpu"
     const val COMMAND = "command"
@@ -92,14 +98,13 @@ object Pc98Catalog : LayeredGameCatalog.Schema {
         } else emptySet()
 
     override fun validField(field: String, value: Any): Boolean = when (field) {
-        "machine" -> value is JSONObject &&
-            value.keys().asSequence().all { it in fields.getValue("machine")!! } &&
-            (!value.has("baseClockTenthsMHz") ||
-                (value.opt("baseClockTenthsMHz") is Int && value.optInt("baseClockTenthsMHz") in listOf(20, 25))) &&
-            (!value.has("gdcClockTenthsMHz") ||
-                (value.opt("gdcClockTenthsMHz") is Int && value.optInt("gdcClockTenthsMHz") in listOf(25, 50))) &&
-            (!value.has("cpuMultiple") ||
-                (value.opt("cpuMultiple") is Int && value.optInt("cpuMultiple") in CPU_MULTIPLES))
+        "machine" -> value is JSONObject && value.keys().asSequence().all { key ->
+            when (key) {
+                "gdcClockTenthsMHz" -> value.opt(key) is Int && value.optInt(key) in listOf(25, 50)
+                "cpuMultiple" -> value.opt(key) is Int && value.optInt(key) in CPU_MULTIPLES
+                else -> listOf(baseClock, skipMemoryCheck, font).firstOrNull { it.id == key }?.valid(value.opt(key)) == true
+            }
+        }
         "launch" -> value is JSONObject && value.length() > 0 &&
             value.keys().asSequence().all { it in fields.getValue("launch")!! } &&
             (!value.has("type") || value.optString("type") == "guestCommand") &&
@@ -186,8 +191,6 @@ data class StartupChoice(val id: String, val title: String, val screenHashes: Se
 data class DiskSwap(val id: String, val drive: Int, val contentId: String, val screenHashes: Set<Long>,
                     val key: String, val enter: Boolean)
 
-val CatalogGame.baseClockTenthsMHz: Int?
-    get() = section("machine")?.optInt("baseClockTenthsMHz")?.takeIf { it == 20 || it == 25 }
 val CatalogGame.gdcClockTenthsMHz: Int?
     get() = section("machine")?.optInt("gdcClockTenthsMHz")?.takeIf { it == 25 || it == 50 }
 val CatalogGame.cpuMultiple: Int?

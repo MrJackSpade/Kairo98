@@ -187,20 +187,8 @@
     <string name="select_floppy_image">Wählen Sie ein unterstütztes Disketten-Abbild</string>
     <!-- EN: Select a supported disk image -->
     <string name="select_disk_image">Wählen Sie ein unterstütztes Datenträgerabbild</string>
-    <!-- EN: CLOCK -->
-    <string name="clock_group">TAKT</string>
     <!-- EN: Base clock -->
     <string name="base_clock">Grundtakt</string>
-    <!-- EN: Changing the base clock restarts a running game. Games with their own clock keep it. -->
-    <string name="base_clock_foot">Eine Änderung des Grundtakts startet ein laufendes Spiel neu. Spiele mit eigenem Takt behalten ihn.</string>
-    <!-- EN: BOOT -->
-    <string name="boot_group">START</string>
-    <!-- EN: Clock change resets the machine -->
-    <string name="clock_reset">Taktänderung setzt die Maschine zurück</string>
-    <!-- EN: Global clock saved; this game uses its own clock -->
-    <string name="clock_saved_game_own">Globaler Takt gespeichert; dieses Spiel verwendet einen eigenen Takt</string>
-    <!-- EN: Machine clock -->
-    <string name="machine_clock">Maschinentakt</string>
     <!-- EN: GDC clock -->
     <string name="gdc_clock">GDC-Takt</string>
     <!-- EN: CPU speed -->

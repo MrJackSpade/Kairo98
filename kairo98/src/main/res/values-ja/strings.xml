@@ -187,20 +187,8 @@
     <string name="select_floppy_image">対応しているフロッピーイメージを選択してください</string>
     <!-- EN: Select a supported disk image -->
     <string name="select_disk_image">対応しているディスクイメージを選択してください</string>
-    <!-- EN: CLOCK -->
-    <string name="clock_group">クロック</string>
     <!-- EN: Base clock -->
     <string name="base_clock">ベースクロック</string>
-    <!-- EN: Changing the base clock restarts a running game. Games with their own clock keep it. -->
-    <string name="base_clock_foot">ベースクロックを変更すると実行中のゲームは再起動します。独自のクロックを持つゲームはそれを使います。</string>
-    <!-- EN: BOOT -->
-    <string name="boot_group">起動</string>
-    <!-- EN: Clock change resets the machine -->
-    <string name="clock_reset">クロックの変更でマシンがリセットされます</string>
-    <!-- EN: Global clock saved; this game uses its own clock -->
-    <string name="clock_saved_game_own">全体のクロックを保存しました。このゲームは独自のクロックを使います</string>
-    <!-- EN: Machine clock -->
-    <string name="machine_clock">マシンクロック</string>
     <!-- EN: GDC clock -->
     <string name="gdc_clock">GDC クロック</string>
     <!-- EN: CPU speed -->

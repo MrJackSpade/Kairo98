@@ -187,20 +187,8 @@
     <string name="select_floppy_image">اختر صورة قرص مرن مدعومة</string>
     <!-- EN: Select a supported disk image -->
     <string name="select_disk_image">اختر صورة قرص مدعومة</string>
-    <!-- EN: CLOCK -->
-    <string name="clock_group">الساعة</string>
     <!-- EN: Base clock -->
     <string name="base_clock">الساعة الأساسية</string>
-    <!-- EN: Changing the base clock restarts a running game. Games with their own clock keep it. -->
-    <string name="base_clock_foot">يؤدي تغيير الساعة الأساسية إلى إعادة تشغيل اللعبة الجارية. تحتفظ الألعاب التي لها ساعتها الخاصة بها.</string>
-    <!-- EN: BOOT -->
-    <string name="boot_group">الإقلاع</string>
-    <!-- EN: Clock change resets the machine -->
-    <string name="clock_reset">تغيير الساعة يعيد تعيين الجهاز</string>
-    <!-- EN: Global clock saved; this game uses its own clock -->
-    <string name="clock_saved_game_own">تم حفظ الساعة العامة؛ تستخدم هذه اللعبة ساعتها الخاصة</string>
-    <!-- EN: Machine clock -->
-    <string name="machine_clock">ساعة الجهاز</string>
     <!-- EN: GDC clock -->
     <string name="gdc_clock">ساعة GDC</string>
     <!-- EN: CPU speed -->

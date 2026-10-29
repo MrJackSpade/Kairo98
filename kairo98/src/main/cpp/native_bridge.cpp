@@ -54,7 +54,6 @@ extern "C" void kairo98_machine_egc_snapshot(unsigned int *snap, unsigned long l
 extern "C" void kairo98_machine_stage_times(unsigned long long *cpu_ns, unsigned long long *event_ns,
                                             unsigned long long *draw_ns, unsigned long long *fm_ns);
 extern "C" int kairo98_machine_reset(void);
-extern "C" int kairo98_machine_set_clock(int mhz_times_ten);
 extern "C" void kairo98_machine_key(unsigned char code, int down);
 extern "C" void kairo98_mouse_move(int dx, int dy);
 extern "C" void kairo98_mouse_button(int button, int down);
@@ -88,7 +87,7 @@ namespace {
 // the audio queue holds this much so recoverable lateness never underruns.
 constexpr auto kFrameStall = std::chrono::milliseconds(50);
 constexpr int32_t kAudioStallFrames = 44100 * kFrameStall.count() / 1000;
-enum class CommandType { Pause, Resume, Reset, Stop, Key, Disk, Floppy, Cd, MediaPaths, Clock, MouseMove, MouseWarp, MouseButton, Joystick,
+enum class CommandType { Pause, Resume, Reset, Stop, Key, Disk, Floppy, Cd, MediaPaths, MouseMove, MouseWarp, MouseButton, Joystick,
                          SaveState, LoadState, StartupStart, StartupAdd, StartupResume };
 struct Command {
     CommandType type;
@@ -503,20 +502,6 @@ void run_machine(std::string image, std::string font_path, std::string bios_dir,
                     for (int drive = 0; drive < 3; ++drive) command.media->push_back(kairo98_machine_media_path(drive));
                     command.completion->set_value(0);
                     break;
-                case CommandType::Clock:
-                    kairo98_input_telemetry_reset();
-                    kairo98_joy_release_all();
-                    prompt_frames = 0;
-                    dos_prompt_ready.store(false);
-                    clear_screen_hash();
-                    if (int result = kairo98_machine_set_clock(command.key); result != 0) {
-                        report_state("Error", result == 1 ? "HDI flush failed before clock change" : "Invalid clock setting");
-                        stop = true;
-                    }
-                    // The clock change rescales hzbase / clockbase.
-                    audio_due = 0;
-                    next_frame = std::chrono::steady_clock::now();
-                    break;
                 case CommandType::Stop:
                     kairo98_joy_release_all();
                     stop = true;
@@ -875,11 +860,6 @@ Java_com_mrjackspade_kairo98_MainActivity_nativeReset(JNIEnv *, jobject) {
 extern "C" JNIEXPORT void JNICALL
 Java_com_mrjackspade_kairo98_MainActivity_nativeSkipMemoryCheck(JNIEnv *, jobject, jboolean skip) {
     kairo98_machine_skip_memory_check(skip == JNI_TRUE ? 1 : 0);
-}
-
-extern "C" JNIEXPORT void JNICALL
-Java_com_mrjackspade_kairo98_MainActivity_nativeClock(JNIEnv *, jobject, jint mhz_times_ten) {
-    if (mhz_times_ten == 20 || mhz_times_ten == 25) enqueue({CommandType::Clock, mhz_times_ten});
 }
 
 extern "C" JNIEXPORT void JNICALL
