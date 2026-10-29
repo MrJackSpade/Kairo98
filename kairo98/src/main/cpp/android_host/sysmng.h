@@ -33,7 +33,10 @@ void sysmng_cpureset(void);
 enum { SYS_UPDATECAPTION_FDD = 0x01 };
 void sysmng_requestupdatecaption(UINT8 flag);
 void sysmng_updatecaption(UINT8 flag);
-#define	sysmng_fddaccess(a)
+/* The guest read or wrote its media: a floppy access, or a hard disk or CD data read or write
+ * (patch groups np21w/fdd/sxsi.c, np21w/cbus/atapicmd.c). CD audio does not count. */
+void kairo98_media_activity(void);
+#define	sysmng_fddaccess(a)	kairo98_media_activity()
 #define	sysmng_hddaccess(a)
 
 #ifdef __cplusplus

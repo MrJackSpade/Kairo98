@@ -428,6 +428,7 @@ REG8 sxsi_read(REG8 drv, FILEPOS pos, UINT8 *buf, UINT size) {
 
 	sxsi = sxsi_getptr(drv);
 	if (sxsi != NULL) {
+		kairo98_media_activity();
 		return(sxsi->read(sxsi, pos, buf, size));
 	}
 	else {
@@ -441,6 +442,7 @@ REG8 sxsi_write(REG8 drv, FILEPOS pos, const UINT8 *buf, UINT size) {
 
 	sxsi = sxsi_getptr(drv);
 	if (sxsi != NULL) {
+		kairo98_media_activity();
 		return(sxsi->write(sxsi, pos, buf, size));
 	}
 	else {

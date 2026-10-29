@@ -108,6 +108,32 @@ enum {
 	FDDFILE_MF			= 0x80,
 '''),
     ],
+    'np21w/fdd/sxsi.c': [
+        ('np21w/fdd/sxsi.c', '''	sxsi = sxsi_getptr(drv);
+	if (sxsi != NULL) {
+		return(sxsi->read(sxsi, pos, buf, size));
+	}''', '''	sxsi = sxsi_getptr(drv);
+	if (sxsi != NULL) {
+		kairo98_media_activity();
+		return(sxsi->read(sxsi, pos, buf, size));
+	}'''),
+        ('np21w/fdd/sxsi.c', '''	sxsi = sxsi_getptr(drv);
+	if (sxsi != NULL) {
+		return(sxsi->write(sxsi, pos, buf, size));
+	}''', '''	sxsi = sxsi_getptr(drv);
+	if (sxsi != NULL) {
+		kairo98_media_activity();
+		return(sxsi->write(sxsi, pos, buf, size));
+	}'''),
+    ],
+    'np21w/cbus/atapicmd.c': [
+        ('np21w/cbus/atapicmd.c', '''#include	"fdd/sxsi.h"
+''', '''#include	"fdd/sxsi.h"
+#include	"sysmng.h"
+'''),
+        ('np21w/cbus/atapicmd.c', '''		if (sxsicd_readraw(sxsi, drv->sector, rawdata) != SUCCESS) {''', '''		kairo98_media_activity();
+		if (sxsicd_readraw(sxsi, drv->sector, rawdata) != SUCCESS) {'''),
+    ],
     'np21w/fdd/sxsicd.c': [
         ('np21w/fdd/sxsicd.c',
          '''#endif

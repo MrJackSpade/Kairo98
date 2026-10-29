@@ -328,6 +328,13 @@ void kairo98_machine_key(unsigned char code, int down) {
 }
 
 /* Bit 0: Caps lock, bit 1: Kana lock, as the keyboard controller holds them. */
+/* Media reads and writes since the machine started (kairo98_media_activity). */
+static unsigned long long media_activity;
+
+void kairo98_media_activity(void) { ++media_activity; }
+
+unsigned long long kairo98_machine_media_activity(void) { return media_activity; }
+
 int kairo98_machine_locks(void) {
     return (keyctrl.capsref != NKEYREF_NC ? 1 : 0) | (keyctrl.kanaref != NKEYREF_NC ? 2 : 0);
 }

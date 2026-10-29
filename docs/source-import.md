@@ -87,3 +87,7 @@ imported, and the existing source notices are retained.
 ## Save-state disk paths
 
 `statsave.c` reopens each disk a save state names by the path the state recorded. A game's working copy is named by the game's path since v1.4.1 and was named by a hash of its key before (Kairo#70), so a state saved earlier names a file that is no longer there. Kairo98 passes each recorded path in `flagload_fdd` and `flagload_sxsi` through the shared frontend's `kairo_state_path` (`shared/frontend/src/main/cpp/kairo/state_paths.h`). While a state loads, it returns where the running session's disk with that recorded path is now, worked out by the frontend from each game's current and earlier names, and leaves every other path as it is. Nothing about it is stored in the state or its slot. This is a local change to the existing rev104 source; no new source archive was imported.
+
+## Media activity
+
+`fdd/sxsi.c` (`sxsi_read`, `sxsi_write`) and `cbus/atapicmd.c` (the Mode 1 raw read) call project-owned `kairo98_media_activity` (`android_host/machine.c`) before each hard disk or CD data read or write. The Android build's `android_host/sysmng.h` also maps np2's floppy access lamp, `sysmng_fddaccess`, to it. A frame in which the guest read or wrote its media runs flat out (Kairo#82); CD audio playback does not count. The hooks only count and do not change what the guest reads or writes.

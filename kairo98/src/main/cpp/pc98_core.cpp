@@ -42,6 +42,7 @@ const char *kairo98_machine_media_path(int drive);
 int kairo98_machine_stop(void);
 void kairo98_machine_location(unsigned short *cs, unsigned short *ip);
 unsigned long long kairo98_machine_screen_signature(void);
+unsigned long long kairo98_machine_media_activity(void);
 unsigned int kairo98_audio_buffer_frames(void);
 int kairo98_fill_audio(short *destination, unsigned int frames);
 #if defined(KAIRO98_PGO_GENERATE)
@@ -139,7 +140,9 @@ public:
 
     bool run_frame() override {
         if (!error_.empty()) return false;
+        const unsigned long long activity = kairo98_machine_media_activity();
         const unsigned int clocks = kairo98_machine_exec();
+        loading_ = kairo98_machine_media_activity() != activity;
         unsigned int realclock = 0, hzbase = 0, clockbase = 0;
         kairo98_machine_clock_rates(&realclock, &hzbase, &clockbase);
         if (clockbase == 0) {
@@ -174,6 +177,8 @@ public:
     const uint8_t *frame(uint32_t &, uint32_t &) override { return nullptr; }
     kairo::GpuPicture *gpu_picture() override { return &picture_; }
     double frame_seconds() override { return frame_seconds_; }
+    // A frame that read or wrote a floppy, the hard disk or a CD's data (Kairo#82); CD audio does not count.
+    bool loading() override { return loading_; }
     int32_t audio_rate() override { return kAudioRate; }
 
     uint32_t read_audio(int16_t *stereo, uint32_t max_frames) override {
@@ -333,6 +338,7 @@ private:
     std::string state_error_;
     Pc98Picture picture_;
     double frame_seconds_ = 1 / 56.42;
+    bool loading_ = false;
     uint64_t audio_due_ = 0;
     std::vector<int16_t> audio_;
     size_t audio_read_ = 0;

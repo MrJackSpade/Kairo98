@@ -31,6 +31,7 @@ static void trace_fmt_ex(const char* fmt, ...)
 #include	"ideio.h"
 #include	"atapicmd.h"
 #include	"fdd/sxsi.h"
+#include	"sysmng.h"
 
 #define	YUIDEBUG
 
@@ -865,6 +866,7 @@ static void atapi_cmd_read_cd(IDEDRV drv, UINT32 lba, UINT32 nsec) {
 		// ‚ðŽQÆ
 
 		// MODE1Œˆ‚ß‘Å‚¿
+		kairo98_media_activity();
 		if (sxsicd_readraw(sxsi, drv->sector, rawdata) != SUCCESS) {
 			atapi_dataread_errorend(0);
 			return;
