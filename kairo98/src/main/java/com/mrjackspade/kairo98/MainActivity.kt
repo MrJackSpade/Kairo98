@@ -280,7 +280,8 @@ class MainActivity : MachineActivity<DiskImageEntry>() {
     override fun startupTyped(generation: Int) = scheduleDebugAutoAdvance(generation)
 
     override fun startGame(entry: DiskImageEntry, game: CatalogGame, cancelled: AtomicBoolean, progress: (String) -> Unit) {
-        val external = entry !in libraryEntries
+        // By ID: a collection's picked game is a copy of its library entry.
+        val external = libraryEntries.none { it.id == entry.id }
         val sources = launchEntries
         val cd = cdFor(entry, game.cdId, sources)
         val boot = if (entry.isCd) cdBootDiskFor(this, entry, game.bootDiskId, sources) else entry
