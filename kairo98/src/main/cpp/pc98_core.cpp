@@ -13,6 +13,9 @@
 #include <vector>
 
 extern "C" {
+// Neko Project's own new-disk tools (fdd/newdisk.c); they report nothing, so the file is checked after.
+void newdisk_123mb_fdd(const char *fname);
+void newdisk_hdi(const char *fname, unsigned int hddtype);
 int kairo98_machine_start(const char *image, const char *font_path, const char *bios_dir, int mhz_times_ten,
                           int gdc_mhz_times_ten, int cpu_multiple, int floppy, const char *boot_floppy,
                           const char *second_floppy, const char *cd_image);
@@ -355,4 +358,44 @@ std::unique_ptr<kairo::MachineCore> kairo::create_core(const Launch &launch, std
     auto core = std::make_unique<Pc98Core>();
     if (!core->start(launch, error)) return nullptr;
     return core;
+}
+
+namespace {
+
+// The bytes of the file at [path], or -1 when it cannot be read.
+long file_size(const std::string &path) {
+    FILE *file = std::fopen(path.c_str(), "rb");
+    if (!file) return -1;
+    const long size = std::fseek(file, 0, SEEK_END) == 0 ? std::ftell(file) : -1;
+    std::fclose(file);
+    return size;
+}
+
+// An HDI's data size, from its header (Anex86's: headersize at 8, hddsize at 12).
+long hdi_data_size(const std::string &path) {
+    FILE *file = std::fopen(path.c_str(), "rb");
+    if (!file) return -1;
+    unsigned char header[16] = {};
+    const bool read = std::fread(header, 1, sizeof(header), file) == sizeof(header);
+    std::fclose(file);
+    if (!read) return -1;
+    auto dword = [&](int at) { return static_cast<long>(header[at] | header[at + 1] << 8 | header[at + 2] << 16 |
+                                                        static_cast<unsigned long>(header[at + 3]) << 24); };
+    return dword(8) == 4096 ? dword(12) : -1;
+}
+
+} // namespace
+
+// Kairo98's blank disks (MainActivity.blankDisks): a 2HD floppy as Neko Project's "1.25MB" new
+// disk, and SASI hard disks as its HDI new disks (newdisk_hdi types 3 and 6: 20 and 40 MB).
+std::string kairo::create_blank_disk(const std::string &kind, const std::string &path) {
+    if (kind == "floppy-2hd") {
+        newdisk_123mb_fdd(path.c_str());
+        return file_size(path) == 1261568 ? "" : "Neko Project could not write the floppy disk";
+    }
+    const unsigned int type = kind == "sasi-20" ? 3 : kind == "sasi-40" ? 6 : 7;
+    if (type == 7) return "Kairo98 makes no blank disk " + kind;
+    newdisk_hdi(path.c_str(), type);
+    const long data = hdi_data_size(path);
+    return data > 0 && file_size(path) == 4096 + data ? "" : "Neko Project could not write the hard disk";
 }

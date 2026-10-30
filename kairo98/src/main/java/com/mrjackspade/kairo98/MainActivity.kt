@@ -53,6 +53,16 @@ class MainActivity : MachineActivity<DiskImageEntry>() {
         NativeMachine("kairo98", Pc98KeyboardLayout.value.let { listOf(checkNotNull(it.capsCode), checkNotNull(it.kanaCode)) })
     }
 
+    /**
+     * New games' blank disks, as Neko Project makes them (pc98_core.cpp create_blank_disk): a 2HD
+     * floppy, formatted by FORMAT or a game's own save-disk option, and SASI hard disks a game or
+     * MS-DOS installs to.
+     */
+    override val blankDisks = listOf(
+        coreBlankDisk("floppy-2hd", UiText.res(FrontendR.string.kairo_blank_floppy, "1.2 MB · 2HD"), "hdm"),
+        coreBlankDisk("sasi-20", UiText.res(FrontendR.string.kairo_blank_hard_disk, "20 MB · SASI"), "hdi"),
+        coreBlankDisk("sasi-40", UiText.res(FrontendR.string.kairo_blank_hard_disk, "40 MB · SASI"), "hdi"))
+
     override val keyboard = Pc98KeyboardLayout.value
     override val maxKeyCode = 127
     override fun guestKey(androidKey: Int) = pc98ScanCode(androidKey)
