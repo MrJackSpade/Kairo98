@@ -24,6 +24,9 @@ object Pc98Catalog : LayeredGameCatalog.Schema {
     override val catalogUrl = "https://raw.githubusercontent.com/MrJackSpade/Kairo98/main/catalog/"
     override val selfHostedArt = "/MrJackSpade/Kairo98/main/catalog/artwork/art/catalog/"
     override val contentId = Regex("sha256-(?:hdi|fd|cd)-v1:[0-9a-f]{64}")
+    /** The PC-98 keyboard's Esc and Enter (Pc98KeyboardLayout). */
+    override val escapeKeys = setOf(0x00)
+    override val enterKeys = setOf(0x1c)
     override val mediaExtensions = Regex("\\.(?:zip|hdi|fdi|d88|88d|d98|98d|nfd|fdd|dcp|dcu|hdm|xdf|ccd)$",
         RegexOption.IGNORE_CASE)
     /** A game's font: a FONT.BMP beside the game, else the player's font.bmp, else the built-in one. */
