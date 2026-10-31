@@ -128,6 +128,7 @@ Kairo98 can open a game sent from another Android frontend; no library folder is
 
 ## Documentation
 
+- [Add a game](docs/add-a-game.md): set up a game the catalog doesn't know: group its disks, name it, choose its drives
 - [External frontend setup](docs/frontends.md): LaunchBox, ES-DE, iiSU, and Beacon configuration
 - [Game catalog](docs/game-catalog.md): how games are matched, catalog updates, metadata overrides
 - [Startup choices](docs/startup-choices.md): automatic menu answers and disk swaps before play

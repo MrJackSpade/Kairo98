@@ -55,6 +55,8 @@ __pycache__/
 !/docs/licensing.md
 !/docs/source-import.md
 !/docs/startup-choices.md
+!/docs/add-a-game.md
+!/docs/create-a-game.md
 
 # Local build and UI test logs (shared/tools/build.ps1, uitest.ps1).
 .build/
