@@ -17,6 +17,9 @@
 #include <unistd.h>
 #include <sys/time.h>
 #endif
+#if defined(__ANDROID__)
+#include "kairo_chd.h"
+#endif
 
 static	char	curpath[MAX_PATH] = "./";
 static	char	*curfilep = curpath + 2;
@@ -55,6 +58,11 @@ FILEH file_open_rw(const char *path) {
 
 FILEH file_open_rb(const char *path) {
 
+#if defined(__ANDROID__)
+	// Kairo98: a CD kept as a CHD reads as the image it was made from (kairo98_chd.c).
+	if (kairo_chd_is_chd(path))
+		return(kairo_chd_fopen(path));
+#endif
 #if defined(WIN32) && defined(OSLANG_UTF8)
 	char	sjis[MAX_PATH];
 	codecnv_utf8tosjis(sjis, sizeof(sjis), path, (UINT)-1);
@@ -126,6 +134,17 @@ FILELEN file_getsize(FILEH handle) {
 	if (_fstat64(_fileno(handle), &sb) != 0 || sb.st_size < 0)
 		return 0;
 #else
+	if (fileno(handle) < 0) {
+		// Kairo98: a stream without a file (a CHD's image, kairo_chd_fopen) is measured by seeking.
+		off_t here = ftello(handle);
+		off_t end;
+		if (here < 0 || fseeko(handle, 0, SEEK_END) != 0)
+			return 0;
+		end = ftello(handle);
+		if (fseeko(handle, here, SEEK_SET) != 0 || end < 0)
+			return 0;
+		return (FILELEN)end;
+	}
 	if (fstat(fileno(handle), &sb) != 0 || sb.st_size < 0)
 		return 0;
 #endif

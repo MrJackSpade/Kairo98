@@ -47,6 +47,7 @@ class MainActivity : MachineActivity<DiskImageEntry>() {
             UiText.res(FrontendR.string.kairo_folder_button)),
         UiText.res(FrontendR.string.kairo_saves_group), "MrJackSpade/Kairo98")
     override val machine = Machine(640, 400, 640.0 / 400.0, "state.np2")
+    override val notices = listOf("THIRD_PARTY_NOTICES.txt", "CHD_NOTICES.txt")
 
     /** The 21/W machine (pc98_core.cpp); its lock keys are Caps and Kana. */
     override val bridge by lazy {

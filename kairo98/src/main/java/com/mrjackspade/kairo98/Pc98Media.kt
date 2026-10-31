@@ -20,12 +20,15 @@ import java.io.File
 import java.security.MessageDigest
 import java.util.Locale
 
-/** PC-98 media: hard disks, floppies, and CloneCD discs whose track data is the .img beside the .ccd. */
+/**
+ * PC-98 media: hard disks, floppies, and CDs: CloneCD discs whose track data is the .img beside the
+ * .ccd, and CHDs (Kairo98#127), read as the image they were made from.
+ */
 object Pc98Media {
     private val floppyExtensions = setOf("fdi", "d88", "88d", "d98", "98d", "nfd", "fdd", "dcp", "dcu", "hdm", "xdf")
 
     val format = DiskImageLibrary.Format(
-        kinds = floppyExtensions.associateWith { "fd" } + mapOf("hdi" to "hdi", "ccd" to "cd"),
+        kinds = floppyExtensions.associateWith { "fd" } + mapOf("hdi" to "hdi", "ccd" to "cd", "chd" to "cd"),
         labels = mapOf("fd" to UiText.res(FrontendR.string.kairo_floppy_disk), "cd" to UiText.res(FrontendR.string.kairo_cd_rom),
             "hdi" to UiText.res(FrontendR.string.kairo_hard_disk)),
         maxBytes = mapOf("fd" to 64L * 1024 * 1024, "cd" to 2L * 1024 * 1024 * 1024, "hdi" to 4L * 1024 * 1024 * 1024),
@@ -34,7 +37,7 @@ object Pc98Media {
 
     fun extension(name: String): String = name.substringAfterLast('.', "").lowercase(Locale.ROOT)
     fun isFloppy(name: String) = extension(name) in floppyExtensions
-    fun isCd(name: String) = extension(name) == "ccd"
+    fun isCd(name: String) = format.kind(name) == "cd"
     fun supported(name: String) = format.isImage(name)
     fun suffix(name: String) = ".${extension(name)}"
     fun maxBytes(name: String) = format.limit(name)
@@ -44,7 +47,7 @@ object Pc98Media {
      * JSON cache of version 1.0.3 and earlier are read once and replaced.
      */
     fun library(context: Context) = DiskImageLibrary(context, format, DiskImageLibrary.Cache(
-        file = "library-v2.bin", mediaFormatsVersion = 4,
+        file = "library-v2.bin", mediaFormatsVersion = 5,
         legacy = VersionedLibraryCache.Legacy(File(context.filesDir, "library-v1.json"), 1, "entries", ::decodeLegacyEntry),
         earlierRecords = mapOf(2 to ::readCacheRecordV2, 3 to ::readCacheRecordV3)))
 
@@ -95,7 +98,7 @@ object Pc98Media {
             // Copies made for an earlier version of the source stay where they are, as before.
             if (!from.isFile) return
             val to = library.workingImage(entry)
-            val pairs = listOf(from to to) + if (isCd(entry.displayName))
+            val pairs = listOf(from to to) + if (format.isDescriptor(entry.displayName))
                 listOf(File(directory, cdData(from.name)) to File(directory, cdData(to.name)))
             else emptyList()
             for ((old, new) in pairs) if (old.exists()) {

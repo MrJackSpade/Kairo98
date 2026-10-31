@@ -81,7 +81,7 @@ Games, operating systems, and firmware are not supplied. Some games need a separ
 | --- | --- |
 | Hard disks | HDI |
 | Floppies | FDI, D88/88D, D98/98D, NFD, FDD, DCP/DCU, HDM, XDF |
-| CDs | CloneCD (CCD with its IMG) |
+| CDs | CloneCD (CCD with its IMG), CHD |
 | Archives | Any of the above inside ZIP files |
 
 Games are recognized by their disk contents, so recompressing a ZIP does not change how it matches. A game's disks show as one library entry, and its other releases in the folder (demos, music disks, other versions) sit behind its main one. Details: [game catalog](docs/game-catalog.md).

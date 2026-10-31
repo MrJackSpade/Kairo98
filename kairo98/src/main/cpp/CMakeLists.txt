@@ -5,6 +5,9 @@ get_filename_component(NP21W_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/../../../../third
 get_filename_component(YMFM_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/../../../../third_party/ymfm" ABSOLUTE)
 include(np21w-sources.cmake)
 include("${CMAKE_CURRENT_SOURCE_DIR}/../../../../shared/cmake/KairoMachine.cmake")
+# CDs kept as CHDs (Kairo98#127): NP21/W reads them through the shared reader (kairo98_chd.c).
+include("${CMAKE_CURRENT_SOURCE_DIR}/../../../../shared/cmake/KairoChd.cmake")
+kairo_chd_jni_library()
 
 add_library(np21w_core OBJECT
     ${NP21W_CORE_SOURCES}
@@ -22,6 +25,7 @@ add_library(np21w_core OBJECT
     android_host/input_telemetry.c
     android_host/mousemng.c
     android_host/joymng.c
+    ${NP21W_ROOT}/diskimage/cd/kairo98_chd.c
 )
 target_include_directories(np21w_core PRIVATE
     android_host
@@ -45,6 +49,7 @@ target_compile_definitions(np21w_core PRIVATE SUPPORT_LARGE_HDD SUPPORT_KAI_IMAG
 # across files; without it every guest memory access is a chain of calls.
 target_compile_options(np21w_core PRIVATE -fsigned-char -fno-strict-aliasing -flto=thin)
 kairo_native_debug_defaults(np21w_core)
+target_link_libraries(np21w_core PRIVATE kairo_chd)
 
 # np2 as the shared machine host's core (pc98_core.cpp), with ymfm's sound.
 kairo_machine_library(kairo98
@@ -55,6 +60,7 @@ kairo_machine_library(kairo98
     ${YMFM_ROOT}/src/ymfm_ssg.cpp
     $<TARGET_OBJECTS:np21w_core>)
 target_include_directories(kairo98 PRIVATE ${YMFM_ROOT}/src)
+target_link_libraries(kairo98 PRIVATE kairo_chd)
 target_compile_options(kairo98 PRIVATE -flto=thin)
 # Core calls stay inside this shared library. Bind them locally to avoid the
 # measured PLT cost in the interpreter's instruction-fetch path.

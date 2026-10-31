@@ -27,7 +27,7 @@ object Pc98Catalog : LayeredGameCatalog.Schema {
     /** The PC-98 keyboard's Esc and Enter (Pc98KeyboardLayout). */
     override val escapeKeys = setOf(0x00)
     override val enterKeys = setOf(0x1c)
-    override val mediaExtensions = Regex("\\.(?:zip|hdi|fdi|d88|88d|d98|98d|nfd|fdd|dcp|dcu|hdm|xdf|ccd)$",
+    override val mediaExtensions = Regex("\\.(?:zip|hdi|fdi|d88|88d|d98|98d|nfd|fdd|dcp|dcu|hdm|xdf|ccd|chd)$",
         RegexOption.IGNORE_CASE)
     /** A game's font: a FONT.BMP beside the game, else the player's font.bmp, else the built-in one. */
     const val FONT_GAME_FOLDER = "folder"

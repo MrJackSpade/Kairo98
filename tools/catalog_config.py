@@ -55,7 +55,7 @@ DISK_SWAPS = {0: {"fd"}, 1: {"fd"}}
 
 # The extensions the app removes from a file's name before looking it up (the catalog schema's
 # mediaExtensions); the name index is built the same way (shared app_catalog.lookup_name).
-MEDIA_EXTENSIONS = r"\.(?:zip|hdi|fdi|d88|88d|d98|98d|nfd|fdd|dcp|dcu|hdm|xdf|ccd)$"
+MEDIA_EXTENSIONS = r"\.(?:zip|hdi|fdi|d88|88d|d98|98d|nfd|fdd|dcp|dcu|hdm|xdf|ccd|chd)$"
 
 # Where the research comes from: VNDB-derived metadata carries the ODbL.
 PROVENANCE = {

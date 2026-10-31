@@ -3,7 +3,7 @@
 ENCODING = 'cp932'
 
 # The app's own files beside the code it patches.
-ADDED = ['np21w/i386c/ia32/kairo98_fetch.h', 'np21w/i386c/ia32/kairo98_idle.c', 'np21w/i386c/ia32/kairo98_idle.h', 'np21w/i386c/ia32/kairo98_tlb.h']
+ADDED = ['np21w/diskimage/cd/kairo98_chd.c', 'np21w/diskimage/cd/kairo98_chd.h', 'np21w/i386c/ia32/kairo98_fetch.h', 'np21w/i386c/ia32/kairo98_idle.c', 'np21w/i386c/ia32/kairo98_idle.h', 'np21w/i386c/ia32/kairo98_tlb.h']
 
 # Files taken out of the snapshot.
 REMOVED = ['np21w/win9x/resources/nekop2.bmp.bak']
@@ -2478,5 +2478,12 @@ void sound_reset(void) {
 	else {
 		ret = rasterdraw(*sdrawfn, &sdraw, height);
 '''),
+    ],
+    'kairo98-chd': [
+        ('np21w/fdd/sxsicd.c', '#include\t"diskimage/cd/cdd_real.h"\n', '#include\t"diskimage/cd/cdd_real.h"\n#include\t"diskimage/cd/kairo98_chd.h"\n#include\t"kairo_chd.h"\n'),
+        ('np21w/fdd/sxsicd.c', '#endif\n\n\t//', '#endif\n\n\t// Kairo98: a CD kept as a CHD (Kairo98#127, kairo98_chd.c).\n\tif (kairo_chd_is_chd(fname)) {\n\t\treturn(openchd(sxsi, fname));\n\t}\n\n\t//'),
+        ('np21w/sdl2/dosio.c', '#include <sys/time.h>\n#endif\n', '#include <sys/time.h>\n#endif\n#if defined(__ANDROID__)\n#include "kairo_chd.h"\n#endif\n'),
+        ('np21w/sdl2/dosio.c', 'FILEH file_open_rb(const char *path) {\n\n', 'FILEH file_open_rb(const char *path) {\n\n#if defined(__ANDROID__)\n\t// Kairo98: a CD kept as a CHD reads as the image it was made from (kairo98_chd.c).\n\tif (kairo_chd_is_chd(path))\n\t\treturn(kairo_chd_fopen(path));\n#endif\n'),
+        ('np21w/sdl2/dosio.c', '#else\n\tif (fstat(fileno(handle), &sb) != 0 || sb.st_size < 0)\n\t\treturn 0;\n#endif\n', "#else\n\tif (fileno(handle) < 0) {\n\t\t// Kairo98: a stream without a file (a CHD's image, kairo_chd_fopen) is measured by seeking.\n\t\toff_t here = ftello(handle);\n\t\toff_t end;\n\t\tif (here < 0 || fseeko(handle, 0, SEEK_END) != 0)\n\t\t\treturn 0;\n\t\tend = ftello(handle);\n\t\tif (fseeko(handle, here, SEEK_SET) != 0 || end < 0)\n\t\t\treturn 0;\n\t\treturn (FILELEN)end;\n\t}\n\tif (fstat(fileno(handle), &sb) != 0 || sb.st_size < 0)\n\t\treturn 0;\n#endif\n"),
     ],
 }

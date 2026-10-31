@@ -19,6 +19,8 @@
 #include	"diskimage/cd/cdd_mds.h"
 #include	"diskimage/cd/cdd_nrg.h"
 #include	"diskimage/cd/cdd_real.h"
+#include	"diskimage/cd/kairo98_chd.h"
+#include	"kairo_chd.h"
 
 BRESULT sxsicd_open(SXSIDEV sxsi, const OEMCHAR *fname) {
 
@@ -30,6 +32,11 @@ BRESULT sxsicd_open(SXSIDEV sxsi, const OEMCHAR *fname) {
 		return(openrealcdd(sxsi, fname));
 	}
 #endif
+
+	// Kairo98: a CD kept as a CHD (Kairo98#127, kairo98_chd.c).
+	if (kairo_chd_is_chd(fname)) {
+		return(openchd(sxsi, fname));
+	}
 
 	//	‚Æ‚è‚ ‚¦‚¸Šg’£Žq‚Å”»’f
 	ext = file_getext(fname);
