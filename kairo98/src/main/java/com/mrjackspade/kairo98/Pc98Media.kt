@@ -36,8 +36,6 @@ object Pc98Media {
         data = mapOf("ccd" to listOf("img")))
 
     fun extension(name: String): String = name.substringAfterLast('.', "").lowercase(Locale.ROOT)
-    fun isFloppy(name: String) = extension(name) in floppyExtensions
-    fun isCd(name: String) = format.kind(name) == "cd"
     fun supported(name: String) = format.isImage(name)
     fun suffix(name: String) = ".${extension(name)}"
     fun maxBytes(name: String) = format.limit(name)
@@ -120,8 +118,9 @@ object Pc98Media {
         .digest(bytes).joinToString("") { "%02x".format(it) }
 }
 
-val DiskImageEntry.isFloppy: Boolean get() = Pc98Media.isFloppy(displayName)
-val DiskImageEntry.isCd: Boolean get() = Pc98Media.isCd(displayName)
+// A disk's kind is the one its content ID was hashed as (DiskImageEntry.kind).
+val DiskImageEntry.isFloppy: Boolean get() = kind == "fd"
+val DiskImageEntry.isCd: Boolean get() = kind == "cd"
 
 data class BootMedia(val hardDisk: DiskImageEntry, val bootFloppy: DiskImageEntry)
 
