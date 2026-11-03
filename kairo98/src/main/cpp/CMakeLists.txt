@@ -64,7 +64,14 @@ target_link_libraries(kairo98 PRIVATE kairo_chd)
 target_compile_options(kairo98 PRIVATE -flto=thin)
 # Core calls stay inside this shared library. Bind them locally to avoid the
 # measured PLT cost in the interpreter's instruction-fetch path.
-target_link_options(kairo98 PRIVATE "-Wl,-Bsymbolic" -flto=thin)
+target_link_options(kairo98 PRIVATE -flto=thin)
+if(ANDROID)
+    target_link_options(kairo98 PRIVATE "-Wl,-Bsymbolic")
+    # The picture composed on the GPU (pc98_picture.h). The shared PC boot test's build (Kairo98#126)
+    # has no GPU: np2 converts its frames on the CPU there, which frame() returns.
+    target_compile_definitions(np21w_core PRIVATE KAIRO98_GPU_PICTURE)
+    target_compile_definitions(kairo98 PRIVATE KAIRO98_GPU_PICTURE)
+endif()
 
 # Profile-guided optimization. "generate" builds an instrumented library that
 # writes an LLVM profile into the app's firmware directory while a game runs;

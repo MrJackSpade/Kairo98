@@ -697,9 +697,20 @@ struct stat		sb;
 	if (fli) {
 		memset(fli, 0, sizeof(*fli));
 		fli->caps = FLICAPS_ATTR;
+#if defined(_WIN32)
+		/* Kairo98: Windows' dirent has no d_type, so stat tells a folder (the shared PC boot
+		 * test's Windows build, Kairo98#126). */
+		fli->attr = 0;
+#else
 		fli->attr = (de->d_type & DT_DIR) ? FILEATTR_DIRECTORY : 0;
+#endif
 
 		if (stat(de->d_name, &sb) == 0) {
+#if defined(_WIN32)
+			if (S_ISDIR(sb.st_mode)) {
+				fli->attr |= FILEATTR_DIRECTORY;
+			}
+#endif
 			fli->caps |= FLICAPS_SIZE;
 			fli->size = (UINT)sb.st_size;
 			if (!(sb.st_mode & S_IWUSR)) {

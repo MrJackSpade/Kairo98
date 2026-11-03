@@ -88,6 +88,11 @@ static SCRNSURF frame = {
 };
 
 const UINT16 *kairo98_frame_pixels(void) { return frame_pixels; }
+/* The part of kairo98_frame_pixels the screen mode draws, in rows of 640 pixels. */
+void kairo98_frame_size(int *width, int *height) {
+    *width = frame.width;
+    *height = frame.height;
+}
 
 void scrnmng_setwidth(int x, int width) {
     (void)x;

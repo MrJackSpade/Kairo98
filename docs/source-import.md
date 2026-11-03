@@ -56,6 +56,10 @@ The local changes below are recorded in `tools/patches.py`, which `shared/tools/
 
 Patch group `kairo98-chd` (Kairo98#127): `fdd/sxsicd.c` opens a `.chd` through the project-owned `diskimage/cd/kairo98_chd.c`, which lays out its tracks as `opencue` lays out a cue sheet's, from the shared CHD reader (`shared/native/chd`, libchdr). `sdl2/dosio.c`'s `file_open_rb` opens a CHD as the image it was made from (`kairo_chd_fopen`), so the existing sector and CD audio reads read it, and `file_getsize` measures a stream without a file descriptor by seeking.
 
+## The PC boot test's Windows build
+
+Patch group `kairo98-windows-host` (Kairo98#126): the shared PC boot test builds the core for Windows, where np2 takes the same POSIX paths it takes on Android (`android_host/compiler.h` undefines `WIN32` and supplies the few POSIX calls Windows lacks). Windows' `dirent` has no `d_type`, so `sdl2/dosio.c`'s `file_listnext` tells a folder by `stat` there.
+
 ## Local input observation patch
 
 The vendored rev104 snapshot has two Kairo98-only, additive observation hooks. `bios/bios18.c` records BIOS keyboard waits, completed reads, and polls; `io/mouseif.c` records reads of the PC-98 bus mouse data port. The hooks call project-owned `android_host/input_telemetry.c` and do not branch on telemetry values or change guest-visible results. The Android build replaces the imported SDL2 mouse stub with project-owned `android_host/mousemng.c` to accept guest mouse movement and buttons. These changes are local to this repository; the original archive and its provenance above remain the reference snapshot.

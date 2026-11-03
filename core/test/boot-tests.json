@@ -1,0 +1,319 @@
+{
+  "tests": [
+    {
+      "name": "Acrojet",
+      "firmware": {},
+      "home": {
+        "font/kairo98-font.bmp": "app:kairo98/src/main/assets/font/kairo98-font.bmp"
+      },
+      "media": [
+        "games/Acrojet [T-En by MrRichard999 v1.0]/Acrojet [T-En by MrRichard999 v1.0].d88",
+        "",
+        "",
+        ""
+      ],
+      "settings": {
+        "font": "home:font/kairo98-font.bmp",
+        "baseClock": "25",
+        "gdcClock": "50",
+        "cpuMultiple": "20",
+        "skipMemoryCheck": "on",
+        "ownBios": "off"
+      },
+      "checks": {
+        "boot": {
+          "frames": 1800
+        },
+        "guestInput": {
+          "frames": 2400,
+          "expect": "keyboard"
+        },
+        "sessions": {
+          "frames": 600,
+          "prompt": {}
+        },
+        "state": {
+          "at": 300,
+          "frames": 120
+        },
+        "loading": {
+          "startsBy": 1200,
+          "doneBy": 1800,
+          "settled": 120,
+          "idle": {
+            "media": [
+              "",
+              "",
+              "",
+              "games/Aegean Kai No Shizuku [T-En by Svipur v1.1]/Aegean Kai No Shizuku [T-En by Svipur v1.1].hdi"
+            ],
+            "frames": 2400
+          }
+        }
+      }
+    },
+    {
+      "name": "Aegean Kai no Shizuku",
+      "firmware": {},
+      "home": {
+        "font/kairo98-font.bmp": "app:kairo98/src/main/assets/font/kairo98-font.bmp"
+      },
+      "media": [
+        "",
+        "",
+        "",
+        "games/Aegean Kai No Shizuku [T-En by Svipur v1.1]/Aegean Kai No Shizuku [T-En by Svipur v1.1].hdi"
+      ],
+      "settings": {
+        "font": "home:font/kairo98-font.bmp",
+        "baseClock": "25",
+        "gdcClock": "50",
+        "cpuMultiple": "20",
+        "skipMemoryCheck": "on",
+        "ownBios": "off"
+      },
+      "checks": {
+        "boot": {
+          "frames": 1800
+        },
+        "guestInput": {
+          "frames": 3600,
+          "expect": "mouse"
+        }
+      }
+    },
+    {
+      "name": "The Black Onyx",
+      "firmware": {},
+      "home": {
+        "font/kairo98-font.bmp": "app:kairo98/src/main/assets/font/kairo98-font.bmp"
+      },
+      "media": [
+        "games/Black Onyx, The [T-En by LordKarnov42 v1.0 RC1]/Black Onyx, The (Disk 1) [T-En by LordKarnov42 v1.0 RC1].fdd",
+        "games/Black Onyx, The [T-En by LordKarnov42 v1.0 RC1]/Black Onyx, The (Disk 2) [T-En by LordKarnov42 v1.0 RC1].fdd",
+        "",
+        ""
+      ],
+      "settings": {
+        "font": "home:font/kairo98-font.bmp",
+        "baseClock": "25",
+        "gdcClock": "50",
+        "cpuMultiple": "20",
+        "skipMemoryCheck": "on",
+        "ownBios": "off"
+      },
+      "checks": {
+        "boot": {
+          "frames": 1800
+        },
+        "stateDisks": {
+          "drive": 1,
+          "at": 900,
+          "swap": ""
+        }
+      }
+    },
+    {
+      "name": "DOS prompt",
+      "firmware": {},
+      "home": {
+        "font/kairo98-font.bmp": "app:kairo98/src/main/assets/font/kairo98-font.bmp"
+      },
+      "media": [
+        "",
+        "",
+        "",
+        "host/Aegean Kai no Shizuku DOS prompt/Aegean Kai no Shizuku DOS prompt.hdi"
+      ],
+      "settings": {
+        "font": "home:font/kairo98-font.bmp",
+        "baseClock": "25",
+        "gdcClock": "50",
+        "cpuMultiple": "20",
+        "skipMemoryCheck": "on",
+        "ownBios": "off"
+      },
+      "checks": {
+        "commands": {
+          "commands": "ECHO KAIRO",
+          "typedBy": 1800,
+          "answerBy": 300,
+          "screens": [
+            "8e20913a9f339183"
+          ]
+        },
+        "locks": {
+          "at": 900,
+          "keys": [
+            {
+              "code": 113,
+              "bit": 0
+            },
+            {
+              "code": 114,
+              "bit": 1
+            }
+          ]
+        },
+        "hardDisk": {
+          "settle": 300,
+          "write": {
+            "commands": "MD KAIRO",
+            "typedBy": 1800
+          },
+          "read": {
+            "commands": "CD KAIRO",
+            "typedBy": 1800,
+            "answerBy": 300,
+            "screens": [
+              "ed0db289f8aafad9"
+            ]
+          }
+        },
+        "clock": {
+          "setting": "baseClock",
+          "values": [
+            "25",
+            "20"
+          ],
+          "commands": "DIR A:\\ /S",
+          "typedBy": 1800,
+          "doneBy": 6000,
+          "ratio": 1.25,
+          "margin": 0.05,
+          "screens": [
+            "6de6e8bc90762ca4"
+          ]
+        }
+      }
+    },
+    {
+      "name": "The Black Onyx drive A",
+      "firmware": {},
+      "home": {
+        "font/kairo98-font.bmp": "app:kairo98/src/main/assets/font/kairo98-font.bmp"
+      },
+      "media": [
+        "games/Black Onyx, The [T-En by LordKarnov42 v1.0 RC1]/Black Onyx, The (Disk 1) [T-En by LordKarnov42 v1.0 RC1].fdd",
+        "games/Black Onyx, The [T-En by LordKarnov42 v1.0 RC1]/Black Onyx, The (Disk 2) [T-En by LordKarnov42 v1.0 RC1].fdd",
+        "",
+        ""
+      ],
+      "settings": {
+        "font": "home:font/kairo98-font.bmp",
+        "baseClock": "25",
+        "gdcClock": "50",
+        "cpuMultiple": "20",
+        "skipMemoryCheck": "on",
+        "ownBios": "off"
+      },
+      "checks": {
+        "stateDisks": {
+          "drive": 0,
+          "at": 900,
+          "swap": "games/Black Onyx, The [T-En by LordKarnov42 v1.0 RC1]/Black Onyx, The (Disk 2) [T-En by LordKarnov42 v1.0 RC1].fdd"
+        }
+      }
+    },
+    {
+      "name": "DOS prompt hard disk",
+      "firmware": {},
+      "home": {
+        "font/kairo98-font.bmp": "app:kairo98/src/main/assets/font/kairo98-font.bmp"
+      },
+      "media": [
+        "",
+        "",
+        "",
+        "host/Aegean Kai no Shizuku DOS prompt/Aegean Kai no Shizuku DOS prompt.hdi"
+      ],
+      "settings": {
+        "font": "home:font/kairo98-font.bmp",
+        "baseClock": "25",
+        "gdcClock": "50",
+        "cpuMultiple": "20",
+        "skipMemoryCheck": "on",
+        "ownBios": "off"
+      },
+      "checks": {
+        "stateDisks": {
+          "drive": 3,
+          "at": 900,
+          "swap": ""
+        }
+      }
+    },
+    {
+      "name": "Giten Megami Tensei",
+      "firmware": {},
+      "home": {
+        "font/kairo98-font.bmp": "app:kairo98/src/main/assets/font/kairo98-font.bmp"
+      },
+      "media": [
+        "host/Giten Megami Tensei [T-En by Sneikkimies 0.3]/Giten Megami Tensei (Boot Disk) [T-En by Sneikkimies 0.3].fdi",
+        "",
+        "",
+        "host/Giten Megami Tensei [T-En by Sneikkimies 0.3]/Giten Megami Tensei [T-En by Sneikkimies 0.3].hdi"
+      ],
+      "settings": {
+        "font": "home:font/kairo98-font.bmp",
+        "baseClock": "25",
+        "gdcClock": "50",
+        "cpuMultiple": "20",
+        "skipMemoryCheck": "on",
+        "ownBios": "off"
+      },
+      "checks": {
+        "boot": {
+          "frames": 2400
+        },
+        "stateDisks": {
+          "drive": 0,
+          "at": 1200,
+          "swap": ""
+        }
+      }
+    },
+    {
+      "name": "DOS prompt NHD",
+      "firmware": {},
+      "home": {
+        "font/kairo98-font.bmp": "app:kairo98/src/main/assets/font/kairo98-font.bmp"
+      },
+      "media": [
+        "",
+        "",
+        "",
+        "host/Aegean Kai no Shizuku DOS prompt/Aegean Kai no Shizuku DOS prompt.nhd"
+      ],
+      "settings": {
+        "font": "home:font/kairo98-font.bmp",
+        "baseClock": "25",
+        "gdcClock": "50",
+        "cpuMultiple": "20",
+        "skipMemoryCheck": "on",
+        "ownBios": "off"
+      },
+      "checks": {
+        "boot": {
+          "frames": 1800
+        },
+        "hardDisk": {
+          "settle": 300,
+          "write": {
+            "commands": "MD KAIRO",
+            "typedBy": 1800
+          },
+          "read": {
+            "commands": "CD KAIRO",
+            "typedBy": 1800,
+            "answerBy": 300,
+            "screens": [
+              "ed0db289f8aafad9"
+            ]
+          }
+        }
+      }
+    }
+  ]
+}

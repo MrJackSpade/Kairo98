@@ -2486,4 +2486,9 @@ void sound_reset(void) {
         ('np21w/sdl2/dosio.c', 'FILEH file_open_rb(const char *path) {\n\n', 'FILEH file_open_rb(const char *path) {\n\n#if defined(__ANDROID__)\n\t// Kairo98: a CD kept as a CHD reads as the image it was made from (kairo98_chd.c).\n\tif (kairo_chd_is_chd(path))\n\t\treturn(kairo_chd_fopen(path));\n#endif\n'),
         ('np21w/sdl2/dosio.c', '#else\n\tif (fstat(fileno(handle), &sb) != 0 || sb.st_size < 0)\n\t\treturn 0;\n#endif\n', "#else\n\tif (fileno(handle) < 0) {\n\t\t// Kairo98: a stream without a file (a CHD's image, kairo_chd_fopen) is measured by seeking.\n\t\toff_t here = ftello(handle);\n\t\toff_t end;\n\t\tif (here < 0 || fseeko(handle, 0, SEEK_END) != 0)\n\t\t\treturn 0;\n\t\tend = ftello(handle);\n\t\tif (fseeko(handle, here, SEEK_SET) != 0 || end < 0)\n\t\t\treturn 0;\n\t\treturn (FILELEN)end;\n\t}\n\tif (fstat(fileno(handle), &sb) != 0 || sb.st_size < 0)\n\t\treturn 0;\n#endif\n"),
     ],
+    # The shared PC boot test's Windows build (Kairo98#126): np2 takes its POSIX paths there
+    # (android_host/compiler.h), where Windows' dirent has no d_type.
+    'kairo98-windows-host': [
+        ('np21w/sdl2/dosio.c', '\t\tfli->attr = (de->d_type & DT_DIR) ? FILEATTR_DIRECTORY : 0;\n\n\t\tif (stat(de->d_name, &sb) == 0) {\n', "#if defined(_WIN32)\n\t\t/* Kairo98: Windows' dirent has no d_type, so stat tells a folder (the shared PC boot\n\t\t * test's Windows build, Kairo98#126). */\n\t\tfli->attr = 0;\n#else\n\t\tfli->attr = (de->d_type & DT_DIR) ? FILEATTR_DIRECTORY : 0;\n#endif\n\n\t\tif (stat(de->d_name, &sb) == 0) {\n#if defined(_WIN32)\n\t\t\tif (S_ISDIR(sb.st_mode)) {\n\t\t\t\tfli->attr |= FILEATTR_DIRECTORY;\n\t\t\t}\n#endif\n"),
+    ],
 }

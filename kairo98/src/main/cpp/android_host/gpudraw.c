@@ -41,6 +41,14 @@ static int palette_slot(void) {
 }
 
 int kairo98_gpudraw_begin(const SCRNSURF *surf, int variant, SDRAW sdraw) {
+#if !defined(KAIRO98_GPU_PICTURE)
+    /* No GPU to compose on (the shared PC boot test's build, Kairo98#126): np2 converts every
+     * frame on the CPU, as it does without this path, for pc98_core.cpp's frame(). */
+    (void)surf;
+    (void)variant;
+    (void)sdraw;
+    return 0;
+#endif
     int usable = variant >= 0 && variant < 4 &&
                  surf->width == KAIRO98_GPU_COLS && surf->height == KAIRO98_GPU_ROWS &&
                  surf->bpp == 16;

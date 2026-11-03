@@ -1,11 +1,15 @@
 // The PC-98 on Neko Project 21/W as the shared machine host's core (kairo/machine_core.h,
 // Kairo98#108). np2 keeps its state in globals, so one machine runs at a time, as the host runs
-// one session at a time. Its picture is composed on the GPU (pc98_picture.h).
+// one session at a time. Its picture is composed on the GPU (pc98_picture.h). The shared PC boot
+// test's build (Kairo98#126) has no GPU: np2 converts its frames on the CPU there, which frame()
+// returns. The core signs its screens itself (screen_signature) either way.
 
 #include "kairo/machine_core.h"
+#if defined(KAIRO98_GPU_PICTURE)
 #include "pc98_picture.h"
 
 #include <android/log.h>
+#endif
 #include <algorithm>
 #include <cstdio>
 #include <memory>
@@ -45,6 +49,8 @@ const char *kairo98_machine_media_path(int drive);
 int kairo98_machine_stop(void);
 void kairo98_machine_location(unsigned short *cs, unsigned short *ip);
 unsigned long long kairo98_machine_screen_signature(void);
+const uint16_t *kairo98_frame_pixels(void);
+void kairo98_frame_size(int *width, int *height);
 unsigned long long kairo98_machine_media_activity(void);
 unsigned int kairo98_audio_buffer_frames(void);
 int kairo98_fill_audio(short *destination, unsigned int frames);
@@ -177,8 +183,31 @@ public:
     }
 
     std::string error() override { return error_; }
+#if defined(KAIRO98_GPU_PICTURE)
     const uint8_t *frame(uint32_t &, uint32_t &) override { return nullptr; }
     kairo::GpuPicture *gpu_picture() override { return &picture_; }
+#else
+    // np2's CPU conversion (RGB565, rows of 640 pixels) as RGBA.
+    const uint8_t *frame(uint32_t &width, uint32_t &height) override {
+        int w = 0, h = 0;
+        kairo98_frame_size(&w, &h);
+        const uint16_t *pixels = kairo98_frame_pixels();
+        rgba_.resize(static_cast<size_t>(w) * h * 4);
+        for (int y = 0; y < h; ++y) {
+            for (int x = 0; x < w; ++x) {
+                const uint16_t p = pixels[y * 640 + x];
+                uint8_t *out = &rgba_[(static_cast<size_t>(y) * w + x) * 4];
+                out[0] = static_cast<uint8_t>((p >> 11 & 0x1f) * 255 / 31);
+                out[1] = static_cast<uint8_t>((p >> 5 & 0x3f) * 255 / 63);
+                out[2] = static_cast<uint8_t>((p & 0x1f) * 255 / 31);
+                out[3] = 255;
+            }
+        }
+        width = static_cast<uint32_t>(w);
+        height = static_cast<uint32_t>(h);
+        return rgba_.data();
+    }
+#endif
     double frame_seconds() override { return frame_seconds_; }
     // A frame that read or wrote a floppy, the hard disk or a CD's data (Kairo#82); CD audio does not count.
     bool loading() override { return loading_; }
@@ -339,7 +368,11 @@ private:
     bool started_ = false;
     std::string error_;
     std::string state_error_;
+#if defined(KAIRO98_GPU_PICTURE)
     Pc98Picture picture_;
+#else
+    std::vector<uint8_t> rgba_;
+#endif
     double frame_seconds_ = 1 / 56.42;
     bool loading_ = false;
     uint64_t audio_due_ = 0;

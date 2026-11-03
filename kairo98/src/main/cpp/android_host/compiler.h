@@ -7,6 +7,7 @@
 
 #pragma once
 
+#include <stdarg.h>
 #include <stdio.h>
 #include <stddef.h>
 #include <stdint.h>
@@ -15,6 +16,30 @@
 #include <string.h>
 #include <strings.h>
 #include <time.h>
+
+#if defined(_WIN32)
+/* The shared PC boot test's Windows build (Kairo98#126): np2 takes the same POSIX paths it takes on
+ * Android, not its Win32 ones (which need windows.h, whose types clash with the ones below), and
+ * the few POSIX calls Windows lacks are its own. */
+#undef WIN32
+#include <direct.h>
+#include <io.h>
+#include <sys/time.h>
+#include <sys/utime.h>
+#define mkdir(path, mode) _mkdir(path)
+#define sigjmp_buf jmp_buf
+#define sigsetjmp(env, savemask) setjmp(env)
+#define siglongjmp(env, value) longjmp(env, value)
+#define fsync(fd) _commit(fd)
+/* Windows' stat has no links. */
+#define lstat stat
+#define S_ISLNK(mode) 0
+static inline int kairo98_futimes(int fd, const struct timeval times[2]) {
+	struct _utimbuf when = {(time_t)times[0].tv_sec, (time_t)times[1].tv_sec};
+	return _futime(fd, &when);
+}
+#define futimes kairo98_futimes
+#endif
 
 #define TEXT(s) s
 #define msgbox(title, message) ((void)0)
