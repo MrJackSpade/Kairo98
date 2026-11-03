@@ -40,6 +40,9 @@ object Kairo98App : AppUnderTest() {
     override val otherGame = "The Black Onyx"
     // The Disks page's Floppy A takes The Black Onyx's disk from Other while Acrojet runs.
     override val mediaSwap = MediaSwap("Acrojet", "Floppy A", "Black Onyx", filler = "d88")
+    // Aegean Kai no Shizuku is played with the mouse; Acrojet with the keyboard (TouchTests' Auto).
+    override val mouseGame = "Aegeankai no Shizuku"
+    override val keyboardGame = "Acrojet"
 }
 
 class Kairo98FirstRunTests : FirstRunTests() { override val app = Kairo98App }
