@@ -10,6 +10,16 @@ object Pc98Firmware {
     private const val BIOS_ROM_BYTES = 0x18000L
     private const val RHYTHM_ROM_BYTES = 0x2000L
 
+    /** Whether the player's bios.rom is in the firmware [directory], which "Your BIOS" starts on. */
+    fun ownBiosInstalled(directory: File) = File(directory, "bios.rom").isFile
+
+    /**
+     * Why a game whose System is [system] cannot start with the firmware in [directory]: "Your BIOS"
+     * without bios.rom, which never falls back to the built-in BIOS (Kairo98#107); null when it can.
+     */
+    fun missingForStart(system: String, directory: File): UiText? =
+        UiText.res(R.string.own_bios_missing).takeIf { system == Pc98Catalog.OWN_BIOS && !ownBiosInstalled(directory) }
+
     /**
      * The set in [directory]: [validateFont] checks an imported font, [fontSource] says which font
      * the running game uses.

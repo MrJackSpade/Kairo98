@@ -237,7 +237,7 @@ class MainActivity : MachineActivity<DiskImageEntry>() {
     /** Your BIOS: the player's bios.rom. A player who imported one keeps starting on it (optionDefault). */
     override fun ownFirmwareInstalled(option: MachineOption, values: Map<String, String>): Boolean {
         check(option.id == Pc98Catalog.system.id) { "${option.id} has no firmware of the player's" }
-        return biosFile().isFile
+        return Pc98Firmware.ownBiosInstalled(firmwareDir())
     }
     private fun fontChoices() = fontFiles.items().map { ChoiceOption(it.id, it.label) }
     private fun fontActions(select: (String) -> Unit) = fontImport.actions(select)
@@ -299,8 +299,9 @@ class MainActivity : MachineActivity<DiskImageEntry>() {
         val media = bootMediaFor(this, boot, sources, game.requiredBootFloppyId)
         val floppyB = game.initialFloppyBId?.let { id -> requiredFloppyFor(id, entry, sources) }
         val primary = media?.hardDisk ?: boot
-        val ownBios = optionValue(game, Pc98Catalog.system) == Pc98Catalog.OWN_BIOS
-        check(!ownBios || biosFile().isFile) { getString(R.string.own_bios_missing) }
+        val system = optionValue(game, Pc98Catalog.system)
+        Pc98Firmware.missingForStart(system, firmwareDir())?.let { error(text(it)) }
+        val ownBios = system == Pc98Catalog.OWN_BIOS
         val (font, fontSource) = chooseFont(optionValue(game, fontOption), primary, external, cancelled)
         // In the core's slot order (pc98_core.cpp): floppy A, floppy B, the CD-ROM and the hard disk.
         val slots = listOf(if (primary.isFloppy) primary else media?.bootFloppy, floppyB, cd,
@@ -517,7 +518,6 @@ class MainActivity : MachineActivity<DiskImageEntry>() {
     }
 
     private fun firmwareDir() = File(filesDir, "firmware")
-    private fun biosFile() = File(firmwareDir(), "bios.rom")
     private fun fontBitmapFile() = File(firmwareDir(), "font.bmp")
     private fun rhythmRomFile() = File(firmwareDir(), "ym2608_adpcm_rom.bin")
 
