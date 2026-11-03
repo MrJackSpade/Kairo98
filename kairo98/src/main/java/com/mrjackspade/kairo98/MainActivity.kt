@@ -365,21 +365,10 @@ class MainActivity : MachineActivity<DiskImageEntry>() {
     // Machine and firmware ---------------------------------------------------------------------------
 
 
-    /** The PC-98's optional firmware, on the shared firmware rows; Kairo98 has a replacement for each. */
+    /** The PC-98's optional firmware, on the shared firmware rows (Pc98Firmware). */
     override val firmwareSets by lazy {
-        fun description(name: String, what: UiText) = UiText.res(FrontendR.string.kairo_firmware_part, name, what)
-        listOf(UiText.res(FrontendR.string.kairo_firmware_title, "PC-98") to FirmwareSet(firmwareDir(), listOf(
-            FirmwareSet.Part("bios.rom", UiText.fixed("BIOS"),
-                description("bios.rom", UiText.res(R.string.firmware_bios_description, "PC-98", "Kairo98")),
-                setOf("bios.rom"), false, setOf(BIOS_ROM_BYTES)),
-            FirmwareSet.Part("font.bmp", UiText.res(R.string.option_font),
-                description("font.bmp", UiText.res(R.string.firmware_font_description, "Kairo98")),
-                setOf("font.bmp"), false, maxBytes = Pc98FontBitmap.MAX_BYTES, validate = { Pc98FontBitmap.validate(this, it) },
-                status = { gameFontSource }, missing = UiText.res(R.string.font_built_in),
-                removeLabel = UiText.res(R.string.font_use_built_in)),
-            FirmwareSet.Part("ym2608_adpcm_rom.bin", UiText.res(R.string.firmware_rhythm),
-                description("ym2608_adpcm_rom.bin", UiText.res(R.string.firmware_rhythm_description)),
-                setOf("ym2608_adpcm_rom.bin"), false, setOf(RHYTHM_ROM_BYTES)))))
+        listOf(UiText.res(FrontendR.string.kairo_firmware_title, "PC-98") to
+            Pc98Firmware.set(firmwareDir(), { Pc98FontBitmap.validate(this, it) }) { gameFontSource })
     }
 
     /** A clock choice: [id] in tenths of a MHz, shown as [mhz] MHz. */
@@ -538,7 +527,5 @@ class MainActivity : MachineActivity<DiskImageEntry>() {
         /** Bundled FONT.BMP built by tools/generate_font_bmp.py from redistributable fonts. */
         private const val BUNDLED_FONT = "kairo98-font.bmp"
         private const val FONT_IMPORT_REQUEST = FIRST_PRODUCT_REQUEST
-        private const val BIOS_ROM_BYTES = 0x18000L
-        private const val RHYTHM_ROM_BYTES = 0x2000L
     }
 }
