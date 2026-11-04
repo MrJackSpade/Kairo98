@@ -182,7 +182,7 @@
           "ratio": 1.25,
           "margin": 0.05,
           "screens": [
-            "6de6e8bc90762ca4"
+            "4fd8ee1666c1fb07"
           ]
         }
       }
@@ -312,6 +312,80 @@
               "ed0db289f8aafad9"
             ]
           }
+        }
+      }
+    },
+    {
+      "name": "PC-98 mouse program",
+      "firmware": {},
+      "home": {
+        "font/kairo98-font.bmp": "app:kairo98/src/main/assets/font/kairo98-font.bmp"
+      },
+      "media": [
+        "",
+        "",
+        "",
+        "host/Aegean Kai no Shizuku DOS prompt/Aegean Kai no Shizuku DOS prompt.hdi"
+      ],
+      "settings": {
+        "font": "home:font/kairo98-font.bmp",
+        "baseClock": "25",
+        "gdcClock": "50",
+        "cpuMultiple": "20",
+        "skipMemoryCheck": "on",
+        "ownBios": "off"
+      },
+      "checks": {
+        "directTap": {
+          "commands": "CD ..\nMOUSE98",
+          "typedBy": 1800,
+          "frames": 120,
+          "warpBy": 600,
+          "tolerance": 0,
+          "ownPointer": true,
+          "clickFrames": 42,
+          "points": [
+            {
+              "x": 4,
+              "y": 8,
+              "screens": [
+                "d91c2138e5fb519d"
+              ],
+              "selectedBy": 60
+            },
+            {
+              "x": 636,
+              "y": 8,
+              "screens": [
+                "f224ef9dc504dbed"
+              ],
+              "selectedBy": 60
+            },
+            {
+              "x": 4,
+              "y": 392,
+              "screens": [
+                "4c6fbc89b1ee7e8d"
+              ],
+              "selectedBy": 60
+            },
+            {
+              "x": 636,
+              "y": 392,
+              "screens": [
+                "45d1ca8668e77ead"
+              ],
+              "selectedBy": 60
+            },
+            {
+              "x": 320,
+              "y": 200,
+              "screens": [
+                "114ce9599efaa05d"
+              ],
+              "selectedBy": 60
+            }
+          ]
         }
       }
     }

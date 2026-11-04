@@ -7,11 +7,19 @@ disk is also written as an NHD (T98-Next's format), so the test covers both kind
     make_dos_prompt_hdi.py <Aegean Kai No Shizuku [T-En by Svipur v1.1].zip> <output.zip>
 
 The line keeps its length ("GAME" becomes "REM "), so the file's size and the disk's FAT stay as
-they are. uitest/resources.json lists the output under host/, which the device's test APK leaves out.
+they are. The disk's root also gets MOUSE98.COM, the direct-tap check's mouse program
+(make_pc98_mouse_com.py), written with the shared fat_disk.py. uitest/resources.json lists the
+output under host/, which the device's test APK leaves out.
 """
 import sys
 import zipfile
 from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT / "shared/tools"))
+sys.path.insert(0, str(ROOT / "tools"))
+from fat_disk import add_file  # noqa: E402
+import make_pc98_mouse_com  # noqa: E402
 
 IMAGE = "Aegean Kai No Shizuku [T-En by Svipur v1.1].hdi"
 OUTPUT_IMAGE = "Aegean Kai no Shizuku DOS prompt.hdi"
@@ -32,13 +40,25 @@ def main(argv):
         image = archive.read(names[0])
     if image.count(GAME_LINE) != 1:
         raise SystemExit(f"{IMAGE} holds AUTOEXEC.BAT's game line {image.count(GAME_LINE)} times, not once")
-    prompt = image.replace(GAME_LINE, PROMPT_LINE)
+    prompt = bytearray(image.replace(GAME_LINE, PROMPT_LINE))
+    add_file(prompt, partition(prompt), "MOUSE98.COM", make_pc98_mouse_com.program())
+    prompt = bytes(prompt)
     output.parent.mkdir(parents=True, exist_ok=True)
     with zipfile.ZipFile(output, "w", zipfile.ZIP_DEFLATED) as archive:
         archive.writestr(OUTPUT_IMAGE, prompt)
         archive.writestr(OUTPUT_NHD, nhd(prompt))
     print(f"{output}: {OUTPUT_IMAGE} and {OUTPUT_NHD}, {len(prompt)} bytes")
     return 0
+
+
+def partition(hdi):
+    """The byte where the HDI's first partition (PC-98's partition table, sector 1) starts."""
+    def dword(at):
+        return int.from_bytes(hdi[at:at + 4], "little")
+    header_size, sector_size, sectors, surfaces = dword(8), dword(16), dword(20), dword(24)
+    entry = header_size + sector_size
+    cylinder = int.from_bytes(hdi[entry + 10:entry + 12], "little")
+    return header_size + cylinder * surfaces * sectors * sector_size
 
 
 def nhd(hdi):
