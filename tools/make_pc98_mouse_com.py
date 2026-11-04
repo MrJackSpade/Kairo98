@@ -13,61 +13,13 @@ make_dos_prompt_hdi.py puts it in the DOS prompt disk's root, A:\\MOUSE98.COM.
 import sys
 from pathlib import Path
 
-ORIGIN = 0x100
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "shared/tools"))
+from x86_assembler import JE, JGE, JLE, JNZ, JZ, Assembler  # noqa: E402
+
 PORT_A, PORT_C = 0x7FD9, 0x7FDD
 # Port C: HC (bit 7) latches and clears the counters, SXY (bit 6) picks Y, SHL (bit 5) the high
 # nibble, INT (bit 4) turns the mouse interrupt off.
 INT_OFF = 0x10
-
-
-class Assembler:
-    """8086 bytes with labels: short (rel8) and near (rel16) jumps, and 16-bit data addresses."""
-
-    def __init__(self):
-        self.code = bytearray()
-        self.labels = {}
-        self.fixups = []  # (offset, label, kind): "rel8", "rel16" or "abs16"
-
-    def label(self, name):
-        if name in self.labels:
-            raise SystemExit(f"label {name} twice")
-        self.labels[name] = ORIGIN + len(self.code)
-
-    def b(self, *values):
-        self.code += bytes(values)
-
-    def w(self, value):
-        if isinstance(value, str):
-            self.fixups.append((len(self.code), value, "abs16"))
-            self.code += b"\0\0"
-        else:
-            self.code += (value & 0xFFFF).to_bytes(2, "little")
-
-    def jcc(self, opcode, label):
-        self.b(opcode, 0)
-        self.fixups.append((len(self.code) - 1, label, "rel8"))
-
-    def jmp_near(self, label):
-        self.b(0xE9, 0, 0)
-        self.fixups.append((len(self.code) - 2, label, "rel16"))
-
-    def build(self):
-        for offset, label, kind in self.fixups:
-            target = self.labels[label]
-            if kind == "abs16":
-                self.code[offset:offset + 2] = target.to_bytes(2, "little")
-            elif kind == "rel8":
-                distance = target - (ORIGIN + offset + 1)
-                if not -128 <= distance <= 127:
-                    raise SystemExit(f"the jump to {label} is {distance} bytes")
-                self.code[offset] = distance & 0xFF
-            else:
-                distance = target - (ORIGIN + offset + 2)
-                self.code[offset:offset + 2] = (distance & 0xFFFF).to_bytes(2, "little")
-        return bytes(self.code)
-
-
-JZ, JNZ, JGE, JLE, JE = 0x74, 0x75, 0x7D, 0x7E, 0x74
 
 
 def program():
@@ -149,8 +101,7 @@ def program():
     b(0xBB); w(0xA200); b(0x8E, 0xC3)                # es = text attributes
     b(0x31, 0xFF); b(0xB9); w(2000)                  # di = 0, cx = 80 x 25
     a.label("fill")
-    b(0x26, 0x88, 0x05); b(0x83, 0xC7, 0x02); b(0xE2, 0)    # es:[di] = al; di += 2; loop
-    a.fixups.append((len(a.code) - 1, "fill", "rel8"))
+    b(0x26, 0x88, 0x05); b(0x83, 0xC7, 0x02); a.jcc(0xE2, "fill")  # es:[di] = al; di += 2; loop
     a.label("next")
     a.jmp_near("frame")
 
