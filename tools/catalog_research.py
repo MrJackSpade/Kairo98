@@ -7,7 +7,7 @@ Usage: catalog_research.py [--check]
 Kairo98's research is its own (catalog/research/README.md): matches-v1.json, one entry per game
 (LaunchBox, VNDB, MobyGames and NeoKobe inventory games); descriptions-v1.json.gz and each language's
 descriptions-<language>-v1.json.gz (gzipped, shared catalog_files.py); display-text-v1.json, the reviewed titles, aliases and descriptions;
-adult-content-v1.json, the adult review; artwork-index-v1.json, each game's reviewed images in
+adult-content-v1.json, the adult review; tags-v1.json, each game's tags (tools/catalog_tags.py); artwork-index-v1.json, each game's reviewed images in
 catalog/artwork; and catalog/startup-profiles-v1.json, each disk's own fields: its set's disks and
 media, its own title or description, and its startup choices and disk swaps. A profile's disk that
 no game lists becomes a game of its own. NeoKobe inventory games are recognized only by their disks,
@@ -159,6 +159,11 @@ def assemble():
         for key, text in catalog_descriptions.texts(RESEARCH / f"descriptions-adult-{language}-v1.json.gz").items():
             require(games.get(key, {}).get("adultDescription"), f"Translated adult description of no adult description: {key}")
             games[key].setdefault("adultDescriptions", {})[language] = text
+    # Each game's year, genres and players (tags-v1.json, tools/catalog_tags.py; Kairo#132).
+    tagged = json.loads((RESEARCH / "tags-v1.json").read_text(encoding="utf-8"))["games"]
+    require(not tagged.keys() - games.keys(), f"Tags of games without catalog matches: {sorted(tagged.keys() - games.keys())[:5]}")
+    for key, tags in tagged.items():
+        games[key]["tags"] = tags
     # Each game's Japanese title (titles-v1.json, shared japanese_titles.py; Kairo#61).
     japanese_titles.apply(RESEARCH, games)
     return {"schemaVersion": 1, "games": games}
