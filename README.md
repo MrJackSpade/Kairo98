@@ -60,11 +60,9 @@ Both editions are built from the same source and have the same features. Require
 
 ## Screenshots
 
-| Game library | Game details |
-| --- | --- |
-| ![Kairo98 game library](docs/screenshots/library.png) | ![Game details in Kairo98](docs/screenshots/game-details.png) |
-| **Playing a game** | **On-screen keyboard** |
-| ![A game running in Kairo98](docs/screenshots/running-game.png) | ![Kairo98 PC-98 keyboard](docs/screenshots/keyboard.png) |
+| Library | Details | Playing |
+| --- | --- | --- |
+| ![Kairo98 game library](docs/screenshots/library.png) | ![Game details in Kairo98](docs/screenshots/game-details.png) | ![Touhou 4: Lotus Land Story running in Kairo98](docs/screenshots/running-game.png) |
 
 Games shown in screenshots are user-provided and are not bundled with the app.
 
