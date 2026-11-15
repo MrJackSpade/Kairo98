@@ -1,0 +1,85 @@
+{
+  "tests": [
+    {
+      "name": "Acrojet",
+      "firmware": {},
+      "home": {
+        "font/kairo98-font.bmp": "app:kairo98/src/main/assets/font/kairo98-font.bmp"
+      },
+      "media": [
+        "games/Acrojet [T-En by MrRichard999 v1.0]/Acrojet [T-En by MrRichard999 v1.0].d88",
+        "",
+        "",
+        ""
+      ],
+      "settings": {
+        "font": "home:font/kairo98-font.bmp",
+        "baseClock": "25",
+        "gdcClock": "50",
+        "cpuMultiple": "20",
+        "skipMemoryCheck": "on",
+        "ownBios": "off"
+      },
+      "checks": {
+        "profile": {
+          "boot": 1800,
+          "frames": 3000
+        }
+      }
+    },
+    {
+      "name": "Aegean Kai no Shizuku",
+      "firmware": {},
+      "home": {
+        "font/kairo98-font.bmp": "app:kairo98/src/main/assets/font/kairo98-font.bmp"
+      },
+      "media": [
+        "",
+        "",
+        "",
+        "games/Aegean Kai No Shizuku [T-En by Svipur v1.1]/Aegean Kai No Shizuku [T-En by Svipur v1.1].hdi"
+      ],
+      "settings": {
+        "font": "home:font/kairo98-font.bmp",
+        "baseClock": "25",
+        "gdcClock": "50",
+        "cpuMultiple": "20",
+        "skipMemoryCheck": "on",
+        "ownBios": "off"
+      },
+      "checks": {
+        "profile": {
+          "boot": 1800,
+          "frames": 3000
+        }
+      }
+    },
+    {
+      "name": "Giten Megami Tensei",
+      "firmware": {},
+      "home": {
+        "font/kairo98-font.bmp": "app:kairo98/src/main/assets/font/kairo98-font.bmp"
+      },
+      "media": [
+        "host/Giten Megami Tensei [T-En by Sneikkimies 0.3]/Giten Megami Tensei (Boot Disk) [T-En by Sneikkimies 0.3].fdi",
+        "",
+        "",
+        "host/Giten Megami Tensei [T-En by Sneikkimies 0.3]/Giten Megami Tensei [T-En by Sneikkimies 0.3].hdi"
+      ],
+      "settings": {
+        "font": "home:font/kairo98-font.bmp",
+        "baseClock": "25",
+        "gdcClock": "50",
+        "cpuMultiple": "20",
+        "skipMemoryCheck": "on",
+        "ownBios": "off"
+      },
+      "checks": {
+        "profile": {
+          "boot": 2400,
+          "frames": 3000
+        }
+      }
+    }
+  ]
+}
