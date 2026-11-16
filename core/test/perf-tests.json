@@ -18,7 +18,8 @@
         "gdcClock": "50",
         "cpuMultiple": "20",
         "skipMemoryCheck": "on",
-        "ownBios": "off"
+        "ownBios": "off",
+        "midiOut": "none"
       },
       "checks": {
         "profile": {
@@ -45,7 +46,8 @@
         "gdcClock": "50",
         "cpuMultiple": "20",
         "skipMemoryCheck": "on",
-        "ownBios": "off"
+        "ownBios": "off",
+        "midiOut": "none"
       },
       "checks": {
         "profile": {
@@ -72,7 +74,8 @@
         "gdcClock": "50",
         "cpuMultiple": "20",
         "skipMemoryCheck": "on",
-        "ownBios": "off"
+        "ownBios": "off",
+        "midiOut": "none"
       },
       "checks": {
         "profile": {

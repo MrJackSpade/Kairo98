@@ -18,7 +18,8 @@
         "gdcClock": "50",
         "cpuMultiple": "20",
         "skipMemoryCheck": "on",
-        "ownBios": "off"
+        "ownBios": "off",
+        "midiOut": "none"
       },
       "checks": {
         "boot": {
@@ -70,7 +71,8 @@
         "gdcClock": "50",
         "cpuMultiple": "20",
         "skipMemoryCheck": "on",
-        "ownBios": "off"
+        "ownBios": "off",
+        "midiOut": "none"
       },
       "checks": {
         "boot": {
@@ -100,7 +102,8 @@
         "gdcClock": "50",
         "cpuMultiple": "20",
         "skipMemoryCheck": "on",
-        "ownBios": "off"
+        "ownBios": "off",
+        "midiOut": "none"
       },
       "checks": {
         "boot": {
@@ -131,7 +134,8 @@
         "gdcClock": "50",
         "cpuMultiple": "20",
         "skipMemoryCheck": "on",
-        "ownBios": "off"
+        "ownBios": "off",
+        "midiOut": "none"
       },
       "checks": {
         "commands": {
@@ -182,7 +186,7 @@
           "ratio": 1.25,
           "margin": 0.05,
           "screens": [
-            "4fd8ee1666c1fb07"
+            "21cd8eb9e6b5c6f9"
           ]
         }
       }
@@ -205,7 +209,8 @@
         "gdcClock": "50",
         "cpuMultiple": "20",
         "skipMemoryCheck": "on",
-        "ownBios": "off"
+        "ownBios": "off",
+        "midiOut": "none"
       },
       "checks": {
         "stateDisks": {
@@ -233,7 +238,8 @@
         "gdcClock": "50",
         "cpuMultiple": "20",
         "skipMemoryCheck": "on",
-        "ownBios": "off"
+        "ownBios": "off",
+        "midiOut": "none"
       },
       "checks": {
         "stateDisks": {
@@ -261,7 +267,8 @@
         "gdcClock": "50",
         "cpuMultiple": "20",
         "skipMemoryCheck": "on",
-        "ownBios": "off"
+        "ownBios": "off",
+        "midiOut": "none"
       },
       "checks": {
         "boot": {
@@ -292,7 +299,8 @@
         "gdcClock": "50",
         "cpuMultiple": "20",
         "skipMemoryCheck": "on",
-        "ownBios": "off"
+        "ownBios": "off",
+        "midiOut": "none"
       },
       "checks": {
         "boot": {
@@ -333,7 +341,8 @@
         "gdcClock": "50",
         "cpuMultiple": "20",
         "skipMemoryCheck": "on",
-        "ownBios": "off"
+        "ownBios": "off",
+        "midiOut": "none"
       },
       "checks": {
         "directTap": {
@@ -386,6 +395,91 @@
               "selectedBy": 60
             }
           ]
+        }
+      }
+    },
+    {
+      "name": "PC-98 MIDI out",
+      "firmware": {},
+      "home": {
+        "font/kairo98-font.bmp": "app:kairo98/src/main/assets/font/kairo98-font.bmp"
+      },
+      "media": [
+        "",
+        "",
+        "",
+        "host/Aegean Kai no Shizuku DOS prompt/Aegean Kai no Shizuku DOS prompt.hdi"
+      ],
+      "settings": {
+        "font": "home:font/kairo98-font.bmp",
+        "baseClock": "25",
+        "gdcClock": "50",
+        "cpuMultiple": "20",
+        "skipMemoryCheck": "on",
+        "ownBios": "off",
+        "midiOut": "port"
+      },
+      "checks": {
+        "midiOut": {
+          "commands": "CD ..\nMIDI98",
+          "typedBy": 1800,
+          "frames": 120,
+          "messages": [
+            "B0 7B 00",
+            "B1 7B 00",
+            "B2 7B 00",
+            "B3 7B 00",
+            "B4 7B 00",
+            "B5 7B 00",
+            "B6 7B 00",
+            "B7 7B 00",
+            "B8 7B 00",
+            "B9 7B 00",
+            "BA 7B 00",
+            "BB 7B 00",
+            "BC 7B 00",
+            "BD 7B 00",
+            "BE 7B 00",
+            "BF 7B 00",
+            "F0 7E 7F 09 01 F7",
+            "C1 05",
+            "91 3C 64",
+            "3C 00",
+            "3E 64",
+            "F8",
+            "B1 07 7F",
+            "81 3E 00"
+          ]
+        }
+      }
+    },
+    {
+      "name": "PC-98 MIDI out off",
+      "firmware": {},
+      "home": {
+        "font/kairo98-font.bmp": "app:kairo98/src/main/assets/font/kairo98-font.bmp"
+      },
+      "media": [
+        "",
+        "",
+        "",
+        "host/Aegean Kai no Shizuku DOS prompt/Aegean Kai no Shizuku DOS prompt.hdi"
+      ],
+      "settings": {
+        "font": "home:font/kairo98-font.bmp",
+        "baseClock": "25",
+        "gdcClock": "50",
+        "cpuMultiple": "20",
+        "skipMemoryCheck": "on",
+        "ownBios": "off",
+        "midiOut": "none"
+      },
+      "checks": {
+        "midiOut": {
+          "commands": "CD ..\nMIDI98",
+          "typedBy": 1800,
+          "frames": 120,
+          "messages": []
         }
       }
     }

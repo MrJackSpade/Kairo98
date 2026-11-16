@@ -232,7 +232,10 @@ class MainActivity : MachineActivity<DiskImageEntry>() {
 
     // Font lists the player's fonts too, and imports more (Pc98Catalog.font).
     private val fontOption = Pc98Catalog.font(::fontChoices, ::fontActions)
-    override val machineOptions = listOf(Pc98Catalog.system, Pc98Catalog.baseClock, Pc98Catalog.skipMemoryCheck, fontOption)
+    override val machineOptions = listOf(Pc98Catalog.system, Pc98Catalog.baseClock, Pc98Catalog.skipMemoryCheck, fontOption,
+        Pc98Catalog.midiOut)
+    // A game set to the MIDI port sends its MIDI music to the port picked under Configurations (Kairo98#132).
+    override val guestMidiOut = true
 
     /** Your BIOS: the player's bios.rom. A player who imported one keeps starting on it (optionDefault). */
     override fun ownFirmwareInstalled(option: MachineOption, values: Map<String, String>): Boolean {
@@ -313,7 +316,8 @@ class MainActivity : MachineActivity<DiskImageEntry>() {
             "gdcClock" to (game.gdcClockTenthsMHz ?: 50).toString(),
             "cpuMultiple" to (game.cpuMultiple ?: DEFAULT_CPU_MULTIPLE).toString(),
             "skipMemoryCheck" to optionValue(game, Pc98Catalog.skipMemoryCheck),
-            "ownBios" to if (ownBios) "on" else "off"))) { getString(R.string.start_failed) }
+            "ownBios" to if (ownBios) "on" else "off",
+            "midiOut" to optionValue(game, Pc98Catalog.midiOut)))) { getString(R.string.start_failed) }
         awaitRunning()
         mediaStarted(slots)
         prepared = PreparedLaunch(fontSource, primary.isFloppy)

@@ -26,6 +26,7 @@ int kairo98_machine_start(const char *image, const char *font_path, const char *
 int kairo98_machine_dos_prompt(void);
 void kairo98_machine_skip_memory_check(int skip);
 void kairo98_machine_own_bios(int own);
+void kairo98_machine_midi_port(int on);
 unsigned int kairo98_machine_exec(void);
 void kairo98_machine_clock_rates(unsigned int *realclock, unsigned int *hzbase, unsigned int *clockbase);
 int kairo98_machine_reset(void);
@@ -73,6 +74,7 @@ constexpr const char *kGdcClock = "gdcClock";           // 25 or 50: the GDC clo
 constexpr const char *kCpuMultiple = "cpuMultiple";     // 1 to 20
 constexpr const char *kSkipMemoryCheck = "skipMemoryCheck";  // on or off
 constexpr const char *kOwnBios = "ownBios";             // on: the player's bios.rom in the firmware folder
+constexpr const char *kMidiOut = "midiOut";             // none, or port: the MPU-PC98II's MIDI out to the MIDI port
 
 // np2 mixes sound in buffers of this many stereo frames, at kAudioRate.
 constexpr unsigned int kAudioBuffer = 512;
@@ -98,15 +100,20 @@ public:
             value = found->second;
             return true;
         };
-        std::string font, base_clock, gdc_clock, cpu_multiple, skip_memory_check, own_bios;
+        std::string font, base_clock, gdc_clock, cpu_multiple, skip_memory_check, own_bios, midi_out;
         if (!setting(kFont, font) || !setting(kBaseClock, base_clock) || !setting(kGdcClock, gdc_clock) ||
             !setting(kCpuMultiple, cpu_multiple) || !setting(kSkipMemoryCheck, skip_memory_check) ||
-            !setting(kOwnBios, own_bios))
+            !setting(kOwnBios, own_bios) || !setting(kMidiOut, midi_out))
             return false;
+        if (midi_out != "none" && midi_out != "port") {
+            error = "The PC-98 launch's midiOut is " + midi_out + ", not none or port";
+            return false;
+        }
         kairo98_input_telemetry_reset();
         kairo98_joy_release_all();
         kairo98_machine_skip_memory_check(skip_memory_check == "on" ? 1 : 0);
         kairo98_machine_own_bios(own_bios == "on" ? 1 : 0);
+        kairo98_machine_midi_port(midi_out == "port" ? 1 : 0);
         // The game boots from its hard disk, with floppy A beside it, or from floppy A.
         const std::string &hard_disk = launch.media[kHardDisk];
         const bool floppy = hard_disk.empty();

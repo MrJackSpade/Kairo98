@@ -8,7 +8,8 @@ disk is also written as an NHD (T98-Next's format), so the test covers both kind
 
 The line keeps its length ("GAME" becomes "REM "), so the file's size and the disk's FAT stay as
 they are. The disk's root also gets MOUSE98.COM, the direct-tap check's mouse program
-(make_pc98_mouse_com.py), written with the shared fat_disk.py. uitest/resources.json lists the
+(make_pc98_mouse_com.py), and MIDI98.COM, the MIDI out check's program (make_pc98_midi_com.py),
+written with the shared fat_disk.py. uitest/resources.json lists the
 output under host/, which the device's test APK leaves out.
 """
 import sys
@@ -19,6 +20,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "shared/tools"))
 sys.path.insert(0, str(ROOT / "tools"))
 from fat_disk import add_file  # noqa: E402
+import make_pc98_midi_com  # noqa: E402
 import make_pc98_mouse_com  # noqa: E402
 
 IMAGE = "Aegean Kai No Shizuku [T-En by Svipur v1.1].hdi"
@@ -42,6 +44,7 @@ def main(argv):
         raise SystemExit(f"{IMAGE} holds AUTOEXEC.BAT's game line {image.count(GAME_LINE)} times, not once")
     prompt = bytearray(image.replace(GAME_LINE, PROMPT_LINE))
     add_file(prompt, partition(prompt), "MOUSE98.COM", make_pc98_mouse_com.program())
+    add_file(prompt, partition(prompt), "MIDI98.COM", make_pc98_midi_com.program())
     prompt = bytes(prompt)
     output.parent.mkdir(parents=True, exist_ok=True)
     with zipfile.ZipFile(output, "w", zipfile.ZIP_DEFLATED) as archive:

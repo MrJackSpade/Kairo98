@@ -59,6 +59,8 @@ object Pc98Catalog : LayeredGameCatalog.Schema {
         listOf(ChoiceOption("25", UiText.res(FrontendR.string.kairo_clock_mhz, "2.5")),
             ChoiceOption("20", UiText.res(FrontendR.string.kairo_clock_mhz, "2"))), "25", numeric = true)
     val skipMemoryCheck = MachineOption.skipMemoryCheck()
+    /** The MPU-PC98II's MIDI out: none, or the MIDI port picked under Configurations (Kairo98#132). */
+    val midiOut = MachineOption.midiOut()
 
     const val BUILT_IN_BIOS = "builtin"
     const val OWN_BIOS = "own"
@@ -75,6 +77,7 @@ object Pc98Catalog : LayeredGameCatalog.Schema {
         CatalogSetting.Choice(system),
         CatalogSetting.Choice(skipMemoryCheck),
         CatalogSetting.Choice(font),
+        CatalogSetting.Choice(midiOut),
         CatalogSetting.Custom(COMMAND, "launch", setOf("type", "text", "commands", "ready", "timeoutMs", "screenHashes")),
         CatalogSetting.StartupChoices,
         // Floppies, in drives A and B.
@@ -113,7 +116,7 @@ object Pc98Catalog : LayeredGameCatalog.Schema {
             when (key) {
                 "gdcClockTenthsMHz" -> value.opt(key) is Int && value.optInt(key) in listOf(25, 50)
                 "cpuMultiple" -> value.opt(key) is Int && value.optInt(key) in CPU_MULTIPLES
-                else -> listOf(system, baseClock, skipMemoryCheck, font).firstOrNull { it.id == key }?.valid(value.opt(key)) == true
+                else -> listOf(system, baseClock, skipMemoryCheck, font, midiOut).firstOrNull { it.id == key }?.valid(value.opt(key)) == true
             }
         }
         "launch" -> value is JSONObject && value.length() > 0 &&

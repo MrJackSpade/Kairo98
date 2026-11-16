@@ -8,6 +8,7 @@
 #include "ymfm_bridge.h"
 #include "statsave.h"
 #include "sound/sound.h"
+#include "kairo/midi_bytes.h"
 
 NP2OSCFG np2oscfg = {0};
 
@@ -54,15 +55,55 @@ static _COMMNG disconnected = {
     disconnected_release
 };
 
+/* The MPU-PC98II's MIDI out (Kairo98#132). A game set to the MIDI port gets a connected MIDI device, so
+ * the MPU answers the guest, and every byte the guest writes to it goes, unchanged and in order, to the
+ * shared sender (kairo/midi_bytes.h), and from there to the port picked under Configurations. Each byte
+ * reports one byte sent, so the MPU's transfer wait follows the bytes as the wire carries them. Any other
+ * game keeps the disconnected device, which the MPU has always seen here: it answers nothing. */
+static int midi_port_on;
+void kairo98_machine_midi_port(int on) { midi_port_on = on; }
+static UINT midi_port_write(COMMNG self, UINT8 data) {
+    (void)self;
+    kairo_midi_out_byte(data);
+    return 1;
+}
+static UINT8 midi_port_status(COMMNG self) {
+    (void)self;
+    return 0x00;
+}
+static INTPTR midi_port_message(COMMNG self, UINT message, INTPTR value) {
+    (void)self;
+    (void)value;
+    /* The MPU's reset: a message the guest left open (a SysEx without its end) goes as written. */
+    if (message == COMMSG_MIDIRESET) {
+        kairo_midi_out_flush();
+        return 1;
+    }
+    return 0;
+}
+static _COMMNG midi_port = {
+    COMCONNECT_MIDI,
+    disconnected_read,
+    midi_port_write,
+    disconnected_retry,
+    disconnected_block,
+    disconnected_block,
+    disconnected_retry,
+    midi_port_status,
+    midi_port_message,
+    disconnected_release
+};
+
 void commng_initialize(void) {}
 void commng_finalize(void) {}
 COMMNG commng_create(UINT device, BOOL onReset) {
-    (void)device;
     (void)onReset;
-    return &disconnected;
+    return device == COMCREATE_MPU98II && midi_port_on ? &midi_port : &disconnected;
 }
 void commng_destroy(COMMNG handle) {
-    (void)handle;
+    /* The machine resets or closes: what the guest left open goes, and the next session starts with no
+       running status. */
+    if (handle == &midi_port) kairo_midi_out_flush();
 }
 
 void sysmng_initialize(void) {}
