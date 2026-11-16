@@ -192,6 +192,38 @@
       }
     },
     {
+      "name": "DOS clock read",
+      "firmware": {},
+      "home": {
+        "font/kairo98-font.bmp": "app:kairo98/src/main/assets/font/kairo98-font.bmp"
+      },
+      "media": [
+        "",
+        "",
+        "",
+        "host/Aegean Kai no Shizuku DOS prompt/Aegean Kai no Shizuku DOS prompt.hdi"
+      ],
+      "settings": {
+        "font": "home:font/kairo98-font.bmp",
+        "baseClock": "25",
+        "gdcClock": "50",
+        "cpuMultiple": "20",
+        "skipMemoryCheck": "on",
+        "ownBios": "off",
+        "midiOut": "none"
+      },
+      "checks": {
+        "commands": {
+          "commands": "TIME",
+          "typedBy": 1800,
+          "answerBy": 300,
+          "screens": [
+            "16510b8e36933f56"
+          ]
+        }
+      }
+    },
+    {
       "name": "The Black Onyx drive A",
       "firmware": {},
       "home": {

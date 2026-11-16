@@ -99,3 +99,7 @@ imported, and the existing source notices are retained.
 ## Media activity
 
 `fdd/sxsi.c` (`sxsi_read`, `sxsi_write`) and `cbus/atapicmd.c` (the Mode 1 raw read) call project-owned `kairo98_media_activity` (`android_host/machine.c`) before each hard disk or CD data read or write. The Android build's `android_host/sysmng.h` also maps np2's floppy access lamp, `sysmng_fddaccess`, to it. A frame in which the guest read or wrote its media runs flat out (Kairo#82); CD audio playback does not count. The hooks only count and do not change what the guest reads or writes.
+
+## Repeatable calendar
+
+`sdl2/timemng.c` gains `kairo98_fixed_time` (Kairo98#136): when it is 0 or more, `timemng_gettime` returns that time (UTC) instead of the host's local time. `pc98_core.cpp` sets it to 1993-01-01 00:00:00 for a run that must repeat exactly (`kairo::Launch::repeatable`, the shared tests) and to -1 otherwise, before the machine resets; np2's virtual calendar starts there and runs on emulated time as before, so a test reading the clock (MS-DOS `TIME`) repeats exactly. The app keeps the host's time.

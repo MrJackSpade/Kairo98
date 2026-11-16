@@ -2491,4 +2491,14 @@ void sound_reset(void) {
     'kairo98-windows-host': [
         ('np21w/sdl2/dosio.c', '\t\tfli->attr = (de->d_type & DT_DIR) ? FILEATTR_DIRECTORY : 0;\n\n\t\tif (stat(de->d_name, &sb) == 0) {\n', "#if defined(_WIN32)\n\t\t/* Kairo98: Windows' dirent has no d_type, so stat tells a folder (the shared PC boot\n\t\t * test's Windows build, Kairo98#126). */\n\t\tfli->attr = 0;\n#else\n\t\tfli->attr = (de->d_type & DT_DIR) ? FILEATTR_DIRECTORY : 0;\n#endif\n\n\t\tif (stat(de->d_name, &sb) == 0) {\n#if defined(_WIN32)\n\t\t\tif (S_ISDIR(sb.st_mode)) {\n\t\t\t\tfli->attr |= FILEATTR_DIRECTORY;\n\t\t\t}\n#endif\n"),
     ],
+    # A run that must repeat exactly reads a fixed time (Kairo98#136): kairo98_fixed_time, which
+    # pc98_core.cpp sets from Launch::repeatable before the machine resets the calendar from it.
+    'np21w/sdl2/timemng.c': [
+        ('np21w/sdl2/timemng.c',
+         '#include\t"timemng.h"\n\n\nBRESULT timemng_gettime(_SYSTIME *systime) {\n',
+         '#include\t"timemng.h"\n\n\n/* Kairo98#136: when 0 or more, the time (seconds since 1970, UTC) a run that must repeat exactly\n * reads instead of the host\'s; set before the machine resets. */\nlong long kairo98_fixed_time = -1;\n\nBRESULT timemng_gettime(_SYSTIME *systime) {\n'),
+        ('np21w/sdl2/timemng.c',
+         '\n\ttime(&long_time);\n\tnow_time = localtime(&long_time);\n\tif (now_time != NULL) {\n',
+         '\n\tif (kairo98_fixed_time >= 0) {\n\t\tlong_time = (time_t)kairo98_fixed_time;\n\t\tnow_time = gmtime(&long_time);\n\t}\n\telse {\n\t\ttime(&long_time);\n\t\tnow_time = localtime(&long_time);\n\t}\n\tif (now_time != NULL) {\n'),
+    ],
 }

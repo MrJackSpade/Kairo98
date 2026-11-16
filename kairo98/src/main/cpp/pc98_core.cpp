@@ -27,6 +27,8 @@ int kairo98_machine_dos_prompt(void);
 void kairo98_machine_skip_memory_check(int skip);
 void kairo98_machine_own_bios(int own);
 void kairo98_machine_midi_port(int on);
+// The calendar's time for a repeatable run (np2 sdl2/timemng.c, Kairo98#136); -1 for the host's.
+extern long long kairo98_fixed_time;
 unsigned int kairo98_machine_exec(void);
 void kairo98_machine_clock_rates(unsigned int *realclock, unsigned int *hzbase, unsigned int *clockbase);
 int kairo98_machine_reset(void);
@@ -86,6 +88,8 @@ class Pc98Core : public kairo::MachineCore {
 public:
     // Starts np2 with the launch's media; false with error when it cannot.
     bool start(const kairo::Launch &launch, std::string &error) {
+        // A repeatable run's calendar starts at 1993-01-01 00:00:00 UTC, read as the machine resets.
+        kairo98_fixed_time = launch.repeatable ? 725846400 : -1;
         if (launch.media.size() != kSlots) {
             error = "A PC-98 launch names floppies A and B, a CD and a hard disk; this one has " +
                     std::to_string(launch.media.size()) + " media";
