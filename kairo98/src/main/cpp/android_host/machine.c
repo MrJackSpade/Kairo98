@@ -387,7 +387,7 @@ void kairo_ymfm_reload_all_ram(void);
 
 /* Creates the folders above [path]: a working copy sits under its game's own folders. */
 static int make_parents(const char *path) {
-    char parent[MAX_PATH * 2];
+    char parent[MAX_PATH];
     char *slash;
     if (strlen(path) >= sizeof(parent)) return 1;
     strcpy(parent, path);
@@ -427,15 +427,15 @@ static int copy_file(const char *from, const char *to) {
 }
 
 /* The longest slot directory: every file in it fits the slot paths' buffers (disks.txt is the longest name). */
-static int slot_fits(const char *dir) { return strlen(dir) + sizeof("/disks.txt") <= MAX_PATH * 2; }
+static int slot_fits(const char *dir) { return strlen(dir) + sizeof("/disks.txt") <= MAX_PATH; }
 
 static void slot_path(char *out, size_t size, const char *dir, const char *name) {
     snprintf(out, size, "%s/%s", dir, name);
 }
 
 int kairo98_machine_save_state(const char *dir) {
-    char path[MAX_PATH * 2];
-    char copy[MAX_PATH * 2];
+    char path[MAX_PATH];
+    char copy[MAX_PATH];
     FILE *list;
     int drive;
     if (!dir || !*dir) return 1;
@@ -473,9 +473,9 @@ int kairo98_machine_save_state(const char *dir) {
 }
 
 int kairo98_machine_load_state(const char *dir) {
-    char path[MAX_PATH * 2];
-    char line[MAX_PATH * 2 + 32];
-    char copy[MAX_PATH * 2];
+    char path[MAX_PATH];
+    char line[MAX_PATH + 32];
+    char copy[MAX_PATH];
     OEMCHAR message[256];
     FILE *list;
     int drive;

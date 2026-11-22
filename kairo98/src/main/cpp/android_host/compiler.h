@@ -110,9 +110,10 @@ typedef signed char BOOL;
 #define	FALSE	0
 #endif
 
-#ifndef	MAX_PATH
-#define	MAX_PATH	256
-#endif
+/* np2's path buffers hold any path the system can open: Android's own limit, nothing shorter. */
+#include <limits.h>
+#undef	MAX_PATH
+#define	MAX_PATH	PATH_MAX
 
 #ifndef _countof
 #define _countof(a) (sizeof(a) / sizeof((a)[0]))

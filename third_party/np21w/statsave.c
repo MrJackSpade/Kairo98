@@ -180,6 +180,9 @@ typedef struct {
 #define	PROC2NUM(a, b)		proc2num(&(a), (b), sizeof(b)/sizeof(PROCTBL))
 #define	NUM2PROC(a, b)		num2proc(&(a), (b), sizeof(b)/sizeof(PROCTBL))
 
+/* Kairo98: the version of the FDD and SXSI sections' disk path records (statflag_writepath). */
+#define	STATPATH_VER	1
+
 #include "statsave.tbl"
 
 
@@ -468,18 +471,37 @@ typedef struct {
 	DOSTIME	time;
 } STATPATH;
 
+/* Kairo98: the FDD and SXSI sections' disk path records (STATPATH_VER). Version 0 is rev104's,
+ * a path cut to 256 bytes; version 1 holds a path of any length, as its byte count and then its bytes. */
+typedef struct {
+	OEMCHAR	path[256];
+	UINT	ftype;
+	int		readonly;
+	DOSDATE	date;
+	DOSTIME	time;
+} STATPATH_V0;
+
+typedef struct {
+	UINT32	length;
+	UINT32	ftype;
+	SINT32	readonly;
+	DOSDATE	date;
+	DOSTIME	time;
+} STATPATH_V1;
+
 static const OEMCHAR str_updated[] = OEMTEXT("%s: updated");
 static const OEMCHAR str_notfound[] = OEMTEXT("%s: not found");
 
 static int statflag_writepath(STFLAGH sfh, const OEMCHAR *path,
 												UINT ftype, int readonly) {
 
-	STATPATH	sp;
+	STATPATH_V1	sp;
 	FILEH		fh;
+	int			ret;
 
 	ZeroMemory(&sp, sizeof(sp));
 	if ((path) && (path[0])) {
-		file_cpyname(sp.path, path, NELEMENTS(sp.path));
+		sp.length = (UINT32)OEMSTRLEN(path);
 		sp.ftype = ftype;
 		sp.readonly = readonly;
 		fh = file_open_rb(path);
@@ -488,7 +510,51 @@ static int statflag_writepath(STFLAGH sfh, const OEMCHAR *path,
 			file_close(fh);
 		}
 	}
-	return(statflag_write(sfh, &sp, sizeof(sp)));
+	ret = statflag_write(sfh, &sp, sizeof(sp));
+	if (sp.length) {
+		ret |= statflag_write(sfh, path, sp.length * sizeof(OEMCHAR));
+	}
+	return(ret);
+}
+
+/* The next disk path record of [sfh]'s section, in the version that section was written in. */
+static int statflag_readpath(STFLAGH sfh, STATPATH *sp) {
+
+	int			ret;
+	STATPATH_V0	v0;
+	STATPATH_V1	v1;
+
+	ZeroMemory(sp, sizeof(*sp));
+	if (sfh->hdr.ver == 0) {
+		ret = statflag_read(sfh, &v0, sizeof(v0));
+		if (ret != STATFLAG_SUCCESS) {
+			return(ret);
+		}
+		memcpy(sp->path, v0.path, sizeof(v0.path));
+		sp->path[NELEMENTS(v0.path) - 1] = '\0';
+		sp->ftype = v0.ftype;
+		sp->readonly = v0.readonly;
+		sp->date = v0.date;
+		sp->time = v0.time;
+		return(STATFLAG_SUCCESS);
+	}
+	if (sfh->hdr.ver != STATPATH_VER) {
+		return(STATFLAG_FAILURE);
+	}
+	ret = statflag_read(sfh, &v1, sizeof(v1));
+	if ((ret != STATFLAG_SUCCESS) || (v1.length >= NELEMENTS(sp->path))) {
+		return(STATFLAG_FAILURE);
+	}
+	ret = statflag_read(sfh, sp->path, v1.length * sizeof(OEMCHAR));
+	if (ret != STATFLAG_SUCCESS) {
+		return(ret);
+	}
+	sp->path[v1.length] = '\0';
+	sp->ftype = v1.ftype;
+	sp->readonly = v1.readonly;
+	sp->date = v1.date;
+	sp->time = v1.time;
+	return(STATFLAG_SUCCESS);
 }
 
 static int statflag_checkpath(STFLAGH sfh, const OEMCHAR *dvname) {
@@ -500,7 +566,7 @@ static int statflag_checkpath(STFLAGH sfh, const OEMCHAR *dvname) {
 	DOSDATE		dosdate;
 	DOSTIME		dostime;
 
-	ret = statflag_read(sfh, &sp, sizeof(sp));
+	ret = statflag_readpath(sfh, &sp);
 	if (sp.path[0]) {
 		fh = file_open_rb(sp.path);
 		if (fh != FILEH_INVALID) {
@@ -1275,7 +1341,7 @@ static int flagload_fdd(STFLAGH sfh, const SFENTRY *tbl) {
 
 	ret = STATFLAG_SUCCESS;
 	for (i=0; i<4; i++) {
-		ret |= statflag_read(sfh, &sp, sizeof(sp));
+		ret |= statflag_readpath(sfh, &sp);
 		if (sp.path[0]) {
 			fdd_set(i, kairo_state_path(sp.path), sp.ftype, sp.readonly);
 		}
@@ -1389,7 +1455,7 @@ static int flagload_sxsi(STFLAGH sfh, const SFENTRY *tbl) {
 		drv = (REG8)i;
 		sxsi_setdevtype(drv, sds.ide[i]);
 		if (sds.ide[i] != SXSIDEV_NC) {
-			ret |= statflag_read(sfh, &sp, sizeof(sp));
+			ret |= statflag_readpath(sfh, &sp);
 			sxsi_devopen(drv, kairo_state_path(sp.path));
 		}
 	}
@@ -1397,7 +1463,7 @@ static int flagload_sxsi(STFLAGH sfh, const SFENTRY *tbl) {
 		drv = (REG8)(i + 0x20);
 		sxsi_setdevtype(drv, sds.scsi[i]);
 		if (sds.scsi[i] != SXSIDEV_NC) {
-			ret |= statflag_read(sfh, &sp, sizeof(sp));
+			ret |= statflag_readpath(sfh, &sp);
 			sxsi_devopen(drv, kairo_state_path(sp.path));
 		}
 	}
